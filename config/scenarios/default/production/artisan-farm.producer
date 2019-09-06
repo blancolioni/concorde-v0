@@ -1,0 +1,13 @@
+producer Artisan.Farm is
+
+   Zone => Farmland;
+   
+   Inputs => (Farming => 10);
+   
+   Efficiency => (Administration => 1);
+   
+   Outputs => ((Grain => 100),
+               (Vegetables => 50),
+			   (Fruit => 20));
+			  
+end Artisan.Farm;

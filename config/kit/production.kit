@@ -1,0 +1,32 @@
+with Localisation;
+
+with Commodities;
+with Money;
+with Quantities;
+
+package Production is
+
+record Production : Localised is	
+   Zone;
+   Size : Long_Float;
+end Production;
+
+record Production_Item is
+   key Production;
+   key Commodity;
+   Quantity : Quantity_Type;
+end Production_Item;
+
+record Input_Item : Production_Item;
+
+record Output_Item : Production_Item;
+
+record Efficiency_Item : Production_Item;
+
+record Required_Item : Production_Item;
+
+record Producer is
+   key Production;
+end Producer;
+
+end Production;

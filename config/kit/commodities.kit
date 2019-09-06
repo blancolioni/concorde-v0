@@ -1,0 +1,49 @@
+with Localisation;
+with Calendar;
+with Colors;
+with Money;
+with Properties;
+with Quantities;
+
+package Commodities is
+
+   record Commodity_Class : Localised;
+	
+   record Commodity : Localised, Has_Properties with Vector, Map is
+      key Commodity_Class;
+      Initial_Price : Price_Type;
+      Mass          : Long_Float;
+      Density       : Long_Float;
+   end Commodity;
+   
+   record Resource : Commodity;
+   
+   record Skill : Commodity;
+   
+   record Lease : Commodity is
+      key Leased_Commodity : Commodity;
+	  Term    : Positive;
+   end Lease;
+   
+   record Has_Stock is
+      Capacity : Quantity_Type;
+   end Has_Stock;
+   
+   record Stock_Item is
+      key Has_Stock;
+      Commodity;
+      Quantity : Quantity_Type;
+      Value    : Money_Type;
+      unique key Stock_Item with Has_Stock, Commodity;
+   end Stock_Item;
+   
+   record Historical_Stock is
+      Time_Stamp : Time;
+      Has_Stock;
+      Commodity;
+      Quantity : Quantity_Type;
+      Value    : Money_Type;
+      unique key Historical_Stock with Has_Stock, Commodity, Time_Stamp;
+   end Historical_Stock;
+   
+end Commodities;

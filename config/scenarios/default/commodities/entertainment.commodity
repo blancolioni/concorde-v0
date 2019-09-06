@@ -1,0 +1,9 @@
+literature = {
+  base-price = 1
+  happy = 1
+  }
+  
+film = {
+  base-price = 1
+  happy = 1
+  }

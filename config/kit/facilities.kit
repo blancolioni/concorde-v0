@@ -1,0 +1,11 @@
+with Localisation;
+
+package Facilities is
+
+record Facility_Class : Localised;
+
+record Facility : Localised is
+   key Facility_Class;
+end Facility;
+
+end Facilities;

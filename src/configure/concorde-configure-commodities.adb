@@ -1,0 +1,206 @@
+with Ada.Text_IO;
+
+with Tropos.Reader;
+
+with Concorde.Commodities;
+with Concorde.Properties;
+with Concorde.Money;
+
+with Concorde.Db.Commodity_Class;
+with Concorde.Db.Commodity;
+with Concorde.Db.Property_Entry;
+with Concorde.Db.Resource;
+with Concorde.Db.Skill;
+with Concorde.Db.Stock_Item;
+
+package body Concorde.Configure.Commodities is
+
+   Resource_Category : Concorde.Db.Commodity_Class_Reference :=
+     Concorde.Db.Null_Commodity_Class_Reference;
+   Skill_Category    : Concorde.Db.Commodity_Class_Reference :=
+     Concorde.Db.Null_Commodity_Class_Reference;
+
+   procedure Configure_Category
+     (Category_Config : Tropos.Configuration);
+
+   procedure Configure_Commodity
+     (Category : Concorde.Db.Commodity_Class_Reference;
+      Config   : Tropos.Configuration);
+
+   ------------------------
+   -- Configure_Category --
+   ------------------------
+
+   procedure Configure_Category
+     (Category_Config : Tropos.Configuration)
+   is
+      Name : constant String := Category_Config.Config_Name;
+      Category : constant Concorde.Db.Commodity_Class_Reference :=
+        Concorde.Db.Commodity_Class.Create (Name);
+   begin
+      if Name = "skills" then
+         Skill_Category := Category;
+      elsif Name = "resources" then
+         Resource_Category := Category;
+      end if;
+
+      for Commodity_Config of Category_Config loop
+         Configure_Commodity
+           (Category, Commodity_Config);
+      end loop;
+   end Configure_Category;
+
+   ---------------------------
+   -- Configure_Commodities --
+   ---------------------------
+
+   procedure Configure_Commodities (Scenario_Name : String) is
+   begin
+      for Category_Config of
+        Tropos.Reader.Read_Config
+          (Scenario_Directory
+             (Scenario_Name, "commodities"),
+           "commodity")
+      loop
+         Configure_Category (Category_Config);
+      end loop;
+   end Configure_Commodities;
+
+   -------------------------
+   -- Configure_Commodity --
+   -------------------------
+
+   procedure Configure_Commodity
+     (Category : Concorde.Db.Commodity_Class_Reference;
+      Config   : Tropos.Configuration)
+   is
+      use type Concorde.Db.Commodity_Class_Reference;
+
+      function Create_Commodity
+        (Tag           : String;
+         Initial_Price : Concorde.Money.Price_Type)
+         return Concorde.Db.Commodity_Reference;
+
+      ----------------------
+      -- Create_Commodity --
+      ----------------------
+
+      function Create_Commodity
+        (Tag           : String;
+         Initial_Price : Concorde.Money.Price_Type)
+         return Concorde.Db.Commodity_Reference
+      is
+      begin
+         if Category = Skill_Category then
+            declare
+               Ref : constant Concorde.Db.Skill_Reference :=
+                 Concorde.Db.Skill.Create
+                   (Category, Initial_Price, 1.0, 1.0, Tag);
+            begin
+               return Concorde.Db.Skill.Get (Ref).Get_Commodity_Reference;
+            end;
+         elsif Category = Resource_Category then
+            declare
+               Ref : constant Concorde.Db.Resource_Reference :=
+                 Concorde.Db.Resource.Create
+                   (Category, Initial_Price, 1.0, 1.0, Tag);
+            begin
+               return Concorde.Db.Resource.Get (Ref).Get_Commodity_Reference;
+            end;
+         else
+            return Concorde.Db.Commodity.Create
+              (Tag, Category, Initial_Price, 1.0, 1.0);
+         end if;
+      end Create_Commodity;
+
+      Commodity : constant Concorde.Db.Commodity_Reference :=
+        Create_Commodity
+          (Tag           => Config.Config_Name,
+           Initial_Price =>
+             Concorde.Money.To_Price
+               (Real (Float'(Config.Get ("base-price", 1.0)))));
+      Has_Properties : constant Concorde.Db.Has_Properties_Reference :=
+        Concorde.Db.Commodity.Get (Commodity).Get_Has_Properties_Reference;
+
+   begin
+
+      for Property_Config of Config loop
+         if Property_Config.Config_Name = "education" then
+            null;
+         else
+            begin
+               Concorde.Db.Property_Entry.Create
+                 (Has_Properties => Has_Properties,
+                  Property       =>
+                    Concorde.Properties.Property (Property_Config.Config_Name),
+                  Value          =>
+                    Real (Float'(Property_Config.Value)));
+            exception
+               when Constraint_Error =>
+                  Ada.Text_IO.Put_Line
+                    (Ada.Text_IO.Standard_Error,
+                       "property '" & Property_Config.Config_Name & "'"
+                     & " in commodity '" & Config.Config_Name & "'"
+                     & ": bad value: '" & Property_Config.Value);
+            end;
+         end if;
+      end loop;
+   end Configure_Commodity;
+
+   ---------------------
+   -- Configure_Stock --
+   ---------------------
+
+   procedure Configure_Stock
+     (Has_Stock : Concorde.Db.Has_Stock.Has_Stock_Type;
+      Config    : Tropos.Configuration;
+      Factor    : Non_Negative_Real := 1.0)
+   is
+   begin
+      Configure_Stock (Has_Stock.Get_Has_Stock_Reference, Config, Factor);
+   end Configure_Stock;
+
+   ---------------------
+   -- Configure_Stock --
+   ---------------------
+
+   procedure Configure_Stock
+     (Has_Stock : Concorde.Db.Has_Stock_Reference;
+      Config    : Tropos.Configuration;
+      Factor    : Non_Negative_Real := 1.0)
+   is
+      Stock_Config : constant Tropos.Configuration :=
+                       (if Config.Contains ("stock")
+                        then Config.Child ("stock")
+                        else Config);
+   begin
+      for Item_Config of Stock_Config loop
+         if Concorde.Commodities.Exists (Item_Config.Config_Name) then
+            declare
+               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+                 Concorde.Commodities.Get (Item_Config.Config_Name);
+               Quantity  : constant Concorde.Quantities.Quantity_Type :=
+                 Concorde.Quantities.Scale
+                   (Concorde.Quantities.To_Quantity
+                      (Real (Float'(Item_Config.Value))),
+                    Factor);
+               Value     : constant Concorde.Money.Money_Type :=
+                 Concorde.Money.Total
+                   (Concorde.Commodities.Initial_Price (Commodity),
+                    Quantity);
+            begin
+               Concorde.Db.Stock_Item.Create
+                 (Has_Stock => Has_Stock,
+                  Commodity => Commodity,
+                  Quantity  => Quantity,
+                  Value     => Value);
+            end;
+         else
+            raise Constraint_Error with
+              "no such commodity in stock configuration: "
+              & Item_Config.Config_Name;
+         end if;
+      end loop;
+   end Configure_Stock;
+
+end Concorde.Configure.Commodities;

@@ -1,0 +1,75 @@
+cash = 10M
+pops = {
+   pop = {
+      size = 10K
+      cash = 100K
+      }
+   pop = {
+      size = 100
+      cash = 100K
+      }
+   pop = {
+      size = 1K
+	  cash = 10K
+	  skills = { farming = 1 }
+	  }
+   pop = {
+      size = 100
+	  cash = 10K
+	  skills = { cooking = 1 }
+	  }
+   pop = {
+      size = 100
+	  cash = 10K
+	  skills = { cooking = 1 }
+	  }
+   pop = {
+      size = 100
+	  cash = 10K
+	  skills = { cooking = 1 }
+	  }
+}
+
+ships = {
+   scout = 2
+   transport = 1
+   defender = 1
+}
+
+capital-sector = {
+   administration = 10 
+   commercial = 10 
+   residential = 100
+}
+
+sector-use = {
+   farmland = {
+      count = 1
+	  zones = { farm = 100 }
+	  }
+}
+
+installations = {
+   agora = {
+      manager = default-agora
+      cash = 10M
+      stock = {
+         grain = 10K
+         fruit = 50K
+         vegetables = 50K
+         basic-takeout = 5K
+		 regular-takeout = 1K
+		 basic-meal = 100
+		 regular-meal = 50
+		 luxury-meal = 10
+      }
+    }
+}
+
+init-script = {
+   "load-galaxy-view"
+   "load-star-system-view --name=$CAPITAL_SYSTEM"
+   "load-world-view --world-name=$CAPITAL_WORLD"
+   "show-market $CAPITAL_WORLD"
+   "show-orbit $CAPITAL_WORLD"
+}

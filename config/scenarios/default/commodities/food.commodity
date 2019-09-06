@@ -1,0 +1,63 @@
+grain = {
+  base-price = 0.5
+  preparation = 2
+  health = 1
+  happy = 0.1
+  hours = 0.5
+  }
+
+vegetables = {
+  base-price = 1.2
+  preparation = 1
+  health = 1.5
+  happy = 1.1
+  hours = 1.1
+  }
+  
+fruit = {
+  base-price = 1.4
+  preparation = 0.2
+  health = 1
+  happy = 1.2
+  hours = 1.3
+  }
+  
+basic-takeout = {
+  base-price = 1.1
+  preparation = 0
+  health = 0.5
+  happy = 1.1
+  hours = 2
+  }
+
+regular-takeout = {
+  base-price = 2.6
+  preparation = 0
+  health = 1
+  happy = 2.1
+  hours = 2
+  }
+
+basic-meal = {
+  base-price = 4
+  preparation = 0
+  health = 1
+  happy = 2.5
+  hours = 2
+  }
+
+regular-meal = {
+  base-price = 8
+  preparation = 0
+  health = 1.5
+  happy = 3
+  hours = 2
+  }
+
+luxury-meal = {
+  base-price = 25
+  preparation = 0
+  health = 1.5
+  happy = 4
+  hours = 2
+  }

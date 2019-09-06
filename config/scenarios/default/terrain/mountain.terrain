@@ -1,0 +1,20 @@
+name = Mountain
+color = "#fffafa"
+hazard = 0.05
+resource = { type = { 1 = aluminium
+                      2 = carbonite
+                      3 = copper
+                      4 = fissile
+                      5 = iron
+                      6 = precious
+                      7 = water
+                    }
+             chance = { 1 = 15
+                        2 = 15
+                        3 = 45
+                        4 = 10
+                        5 = 45
+                        6 = 10
+                        7 = 50
+                      }
+           }

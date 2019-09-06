@@ -1,0 +1,27 @@
+with Concorde.Managers.Factions;
+with Concorde.Managers.Installations;
+with Concorde.Managers.Pops;
+
+package body Concorde.Managers.Loader is
+
+   -----------------------
+   -- Register_Managers --
+   -----------------------
+
+   procedure Register_Managers is
+   begin
+      Register.Insert
+        ("default-installation",
+         Concorde.Managers.Installations.Create_Default_Manager'Access);
+      Register.Insert
+        ("default-agora",
+         Concorde.Managers.Installations.Create_Default_Agora_Manager'Access);
+      Register.Insert
+        ("default-pop",
+         Concorde.Managers.Pops.Create_Default_Manager'Access);
+      Register.Insert
+        ("default-faction",
+         Concorde.Managers.Factions.Create_Default_Manager'Access);
+   end Register_Managers;
+
+end Concorde.Managers.Loader;

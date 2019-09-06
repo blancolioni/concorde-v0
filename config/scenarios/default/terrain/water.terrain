@@ -1,0 +1,19 @@
+name = Water
+color = "#0077be"
+is_water = yes
+hazard = 0.05
+resource = { type = { 1 = hydrocarbon
+                      2 = oil
+                      3 = "rare-minerals"
+                      4 = salt
+                      5 = seafood
+                      6 = water
+                    }
+             chance = { 1 = 25
+                        2 = 25
+                        3 = 10
+                        4 = 50
+                        5 = 50
+                        6 = 100
+                      }
+           }

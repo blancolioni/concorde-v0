@@ -1,0 +1,15 @@
+farming = {
+  education = primary
+}
+
+cooking = {
+  education = secondary
+}
+
+administration = {
+  education = tertiary
+}
+
+operator = {
+  education = secondary
+}

@@ -1,0 +1,22 @@
+name = Hill
+color = "#3F704D"
+hazard = 0.02
+resource = { type = { 1 = aluminium
+                      2 = carbonite
+                      3 = coal
+                      4 = copper
+                      5 = iron
+                      6 = precious
+                      7 = silicon
+                      8 = water
+                    }
+             chance = { 1 = 10
+                        2 = 25
+                        3 = 15
+                        4 = 15
+                        5 = 25
+                        6 = 5
+                        7 = 10
+                        8 = 25
+                      }
+           }

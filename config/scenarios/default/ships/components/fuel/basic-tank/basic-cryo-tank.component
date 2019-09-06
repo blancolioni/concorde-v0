@@ -1,0 +1,25 @@
+bounding-box = { -2 2 -2 2 -5 5 }
+shape = cylinder
+mass = 26K
+attachments = {
+   down = { 0 0 -5 }
+   up = { 0 0 5 }
+}
+cargo = { volume = 96 liquid = yes cryo = yes }
+
+parts = {
+   aluminium = 100
+   pvc = 100
+   electronic-component = 10
+}
+
+color = { 229 165 136 }
+acceleration_limit = {
+   linear = 25
+   angular = 4
+}
+temperature_limit = {
+   normal = 300
+   failure = 500
+}
+heat = 100

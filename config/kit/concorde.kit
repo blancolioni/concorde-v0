@@ -1,0 +1,30 @@
+with Calendar;
+with Events;
+with Facilities;
+with Factions;
+with Installations;
+with Markets;
+with Pops;
+with Production;
+with Properties;
+with Stars;
+with Surfaces;
+with Users;
+with Worlds;
+
+package Concorde is
+
+for Concorde'Database_Package_Name use "Concorde.Db";
+
+--  bug in kit requires at least one fixed string field in the database
+record Unused is
+   Tag : Fixed_String (3);
+end Unused;
+
+record Scenario is
+   unique key Id     : String (32);
+   unique key Active : Boolean;
+   Central_System    : Star_System;
+end Scenario;
+
+end Concorde;
