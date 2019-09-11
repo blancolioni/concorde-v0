@@ -58,6 +58,13 @@ package Concorde.Markets is
       Offer     : Concorde.Db.Offer_Type)
       return Concorde.Quantities.Quantity_Type;
 
+   function Previous_Agent_Offer_Price
+     (Market    : Concorde_Market;
+      Agent     : Concorde.Db.Agent_Reference;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Offer     : Concorde.Db.Offer_Type)
+      return Concorde.Money.Price_Type;
+
    function Remaining_Agent_Offer
      (Market    : Concorde_Market;
       Agent     : Concorde.Db.Agent_Reference;
