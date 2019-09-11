@@ -153,7 +153,8 @@ package body Concorde.Markets is
       Concorde.Db.Historical_Offer.Create
         (Time_Stamp  => Concorde.Calendar.Clock,
          Time_Offset =>
-           Real'Last - Concorde.Calendar.To_Real (Concorde.Calendar.Clock),
+           10_000.0
+         / (1.0 + Concorde.Calendar.To_Real (Concorde.Calendar.Clock)),
          Market      => Market,
          Commodity   => Commodity,
          Agent       => Agent,
