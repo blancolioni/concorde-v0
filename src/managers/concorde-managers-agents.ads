@@ -107,6 +107,11 @@ package Concorde.Managers.Agents is
       Commodity : Concorde.Commodities.Commodity_Reference)
       return Concorde.Quantities.Quantity_Type;
 
+   function Previous_Ask_Price
+     (Manager   : Root_Agent_Manager_Type'Class;
+      Commodity : Concorde.Commodities.Commodity_Reference)
+      return Concorde.Money.Price_Type;
+
    function Previous_Bid
      (Manager   : Root_Agent_Manager_Type'Class;
       Commodity : Concorde.Commodities.Commodity_Reference)

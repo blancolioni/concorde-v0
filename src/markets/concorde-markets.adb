@@ -773,6 +773,32 @@ package body Concorde.Markets is
       end return;
    end Previous_Agent_Offer;
 
+   --------------------------------
+   -- Previous_Agent_Offer_Price --
+   --------------------------------
+
+   function Previous_Agent_Offer_Price
+     (Market    : Concorde_Market;
+      Agent     : Concorde.Db.Agent_Reference;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Offer     : Concorde.Db.Offer_Type)
+      return Concorde.Money.Price_Type
+   is
+      use Concorde.Db.Historical_Offer;
+   begin
+      return Price : Concorde.Money.Price_Type :=
+        Concorde.Money.Zero
+      do
+         for Hist_Offer of
+           Select_Reverse_Agent_Offer_Bounded_By_Time_Offset
+             (Market, Agent, Commodity, Offer, 0.0, Real'Last)
+         loop
+            Price := Hist_Offer.Price;
+            exit;
+         end loop;
+      end return;
+   end Previous_Agent_Offer_Price;
+
    ---------------------------
    -- Remaining_Agent_Offer --
    ---------------------------

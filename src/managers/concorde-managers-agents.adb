@@ -345,6 +345,20 @@ package body Concorde.Managers.Agents is
         (Manager.Market, Manager.Agent, Commodity, Concorde.Db.Ask);
    end Previous_Ask;
 
+   ------------------------
+   -- Previous_Ask_Price --
+   ------------------------
+
+   function Previous_Ask_Price
+     (Manager   : Root_Agent_Manager_Type'Class;
+      Commodity : Concorde.Commodities.Commodity_Reference)
+      return Concorde.Money.Price_Type
+   is
+   begin
+      return Concorde.Markets.Previous_Agent_Offer_Price
+        (Manager.Market, Manager.Agent, Commodity, Concorde.Db.Ask);
+   end Previous_Ask_Price;
+
    ------------------
    -- Previous_Bid --
    ------------------
