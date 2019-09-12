@@ -1,8 +1,25 @@
+with Concorde.Calendar;
 with Concorde.Updates.Tasks;            use Concorde.Updates.Tasks;
 
 package body Concorde.Updates.Control is
 
    Start_Time : Ada.Calendar.Time;
+
+   -----------------------------
+   -- Execute_Pending_Updates --
+   -----------------------------
+
+   procedure Execute_Pending_Updates is
+      List  : Update_Lists.List;
+      Clock : constant Concorde.Calendar.Time :=
+        Concorde.Calendar.Clock;
+   begin
+      Update_Map.Get_Updates (Clock, List);
+
+      if not List.Is_Empty then
+         Dispatch_Task.Dispatch (List);
+      end if;
+   end Execute_Pending_Updates;
 
    ----------------
    -- Get_Status --

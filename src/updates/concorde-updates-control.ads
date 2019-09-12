@@ -18,6 +18,8 @@ package Concorde.Updates.Control is
    function Is_Paused return Boolean;
    function Is_Active return Boolean;
 
+   procedure Execute_Pending_Updates;
+
 private
 
    function Is_Active return Boolean
