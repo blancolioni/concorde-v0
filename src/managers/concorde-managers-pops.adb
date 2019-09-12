@@ -1093,7 +1093,8 @@ package body Concorde.Managers.Pops is
                      Available_Quantity : constant Quantity_Type :=
                        Manager.Current_Ask_Quantity (Commodity);
                      Bid_Limit          : constant Quantity_Type :=
-                       Min (Required_Quantity, Available_Quantity);
+                       Required_Quantity;
+--                         Min (Required_Quantity, Available_Quantity);
                      Price              : constant Price_Type :=
                        Manager.Current_Ask_Price (Commodity, Bid_Limit);
                      Total_Cost         : constant Money_Type :=
@@ -1103,8 +1104,8 @@ package body Concorde.Managers.Pops is
                      Bid_Quantity       : constant Quantity_Type :=
                        (if Total_Cost <= Max_Cost
                         then Bid_Limit
-                        else Manager.Current_Ask_Quantity
-                          (Commodity, Max_Cost));
+                        else Get_Quantity
+                          (Max_Cost, Price));
                   begin
                      Manager.Log
                        (Concorde.Commodities.Local_Name (Commodity)
@@ -1220,44 +1221,50 @@ package body Concorde.Managers.Pops is
                   & " for "
                   & Concorde.Money.Show (Minimum_Price)
                   & " ea");
-
                Manager.Add_Stock
                  (Commodity => Out_Item.Commodity,
                   Quantity  => Quantity,
                   Value     =>
                     Production_Cost);
 
-               declare
-                  use Concorde.Money;
-                  Current_Bid : constant Price_Type :=
-                    Manager.Current_Bid_Price
-                      (Out_Item.Commodity, Quantity);
-                  Mean_Price  : constant Price_Type :=
-                    Manager.Historical_Mean_Price
-                      (Out_Item.Commodity);
-                  Base_Ask_Price : constant Price_Type :=
-                    (if Current_Bid = Zero
-                     then Mean_Price else Current_Bid);
-                  Discount_Price : constant Price_Type :=
-                    Adjust_Price (Base_Ask_Price, 0.99);
-                  Previous_Price : constant Price_Type :=
-                    Manager.Previous_Ask_Price
-                      (Out_Item.Commodity);
-                  Ask_Price      : constant Price_Type :=
-                    (if Previous_Price > Zero
-                     and then Previous_Price <= Base_Ask_Price
-                     then Previous_Price
-                     elsif Discount_Price > Minimum_Price
-                     then Discount_Price
-                     elsif Mean_Price > Minimum_Price
-                     then Mean_Price
-                     else Adjust_Price (Minimum_Price, 1.1));
-               begin
-                  Manager.Create_Ask
-                    (Commodity => Out_Item.Commodity,
-                     Quantity  => Quantity,
-                     Price     => Ask_Price);
-               end;
+            end;
+
+            declare
+               use Concorde.Money;
+               Quantity : constant Concorde.Quantities.Quantity_Type :=
+                 Manager.Stock_Quantity
+                   (Out_Item.Commodity);
+               Minimum_Price : constant Concorde.Money.Price_Type :=
+                 Manager.Stock_Price (Out_Item.Commodity);
+               Current_Bid    : constant Price_Type :=
+                 Manager.Current_Bid_Price
+                   (Out_Item.Commodity, Quantity);
+               Mean_Price     : constant Price_Type :=
+                 Manager.Historical_Mean_Price
+                   (Out_Item.Commodity);
+               Base_Ask_Price : constant Price_Type :=
+                 (if Current_Bid = Zero
+                  then Mean_Price else Current_Bid);
+               Discount_Price : constant Price_Type :=
+                 Adjust_Price (Base_Ask_Price, 0.99);
+               Previous_Price : constant Price_Type :=
+                 Manager.Previous_Ask_Price
+                   (Out_Item.Commodity);
+               Ask_Price      : constant Price_Type :=
+                 (if Previous_Price > Zero
+                  and then Previous_Price <= Base_Ask_Price
+                  then Previous_Price
+                  elsif Discount_Price > Minimum_Price
+                  then Discount_Price
+                  elsif Mean_Price > Minimum_Price
+                  then Mean_Price
+                  else Adjust_Price (Minimum_Price, 1.1));
+            begin
+
+               Manager.Create_Ask
+                 (Commodity => Out_Item.Commodity,
+                  Quantity  => Quantity,
+                  Price     => Ask_Price);
             end;
          end loop;
 
