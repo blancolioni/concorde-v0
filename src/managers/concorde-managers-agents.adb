@@ -5,6 +5,7 @@ with WL.Random;
 with Concorde.Agents;
 with Concorde.Stock;
 
+with Concorde.Db.Market_Offer;
 with Concorde.Db.Stock_Item;
 
 package body Concorde.Managers.Agents is
@@ -410,7 +411,25 @@ package body Concorde.Managers.Agents is
       Commodity : Concorde.Commodities.Commodity_Reference;
       Quantity  : Concorde.Quantities.Quantity_Type)
    is
+      Ask : constant Concorde.Db.Market_Offer.Market_Offer_Type :=
+        Concorde.Db.Market_Offer.Get_By_Market_Offer
+          (Market    => Manager.Market,
+           Agent     => Manager.Agent,
+           Commodity => Commodity,
+           Offer     => Concorde.Db.Ask);
    begin
+      if Ask.Has_Element then
+         declare
+            use Concorde.Quantities;
+            Ask_Quantity : constant Quantity_Type := Ask.Quantity;
+         begin
+            Concorde.Db.Market_Offer.Update_Market_Offer
+              (Ask.Get_Market_Offer_Reference)
+              .Set_Quantity (Ask_Quantity - Min (Quantity, Ask_Quantity))
+                .Done;
+         end;
+      end if;
+
       Concorde.Stock.Remove_Stock
         (Manager.Has_Stock, Commodity, Quantity);
    end Remove_Stock;
