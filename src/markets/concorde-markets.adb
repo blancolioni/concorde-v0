@@ -48,9 +48,9 @@ package body Concorde.Markets is
       return Real
    is (case Offer is
           when Concorde.Db.Ask =>
-             1.0 / Concorde.Money.To_Real (Price),
+             Concorde.Money.To_Real (Price),
           when Concorde.Db.Bid =>
-             Concorde.Money.To_Real (Price));
+             1.0 / Concorde.Money.To_Real (Price));
 
    function Name
      (Offer : Concorde.Db.Offer_Type)
