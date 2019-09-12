@@ -106,6 +106,8 @@ package body Concorde.Managers.Pops is
             Production : Concorde.Db.Production_Reference;
             Sector     : Concorde.Db.World_Sector_Reference;
             Zone       : Concorde.Db.Commodity_Reference;
+            Skill      : Concorde.Quantities.Quantity_Type;
+            Size       : Non_Negative_Real;
          end record;
 
       package Production_Choices is
@@ -117,7 +119,8 @@ package body Concorde.Managers.Pops is
       Choice : Production_Choices.Weighted_Choice_Set;
 
       procedure Add_Choice
-        (Production : Concorde.Db.Production_Reference);
+        (Production : Concorde.Db.Production_Reference;
+         Skill      : Concorde.Db.Commodity_Reference);
 
       function Score_World_Sector_Production
         (World_Sector : Concorde.Db.World_Sector_Reference;
@@ -130,7 +133,8 @@ package body Concorde.Managers.Pops is
       ----------------
 
       procedure Add_Choice
-        (Production : Concorde.Db.Production_Reference)
+        (Production : Concorde.Db.Production_Reference;
+         Skill      : Concorde.Db.Commodity_Reference)
       is
          Zone           : constant Concorde.Db.Zone_Reference :=
            Concorde.Db.Production.Get (Production).Zone;
@@ -152,9 +156,15 @@ package body Concorde.Managers.Pops is
                if Score > 0 then
                   Choice.Insert
                     (Item  =>
-                       (Production,
-                        World_Sector.Get_World_Sector_Reference,
-                        Zone_Commodity),
+                       Production_Record'
+                         (Production => Production,
+                          Sector     =>
+                            World_Sector.Get_World_Sector_Reference,
+                          Zone       => Zone_Commodity,
+                          Skill      =>
+                            Manager.Stock_Quantity (Skill),
+                          Size       =>
+                            Concorde.Db.Production.Get (Production).Size),
                      Score => Score);
                end if;
             end;
@@ -198,7 +208,7 @@ package body Concorde.Managers.Pops is
             for Input_Item of
               Concorde.Db.Input_Item.Select_By_Commodity (Commodity)
             loop
-               Add_Choice (Input_Item.Production);
+               Add_Choice (Input_Item.Production, Commodity);
             end loop;
          end if;
       end loop;
@@ -222,7 +232,7 @@ package body Concorde.Managers.Pops is
             Quantity          : constant Quantity_Type :=
               Concorde.Quantities.Min
                 (Manager.Current_Ask_Quantity (Title),
-                 Manager.Size);
+                 Scale (Manager.Size, Production_Choice.Size));
             Remaining         : Quantity_Type := Quantity;
          begin
 
@@ -1197,17 +1207,18 @@ package body Concorde.Managers.Pops is
          loop
             declare
                Quantity : constant Concorde.Quantities.Quantity_Type :=
-                            Concorde.Quantities.Scale
-                              (Out_Item.Quantity, Output);
+                 Concorde.Quantities.Scale
+                   (Out_Item.Quantity, Output);
+               Minimum_Price : constant Concorde.Money.Price_Type :=
+                 Concorde.Money.Price
+                   (Production_Cost, Quantity);
             begin
                Manager.Log
                  ("produce " & Concorde.Quantities.Show (Quantity)
                   & " "
                   & Concorde.Commodities.Local_Name (Out_Item.Commodity)
                   & " for "
-                  & Concorde.Money.Show
-                    (Concorde.Money.Price
-                         (Production_Cost, Quantity))
+                  & Concorde.Money.Show (Minimum_Price)
                   & " ea");
 
                Manager.Add_Stock
@@ -1224,9 +1235,23 @@ package body Concorde.Managers.Pops is
                   Mean_Price  : constant Price_Type :=
                     Manager.Historical_Mean_Price
                       (Out_Item.Commodity);
-                  Ask_Price   : constant Price_Type :=
+                  Base_Ask_Price : constant Price_Type :=
                     (if Current_Bid = Zero
                      then Mean_Price else Current_Bid);
+                  Discount_Price : constant Price_Type :=
+                    Adjust_Price (Base_Ask_Price, 0.99);
+                  Previous_Price : constant Price_Type :=
+                    Manager.Previous_Ask_Price
+                      (Out_Item.Commodity);
+                  Ask_Price      : constant Price_Type :=
+                    (if Previous_Price > Zero
+                     and then Previous_Price <= Base_Ask_Price
+                     then Previous_Price
+                     elsif Discount_Price > Minimum_Price
+                     then Discount_Price
+                     elsif Mean_Price > Minimum_Price
+                     then Mean_Price
+                     else Adjust_Price (Minimum_Price, 1.1));
                begin
                   Manager.Create_Ask
                     (Commodity => Out_Item.Commodity,
