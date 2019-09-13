@@ -686,9 +686,11 @@ package body Concorde.Managers.Pops is
       Size : constant Non_Negative_Real :=
         Concorde.Quantities.To_Real (Manager.Size);
 
-      Hours     : Real := 0.0;
-      Happy     : Real := 0.0;
-      Health    : Real := 0.0;
+      Hours      : Real := 0.0;
+      Happy      : Real := 0.0;
+      Health     : Real := 0.0;
+      Health_Set : array (1 .. 3) of Real :=
+        (others => 0.0);
       Education : Real := 0.0;
 
       procedure Apply
@@ -751,7 +753,9 @@ package body Concorde.Managers.Pops is
       begin
          Update (Hours, "hours", "preparation");
          Update (Happy, "happy");
-         Update (Health, "health");
+         Update (Health_Set (1), "health-1");
+         Update (Health_Set (2), "health-1");
+         Update (Health_Set (3), "health-1");
          Update (Education, "education");
       end Apply;
 
@@ -778,6 +782,11 @@ package body Concorde.Managers.Pops is
       for Item of Bids loop
          Apply (Item.Commodity, Item.Quantity,
                 Concorde.Money.Total (Item.Price, Item.Quantity));
+      end loop;
+
+      Health := Real'Last;
+      for H of Health_Set loop
+         Health := Real'Min (Health, H);
       end loop;
 
       declare
@@ -811,7 +820,9 @@ package body Concorde.Managers.Pops is
         To_Real (Manager.Size);
 
       Hours, Happy : Non_Negative_Real := 0.0;
-      Health : Non_Negative_Real := 0.0;
+      Health_Set   : array (1 .. 3) of Non_Negative_Real :=
+        (others => 0.0);
+      Health       : Non_Negative_Real := 0.0;
 
    begin
       for Item of Manager.Current_Bids loop
@@ -857,7 +868,9 @@ package body Concorde.Managers.Pops is
 
             Record_Consumption ("hours", Hours);
             Record_Consumption ("happy", Happy);
-            Record_Consumption ("health", Health);
+            Record_Consumption ("health-1", Health_Set (1));
+            Record_Consumption ("health-2", Health_Set (2));
+            Record_Consumption ("health-3", Health_Set (3));
             Manager.Remove_Stock (Commodity, Consume);
          end;
       end loop;
@@ -870,6 +883,11 @@ package body Concorde.Managers.Pops is
          Current_Hours  : constant Non_Negative_Real :=
            Concorde.Pops.Hours (Manager.Pop);
       begin
+         Health := Real'Last;
+         for H of Health_Set loop
+            Health := Real'Min (Health, H);
+         end loop;
+
          Concorde.Db.Pop.Update_Pop (Manager.Pop)
            .Set_Happy (Current_Happy * 0.9 + Happy)
            .Set_Health (Current_Health * 0.95 + Health * 0.5)

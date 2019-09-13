@@ -127,6 +127,26 @@ package body Concorde.Configure.Commodities is
       for Property_Config of Config loop
          if Property_Config.Config_Name = "education" then
             null;
+         elsif Property_Config.Child_Count > 1 then
+            begin
+               for I in 1 .. Property_Config.Child_Count loop
+                  Concorde.Db.Property_Entry.Create
+                    (Has_Properties => Has_Properties,
+                     Property       =>
+                       Concorde.Properties.Property
+                         (Property_Config.Config_Name
+                          & Integer'Image (-I)),
+                     Value          =>
+                       Real (Float'(Property_Config.Get (I))));
+               end loop;
+            exception
+               when Constraint_Error =>
+                  Ada.Text_IO.Put_Line
+                    (Ada.Text_IO.Standard_Error,
+                     "property '" & Property_Config.Config_Name & "'"
+                     & " in commodity '" & Config.Config_Name & "'"
+                     & ": bad value: '" & Property_Config.Value);
+            end;
          else
             begin
                Concorde.Db.Property_Entry.Create
