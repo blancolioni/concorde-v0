@@ -79,8 +79,8 @@ package body Concorde.Managers.Agents is
    is
       use type Concorde.Quantities.Quantity_Type;
    begin
-      return Concorde.Markets.Current_Quantity
-        (Manager.Market, Commodity, Concorde.Db.Ask)
+      return Concorde.Markets.Supply_Since
+        (Manager.Market, Commodity, Concorde.Calendar.Days (1))
         > Concorde.Quantities.Zero;
    end Available;
 
