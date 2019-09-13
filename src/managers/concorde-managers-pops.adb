@@ -1287,6 +1287,8 @@ package body Concorde.Managers.Pops is
                   and then Previous_Price <= Base_Ask_Price
                   then Previous_Price
                   elsif Discount_Price > Minimum_Price
+                  and then Remaining > Zero
+                  and then Previous > Zero
                   then Discount_Price
                   elsif Mean_Price > Minimum_Price
                   then Mean_Price
@@ -1297,7 +1299,7 @@ package body Concorde.Managers.Pops is
                   if Remaining = Zero then
                      Ask := Scale (Previous, 1.1);
                   elsif Remaining < Scale (Previous, 0.9) then
-                     Ask := Previous - Remaining;
+                     Ask := Scale (Previous, 0.8);
                   else
                      Ask := Previous;
                   end if;

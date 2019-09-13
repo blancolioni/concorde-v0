@@ -3,50 +3,60 @@ pops = {
    pop = {
       size = 100K
       cash = 1000K
+	  faction-share = 5%
       }
    pop = {
       size = 100
       cash = 100K
+	  faction-share = 30%
       }
    pop = {
       size = 1K
 	  cash = 10K
 	  skills = { farming = 1 }
+	  faction-share = 1%
 	  }
    pop = {
       size = 1K
 	  cash = 10K
 	  skills = { farming = 1 }
+	  faction-share = 1%
 	  }
    pop = {
       size = 1K
 	  cash = 10K
 	  skills = { farming = 1 }
+	  faction-share = 1%
 	  }
    pop = {
       size = 1K
 	  cash = 10K
 	  skills = { farming = 1 }
+	  faction-share = 1%
 	  }
    pop = {
       size = 1K
 	  cash = 10K
 	  skills = { farming = 1 }
+	  faction-share = 1%
 	  }
    pop = {
       size = 100
 	  cash = 2K
 	  skills = { cooking = 1 }
+	  faction-share = 0.1%
 	  }
    pop = {
       size = 100
 	  cash = 2K
 	  skills = { cooking = 1 }
+	  faction-share = 0.1%
 	  }
    pop = {
       size = 100
 	  cash = 2K
 	  skills = { cooking = 1 }
+	  faction-share = 0.1%
 	  }
 }
 

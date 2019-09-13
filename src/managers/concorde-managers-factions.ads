@@ -4,4 +4,8 @@ package Concorde.Managers.Factions is
      (Managed : Concorde.Db.Managed_Reference)
       return Manager_Type;
 
+   function Create_Faction_Company_Manager
+     (Managed : Concorde.Db.Managed_Reference)
+      return Manager_Type;
+
 end Concorde.Managers.Factions;

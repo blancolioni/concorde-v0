@@ -20,6 +20,7 @@ with Concorde.Configure.Commodities;
 with Concorde.Configure.Installations;
 
 with Concorde.Db.Account;
+with Concorde.Db.Company;
 with Concorde.Db.Deposit;
 with Concorde.Db.Faction;
 with Concorde.Db.Market;
@@ -28,6 +29,7 @@ with Concorde.Db.Script;
 with Concorde.Db.Script_Line;
 with Concorde.Db.Sector_Use;
 with Concorde.Db.Sector_Zone;
+with Concorde.Db.Shareholder;
 with Concorde.Db.Star_System_Distance;
 with Concorde.Db.World;
 with Concorde.Db.World_Sector;
@@ -38,6 +40,8 @@ package body Concorde.Factions.Create is
 
 --     Log_Faction_Creation : constant Boolean := False;
 
+   Faction_Company_Shares : constant := 1000;
+
    function Find_Homeworld
      return Concorde.Db.World_Reference;
 
@@ -46,10 +50,10 @@ package body Concorde.Factions.Create is
       return Concorde.Db.World_Sector_Reference;
 
    procedure Initialize_Zone
-     (Faction        : Concorde.Db.Faction_Reference;
-      Sector         : Concorde.Db.World_Sector_Reference;
-      Sector_Use     : Concorde.Db.Sector_Use_Reference;
-      Zone_Config    : Tropos.Configuration);
+     (Company     : Concorde.Db.Company_Reference;
+      Sector      : Concorde.Db.World_Sector_Reference;
+      Sector_Use  : Concorde.Db.Sector_Use_Reference;
+      Zone_Config : Tropos.Configuration);
 
    --------------------
    -- Create_Faction --
@@ -107,15 +111,29 @@ package body Concorde.Factions.Create is
                         Capital_System =>
                           Concorde.Worlds.Star_System (Capital),
                         Capital_World  => Capital);
-
-         Script     : constant Concorde.Db.Script_Reference :=
-                        Concorde.Db.Script.Create ("rc", User);
-         Line_Index : Natural := 0;
+         Company    : constant Concorde.Db.Company_Reference :=
+           Concorde.Db.Company.Create
+             (Account      =>
+                Concorde.Agents.New_Account (Concorde.Money.Zero),
+              Name         => Name,
+              Active       => True,
+              Scheduled    => False,
+              Next_Event   => Concorde.Calendar.Clock,
+              Manager      => "faction-company",
+              Capacity     => Concorde.Quantities.To_Quantity (1.0e6),
+              Faction      => Faction,
+              Headquarters => Capital,
+              Shares       => Faction_Company_Shares,
+              Dividend     => 0.2);
+         Remaining_Shares : Natural := Faction_Company_Shares;
+         Script           : constant Concorde.Db.Script_Reference :=
+           Concorde.Db.Script.Create ("rc", User);
+         Line_Index       : Natural := 0;
 
       begin
 
          Initialize_Zone
-           (Faction     => Faction,
+           (Company     => Company,
             Sector      => Sector,
             Sector_Use  =>
               Concorde.Db.Sector_Use.Get_Reference_By_Tag ("urban"),
@@ -134,7 +152,8 @@ package body Concorde.Factions.Create is
                      Next := Next + 1;
                      exit when Next > Neighbours'Last;
 
-                     Initialize_Zone (Faction, Neighbours (Next), Sector_Use,
+                     Initialize_Zone (Company,
+                                      Neighbours (Next), Sector_Use,
                                       Sector_Use_Config.Child ("zones"));
 
                   end loop;
@@ -155,6 +174,8 @@ package body Concorde.Factions.Create is
                           (Real (Float'(Pop_Config.Get ("cash"))));
                Account : constant Concorde.Db.Account_Reference :=
                  Concorde.Agents.New_Account (Cash);
+               Ownership : constant Unit_Real :=
+                 Real (Float'(Pop_Config.Get ("faction-share", 0.0)));
                Pop : constant Concorde.Db.Pop_Reference :=
                  Concorde.Db.Pop.Create
                    (Transported_Size => Concorde.Quantities.To_Real (Size),
@@ -182,8 +203,26 @@ package body Concorde.Factions.Create is
                Concorde.Configure.Commodities.Configure_Stock
                  (Concorde.Db.Pop.Get (Pop), Pop_Config.Child ("skills"),
                   Factor => Concorde.Quantities.To_Real (Size));
+               if Ownership > 0.0 then
+                  declare
+                     Shares : constant Natural :=
+                       Natural (Real (Faction_Company_Shares) * Ownership);
+                  begin
+                     Concorde.Db.Shareholder.Create
+                       (Company => Company,
+                        Agent   =>
+                          Concorde.Db.Pop.Get (Pop).Get_Agent_Reference,
+                        Shares  => Shares);
+                     Remaining_Shares := Remaining_Shares - Shares;
+                  end;
+               end if;
             end;
          end loop;
+
+         Concorde.Db.Shareholder.Create
+           (Company => Company,
+            Agent   => Concorde.Db.Faction.Get (Faction).Get_Agent_Reference,
+            Shares  => Remaining_Shares);
 
          for Installation_Config of
            Setup.Child ("installations")
@@ -400,13 +439,13 @@ package body Concorde.Factions.Create is
    ---------------------
 
    procedure Initialize_Zone
-     (Faction     : Concorde.Db.Faction_Reference;
+     (Company     : Concorde.Db.Company_Reference;
       Sector      : Concorde.Db.World_Sector_Reference;
       Sector_Use  : Concorde.Db.Sector_Use_Reference;
       Zone_Config : Tropos.Configuration)
    is
       Owner      : constant Concorde.Db.Owner_Reference :=
-        Concorde.Db.Faction.Get (Faction).Get_Owner_Reference;
+        Concorde.Db.Company.Get (Company).Get_Owner_Reference;
       Has_Stock  : constant Concorde.Db.Has_Stock_Reference :=
         Concorde.Sectors.Has_Stock_Reference (Sector)
         with Unreferenced;
@@ -445,7 +484,7 @@ package body Concorde.Factions.Create is
                  World_Sector    => Sector);
 
             Stock : constant Concorde.Db.Has_Stock_Reference :=
-              Concorde.Db.Faction.Get (Faction).Get_Has_Stock_Reference;
+              Concorde.Db.Company.Get (Company).Get_Has_Stock_Reference;
             Commodity : constant Concorde.Db.Commodity_Reference :=
               Concorde.Db.Sector_Zone.Get (Ref).Get_Commodity_Reference;
             Lease     : constant Concorde.Db.Commodity_Reference :=

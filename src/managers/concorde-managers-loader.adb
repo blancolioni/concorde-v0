@@ -22,6 +22,9 @@ package body Concorde.Managers.Loader is
       Register.Insert
         ("default-faction",
          Concorde.Managers.Factions.Create_Default_Manager'Access);
+      Register.Insert
+        ("faction-company",
+         Concorde.Managers.Factions.Create_Faction_Company_Manager'Access);
    end Register_Managers;
 
 end Concorde.Managers.Loader;
