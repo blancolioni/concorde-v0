@@ -30,9 +30,26 @@ package Concorde.Managers.Agents is
      (Manager : in out Root_Agent_Manager_Type)
    is abstract;
 
+   procedure On_Activation_Begin
+     (Manager : in out Root_Agent_Manager_Type);
+
+   procedure On_Activation_End
+     (Manager : in out Root_Agent_Manager_Type);
+
    function Current_Cash
      (Manager : Root_Agent_Manager_Type'Class)
       return Concorde.Money.Money_Type;
+
+   function Last_Earn
+     (Manager : Root_Agent_Manager_Type'Class)
+      return Concorde.Money.Money_Type;
+
+   function Last_Spend
+     (Manager : Root_Agent_Manager_Type'Class)
+      return Concorde.Money.Money_Type;
+
+   procedure Reset_Cashflow
+     (Manager : Root_Agent_Manager_Type'Class);
 
    function Current_Ask_Price
      (Manager   : Root_Agent_Manager_Type'Class;
@@ -186,6 +203,10 @@ private
          Market            : Concorde.Markets.Concorde_Market;
          Planning_Cycle    : Positive;
          Update_Count      : Natural := 0;
+         Last_Earn         : Concorde.Money.Money_Type :=
+           Concorde.Money.Zero;
+         Last_Spend        : Concorde.Money.Money_Type :=
+           Concorde.Money.Zero;
       end record;
 
 end Concorde.Managers.Agents;

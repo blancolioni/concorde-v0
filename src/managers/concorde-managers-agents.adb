@@ -5,6 +5,8 @@ with WL.Random;
 with Concorde.Agents;
 with Concorde.Stock;
 
+with Concorde.Db.Account;
+with Concorde.Db.Lease_Contract;
 with Concorde.Db.Market_Offer;
 with Concorde.Db.Stock_Item;
 
@@ -25,6 +27,8 @@ package body Concorde.Managers.Agents is
          & Concorde.Money.Show
            (Concorde.Agents.Cash (M.Account)));
 
+      M.On_Activation_Begin;
+
       if Manager.Update_Count mod Manager.Planning_Cycle = 0 then
          M.Create_Planning;
       end if;
@@ -32,6 +36,8 @@ package body Concorde.Managers.Agents is
       M.Create_Bids;
       M.Execute_Production;
       M.Execute_Consumption;
+
+      M.On_Activation_End;
 
       if M.Update_Count = 0 then
          M.Update_Count :=
@@ -318,6 +324,30 @@ package body Concorde.Managers.Agents is
       Manager.Planning_Cycle := Planning_Cycle;
    end Initialize_Agent_Manager;
 
+   ---------------
+   -- Last_Earn --
+   ---------------
+
+   function Last_Earn
+     (Manager : Root_Agent_Manager_Type'Class)
+      return Concorde.Money.Money_Type
+   is
+   begin
+      return Manager.Last_Earn;
+   end Last_Earn;
+
+   ----------------
+   -- Last_Spend --
+   ----------------
+
+   function Last_Spend
+     (Manager : Root_Agent_Manager_Type'Class)
+      return Concorde.Money.Money_Type
+   is
+   begin
+      return Manager.Last_Spend;
+   end Last_Spend;
+
    ---------
    -- Log --
    ---------
@@ -331,6 +361,50 @@ package body Concorde.Managers.Agents is
         (Agent   => Manager.Agent,
          Message => Message);
    end Log;
+
+   -------------------------
+   -- On_Activation_Begin --
+   -------------------------
+
+   procedure On_Activation_Begin
+     (Manager : in out Root_Agent_Manager_Type)
+   is
+      use type Concorde.Calendar.Time;
+   begin
+      for Contract of
+        Concorde.Db.Lease_Contract.Select_By_Tenant (Manager.Agent)
+      loop
+         if Contract.Expires > Concorde.Calendar.Clock then
+            Manager.Log ("pay " & Concorde.Money.Show (Contract.Daily_Rent)
+                         & " to Agent"
+                         & Concorde.Db.To_String (Contract.Owner)
+                         & " for "
+                         & Concorde.Commodities.Local_Name
+                           (Contract.Commodity));
+            Concorde.Agents.Remove_Cash (Manager.Account, Contract.Daily_Rent);
+            Concorde.Agents.Add_Cash
+              (Concorde.Db.Agent.Get (Contract.Owner), Contract.Daily_Rent);
+         end if;
+      end loop;
+      Manager.Last_Earn :=
+        Concorde.Db.Account.Get (Manager.Account).Earn;
+      Manager.Last_Spend :=
+        Concorde.Db.Account.Get (Manager.Account).Spend;
+      Manager.Reset_Cashflow;
+      Manager.Log ("last period earned "
+                   & Concorde.Money.Show (Manager.Last_Earn)
+                   & " and spent "
+                   & Concorde.Money.Show (Manager.Last_Spend));
+
+   end On_Activation_Begin;
+
+   -----------------------
+   -- On_Activation_End --
+   -----------------------
+
+   procedure On_Activation_End
+     (Manager : in out Root_Agent_Manager_Type)
+   is null;
 
    ------------------
    -- Previous_Ask --
@@ -433,6 +507,20 @@ package body Concorde.Managers.Agents is
       Concorde.Stock.Remove_Stock
         (Manager.Has_Stock, Commodity, Quantity);
    end Remove_Stock;
+
+   --------------------
+   -- Reset_Cashflow --
+   --------------------
+
+   procedure Reset_Cashflow
+     (Manager : Root_Agent_Manager_Type'Class)
+   is
+   begin
+      Concorde.Db.Account.Update_Account (Manager.Account)
+        .Set_Earn (Concorde.Money.Zero)
+        .Set_Spend (Concorde.Money.Zero)
+        .Done;
+   end Reset_Cashflow;
 
    ----------------
    -- Scan_Stock --
