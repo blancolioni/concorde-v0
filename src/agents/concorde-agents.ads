@@ -29,6 +29,12 @@ package Concorde.Agents is
       To       : Concorde.Db.Agent.Agent_Type;
       Fraction : Unit_Real);
 
+   function New_Account
+     (Starting_Balance : Concorde.Money.Money_Type;
+      Guarantor        : Concorde.Db.Account_Reference :=
+        Concorde.Db.Null_Account_Reference)
+      return Concorde.Db.Account_Reference;
+
    procedure Log_Agent
      (Agent   : Concorde.Db.Agent_Reference;
       Message : String);

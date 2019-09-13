@@ -182,6 +182,25 @@ package body Concorde.Agents is
    end Move_Assets;
 
    -----------------
+   -- New_Account --
+   -----------------
+
+   function New_Account
+     (Starting_Balance : Concorde.Money.Money_Type;
+      Guarantor        : Concorde.Db.Account_Reference :=
+        Concorde.Db.Null_Account_Reference)
+      return Concorde.Db.Account_Reference
+   is
+   begin
+      return Concorde.Db.Account.Create
+        (Guarantor  => Guarantor,
+         Start_Cash => Starting_Balance,
+         Cash       => Starting_Balance,
+         Earn       => Concorde.Money.Zero,
+         Spend      => Concorde.Money.Zero);
+   end New_Account;
+
+   -----------------
    -- Remove_Cash --
    -----------------
 
