@@ -2,10 +2,10 @@ with Concorde.Calendar;
 
 with Concorde.Configure.Commodities;
 
+with Concorde.Agents;
 with Concorde.Facilities;
 with Concorde.Worlds;
 
-with Concorde.Db.Account;
 with Concorde.Db.Faction;
 with Concorde.Db.Installation;
 
@@ -24,9 +24,8 @@ package body Concorde.Configure.Installations is
                Concorde.Money.To_Money
                  (Real (Float'(Config.Get ("cash"))));
       Account : constant Concorde.Db.Account_Reference :=
-                  Concorde.Db.Account.Create
-                    (Concorde.Db.Faction.Get (Owner).Account,
-                     Cash, Cash);
+        Concorde.Agents.New_Account
+          (Cash, Concorde.Db.Faction.Get (Owner).Account);
       Ref : constant Concorde.Db.Installation_Reference :=
               Concorde.Db.Installation.Create
                 (Transported_Size => 1000.0,
