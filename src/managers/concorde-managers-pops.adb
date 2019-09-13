@@ -350,8 +350,13 @@ package body Concorde.Managers.Pops is
      (Manager : in out Root_Pop_Manager_Type)
    is
 
+      use type Concorde.Money.Money_Type;
+
       Budget : constant Concorde.Money.Money_Type :=
-                 Concorde.Money.Adjust (Manager.Current_Cash, 0.1);
+        Concorde.Money.Max
+          (Concorde.Money.Adjust (Manager.Current_Cash, 0.5),
+           Concorde.Money.Adjust
+             (Manager.Last_Earn - Manager.Last_Spend, 10.0));
 
       Work : Bid_Vectors.Vector renames Manager.Current_Bids;
 
@@ -557,6 +562,8 @@ package body Concorde.Managers.Pops is
       end Show_Work;
 
    begin
+
+      Manager.Log ("planning budget: " & Concorde.Money.Show (Budget));
 
       Work.Clear;
 
@@ -864,9 +871,9 @@ package body Concorde.Managers.Pops is
            Concorde.Pops.Hours (Manager.Pop);
       begin
          Concorde.Db.Pop.Update_Pop (Manager.Pop)
-           .Set_Happy (Current_Happy * 0.9 + Happy * 0.1)
-           .Set_Health (Current_Health * 0.95 + Health * 0.05)
-           .Set_Hours (Current_Hours * 0.5 + Hours * 0.5)
+           .Set_Happy (Current_Happy * 0.9 + Happy)
+           .Set_Health (Current_Health * 0.95 + Health * 0.5)
+           .Set_Hours (Current_Hours * 0.5 + Hours * 5.0)
            .Done;
          Manager.Log
            ("metric: happy: old="
@@ -1230,10 +1237,17 @@ package body Concorde.Managers.Pops is
             end;
 
             declare
-               use Concorde.Money;
+               use Concorde.Money, Concorde.Quantities;
+               Commodity : constant Commodities.Commodity_Reference :=
+                 Out_Item.Commodity;
                Quantity : constant Concorde.Quantities.Quantity_Type :=
                  Manager.Stock_Quantity
-                   (Out_Item.Commodity);
+                   (Commodity);
+               Previous      : constant Quantity_Type :=
+                 Manager.Previous_Ask (Commodity);
+               Remaining     : constant Quantity_Type :=
+                 Manager.Remaining_Ask (Commodity);
+               Ask           : Quantity_Type := Quantity;
                Minimum_Price : constant Concorde.Money.Price_Type :=
                  Manager.Stock_Price (Out_Item.Commodity);
                Current_Bid    : constant Price_Type :=
@@ -1261,9 +1275,28 @@ package body Concorde.Managers.Pops is
                   else Adjust_Price (Minimum_Price, 1.1));
             begin
 
+               if Previous > Zero then
+                  if Remaining = Zero then
+                     Ask := Scale (Previous, 1.1);
+                  elsif Remaining < Scale (Previous, 0.9) then
+                     Ask := Previous - Remaining;
+                  else
+                     Ask := Previous;
+                  end if;
+               end if;
+
+               Manager.Log
+                 (Commodities.Local_Name (Commodity)
+                  & " previous ask "
+                  & Show (Previous) & " @ " & Show (Previous_Price)
+                  & "; sold " & Show (Previous - Remaining)
+                  & "; remaining " & Show (Remaining)
+                  & "; new ask "
+                  & Show (Ask) & " @ " & Show (Ask_Price));
+
                Manager.Create_Ask
                  (Commodity => Out_Item.Commodity,
-                  Quantity  => Quantity,
+                  Quantity  => Min (Ask, Quantity),
                   Price     => Ask_Price);
             end;
          end loop;
