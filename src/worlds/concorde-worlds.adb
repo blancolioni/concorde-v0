@@ -1,8 +1,8 @@
 with Concorde.Calendar;
 
+with Concorde.Agents;
 with Concorde.Configure.Worlds;
 
-with Concorde.Db.Account;
 with Concorde.Db.Deposit;
 with Concorde.Db.Faction;
 with Concorde.Db.Generation;
@@ -34,8 +34,7 @@ package body Concorde.Worlds is
       Cash    : Concorde.Money.Money_Type)
    is
       Account : constant Concorde.Db.Account_Reference :=
-        Concorde.Db.Account.Create
-          (Concorde.Db.Null_Account_Reference, Cash, Cash);
+        Concorde.Agents.New_Account (Cash);
    begin
       Concorde.Db.Pop.Create
         (Active           => True,
