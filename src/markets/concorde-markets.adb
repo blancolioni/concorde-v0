@@ -9,6 +9,7 @@ with Concorde.Worlds;
 with Concorde.Logging;
 
 with Concorde.Db.Historical_Offer;
+with Concorde.Db.Lease_Contract;
 with Concorde.Db.Market;
 with Concorde.Db.Market_Offer;
 with Concorde.Db.Transaction;
@@ -684,6 +685,7 @@ package body Concorde.Markets is
       if Concorde.Commodities.Is_Lease (Commodity) then
          declare
             use Concorde.Commodities;
+            use type Concorde.Calendar.Time;
             Leased_Item  : constant Commodity_Reference :=
               Leased_Commodity (Commodity);
             Leased_Value : Concorde.Money.Money_Type;
@@ -698,6 +700,15 @@ package body Concorde.Markets is
               (Seller_Stock, Leased_Item, Quantity, Leased_Value);
             Concorde.Stock.Add_Stock
               (Buyer_Stock, Leased_Item, Quantity, Leased_Value);
+
+            Concorde.Db.Lease_Contract.Create
+              (Commodity  => Leased_Item,
+               Owner      => Seller,
+               Tenant     => Buyer,
+               Expires    =>
+                 Concorde.Calendar.Clock
+               + Concorde.Calendar.Days (Lease_Days (Commodity)),
+               Daily_Rent => Total);
          end;
       end if;
 
