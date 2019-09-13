@@ -1,5 +1,6 @@
 with Concorde.Commodities;
 
+with Concorde.Calendar;
 with Concorde.Money;
 with Concorde.Quantities;
 
@@ -20,6 +21,18 @@ package Concorde.Markets is
      (Market    : Concorde_Market;
       Commodity : Concorde.Commodities.Commodity_Reference)
       return Concorde.Money.Price_Type;
+
+   function Supply
+     (Market    : Concorde_Market;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      From, To  : Concorde.Calendar.Time)
+      return Concorde.Quantities.Quantity_Type;
+
+   function Supply_Since
+     (Market    : Concorde_Market;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Since     : Duration)
+      return Concorde.Quantities.Quantity_Type;
 
    function Current_Quantity
      (Market    : Concorde_Market;

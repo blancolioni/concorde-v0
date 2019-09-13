@@ -3,7 +3,6 @@ with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Vectors;
 
 with Concorde.Agents;
-with Concorde.Calendar;
 with Concorde.Stock;
 with Concorde.Worlds;
 
@@ -821,5 +820,45 @@ package body Concorde.Markets is
          return Concorde.Quantities.Zero;
       end if;
    end Remaining_Agent_Offer;
+
+   ------------
+   -- Supply --
+   ------------
+
+   function Supply
+     (Market    : Concorde_Market;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      From, To  : Concorde.Calendar.Time)
+      return Concorde.Quantities.Quantity_Type
+   is
+      use Concorde.Quantities;
+      use Concorde.Db.Historical_Offer;
+   begin
+      return Quantity : Quantity_Type := Zero do
+         for Offer of
+           Select_Historical_Offer_Bounded_By_Time_Stamp
+             (Market, Commodity, Concorde.Db.Ask, From, To)
+         loop
+            Quantity := Quantity + Offer.Quantity;
+         end loop;
+      end return;
+   end Supply;
+
+   ------------------
+   -- Supply_Since --
+   ------------------
+
+   function Supply_Since
+     (Market    : Concorde_Market;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Since     : Duration)
+      return Concorde.Quantities.Quantity_Type
+   is
+      use type Concorde.Calendar.Time;
+      Now : constant Concorde.Calendar.Time :=
+        Concorde.Calendar.Clock;
+   begin
+      return Supply (Market, Commodity, Now - Since, Now);
+   end Supply_Since;
 
 end Concorde.Markets;
