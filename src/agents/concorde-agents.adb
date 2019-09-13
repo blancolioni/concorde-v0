@@ -22,6 +22,7 @@ package body Concorde.Agents is
    begin
       Concorde.Db.Account.Update_Account (Agent.Account)
         .Set_Cash (Account.Cash + Cash)
+        .Set_Earn (Account.Earn + Cash)
         .Done;
    end Add_Cash;
 
@@ -39,6 +40,7 @@ package body Concorde.Agents is
    begin
       Concorde.Db.Account.Update_Account (Account)
         .Set_Cash (Rec.Cash + Cash)
+        .Set_Earn (Rec.Earn + Cash)
         .Done;
    end Add_Cash;
 
@@ -214,8 +216,8 @@ package body Concorde.Agents is
    begin
       Concorde.Db.Account.Update_Account (Account)
         .Set_Cash (Rec.Cash - Cash)
+        .Set_Spend (Rec.Spend + Cash)
         .Done;
-
    end Remove_Cash;
 
 end Concorde.Agents;
