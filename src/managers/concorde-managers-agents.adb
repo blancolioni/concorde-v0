@@ -277,6 +277,20 @@ package body Concorde.Managers.Agents is
         (Manager.Market, Commodity, Concorde.Db.Bid, Quantity);
    end Current_Sell_Earn;
 
+   ----------
+   -- Earn --
+   ----------
+
+   procedure Earn
+     (Manager : Root_Agent_Manager_Type'Class;
+      Amount  : Concorde.Money.Money_Type;
+      Tag     : String)
+   is
+   begin
+      Concorde.Agents.Add_Cash
+        (Manager.Account, Amount, Tag);
+   end Earn;
+
    ---------------
    -- Has_Stock --
    ---------------
@@ -381,9 +395,10 @@ package body Concorde.Managers.Agents is
                          & " for "
                          & Concorde.Commodities.Local_Name
                            (Contract.Commodity));
-            Concorde.Agents.Remove_Cash (Manager.Account, Contract.Daily_Rent);
+            Manager.Spend (Contract.Daily_Rent, "rent");
             Concorde.Agents.Add_Cash
-              (Concorde.Db.Agent.Get (Contract.Owner), Contract.Daily_Rent);
+              (Concorde.Db.Agent.Get (Contract.Owner), Contract.Daily_Rent,
+               "rent");
          end if;
       end loop;
       Manager.Last_Earn :=
@@ -563,6 +578,20 @@ package body Concorde.Managers.Agents is
            (Stock_Item.Commodity, Stock_Item.Quantity, Stock_Item.Value);
       end loop;
    end Scan_Stock;
+
+   -----------
+   -- Spend --
+   -----------
+
+   procedure Spend
+     (Manager : Root_Agent_Manager_Type'Class;
+      Amount  : Concorde.Money.Money_Type;
+      Tag     : String)
+   is
+   begin
+      Concorde.Agents.Remove_Cash
+        (Manager.Account, Amount, Tag);
+   end Spend;
 
    -----------------
    -- Stock_Price --

@@ -236,13 +236,11 @@ package body Concorde.Managers.Factions is
                   Concorde.Agents.Add_Cash
                     (Concorde.Db.Agent.Get
                        (Shareholder.Agent).Account,
-                     Payment);
+                     Payment, "dividend");
                end;
             end loop;
 
-            Concorde.Agents.Remove_Cash
-              (Concorde.Db.Company.Get (Manager.Company).Account,
-               Dividend);
+            Manager.Spend (Dividend, "dividend");
          end if;
       end;
    end On_Activation_Begin;

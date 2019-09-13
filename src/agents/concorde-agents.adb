@@ -16,10 +16,11 @@ package body Concorde.Agents is
 
    procedure Add_Cash
      (Agent : Concorde.Db.Agent.Agent_Type;
-      Cash  : Concorde.Money.Money_Type)
+      Cash  : Concorde.Money.Money_Type;
+      Tag   : String)
    is
    begin
-      Add_Cash (Agent.Account, Cash);
+      Add_Cash (Agent.Account, Cash, Tag);
    end Add_Cash;
 
    --------------
@@ -28,7 +29,8 @@ package body Concorde.Agents is
 
    procedure Add_Cash
      (Account : Concorde.Db.Account_Reference;
-      Cash    : Concorde.Money.Money_Type)
+      Cash    : Concorde.Money.Money_Type;
+      Tag     : String)
    is
       use type Concorde.Money.Money_Type;
       Rec : constant Concorde.Db.Account.Account_Type :=
@@ -43,6 +45,8 @@ package body Concorde.Agents is
       Concorde.Db.Historical_Account.Create
         (Account    => Account,
          Time_Stamp => Concorde.Calendar.Clock,
+         Tag        => Tag,
+         Change     => Cash,
          Cash       => New_Cash);
    end Add_Cash;
 
@@ -210,7 +214,8 @@ package body Concorde.Agents is
 
    procedure Remove_Cash
      (Account : Concorde.Db.Account_Reference;
-      Cash    : Concorde.Money.Money_Type)
+      Cash    : Concorde.Money.Money_Type;
+      Tag     : String)
    is
       use type Concorde.Money.Money_Type;
       Rec : constant Concorde.Db.Account.Account_Type :=
@@ -225,6 +230,8 @@ package body Concorde.Agents is
       Concorde.Db.Historical_Account.Create
         (Account    => Account,
          Time_Stamp => Concorde.Calendar.Clock,
+         Tag        => Tag,
+         Change     => Concorde.Money.Zero - Cash,
          Cash       => New_Cash);
    end Remove_Cash;
 

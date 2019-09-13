@@ -678,9 +678,9 @@ package body Concorde.Markets is
       Concorde.Stock.Add_Stock
         (Buyer_Stock, Commodity, Quantity, Total);
       Concorde.Agents.Add_Cash
-        (Seller_Account, Total);
+        (Seller_Account, Total, "sell-stock");
       Concorde.Agents.Remove_Cash
-        (Buyer_Account, Total);
+        (Buyer_Account, Total, "buy-stock");
 
       if Concorde.Commodities.Is_Lease (Commodity) then
          declare

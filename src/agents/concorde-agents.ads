@@ -14,15 +14,18 @@ package Concorde.Agents is
 
    procedure Add_Cash
      (Agent : Concorde.Db.Agent.Agent_Type;
-      Cash  : Concorde.Money.Money_Type);
+      Cash  : Concorde.Money.Money_Type;
+      Tag   : String);
 
    procedure Add_Cash
      (Account : Concorde.Db.Account_Reference;
-      Cash    : Concorde.Money.Money_Type);
+      Cash    : Concorde.Money.Money_Type;
+      Tag     : String);
 
    procedure Remove_Cash
      (Account : Concorde.Db.Account_Reference;
-      Cash    : Concorde.Money.Money_Type);
+      Cash    : Concorde.Money.Money_Type;
+      Tag     : String);
 
    procedure Move_Assets
      (From     : Concorde.Db.Agent.Agent_Type;

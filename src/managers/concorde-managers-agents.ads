@@ -40,6 +40,16 @@ package Concorde.Managers.Agents is
      (Manager : Root_Agent_Manager_Type'Class)
       return Concorde.Money.Money_Type;
 
+   procedure Earn
+     (Manager : Root_Agent_Manager_Type'Class;
+      Amount  : Concorde.Money.Money_Type;
+      Tag     : String);
+
+   procedure Spend
+     (Manager : Root_Agent_Manager_Type'Class;
+      Amount  : Concorde.Money.Money_Type;
+      Tag     : String);
+
    function Last_Earn
      (Manager : Root_Agent_Manager_Type'Class)
       return Concorde.Money.Money_Type;
