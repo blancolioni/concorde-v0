@@ -1,3 +1,4 @@
+with Concorde.Calendar;
 with Concorde.Commodities;
 with Concorde.Logging;
 with Concorde.Quantities;
@@ -5,6 +6,7 @@ with Concorde.Real_Images;
 with Concorde.Stock;
 
 with Concorde.Db.Account;
+with Concorde.Db.Historical_Account;
 
 package body Concorde.Agents is
 
@@ -16,14 +18,8 @@ package body Concorde.Agents is
      (Agent : Concorde.Db.Agent.Agent_Type;
       Cash  : Concorde.Money.Money_Type)
    is
-      use type Concorde.Money.Money_Type;
-      Account : constant Concorde.Db.Account.Account_Type :=
-                  Concorde.Db.Account.Get (Agent.Account);
    begin
-      Concorde.Db.Account.Update_Account (Agent.Account)
-        .Set_Cash (Account.Cash + Cash)
-        .Set_Earn (Account.Earn + Cash)
-        .Done;
+      Add_Cash (Agent.Account, Cash);
    end Add_Cash;
 
    --------------
@@ -37,11 +33,17 @@ package body Concorde.Agents is
       use type Concorde.Money.Money_Type;
       Rec : constant Concorde.Db.Account.Account_Type :=
               Concorde.Db.Account.Get (Account);
+      Old_Cash : constant Concorde.Money.Money_Type := Rec.Cash;
+      New_Cash : constant Concorde.Money.Money_Type := Old_Cash + Cash;
    begin
       Concorde.Db.Account.Update_Account (Account)
-        .Set_Cash (Rec.Cash + Cash)
+        .Set_Cash (New_Cash)
         .Set_Earn (Rec.Earn + Cash)
         .Done;
+      Concorde.Db.Historical_Account.Create
+        (Account    => Account,
+         Time_Stamp => Concorde.Calendar.Clock,
+         Cash       => New_Cash);
    end Add_Cash;
 
    ----------
@@ -213,11 +215,17 @@ package body Concorde.Agents is
       use type Concorde.Money.Money_Type;
       Rec : constant Concorde.Db.Account.Account_Type :=
               Concorde.Db.Account.Get (Account);
+      Old_Cash : constant Concorde.Money.Money_Type := Rec.Cash;
+      New_Cash : constant Concorde.Money.Money_Type := Old_Cash - Cash;
    begin
       Concorde.Db.Account.Update_Account (Account)
-        .Set_Cash (Rec.Cash - Cash)
+        .Set_Cash (New_Cash)
         .Set_Spend (Rec.Spend + Cash)
         .Done;
+      Concorde.Db.Historical_Account.Create
+        (Account    => Account,
+         Time_Stamp => Concorde.Calendar.Clock,
+         Cash       => New_Cash);
    end Remove_Cash;
 
 end Concorde.Agents;
