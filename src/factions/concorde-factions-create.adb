@@ -8,6 +8,7 @@ with Concorde.Configure;
 with Concorde.Money;
 with Concorde.Quantities;
 
+with Concorde.Agents;
 with Concorde.Commodities;
 with Concorde.Star_Systems;
 with Concorde.Sectors;
@@ -79,7 +80,9 @@ package body Concorde.Factions.Create is
                      Concorde.Db.Account.Create
                        (Guarantor  => Concorde.Db.Null_Account_Reference,
                         Start_Cash => Cash,
-                        Cash       => Cash);
+                        Cash       => Cash,
+                        Earn       => Concorde.Money.Zero,
+                        Spend      => Concorde.Money.Zero);
          Sector  : constant Concorde.Db.World_Sector_Reference :=
            Find_Home_Sector (Capital);
          Neighbours : constant Concorde.Worlds.World_Sector_Array :=
@@ -151,10 +154,7 @@ package body Concorde.Factions.Create is
                         Concorde.Money.To_Money
                           (Real (Float'(Pop_Config.Get ("cash"))));
                Account : constant Concorde.Db.Account_Reference :=
-                           Concorde.Db.Account.Create
-                             (Guarantor  => Concorde.Db.Null_Account_Reference,
-                              Start_Cash => Cash,
-                              Cash       => Cash);
+                 Concorde.Agents.New_Account (Cash);
                Pop : constant Concorde.Db.Pop_Reference :=
                  Concorde.Db.Pop.Create
                    (Transported_Size => Concorde.Quantities.To_Real (Size),
