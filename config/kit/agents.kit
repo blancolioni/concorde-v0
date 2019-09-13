@@ -7,7 +7,15 @@ package Agents is
       Guarantor  : Account;
       Start_Cash : Money_Type;
       Cash       : Money_Type;
+	  Earn       : Money_Type;
+	  Spend      : Money_Type;
    end Account;
+
+   record Historical_Account is
+      key Account;
+      Time_Stamp : Time;
+      Cash       : Money_Type;
+   end Historical_Account;
    
    record Agent : Has_Stock is
       unique key Account;
@@ -19,5 +27,13 @@ package Agents is
       Price : Price_Type;
       unique key Stock_Price with Agent, Commodity;
    end Stock_Price;
+
+   record Lease_Contract is
+     key Commodity;
+     key Owner : Agent;
+     key Tenant : Agent;
+     Expires    : Time;
+     Daily_Rent : Money_Type;
+   end Lease_Contract;
    
 end Agents;
