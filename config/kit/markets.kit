@@ -47,7 +47,7 @@ record Historical_Offer is
    Offer       : Offer_Type;
    Quantity    : Quantity_Type;
    Price       : Price_Type;
-   key Historical_Offer with Market, Commodity, Time_Stamp;
+   key Historical_Offer with Market, Commodity, Offer, Time_Stamp;
    key Historical_Agent_Offer with Market, Agent, Commodity, Time_Stamp;
    key Reverse_Agent_Offer with Market, Agent, Commodity, Offer, Time_Offset;
 end Historical_Offer;
