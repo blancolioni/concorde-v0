@@ -1225,16 +1225,6 @@ package body Concorde.Managers.Pops is
          Output : constant Non_Negative_Real :=
                     Real'Max (0.0, (1.0 + Factor) * Max_Capacity);
       begin
-         Manager.Log ("factor: "
-                      & Concorde.Real_Images.Approximate_Image
-                        (Factor));
-         Manager.Log ("output: "
-                      & Concorde.Real_Images.Approximate_Image
-                        (Output));
-         Manager.Log ("production cost: "
-                      & Concorde.Money.Show
-                        (Production_Cost));
-
          for Out_Item of
            Concorde.Db.Output_Item.Select_By_Production
              (Manager.Production)
@@ -1276,32 +1266,57 @@ package body Concorde.Managers.Pops is
                Ask           : Quantity_Type := Quantity;
                Minimum_Price : constant Concorde.Money.Price_Type :=
                  Manager.Stock_Price (Out_Item.Commodity);
-               Current_Bid    : constant Price_Type :=
-                 Manager.Current_Bid_Price
-                   (Out_Item.Commodity, Quantity);
                Mean_Price     : constant Price_Type :=
                  Manager.Historical_Mean_Price
                    (Out_Item.Commodity);
-               Base_Ask_Price : constant Price_Type :=
-                 (if Current_Bid = Zero
-                  then Mean_Price else Current_Bid);
+               Base_Ask_Price : constant Price_Type := Mean_Price;
                Discount_Price : constant Price_Type :=
                  Adjust_Price (Base_Ask_Price, 0.99);
                Previous_Price : constant Price_Type :=
                  Manager.Previous_Ask_Price
                    (Out_Item.Commodity);
+               Supply         : constant Quantity_Type :=
+                 Manager.Historical_Supply
+                   (Out_Item.Commodity, Concorde.Calendar.Days (1));
+               Supply_At_Ask  : constant Quantity_Type :=
+                 Manager.Historical_Supply
+                   (Out_Item.Commodity, Previous_Price,
+                    Concorde.Calendar.Days (1));
+               Demand         : constant Quantity_Type :=
+                 Manager.Historical_Demand
+                   (Out_Item.Commodity, Concorde.Calendar.Days (1));
+               Demand_At_Ask  : constant Quantity_Type :=
+                 Manager.Historical_Demand
+                   (Out_Item.Commodity, Previous_Price,
+                    Concorde.Calendar.Days (1));
                Ask_Price      : constant Price_Type :=
                  (if Previous_Price > Zero
                   and then Previous_Price <= Base_Ask_Price
+                  and then Remaining < Scale (Previous, 0.1)
                   then Previous_Price
                   elsif Discount_Price > Minimum_Price
                   and then Remaining > Zero
-                  and then Previous > Zero
                   then Discount_Price
                   elsif Mean_Price > Minimum_Price
                   then Mean_Price
                   else Adjust_Price (Minimum_Price, 1.1));
             begin
+
+               Manager.Log
+                 ("price: base=" & Show (Base_Ask_Price)
+                  & "; mean=" & Show (Mean_Price)
+                  & "; discount=" & Show (Discount_Price)
+                  & "; previous=" & Show (Previous_Price)
+                  & "; minimum=" & Show (Minimum_Price)
+                  & "; ask=" & Show (Ask_Price));
+               Manager.Log
+                 ("market: supply=" & Show (Supply)
+                  & " at ask=" & Show (Supply_At_Ask)
+                  & "; demand=" & Show (Demand)
+                  & " at ask=" & Show (Demand_At_Ask)
+                  & "; offered=" & Show (Previous)
+                  & "; sold=" & Show (Previous - Remaining)
+                  & "; remaining=" & Show (Remaining));
 
                if Previous > Zero then
                   if Remaining = Zero then
