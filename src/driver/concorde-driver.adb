@@ -3,6 +3,7 @@ with Ada.Text_IO;
 
 with WL.Command_Line;
 with WL.Localisation;
+with WL.Processes;
 with WL.Random.Names;
 
 --  with Gnoga.Application.Multi_Connect;
@@ -314,13 +315,34 @@ begin
    Concorde.Updates.Control.Start_Updates;
    Updates_Running := True;
 
-   if Concorde.Options.Command_Line then
+   if Concorde.Options.Batch_Mode
+     or else Concorde.Options.Command_Line
+   then
       Ada.Text_IO.Put_Line ("C O N C O R D E");
 
-      Concorde.Updates.Control.Set_Advance_Speed (Concorde.Calendar.Days (1));
-      Concorde.Updates.Control.Resume_Updates;
+      if Concorde.Options.Batch_Mode then
+         declare
+            Process     : WL.Processes.Process_Type;
+            Update_Days : constant Natural :=
+              Concorde.Options.Update_Count;
+         begin
+            Process.Start_Bar ("Updating", Update_Days * 24, True);
 
-      delay 5.0;
+            for Day_Index in 1 .. Update_Days loop
+               for Hour_Index in 1 .. 24 loop
+                  for Minute_Index in 1 .. 60 loop
+                     Concorde.Calendar.Advance (60.0);
+                     Concorde.Updates.Control.Execute_Pending_Updates;
+                  end loop;
+                  Process.Tick;
+               end loop;
+            end loop;
+         end;
+
+         Ada.Text_IO.New_Line;
+      else
+         null;
+      end if;
 
 --        declare
 --           User    : constant Concorde.Db.User_Reference :=
