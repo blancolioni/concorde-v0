@@ -80,7 +80,7 @@ package body Concorde.Managers.Agents is
       use type Concorde.Quantities.Quantity_Type;
    begin
       return Concorde.Markets.Supply_Since
-        (Manager.Market, Commodity, Concorde.Calendar.Days (1))
+        (Manager.Market, Commodity, Concorde.Calendar.Days (10))
         > Concorde.Quantities.Zero;
    end Available;
 
