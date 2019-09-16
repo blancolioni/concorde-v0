@@ -1,4 +1,4 @@
-package Harriet.Options is
+package Concorde.Options is
 
    Scenario                : String;
    Language                : String;
@@ -7,7 +7,8 @@ package Harriet.Options is
    Random_Seed             : Natural;
    Generate_Root_Password  : Boolean;
    Command_Line            : Boolean;
-   Timed_Run               : Natural;
+   Batch_Mode              : Boolean;
+   Update_Count            : Natural;
    
    Create                  : Boolean;
    System_Count            : Natural;
@@ -47,4 +48,4 @@ package Harriet.Options is
    Detailed_Logging        : Boolean;
    Show_Clock_Time         : Boolean;
    
-end Harriet.Options;
+end Concorde.Options;
