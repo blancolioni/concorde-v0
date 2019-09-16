@@ -20,3 +20,6 @@ factions.config
 
 # Log file
 log
+options.txt
+gmon.out
+gprof.txt
