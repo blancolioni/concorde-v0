@@ -105,7 +105,8 @@ package body Concorde.Managers.Pops is
          record
             Production : Concorde.Db.Production_Reference;
             Sector     : Concorde.Db.World_Sector_Reference;
-            Zone       : Concorde.Db.Commodity_Reference;
+            Sector_Use : Concorde.Db.Sector_Use_Reference;
+            Zone       : Concorde.Commodities.Commodity_Reference;
             Skill      : Concorde.Quantities.Quantity_Type;
             Size       : Non_Negative_Real;
          end record;
@@ -113,19 +114,20 @@ package body Concorde.Managers.Pops is
       package Production_Choices is
         new Concorde.Weighted_Random_Choices (Production_Record);
 
-      Skills : constant Concorde.Commodities.Commodity_Lists.List :=
+      Skills : constant Concorde.Commodities.Commodity_Array :=
         Concorde.Commodities.Skills;
 
       Choice : Production_Choices.Weighted_Choice_Set;
 
       procedure Add_Choice
         (Production : Concorde.Db.Production_Reference;
-         Skill      : Concorde.Db.Commodity_Reference);
+         Skill      : Concorde.Commodities.Commodity_Reference);
 
       function Score_World_Sector_Production
         (World_Sector : Concorde.Db.World_Sector_Reference;
          Production   : Concorde.Db.Production_Reference;
-         Zone_Commodity : Concorde.Db.Commodity_Reference)
+         Sector_Use   : Concorde.Db.Sector_Use_Reference;
+         Zone         : Concorde.Commodities.Commodity_Reference)
         return Natural;
 
       ----------------
@@ -134,14 +136,14 @@ package body Concorde.Managers.Pops is
 
       procedure Add_Choice
         (Production : Concorde.Db.Production_Reference;
-         Skill      : Concorde.Db.Commodity_Reference)
+         Skill      : Concorde.Commodities.Commodity_Reference)
       is
          Zone           : constant Concorde.Db.Zone_Reference :=
            Concorde.Db.Production.Get (Production).Zone;
          Sector_Use     : constant Concorde.Db.Sector_Use_Reference :=
            Concorde.Db.Zone.Get (Zone).Sector_Use;
-         Zone_Commodity : constant Concorde.Db.Commodity_Reference :=
-           Concorde.Db.Zone.Get (Zone).Get_Commodity_Reference;
+         Zone_Commodity : constant Concorde.Commodities.Commodity_Reference :=
+           Concorde.Commodities.Get_Commodity (Zone);
       begin
          for World_Sector of
            Concorde.Db.World_Sector.Select_By_World_Sector_Use
@@ -151,7 +153,7 @@ package body Concorde.Managers.Pops is
                Score : constant Natural :=
                  Score_World_Sector_Production
                    (World_Sector.Get_World_Sector_Reference,
-                    Production, Zone_Commodity);
+                    Production, Sector_Use, Zone_Commodity);
             begin
                if Score > 0 then
                   Choice.Insert
@@ -160,6 +162,8 @@ package body Concorde.Managers.Pops is
                          (Production => Production,
                           Sector     =>
                             World_Sector.Get_World_Sector_Reference,
+                          Sector_Use =>
+                            Sector_Use,
                           Zone       => Zone_Commodity,
                           Skill      =>
                             Manager.Stock_Quantity (Skill),
@@ -178,15 +182,16 @@ package body Concorde.Managers.Pops is
       function Score_World_Sector_Production
         (World_Sector   : Concorde.Db.World_Sector_Reference;
          Production     : Concorde.Db.Production_Reference;
-         Zone_Commodity : Concorde.Db.Commodity_Reference)
+         Sector_Use     : Concorde.Db.Sector_Use_Reference;
+         Zone           : Concorde.Commodities.Commodity_Reference)
          return Natural
       is
-         pragma Unreferenced (Production);
+         pragma Unreferenced (Production, Sector_Use);
          use Concorde.Quantities;
-         Title     : constant Concorde.Db.Commodity_Reference :=
+         Title     : constant Concorde.Commodities.Commodity_Reference :=
            Concorde.Commodities.Title_Commodity
-             (World_Sector, Zone_Commodity);
-         Leases    : constant Commodities.Commodity_Lists.List :=
+             (World_Sector, Zone);
+         Leases    : constant Concorde.Commodities.Commodity_Array :=
            Commodities.Lease_Commodities (Title);
          Available : Quantity_Type := Zero;
       begin
@@ -206,7 +211,8 @@ package body Concorde.Managers.Pops is
       for Commodity of Skills loop
          if Manager.Has_Stock (Commodity) then
             for Input_Item of
-              Concorde.Db.Input_Item.Select_By_Commodity (Commodity)
+              Concorde.Db.Input_Item.Select_By_Commodity
+                (Concorde.Commodities.To_Database_Reference (Commodity))
             loop
                Add_Choice (Input_Item.Production, Commodity);
             end loop;
@@ -224,10 +230,10 @@ package body Concorde.Managers.Pops is
               Production_Choice.Production;
             Sector            : constant Concorde.Db.World_Sector_Reference :=
               Production_Choice.Sector;
-            Title             : constant Concorde.Db.Commodity_Reference :=
+            Title             : constant Commodities.Commodity_Reference :=
               Concorde.Commodities.Title_Commodity
                 (Sector, Production_Choice.Zone);
-            Leases            : constant Commodities.Commodity_Lists.List :=
+            Leases            : constant Commodities.Commodity_Array :=
               Commodities.Lease_Commodities (Title);
             Quantity          : constant Quantity_Type :=
               Concorde.Quantities.Min
@@ -281,7 +287,7 @@ package body Concorde.Managers.Pops is
       for Item of Manager.Current_Bids loop
          declare
             use Concorde.Quantities;
-            Commodity : constant Concorde.Db.Commodity_Reference :=
+            Commodity : constant Concorde.Commodities.Commodity_Reference :=
               Item.Commodity;
             Quantity  : constant Quantity_Type :=
               Item.Quantity;
@@ -330,7 +336,7 @@ package body Concorde.Managers.Pops is
           (Pop.Utility_Class)
       loop
          Manager.Utility_Fns.Insert
-           (Utility_Fn.Commodity,
+           (Concorde.Commodities.Get_Commodity (Utility_Fn.Commodity),
             Create_Utility_Function (Utility_Fn));
       end loop;
 
@@ -835,7 +841,7 @@ package body Concorde.Managers.Pops is
    begin
       for Item of Manager.Current_Bids loop
          declare
-            Commodity : constant Concorde.Db.Commodity_Reference :=
+            Commodity : constant Concorde.Commodities.Commodity_Reference :=
               Item.Commodity;
             Quantity  : constant Quantity_Type :=
               Item.Quantity;
@@ -942,12 +948,12 @@ package body Concorde.Managers.Pops is
                           Concorde.Money.Zero;
 
       function Constrain
-        (Commodity : Concorde.Db.Commodity_Reference;
+        (Commodity : Concorde.Commodities.Commodity_Reference;
          Required  : Concorde.Quantities.Quantity_Type)
          return Non_Negative_Real;
 
       function Evaluate_Cost
-        (Commodity : Concorde.Db.Commodity_Reference;
+        (Commodity : Concorde.Commodities.Commodity_Reference;
          Used      : Concorde.Quantities.Quantity_Type)
          return Concorde.Money.Money_Type;
 
@@ -959,7 +965,7 @@ package body Concorde.Managers.Pops is
       ---------------
 
       function Constrain
-        (Commodity : Concorde.Db.Commodity_Reference;
+        (Commodity : Concorde.Commodities.Commodity_Reference;
          Required  : Concorde.Quantities.Quantity_Type)
          return Non_Negative_Real
       is
@@ -975,31 +981,29 @@ package body Concorde.Managers.Pops is
       -------------------
 
       function Evaluate_Cost
-        (Commodity : Concorde.Db.Commodity_Reference;
+        (Commodity : Concorde.Commodities.Commodity_Reference;
          Used      : Concorde.Quantities.Quantity_Type)
          return Concorde.Money.Money_Type
       is
          use Concorde.Money, Concorde.Quantities;
          Price    : constant Price_Type :=
            Manager.Current_Ask_Price (Commodity, Used);
-         Leased   : constant Concorde.Commodities.Commodity_Lists.List :=
+         Leased   : constant Concorde.Commodities.Commodity_Array :=
            Concorde.Commodities.Lease_Commodities (Commodity);
          Cost     : Money_Type := Zero;
          Quantity : Quantity_Type := Used;
       begin
-         if not Leased.Is_Empty then
-            for Lease of Leased loop
-               declare
-                  Lease_Quantity : constant Quantity_Type :=
-                    Min (Manager.Stock_Quantity (Lease), Quantity);
-                  Lease_Cost     : constant Money_Type :=
-                    Manager.Stock_Value (Lease);
-               begin
-                  Cost := Cost + Lease_Cost;
-                  Quantity := Quantity - Lease_Quantity;
-               end;
-            end loop;
-         end if;
+         for Lease of Leased loop
+            declare
+               Lease_Quantity : constant Quantity_Type :=
+                 Min (Manager.Stock_Quantity (Lease), Quantity);
+               Lease_Cost     : constant Money_Type :=
+                 Manager.Stock_Value (Lease);
+            begin
+               Cost := Cost + Lease_Cost;
+               Quantity := Quantity - Lease_Quantity;
+            end;
+         end loop;
 
          return Cost + Concorde.Money.Total (Price, Quantity);
 
@@ -1012,11 +1016,9 @@ package body Concorde.Managers.Pops is
       function Zone_Capacity return Non_Negative_Real is
          Production : constant Concorde.Db.Production.Production_Type :=
            Concorde.Db.Production.Get (Manager.Production);
-         Zone       : constant Concorde.Db.Zone.Zone_Type :=
-           Concorde.Db.Zone.Get (Production.Zone);
          Title      : constant Concorde.Commodities.Commodity_Reference :=
            Concorde.Commodities.Title_Commodity
-             (Manager.Sector, Zone.Get_Commodity_Reference);
+             (Manager.Sector, Commodities.Get_Commodity (Production.Zone));
          Size : constant Non_Negative_Real := Production.Size;
          Have : constant Non_Negative_Real :=
            Concorde.Quantities.To_Real
@@ -1033,14 +1035,14 @@ package body Concorde.Managers.Pops is
          use Concorde.Money, Concorde.Quantities;
          Production : constant Concorde.Db.Production.Production_Type :=
            Concorde.Db.Production.Get (Manager.Production);
-         Zone       : constant Concorde.Db.Commodity_Reference :=
-           Concorde.Db.Zone.Get (Production.Zone).Get_Commodity_Reference;
+         Zone       : constant Concorde.Commodities.Commodity_Reference :=
+           Concorde.Commodities.Get_Commodity (Production.Zone);
          Title      : constant Concorde.Commodities.Commodity_Reference :=
            Concorde.Commodities.Title_Commodity
              (Manager.Sector, Zone);
          Have       : Concorde.Quantities.Quantity_Type :=
            Manager.Stock_Quantity (Title);
-         Leases     : constant Concorde.Commodities.Commodity_Lists.List :=
+         Leases     : constant Concorde.Commodities.Commodity_Array :=
            Concorde.Commodities.Lease_Commodities (Title);
          Cost       : Money_Type := Zero;
       begin
@@ -1074,11 +1076,14 @@ package body Concorde.Managers.Pops is
       for Input_Item of
         Concorde.Db.Input_Item.Select_By_Production (Manager.Production)
       loop
-         if Concorde.Commodities.Is_Skill (Input_Item.Commodity) then
+         if Concorde.Commodities.Is_Skill
+           (Concorde.Commodities.Get_Commodity (Input_Item.Commodity))
+         then
             declare
                This_Capacity : constant Non_Negative_Real :=
                  Constrain
-                   (Input_Item.Commodity,
+                   (Concorde.Commodities.Get_Commodity
+                      (Input_Item.Commodity),
                     Input_Item.Quantity);
             begin
                Max_Capacity := Real'Min (This_Capacity, Max_Capacity);
@@ -1103,15 +1108,16 @@ package body Concorde.Managers.Pops is
          declare
             This_Capacity : constant Non_Negative_Real :=
               Constrain
-                (Input_Item.Commodity,
+                (Concorde.Commodities.Get_Commodity (Input_Item.Commodity),
                  Input_Item.Quantity);
          begin
             if This_Capacity < Max_Capacity then
                declare
                   use Concorde.Quantities, Concorde.Money;
 
-                  Commodity : constant Concorde.Db.Commodity_Reference :=
-                    Input_Item.Commodity;
+                  Commodity : constant Commodities.Commodity_Reference :=
+                    Commodities.Get_Commodity
+                      (Input_Item.Commodity);
 
                   function Calculate_Bid_Quantity return Quantity_Type;
 
@@ -1162,9 +1168,9 @@ package body Concorde.Managers.Pops is
                begin
                   if Bid_Quantity > Zero then
                      Manager.Create_Bid
-                       (Input_Item.Commodity, Bid_Quantity,
+                       (Commodity, Bid_Quantity,
                         Manager.Current_Ask_Price
-                          (Input_Item.Commodity, Bid_Quantity));
+                          (Commodity, Bid_Quantity));
                   end if;
                end;
             end if;
@@ -1177,7 +1183,7 @@ package body Concorde.Managers.Pops is
          declare
             This_Capacity : constant Non_Negative_Real :=
               Constrain
-                (Input_Item.Commodity,
+                (Concorde.Commodities.Get_Commodity (Input_Item.Commodity),
                  Input_Item.Quantity);
          begin
             Max_Capacity := Real'Min (This_Capacity, Max_Capacity);
@@ -1199,7 +1205,7 @@ package body Concorde.Managers.Pops is
          declare
             use Concorde.Commodities;
             Commodity : constant Commodity_Reference :=
-              Input_Item.Commodity;
+              Get_Commodity (Input_Item.Commodity);
          begin
             if not Is_Skill (Commodity) then
                declare
@@ -1208,10 +1214,10 @@ package body Concorde.Managers.Pops is
                     Concorde.Quantities.Scale
                       (Input_Item.Quantity, Max_Capacity);
                   This_Cost     : constant Money_Type :=
-                    Evaluate_Cost (Input_Item.Commodity, This_Quantity);
+                    Evaluate_Cost (Commodity, This_Quantity);
                begin
                   Manager.Log
-                    (Concorde.Commodities.Local_Name (Input_Item.Commodity)
+                    (Concorde.Commodities.Local_Name (Commodity)
                      & " cost " & Show (This_Cost));
                   Production_Cost := Production_Cost + This_Cost;
                end;
@@ -1230,6 +1236,8 @@ package body Concorde.Managers.Pops is
              (Manager.Production)
          loop
             declare
+               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+                 Concorde.Commodities.Get_Commodity (Out_Item.Commodity);
                Quantity : constant Concorde.Quantities.Quantity_Type :=
                  Concorde.Quantities.Scale
                    (Out_Item.Quantity, Output);
@@ -1240,12 +1248,12 @@ package body Concorde.Managers.Pops is
                Manager.Log
                  ("produce " & Concorde.Quantities.Show (Quantity)
                   & " "
-                  & Concorde.Commodities.Local_Name (Out_Item.Commodity)
+                  & Concorde.Commodities.Local_Name (Commodity)
                   & " for "
                   & Concorde.Money.Show (Minimum_Price)
                   & " ea");
                Manager.Add_Stock
-                 (Commodity => Out_Item.Commodity,
+                 (Commodity => Commodity,
                   Quantity  => Quantity,
                   Value     =>
                     Production_Cost);
@@ -1254,9 +1262,9 @@ package body Concorde.Managers.Pops is
 
             declare
                use Concorde.Money, Concorde.Quantities;
-               Commodity : constant Commodities.Commodity_Reference :=
-                 Out_Item.Commodity;
-               Quantity : constant Concorde.Quantities.Quantity_Type :=
+               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+                 Concorde.Commodities.Get_Commodity (Out_Item.Commodity);
+               Quantity  : constant Concorde.Quantities.Quantity_Type :=
                  Manager.Stock_Quantity
                    (Commodity);
                Previous      : constant Quantity_Type :=
@@ -1265,29 +1273,29 @@ package body Concorde.Managers.Pops is
                  Manager.Remaining_Ask (Commodity);
                Ask           : Quantity_Type := Quantity;
                Minimum_Price : constant Concorde.Money.Price_Type :=
-                 Manager.Stock_Price (Out_Item.Commodity);
+                 Manager.Stock_Price (Commodity);
                Mean_Price     : constant Price_Type :=
                  Manager.Historical_Mean_Price
-                   (Out_Item.Commodity);
+                   (Commodity);
                Base_Ask_Price : constant Price_Type := Mean_Price;
                Discount_Price : constant Price_Type :=
                  Adjust_Price (Base_Ask_Price, 0.99);
                Previous_Price : constant Price_Type :=
                  Manager.Previous_Ask_Price
-                   (Out_Item.Commodity);
+                   (Commodity);
                Supply         : constant Quantity_Type :=
                  Manager.Historical_Supply
-                   (Out_Item.Commodity, Concorde.Calendar.Days (1));
+                   (Commodity, Concorde.Calendar.Days (1));
                Supply_At_Ask  : constant Quantity_Type :=
                  Manager.Historical_Supply
-                   (Out_Item.Commodity, Previous_Price,
+                   (Commodity, Previous_Price,
                     Concorde.Calendar.Days (1));
                Demand         : constant Quantity_Type :=
                  Manager.Historical_Demand
-                   (Out_Item.Commodity, Concorde.Calendar.Days (1));
+                   (Commodity, Concorde.Calendar.Days (1));
                Demand_At_Ask  : constant Quantity_Type :=
                  Manager.Historical_Demand
-                   (Out_Item.Commodity, Previous_Price,
+                   (Commodity, Previous_Price,
                     Concorde.Calendar.Days (1));
                Ask_Price      : constant Price_Type :=
                  (if Previous_Price > Zero
@@ -1338,7 +1346,7 @@ package body Concorde.Managers.Pops is
                   & Show (Ask) & " @ " & Show (Ask_Price));
 
                Manager.Create_Ask
-                 (Commodity => Out_Item.Commodity,
+                 (Commodity => Commodity,
                   Quantity  => Min (Ask, Quantity),
                   Price     => Ask_Price);
             end;

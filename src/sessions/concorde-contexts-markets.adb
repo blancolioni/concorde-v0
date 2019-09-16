@@ -6,7 +6,6 @@ with Concorde.Money;
 with Concorde.Quantities;
 with Concorde.Worlds;
 
-with Concorde.Db.Commodity;
 with Concorde.Db.Market;
 with Concorde.Db.Transaction;
 
@@ -41,7 +40,7 @@ package body Concorde.Contexts.Markets is
      new Root_Context_Type with
       record
          Market    : Concorde.Db.Market_Reference;
-         Commodity : Concorde.Db.Commodity_Reference;
+         Commodity : Concorde.Commodities.Commodity_Reference;
       end record;
 
    overriding function Is_Valid
@@ -68,8 +67,8 @@ package body Concorde.Contexts.Markets is
         procedure (Line : String));
 
    function Market_Commodity_Context
-     (Market : Concorde.Db.Market_Reference;
-      Commodity : Concorde.Db.Commodity_Reference)
+     (Market    : Concorde.Db.Market_Reference;
+      Commodity : Concorde.Commodities.Commodity_Reference)
       return Context_Type;
 
    procedure Scan_Markets
@@ -93,15 +92,15 @@ package body Concorde.Contexts.Markets is
    is
    begin
       Children.Clear;
-      for Commodity of Concorde.Db.Commodity.Scan_By_Tag loop
+      for Commodity of Concorde.Commodities.All_Commodities loop
          for Offer of
            Concorde.Db.Transaction.Select_Transaction_Bounded_By_Time_Stamp
-             (Context.Market, Commodity.Get_Commodity_Reference,
+             (Context.Market, Commodities.To_Database_Reference (Commodity),
               Concorde.Calendar.Start, Concorde.Calendar.Clock)
          loop
             Children.Append
               (Market_Commodity_Context
-                 (Context.Market, Commodity.Get_Commodity_Reference));
+                 (Context.Market, Commodity));
             exit;
          end loop;
       end loop;
@@ -143,8 +142,7 @@ package body Concorde.Contexts.Markets is
    is
       use Concorde.Db;
    begin
-      return Context.Market /= Null_Market_Reference
-        and then Context.Commodity /= Null_Commodity_Reference;
+      return Context.Market /= Null_Market_Reference;
    end Is_Valid;
 
    ---------------------------
@@ -163,7 +161,8 @@ package body Concorde.Contexts.Markets is
    begin
       for Transaction of
         Concorde.Db.Transaction.Select_Transaction_Bounded_By_Time_Stamp
-          (Context.Market, Context.Commodity,
+          (Context.Market,
+           Commodities.To_Database_Reference (Context.Commodity),
            Concorde.Calendar.Start, Concorde.Calendar.Clock)
       loop
          Total_Trade := Total_Trade + Transaction.Quantity;
@@ -183,7 +182,7 @@ package body Concorde.Contexts.Markets is
 
    function Market_Commodity_Context
      (Market    : Concorde.Db.Market_Reference;
-      Commodity : Concorde.Db.Commodity_Reference)
+      Commodity : Concorde.Commodities.Commodity_Reference)
       return Context_Type
    is
    begin

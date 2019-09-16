@@ -28,7 +28,6 @@ with Concorde.Db.Pop;
 with Concorde.Db.Script;
 with Concorde.Db.Script_Line;
 with Concorde.Db.Sector_Use;
-with Concorde.Db.Sector_Zone;
 with Concorde.Db.Shareholder;
 with Concorde.Db.Star_System_Distance;
 with Concorde.Db.World;
@@ -468,27 +467,15 @@ package body Concorde.Factions.Create is
          declare
             General_Commodity : constant Commodities.Commodity_Reference :=
               Commodities.Get (Available_Config.Config_Name);
-            Tag               : constant String :=
-              Commodities.Title_Tag (Sector, General_Commodity);
             Price             : constant Concorde.Money.Price_Type :=
               Commodities.Initial_Price (General_Commodity);
-            Ref : constant Concorde.Db.Sector_Zone_Reference :=
-              Concorde.Db.Sector_Zone.Create
-                (Commodity_Class =>
-                   Concorde.Commodities.Title_Category,
-                 Initial_Price   => Price,
-                 Mass            => 1.0,
-                 Density         => 1.0,
-                 Tag             => Tag,
-                 Sector_Use      => Sector_Use,
-                 World_Sector    => Sector);
-
             Stock : constant Concorde.Db.Has_Stock_Reference :=
               Concorde.Db.Company.Get (Company).Get_Has_Stock_Reference;
-            Commodity : constant Concorde.Db.Commodity_Reference :=
-              Concorde.Db.Sector_Zone.Get (Ref).Get_Commodity_Reference;
-            Lease     : constant Concorde.Db.Commodity_Reference :=
-              Concorde.Commodities.Lease
+            Commodity : constant Concorde.Commodities.Commodity_Reference :=
+              Concorde.Commodities.Create_Title
+                (Sector, General_Commodity, Price);
+            Lease     : constant Concorde.Commodities.Commodity_Reference :=
+              Concorde.Commodities.Create_Lease
                 (Commodity, 360);
             Quantity          : constant Concorde.Quantities.Quantity_Type :=
               Concorde.Quantities.To_Quantity

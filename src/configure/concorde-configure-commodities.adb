@@ -15,6 +15,8 @@ with Concorde.Db.Stock_Item;
 
 package body Concorde.Configure.Commodities is
 
+   Next_Index : Natural := 0;
+
    Resource_Category : Concorde.Db.Commodity_Class_Reference :=
      Concorde.Db.Null_Commodity_Class_Reference;
    Skill_Category    : Concorde.Db.Commodity_Class_Reference :=
@@ -91,11 +93,14 @@ package body Concorde.Configure.Commodities is
          return Concorde.Db.Commodity_Reference
       is
       begin
+
+         Next_Index := Next_Index + 1;
+
          if Category = Skill_Category then
             declare
                Ref : constant Concorde.Db.Skill_Reference :=
                  Concorde.Db.Skill.Create
-                   (Category, Initial_Price, 1.0, 1.0, Tag);
+                   (Category, Next_Index, Initial_Price, 1.0, 1.0, Tag);
             begin
                return Concorde.Db.Skill.Get (Ref).Get_Commodity_Reference;
             end;
@@ -103,13 +108,13 @@ package body Concorde.Configure.Commodities is
             declare
                Ref : constant Concorde.Db.Resource_Reference :=
                  Concorde.Db.Resource.Create
-                   (Category, Initial_Price, 1.0, 1.0, Tag);
+                   (Category, Next_Index, Initial_Price, 1.0, 1.0, Tag);
             begin
                return Concorde.Db.Resource.Get (Ref).Get_Commodity_Reference;
             end;
          else
             return Concorde.Db.Commodity.Create
-              (Tag, Category, Initial_Price, 1.0, 1.0);
+              (Tag, Category, Next_Index, Initial_Price, 1.0, 1.0);
          end if;
       end Create_Commodity;
 
@@ -211,7 +216,8 @@ package body Concorde.Configure.Commodities is
             begin
                Concorde.Db.Stock_Item.Create
                  (Has_Stock => Has_Stock,
-                  Commodity => Commodity,
+                  Commodity =>
+                    Concorde.Commodities.To_Database_Reference (Commodity),
                   Quantity  => Quantity,
                   Value     => Value);
             end;
@@ -222,5 +228,15 @@ package body Concorde.Configure.Commodities is
          end if;
       end loop;
    end Configure_Stock;
+
+   --------------------------
+   -- Next_Commodity_Index --
+   --------------------------
+
+   function Next_Commodity_Index return Positive is
+   begin
+      Next_Index := Next_Index + 1;
+      return Next_Index;
+   end Next_Commodity_Index;
 
 end Concorde.Configure.Commodities;
