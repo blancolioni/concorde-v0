@@ -364,9 +364,13 @@ package body Concorde.Managers.Pops is
                      Concorde.Properties.Property ("hours");
       Prop_Happy : constant Concorde.Properties.Property_Type :=
                      Concorde.Properties.Property ("happy");
-      Prop_Health : constant Concorde.Properties.Property_Type :=
-                      Concorde.Properties.Property ("health");
-      Prop_Ed : constant Concorde.Properties.Property_Type :=
+      Prop_Health_1 : constant Concorde.Properties.Property_Type :=
+                      Concorde.Properties.Property ("health-1");
+      Prop_Health_2 : constant Concorde.Properties.Property_Type :=
+        Concorde.Properties.Property ("health-2");
+      Prop_Health_3 : constant Concorde.Properties.Property_Type :=
+        Concorde.Properties.Property ("health-3");
+      Prop_Ed       : constant Concorde.Properties.Property_Type :=
                   Concorde.Properties.Property ("education");
 
       function Current_Cost return Concorde.Money.Money_Type;
@@ -439,7 +443,11 @@ package body Concorde.Managers.Pops is
               or else Concorde.Commodities.Has_Property
                 (Commodity, Prop_Happy)
               or else Concorde.Commodities.Has_Property
-                (Commodity, Prop_Health)
+                (Commodity, Prop_Health_1)
+              or else Concorde.Commodities.Has_Property
+                (Commodity, Prop_Health_2)
+              or else Concorde.Commodities.Has_Property
+                (Commodity, Prop_Health_3)
               or else Concorde.Commodities.Has_Property
                 (Commodity, Prop_Ed)
             then
