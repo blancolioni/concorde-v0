@@ -140,8 +140,6 @@ package body Concorde.Updates.Tasks is
          terminate;
       end select;
 
-      Ada.Text_IO.Put_Line ("Update task starting");
-
       while not Stopping loop
 
          while Paused loop
