@@ -79,8 +79,9 @@ package body Concorde.Managers.Agents is
    is
       use type Concorde.Quantities.Quantity_Type;
    begin
-      return Concorde.Markets.Supply_Since
-        (Manager.Market, Commodity, Concorde.Calendar.Days (10))
+      return Concorde.Markets.Historical_Offer_Quantity
+        (Manager.Market, Commodity, Concorde.Db.Ask,
+         Concorde.Calendar.Days (10))
         > Concorde.Quantities.Zero;
    end Available;
 
@@ -306,6 +307,44 @@ package body Concorde.Managers.Agents is
         > Concorde.Quantities.Zero;
    end Has_Stock;
 
+   -----------------------
+   -- Historical_Demand --
+   -----------------------
+
+   function Historical_Demand
+     (Manager   : Root_Agent_Manager_Type'Class;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Since     : Duration)
+      return Concorde.Quantities.Quantity_Type
+   is
+   begin
+      return Concorde.Markets.Historical_Offer_Quantity
+        (Market    => Manager.Market,
+         Commodity => Commodity,
+         Offer     => Concorde.Db.Bid,
+         Since     => Since);
+   end Historical_Demand;
+
+   -----------------------
+   -- Historical_Demand --
+   -----------------------
+
+   function Historical_Demand
+     (Manager   : Root_Agent_Manager_Type'Class;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Min_Price : Concorde.Money.Price_Type;
+      Since     : Duration)
+      return Concorde.Quantities.Quantity_Type
+   is
+   begin
+      return Concorde.Markets.Historical_Offer_Quantity
+        (Market    => Manager.Market,
+         Commodity => Commodity,
+         Offer     => Concorde.Db.Bid,
+         Price     => Min_Price,
+         Since     => Since);
+   end Historical_Demand;
+
    ---------------------------
    -- Historical_Mean_Price --
    ---------------------------
@@ -319,6 +358,44 @@ package body Concorde.Managers.Agents is
       return Concorde.Markets.Historical_Mean_Price
         (Manager.Market, Commodity);
    end Historical_Mean_Price;
+
+   -----------------------
+   -- Historical_Supply --
+   -----------------------
+
+   function Historical_Supply
+     (Manager   : Root_Agent_Manager_Type'Class;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Since     : Duration)
+      return Concorde.Quantities.Quantity_Type
+   is
+   begin
+      return Concorde.Markets.Historical_Offer_Quantity
+        (Market    => Manager.Market,
+         Commodity => Commodity,
+         Offer     => Concorde.Db.Ask,
+         Since     => Since);
+   end Historical_Supply;
+
+   -----------------------
+   -- Historical_Supply --
+   -----------------------
+
+   function Historical_Supply
+     (Manager   : Root_Agent_Manager_Type'Class;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Max_Price : Concorde.Money.Price_Type;
+      Since     : Duration)
+      return Concorde.Quantities.Quantity_Type
+   is
+   begin
+      return Concorde.Markets.Historical_Offer_Quantity
+        (Market    => Manager.Market,
+         Commodity => Commodity,
+         Offer     => Concorde.Db.Ask,
+         Price     => Max_Price,
+         Since     => Since);
+   end Historical_Supply;
 
    ------------------------------
    -- Initialize_Agent_Manager --

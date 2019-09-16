@@ -22,15 +22,33 @@ package Concorde.Markets is
       Commodity : Concorde.Commodities.Commodity_Reference)
       return Concorde.Money.Price_Type;
 
-   function Supply
+   function Historical_Offer_Quantity
      (Market    : Concorde_Market;
       Commodity : Concorde.Commodities.Commodity_Reference;
+      Offer     : Concorde.Db.Offer_Type;
       From, To  : Concorde.Calendar.Time)
       return Concorde.Quantities.Quantity_Type;
 
-   function Supply_Since
+   function Historical_Offer_Quantity
      (Market    : Concorde_Market;
       Commodity : Concorde.Commodities.Commodity_Reference;
+      Offer     : Concorde.Db.Offer_Type;
+      Price     : Concorde.Money.Price_Type;
+      From, To  : Concorde.Calendar.Time)
+      return Concorde.Quantities.Quantity_Type;
+
+   function Historical_Offer_Quantity
+     (Market    : Concorde_Market;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Offer     : Concorde.Db.Offer_Type;
+      Since     : Duration)
+      return Concorde.Quantities.Quantity_Type;
+
+   function Historical_Offer_Quantity
+     (Market    : Concorde_Market;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Offer     : Concorde.Db.Offer_Type;
+      Price     : Concorde.Money.Price_Type;
       Since     : Duration)
       return Concorde.Quantities.Quantity_Type;
 

@@ -740,6 +740,98 @@ package body Concorde.Markets is
       return Price;
    end Historical_Mean_Price;
 
+   -------------------------------
+   -- Historical_Offer_Quantity --
+   -------------------------------
+
+   function Historical_Offer_Quantity
+     (Market    : Concorde_Market;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Offer     : Concorde.Db.Offer_Type;
+      From, To  : Concorde.Calendar.Time)
+      return Concorde.Quantities.Quantity_Type
+   is
+      use Concorde.Quantities;
+      use Concorde.Db.Historical_Offer;
+   begin
+      return Quantity : Quantity_Type := Zero do
+         for Historical_Offer of
+           Select_Historical_Offer_Bounded_By_Time_Stamp
+             (Market, Commodity, Offer, From, To)
+         loop
+            Quantity := Quantity + Historical_Offer.Quantity;
+         end loop;
+      end return;
+   end Historical_Offer_Quantity;
+
+   -------------------------------
+   -- Historical_Offer_Quantity --
+   -------------------------------
+
+   function Historical_Offer_Quantity
+     (Market    : Concorde_Market;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Offer     : Concorde.Db.Offer_Type;
+      Price     : Concorde.Money.Price_Type;
+      From, To  : Concorde.Calendar.Time)
+      return Concorde.Quantities.Quantity_Type
+   is
+      use type Concorde.Db.Offer_Type;
+      use type Concorde.Money.Price_Type;
+      use Concorde.Quantities;
+      use Concorde.Db.Historical_Offer;
+   begin
+      return Quantity : Quantity_Type := Zero do
+         for Historical_Offer of
+           Select_Historical_Offer_Bounded_By_Time_Stamp
+             (Market, Commodity, Offer, From, To)
+         loop
+            if (Offer = Concorde.Db.Ask
+                and then Price <= Historical_Offer.Price)
+              or else (Offer = Concorde.Db.Bid
+                       and then Price >= Historical_Offer.Price)
+            then
+               Quantity := Quantity + Historical_Offer.Quantity;
+            end if;
+         end loop;
+      end return;
+   end Historical_Offer_Quantity;
+
+   -------------------------------
+   -- Historical_Offer_Quantity --
+   -------------------------------
+
+   function Historical_Offer_Quantity
+     (Market    : Concorde_Market;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Offer     : Concorde.Db.Offer_Type;
+      Since     : Duration)
+      return Concorde.Quantities.Quantity_Type
+   is
+      use type Concorde.Calendar.Time;
+      Now : constant Concorde.Calendar.Time :=
+        Concorde.Calendar.Clock;
+   begin
+      return Historical_Offer_Quantity
+        (Market, Commodity, Offer, Now - Since, Now);
+   end Historical_Offer_Quantity;
+
+   function Historical_Offer_Quantity
+     (Market    : Concorde_Market;
+      Commodity : Concorde.Commodities.Commodity_Reference;
+      Offer     : Concorde.Db.Offer_Type;
+      Price     : Concorde.Money.Price_Type;
+      Since     : Duration)
+      return Concorde.Quantities.Quantity_Type
+   is
+      use type Concorde.Calendar.Time;
+      Now : constant Concorde.Calendar.Time :=
+        Concorde.Calendar.Clock;
+   begin
+      return Historical_Offer_Quantity
+        (Market, Commodity, Offer, Price, Now - Since, Now);
+   end Historical_Offer_Quantity;
+
    ----------------
    -- Log_Market --
    ----------------
@@ -831,45 +923,5 @@ package body Concorde.Markets is
          return Concorde.Quantities.Zero;
       end if;
    end Remaining_Agent_Offer;
-
-   ------------
-   -- Supply --
-   ------------
-
-   function Supply
-     (Market    : Concorde_Market;
-      Commodity : Concorde.Commodities.Commodity_Reference;
-      From, To  : Concorde.Calendar.Time)
-      return Concorde.Quantities.Quantity_Type
-   is
-      use Concorde.Quantities;
-      use Concorde.Db.Historical_Offer;
-   begin
-      return Quantity : Quantity_Type := Zero do
-         for Offer of
-           Select_Historical_Offer_Bounded_By_Time_Stamp
-             (Market, Commodity, Concorde.Db.Ask, From, To)
-         loop
-            Quantity := Quantity + Offer.Quantity;
-         end loop;
-      end return;
-   end Supply;
-
-   ------------------
-   -- Supply_Since --
-   ------------------
-
-   function Supply_Since
-     (Market    : Concorde_Market;
-      Commodity : Concorde.Commodities.Commodity_Reference;
-      Since     : Duration)
-      return Concorde.Quantities.Quantity_Type
-   is
-      use type Concorde.Calendar.Time;
-      Now : constant Concorde.Calendar.Time :=
-        Concorde.Calendar.Clock;
-   begin
-      return Supply (Market, Commodity, Now - Since, Now);
-   end Supply_Since;
 
 end Concorde.Markets;
