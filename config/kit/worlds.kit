@@ -105,10 +105,10 @@ record Deposit is
    Abundance     : Long_Float;
 end Deposit;
 
-record Sector_Zone : Commodity is
-   key Sector_use;
+record Sector_Title : Commodity is
+   key Zone;
    key World_Sector;
-   key Sector_Zone with World_Sector, Sector_Use;
-end Sector_Zone;
+   key Sector_Title with World_Sector, Zone;
+end Sector_Title;
 
 end Worlds;

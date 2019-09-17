@@ -3,8 +3,6 @@ with Ada.Text_IO;
 with Concorde.Calendar;
 with Concorde.Logging;
 
-with Concorde.Commodities;
-
 with Concorde.Db.Commodity;
 with Concorde.Db.Historical_Stock;
 with Concorde.Db.Stock_Item;
@@ -15,7 +13,7 @@ package body Concorde.Stock is
 
    procedure Register_Stock
      (Stock     : Concorde.Db.Has_Stock_Reference;
-      Commodity : Concorde.Db.Commodity_Reference);
+      Commodity : Concorde.Commodities.Commodity_Reference);
 
    -----------------------
    -- Add_Initial_Stock --
@@ -23,13 +21,13 @@ package body Concorde.Stock is
 
    procedure Add_Initial_Stock
      (To       : Concorde.Db.Has_Stock_Reference;
-      Item     : Concorde.Db.Commodity_Reference;
+      Item     : Concorde.Commodities.Commodity_Reference;
       Quantity : Concorde.Quantities.Quantity_Type)
    is
    begin
       Add_Stock (To, Item, Quantity,
                  Concorde.Money.Total
-                   (Concorde.Db.Commodity.Get (Item).Initial_Price,
+                   (Concorde.Commodities.Initial_Price (Item),
                     Quantity));
    end Add_Initial_Stock;
 
@@ -39,7 +37,7 @@ package body Concorde.Stock is
 
    procedure Add_Stock
      (To       : Concorde.Db.Has_Stock.Has_Stock_Type;
-      Item     : Concorde.Db.Commodity_Reference;
+      Item     : Concorde.Commodities.Commodity_Reference;
       Quantity : Concorde.Quantities.Quantity_Type;
       Value    : Concorde.Money.Money_Type)
    is
@@ -57,7 +55,7 @@ package body Concorde.Stock is
 
    procedure Add_Stock
      (To       : Concorde.Db.Has_Stock_Reference;
-      Item     : Concorde.Db.Commodity_Reference;
+      Item     : Concorde.Commodities.Commodity_Reference;
       Quantity : Concorde.Quantities.Quantity_Type;
       Value    : Concorde.Money.Money_Type)
    is
@@ -67,9 +65,11 @@ package body Concorde.Stock is
       if Quantity > Zero then
          pragma Assert (Value > Zero);
          declare
+            Ref : constant Concorde.Db.Commodity_Reference :=
+              Concorde.Commodities.To_Database_Reference (Item);
             Stock : constant Concorde.Db.Stock_Item.Stock_Item_Type :=
-                      Concorde.Db.Stock_Item.Get_By_Stock_Item
-                        (To, Item);
+              Concorde.Db.Stock_Item.Get_By_Stock_Item
+                (To, Ref);
          begin
             if Stock.Has_Element then
                Concorde.Db.Stock_Item.Update_Stock_Item
@@ -80,7 +80,7 @@ package body Concorde.Stock is
             else
                Concorde.Db.Stock_Item.Create
                  (Has_Stock => To,
-                  Commodity => Item,
+                  Commodity => Ref,
                   Quantity  => Quantity,
                   Value     => Value);
             end if;
@@ -96,7 +96,7 @@ package body Concorde.Stock is
 
    function Get_Price_Per_Item
      (Has_Stock : Concorde.Db.Has_Stock_Reference;
-      Commodity : Concorde.Db.Commodity_Reference)
+      Commodity : Concorde.Commodities.Commodity_Reference)
       return Concorde.Money.Price_Type
    is
       Quantity : Concorde.Quantities.Quantity_Type;
@@ -112,7 +112,7 @@ package body Concorde.Stock is
 
    function Get_Quantity
      (Has_Stock : Concorde.Db.Has_Stock_Reference;
-      Commodity : Concorde.Db.Commodity_Reference)
+      Commodity : Concorde.Commodities.Commodity_Reference)
       return Concorde.Quantities.Quantity_Type
    is
       Quantity : Concorde.Quantities.Quantity_Type;
@@ -128,13 +128,14 @@ package body Concorde.Stock is
 
    procedure Get_Stock
      (Has_Stock : Concorde.Db.Has_Stock_Reference;
-      Commodity : Concorde.Db.Commodity_Reference;
+      Commodity : Concorde.Commodities.Commodity_Reference;
       Quantity  : out Concorde.Quantities.Quantity_Type;
       Value     : out Concorde.Money.Money_Type)
    is
       Stock : constant Concorde.Db.Stock_Item.Stock_Item_Type :=
-                Concorde.Db.Stock_Item.Get_By_Stock_Item
-                  (Has_Stock, Commodity);
+        Concorde.Db.Stock_Item.Get_By_Stock_Item
+          (Has_Stock,
+           Concorde.Commodities.To_Database_Reference (Commodity));
    begin
       if Stock.Has_Element then
          Quantity := Stock.Quantity;
@@ -151,7 +152,7 @@ package body Concorde.Stock is
 
    function Get_Value
      (Has_Stock : Concorde.Db.Has_Stock_Reference;
-      Commodity : Concorde.Db.Commodity_Reference)
+      Commodity : Concorde.Commodities.Commodity_Reference)
       return Concorde.Money.Money_Type
    is
       Quantity : Concorde.Quantities.Quantity_Type;
@@ -195,7 +196,7 @@ package body Concorde.Stock is
    procedure Move_Stock
      (From     : Concorde.Db.Has_Stock_Reference;
       To       : Concorde.Db.Has_Stock_Reference;
-      Item     : Concorde.Db.Commodity_Reference;
+      Item     : Concorde.Commodities.Commodity_Reference;
       Quantity : Concorde.Quantities.Quantity_Type)
    is
       use Concorde.Quantities;
@@ -214,14 +215,16 @@ package body Concorde.Stock is
 
    procedure Register_Stock
      (Stock     : Concorde.Db.Has_Stock_Reference;
-      Commodity : Concorde.Db.Commodity_Reference)
+      Commodity : Concorde.Commodities.Commodity_Reference)
    is
       use type Concorde.Db.Historical_Stock_Reference;
       Clock : constant Concorde.Calendar.Time :=
-                Concorde.Calendar.Clock;
+        Concorde.Calendar.Clock;
+      Ref : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
       Historical : constant Db.Historical_Stock_Reference :=
                      Db.Historical_Stock.Get_Reference_By_Historical_Stock
-                       (Stock, Commodity, Clock);
+                       (Stock, Ref, Clock);
       Quantity   : Concorde.Quantities.Quantity_Type;
       Value      : Concorde.Money.Money_Type;
    begin
@@ -237,7 +240,7 @@ package body Concorde.Stock is
          Concorde.Db.Historical_Stock.Create
            (Time_Stamp => Clock,
             Has_Stock  => Stock,
-            Commodity  => Commodity,
+            Commodity  => Ref,
             Quantity   => Quantity,
             Value      => Value);
       end if;
@@ -249,7 +252,7 @@ package body Concorde.Stock is
 
    procedure Remove_Stock
      (From     : Concorde.Db.Has_Stock_Reference;
-      Item     : Concorde.Db.Commodity_Reference;
+      Item     : Concorde.Commodities.Commodity_Reference;
       Quantity : Concorde.Quantities.Quantity_Type)
    is
       Value : Concorde.Money.Money_Type with Unreferenced;
@@ -263,18 +266,20 @@ package body Concorde.Stock is
 
    procedure Remove_Stock
      (From     : Concorde.Db.Has_Stock_Reference;
-      Item     : Concorde.Db.Commodity_Reference;
+      Item     : Concorde.Commodities.Commodity_Reference;
       Quantity : Concorde.Quantities.Quantity_Type;
       Value    : out Concorde.Money.Money_Type)
    is
       use Concorde.Money, Concorde.Quantities;
+      Ref : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Item);
    begin
 
       if Quantity > Zero then
          declare
             Stock : constant Concorde.Db.Stock_Item.Stock_Item_Type :=
                       Concorde.Db.Stock_Item.Get_By_Stock_Item
-                        (From, Item);
+                        (From, Ref);
             Available : constant Quantity_Type := Stock.Quantity;
          begin
             if Available < Quantity then
@@ -314,7 +319,7 @@ package body Concorde.Stock is
    procedure Scan_Stock
      (Has_Stock : Concorde.Db.Has_Stock_Reference;
       Process   : not null access
-        procedure (Item     : Concorde.Db.Commodity_Reference;
+        procedure (Item     : Concorde.Commodities.Commodity_Reference;
                    Quantity : Concorde.Quantities.Quantity_Type;
                    Value    : Concorde.Money.Money_Type))
    is
@@ -331,7 +336,7 @@ package body Concorde.Stock is
    procedure Scan_Stock
      (Has_Stock : Concorde.Db.Has_Stock.Has_Stock_Type;
       Process   : not null access
-        procedure (Item     : Concorde.Db.Commodity_Reference;
+        procedure (Item     : Concorde.Commodities.Commodity_Reference;
                    Quantity : Concorde.Quantities.Quantity_Type;
                    Value    : Concorde.Money.Money_Type))
    is

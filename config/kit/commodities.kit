@@ -11,6 +11,7 @@ package Commodities is
 	
    record Commodity : Localised, Has_Properties with Vector, Map is
       key Commodity_Class;
+	  key Index     : Positive;
       Initial_Price : Price_Type;
       Mass          : Long_Float;
       Density       : Long_Float;

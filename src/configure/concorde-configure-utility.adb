@@ -1,7 +1,6 @@
 with Tropos.Reader;
 
-with Concorde.Commodities;
-
+with Concorde.Db.Commodity;
 with Concorde.Db.Utility_Class;
 with Concorde.Db.Utility_Function;
 
@@ -51,7 +50,8 @@ package body Concorde.Configure.Utility is
             Concorde.Db.Utility_Function.Create
               (Tag           => Tag,
                Commodity     =>
-                 Concorde.Commodities.Get (Function_Config.Config_Name),
+                 Concorde.Db.Commodity.Get_Reference_By_Tag
+                   (Function_Config.Config_Name),
                Utility_Class => Reference,
                A1            => Arg (1),
                A2            => Arg (2),

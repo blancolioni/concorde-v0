@@ -110,7 +110,7 @@ package body Concorde.Agents is
       From_Stock    : Concorde.Commodities.Stock_Type;
 
       procedure Transfer_Stock
-        (Commodity : Concorde.Db.Commodity_Reference;
+        (Commodity : Concorde.Commodities.Commodity_Reference;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type);
 
@@ -119,7 +119,7 @@ package body Concorde.Agents is
       --------------------
 
       procedure Transfer_Stock
-        (Commodity : Concorde.Db.Commodity_Reference;
+        (Commodity : Concorde.Commodities.Commodity_Reference;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type)
       is

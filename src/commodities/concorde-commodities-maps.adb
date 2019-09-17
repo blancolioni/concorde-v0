@@ -1,5 +1,3 @@
-with Concorde.Db.Commodity;
-
 package body Concorde.Commodities.Maps is
 
    --------------
@@ -12,8 +10,7 @@ package body Concorde.Commodities.Maps is
       return Boolean
    is
    begin
-      return Container.Contains
-        (Concorde.Db.Commodity.Get (Commodity).Tag);
+      return Container.Contains (Tag (Commodity));
    end Contains;
 
    -------------
@@ -26,8 +23,7 @@ package body Concorde.Commodities.Maps is
       return Element_Type
    is
    begin
-      return Commodity_Maps.Map (Container).Element
-        (Concorde.Db.Commodity.Get (Commodity).Tag);
+      return Commodity_Maps.Map (Container).Element (Tag (Commodity));
    end Element;
 
    ------------
@@ -40,7 +36,7 @@ package body Concorde.Commodities.Maps is
       Element   : Element_Type)
    is
    begin
-      Container.Insert (Concorde.Db.Commodity.Get (Commodity).Tag, Element);
+      Container.Insert (Tag (Commodity), Element);
    end Insert;
 
 end Concorde.Commodities.Maps;

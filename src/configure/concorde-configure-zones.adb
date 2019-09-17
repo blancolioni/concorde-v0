@@ -1,5 +1,7 @@
 with Tropos.Reader;
 
+with Concorde.Configure.Commodities;
+
 with Concorde.Db.Commodity_Class;
 with Concorde.Db.Sector_Use;
 with Concorde.Db.Zone;
@@ -49,6 +51,8 @@ package body Concorde.Configure.Zones is
                for Zone_Config of Config.Child ("zones") loop
                   Concorde.Db.Zone.Create
                     (Tag             => Zone_Config.Config_Name,
+                     Index           =>
+                       Concorde.Configure.Commodities.Next_Commodity_Index,
                      Commodity_Class => Zone_Class,
                      Sector_Use      => Sector_Use,
                      Initial_Price   =>

@@ -1,27 +1,85 @@
-with WL.String_Maps;
-
 with Concorde.Db.Property;
+with Concorde.Db.Property_Entry;
 
 package body Concorde.Properties is
 
-   package Property_Maps is
+   package Property_Reference_Maps is
      new WL.String_Maps
        (Concorde.Db.Property_Reference, Concorde.Db."=");
 
-   Map : Property_Maps.Map;
+   Map : Property_Reference_Maps.Map;
 
-   --------------
-   -- Property --
-   --------------
+   -----------------
+   -- Create_List --
+   -----------------
 
-   function Property
-     (Name : String)
-      return Concorde.Db.Property_Reference
+   procedure Create_List
+     (List : in out Property_List;
+      Ref  : Concorde.Db.Has_Properties_Reference)
    is
-      Position : constant Property_Maps.Cursor := Map.Find (Name);
+   begin
+      List.Has_Properties := Ref;
+      List.Map.Clear;
+   end Create_List;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   function Get_Property
+     (List     : in out Property_List;
+      Property : Property_Type)
+      return Real
+   is
+   begin
+      return List.Get_Property_Entry (Property).Value;
+   end Get_Property;
+
+   ------------------------
+   -- Get_Property_Entry --
+   ------------------------
+
+   function Get_Property_Entry
+     (List     : in out Property_List;
+      Property : Property_Type)
+      return Property_List_Entry
+   is
+      Position : constant Property_Maps.Cursor :=
+        List.Map.Find (String (Property));
    begin
       if Property_Maps.Has_Element (Position) then
          return Property_Maps.Element (Position);
+      else
+         declare
+            Property_Ref         : constant Concorde.Db.Property_Reference :=
+              Get_Reference (String (Property));
+            Prop_Entry           : constant Concorde.Db.Property_Entry
+              .Property_Entry_Type :=
+                Concorde.Db.Property_Entry.Get_By_Property_Entry
+                  (List.Has_Properties, Property_Ref);
+            New_Entry            : constant Property_List_Entry :=
+              (if Prop_Entry.Has_Element
+               then (True, Prop_Entry.Value)
+               else (False, 0.0));
+         begin
+            List.Map.Insert (String (Property), New_Entry);
+            return New_Entry;
+         end;
+      end if;
+   end Get_Property_Entry;
+
+   -------------------
+   -- Get_Reference --
+   -------------------
+
+   function Get_Reference
+     (Name : String)
+      return Concorde.Db.Property_Reference
+   is
+      Position : constant Property_Reference_Maps.Cursor := Map.Find (Name);
+   begin
+      if Property_Reference_Maps.Has_Element (Position) then
+         return Property_Reference_Maps.Element (Position);
       else
          declare
             use type Concorde.Db.Property_Reference;
@@ -35,6 +93,19 @@ package body Concorde.Properties is
             end if;
          end;
       end if;
-   end Property;
+   end Get_Reference;
+
+   ------------------
+   -- Has_Property --
+   ------------------
+
+   function Has_Property
+     (List     : in out Property_List;
+      Property : Property_Type)
+      return Boolean
+   is
+   begin
+      return List.Get_Property_Entry (Property).Exists;
+   end Has_Property;
 
 end Concorde.Properties;

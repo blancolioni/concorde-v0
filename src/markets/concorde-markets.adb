@@ -21,13 +21,13 @@ package body Concorde.Markets is
       Buyer, Seller                 : Concorde.Db.Agent_Reference;
       Buyer_Account, Seller_Account : Concorde.Db.Account_Reference;
       Buyer_Stock, Seller_Stock     : Concorde.Db.Has_Stock_Reference;
-      Commodity                     : Concorde.Db.Commodity_Reference;
+      Commodity                     : Concorde.Commodities.Commodity_Reference;
       Quantity                      : Concorde.Quantities.Quantity_Type;
       Price                         : Concorde.Money.Price_Type);
 
    procedure Execute_Offers
      (Market    : Concorde.Db.Market_Reference;
-      Commodity : Concorde.Db.Commodity_Reference);
+      Commodity : Concorde.Commodities.Commodity_Reference);
 
    type Weighted_Offer is
       record
@@ -148,6 +148,8 @@ package body Concorde.Markets is
       Quantity  : Concorde.Quantities.Quantity_Type;
       Price     : Concorde.Money.Price_Type)
    is
+      Ref : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
    begin
 
       Concorde.Db.Historical_Offer.Create
@@ -156,7 +158,7 @@ package body Concorde.Markets is
            10_000.0
          / (1.0 + Concorde.Calendar.To_Real (Concorde.Calendar.Clock)),
          Market      => Market,
-         Commodity   => Commodity,
+         Commodity   => Ref,
          Agent       => Agent,
          Offer       => Offer,
          Quantity    => Quantity,
@@ -166,7 +168,7 @@ package body Concorde.Markets is
          use type Concorde.Db.Market_Offer_Reference;
          Old_Offer : constant Concorde.Db.Market_Offer_Reference :=
            Concorde.Db.Market_Offer.Get_Reference_By_Market_Offer
-             (Market, Agent, Commodity, Offer);
+             (Market, Agent, Ref, Offer);
          Priority  : constant Real :=
            Offer_Priority (Offer, Price);
       begin
@@ -181,7 +183,7 @@ package body Concorde.Markets is
             Concorde.Db.Market_Offer.Create
               (Market    => Market,
                Priority  => Priority,
-               Commodity => Commodity,
+               Commodity => Ref,
                Offer     => Offer,
                Agent     => Agent,
                Has_Stock => Has_Stock,
@@ -208,13 +210,15 @@ package body Concorde.Markets is
       return Concorde.Money.Price_Type
    is
       use Concorde.Money, Concorde.Quantities;
+      Ref        : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
       Remaining  : Quantity_Type := Quantity;
       Last_Price : Price_Type := Zero;
    begin
       for Market_Offer of
         Concorde.Db.Market_Offer.Select_Priority_Offer_Bounded_By_Priority
           (Market          => Market,
-           Commodity       => Commodity,
+           Commodity       => Ref,
            Offer           => Offer,
            Start_Priority  => 0.0,
            Finish_Priority => Real'Last)
@@ -246,11 +250,13 @@ package body Concorde.Markets is
       return Concorde.Quantities.Quantity_Type
    is
       use Concorde.Quantities;
+      Ref : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
    begin
       return Quantity : Quantity_Type := Zero do
          for Item of
            Concorde.Db.Market_Offer.Select_Priority_Offer_Bounded_By_Priority
-             (Market, Commodity, Offer, 0.0, Real'Last)
+             (Market, Ref, Offer, 0.0, Real'Last)
          loop
             Quantity := Quantity + Item.Quantity;
          end loop;
@@ -270,11 +276,13 @@ package body Concorde.Markets is
    is
       use Concorde.Money, Concorde.Quantities;
       Remaining : Money_Type := Cash;
+      Ref       : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
    begin
       return Quantity : Quantity_Type := Zero do
          for Item of
            Concorde.Db.Market_Offer.Select_Priority_Offer_Bounded_By_Priority
-             (Market, Commodity, Offer, 0.0, Real'Last)
+             (Market, Ref, Offer, 0.0, Real'Last)
          loop
             declare
                This_Cost : constant Money_Type :=
@@ -306,11 +314,13 @@ package body Concorde.Markets is
    is
       use Concorde.Money, Concorde.Quantities;
       Remaining : Quantity_Type := Quantity;
+      Ref       : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
    begin
       return Cost : Money_Type := Zero do
          for Item of
            Concorde.Db.Market_Offer.Select_Priority_Offer_Bounded_By_Priority
-             (Market, Commodity, Offer, 0.0, Real'Last)
+             (Market, Ref, Offer, 0.0, Real'Last)
          loop
             declare
                This_Quantity : constant Quantity_Type := Item.Quantity;
@@ -334,9 +344,12 @@ package body Concorde.Markets is
 
    procedure Execute_Offers
      (Market    : Concorde.Db.Market_Reference;
-      Commodity : Concorde.Db.Commodity_Reference)
+      Commodity : Concorde.Commodities.Commodity_Reference)
    is
       use Concorde.Money, Concorde.Quantities;
+
+      Ref : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
 
       type Offer_Type is
          record
@@ -598,7 +611,7 @@ package body Concorde.Markets is
 
       for Active of
         Concorde.Db.Market_Offer.Select_By_Market_Commodity
-          (Market, Commodity)
+          (Market, Ref)
       loop
          if Active.Quantity > Zero then
 --              Log_Market
@@ -652,7 +665,7 @@ package body Concorde.Markets is
       Buyer, Seller                 : Concorde.Db.Agent_Reference;
       Buyer_Account, Seller_Account : Concorde.Db.Account_Reference;
       Buyer_Stock, Seller_Stock     : Concorde.Db.Has_Stock_Reference;
-      Commodity                     : Concorde.Db.Commodity_Reference;
+      Commodity                     : Concorde.Commodities.Commodity_Reference;
       Quantity                      : Concorde.Quantities.Quantity_Type;
       Price                         : Concorde.Money.Price_Type)
    is
@@ -702,7 +715,8 @@ package body Concorde.Markets is
               (Buyer_Stock, Leased_Item, Quantity, Leased_Value);
 
             Concorde.Db.Lease_Contract.Create
-              (Commodity  => Leased_Item,
+              (Commodity  =>
+                 Concorde.Commodities.To_Database_Reference (Leased_Item),
                Owner      => Seller,
                Tenant     => Buyer,
                Expires    =>
@@ -715,7 +729,7 @@ package body Concorde.Markets is
       Concorde.Db.Transaction.Create
         (Time_Stamp => Concorde.Calendar.Clock,
          Market     => Market,
-         Commodity  => Commodity,
+         Commodity  => Concorde.Commodities.To_Database_Reference (Commodity),
          Buyer      => Buyer,
          Seller     => Seller,
          Price      => Price,
@@ -753,11 +767,13 @@ package body Concorde.Markets is
    is
       use Concorde.Quantities;
       use Concorde.Db.Historical_Offer;
+      Ref : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
    begin
       return Quantity : Quantity_Type := Zero do
          for Historical_Offer of
            Select_Historical_Offer_Bounded_By_Time_Stamp
-             (Market, Commodity, Offer, From, To)
+             (Market, Ref, Offer, From, To)
          loop
             Quantity := Quantity + Historical_Offer.Quantity;
          end loop;
@@ -780,11 +796,13 @@ package body Concorde.Markets is
       use type Concorde.Money.Price_Type;
       use Concorde.Quantities;
       use Concorde.Db.Historical_Offer;
+      Ref : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
    begin
       return Quantity : Quantity_Type := Zero do
          for Historical_Offer of
            Select_Historical_Offer_Bounded_By_Time_Stamp
-             (Market, Commodity, Offer, From, To)
+             (Market, Ref, Offer, From, To)
          loop
             if (Offer = Concorde.Db.Ask
                 and then Price <= Historical_Offer.Price)
@@ -862,13 +880,15 @@ package body Concorde.Markets is
       return Concorde.Quantities.Quantity_Type
    is
       use Concorde.Db.Historical_Offer;
+      Ref : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
    begin
       return Quantity : Concorde.Quantities.Quantity_Type :=
         Concorde.Quantities.Zero
       do
          for Hist_Offer of
            Select_Reverse_Agent_Offer_Bounded_By_Time_Offset
-             (Market, Agent, Commodity, Offer, 0.0, Real'Last)
+             (Market, Agent, Ref, Offer, 0.0, Real'Last)
          loop
             Quantity := Hist_Offer.Quantity;
             exit;
@@ -888,13 +908,15 @@ package body Concorde.Markets is
       return Concorde.Money.Price_Type
    is
       use Concorde.Db.Historical_Offer;
+      Ref : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
    begin
       return Price : Concorde.Money.Price_Type :=
         Concorde.Money.Zero
       do
          for Hist_Offer of
            Select_Reverse_Agent_Offer_Bounded_By_Time_Offset
-             (Market, Agent, Commodity, Offer, 0.0, Real'Last)
+             (Market, Agent, Ref, Offer, 0.0, Real'Last)
          loop
             Price := Hist_Offer.Price;
             exit;
@@ -913,9 +935,11 @@ package body Concorde.Markets is
       Offer     : Concorde.Db.Offer_Type)
       return Concorde.Quantities.Quantity_Type
    is
+      Ref  : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Commodities.To_Database_Reference (Commodity);
       Item : constant Concorde.Db.Market_Offer.Market_Offer_Type :=
         Concorde.Db.Market_Offer.Get_By_Market_Offer
-          (Market, Agent, Commodity, Offer);
+          (Market, Agent, Ref, Offer);
    begin
       if Item.Has_Element then
          return Item.Quantity;

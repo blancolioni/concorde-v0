@@ -471,7 +471,8 @@ package body Concorde.Managers.Agents is
                          & Concorde.Db.To_String (Contract.Owner)
                          & " for "
                          & Concorde.Commodities.Local_Name
-                           (Contract.Commodity));
+                           (Concorde.Commodities.Get_Commodity
+                              (Contract.Commodity)));
             Manager.Spend (Contract.Daily_Rent, "rent");
             Concorde.Agents.Add_Cash
               (Concorde.Db.Agent.Get (Contract.Owner), Contract.Daily_Rent,
@@ -581,7 +582,7 @@ package body Concorde.Managers.Agents is
         Concorde.Db.Market_Offer.Get_By_Market_Offer
           (Market    => Manager.Market,
            Agent     => Manager.Agent,
-           Commodity => Commodity,
+           Commodity => Commodities.To_Database_Reference (Commodity),
            Offer     => Concorde.Db.Ask);
    begin
       if Ask.Has_Element then
@@ -652,7 +653,8 @@ package body Concorde.Managers.Agents is
 
       for Stock_Item of List loop
          Process
-           (Stock_Item.Commodity, Stock_Item.Quantity, Stock_Item.Value);
+           (Concorde.Commodities.Get_Commodity (Stock_Item.Commodity),
+            Stock_Item.Quantity, Stock_Item.Value);
       end loop;
    end Scan_Stock;
 

@@ -99,7 +99,9 @@ package body Concorde.Configure.Production is
    begin
       for Item of Config loop
          if Concorde.Commodities.Exists (Item.Config_Name) then
-            Create (Production, Concorde.Commodities.Get (Item.Config_Name),
+            Create (Production,
+                    Concorde.Commodities.To_Database_Reference
+                      (Concorde.Commodities.Get (Item.Config_Name)),
                     Concorde.Quantities.To_Quantity
                       (Real (Float'(Item.Value))));
          else
