@@ -17,3 +17,11 @@ operator = {
 infantry-training = {
    education = secondary
 }
+
+chemistry = {
+   education = secondary
+}
+
+metallurgy = {
+   education = secondary
+}

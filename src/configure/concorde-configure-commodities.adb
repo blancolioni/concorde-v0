@@ -42,9 +42,9 @@ package body Concorde.Configure.Commodities is
       Category : constant Concorde.Db.Commodity_Class_Reference :=
         Concorde.Db.Commodity_Class.Create (Name);
    begin
-      if Name = "skills" then
+      if Name = "skill" then
          Skill_Category := Category;
-      elsif Name = "resources" then
+      elsif Name = "resource" then
          Resource_Category := Category;
       end if;
 

@@ -1,0 +1,35 @@
+iron = {
+   base-price = 0.1
+}
+
+sulphur = {
+   base_price = 0.2
+}
+
+oil = {
+   base-price = 0.1
+}
+
+coal = {
+   base-price = 0.1
+}
+
+salt = {
+   base-price = 0.01
+}
+
+fissile = {
+   base-price = 1
+}
+
+hydrocarbon = {
+   base-price = 0.2
+}
+
+precious = {
+   base-price = 5
+}
+
+wood = {
+   base-price = 1
+}
