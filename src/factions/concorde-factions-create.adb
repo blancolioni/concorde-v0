@@ -20,18 +20,23 @@ with Concorde.Configure.Commodities;
 with Concorde.Configure.Installations;
 
 with Concorde.Db.Account;
+with Concorde.Db.Army;
 with Concorde.Db.Company;
 with Concorde.Db.Deposit;
 with Concorde.Db.Faction;
 with Concorde.Db.Market;
 with Concorde.Db.Pop;
+with Concorde.Db.Regiment;
 with Concorde.Db.Script;
 with Concorde.Db.Script_Line;
 with Concorde.Db.Sector_Use;
 with Concorde.Db.Shareholder;
+with Concorde.Db.Skill;
+with Concorde.Db.Stock_Item;
 with Concorde.Db.Star_System_Distance;
 with Concorde.Db.World;
 with Concorde.Db.World_Sector;
+with Concorde.Db.Unit;
 with Concorde.Db.User;
 with Concorde.Db.Utility_Class;
 
@@ -53,6 +58,10 @@ package body Concorde.Factions.Create is
       Sector      : Concorde.Db.World_Sector_Reference;
       Sector_Use  : Concorde.Db.Sector_Use_Reference;
       Zone_Config : Tropos.Configuration);
+
+   procedure Create_Pop_Regiment
+     (Pop  : Concorde.Db.Pop_Reference;
+      Army : Concorde.Db.Army_Reference);
 
    --------------------
    -- Create_Faction --
@@ -124,6 +133,16 @@ package body Concorde.Factions.Create is
               Headquarters => Capital,
               Shares       => Faction_Company_Shares,
               Dividend     => 0.2);
+         Army       : constant Concorde.Db.Army_Reference :=
+           Concorde.Db.Army.Create
+             (Account      =>
+                Concorde.Agents.New_Account
+                  (Concorde.Money.Zero, Account),
+              Name         => "1st Colonial Army",
+              Capacity     => Concorde.Quantities.To_Quantity (1.0e6),
+              Faction      => Faction,
+              World        => Capital,
+              World_Sector => Sector);
          Remaining_Shares : Natural := Faction_Company_Shares;
          Script           : constant Concorde.Db.Script_Reference :=
            Concorde.Db.Script.Create ("rc", User);
@@ -175,6 +194,8 @@ package body Concorde.Factions.Create is
                  Concorde.Agents.New_Account (Cash);
                Ownership : constant Unit_Real :=
                  Real (Float'(Pop_Config.Get ("faction-share", 0.0)));
+               Is_Regiment : constant Boolean :=
+                 Pop_Config.Get ("regiment");
                Pop : constant Concorde.Db.Pop_Reference :=
                  Concorde.Db.Pop.Create
                    (Transported_Size => Concorde.Quantities.To_Real (Size),
@@ -202,6 +223,7 @@ package body Concorde.Factions.Create is
                Concorde.Configure.Commodities.Configure_Stock
                  (Concorde.Db.Pop.Get (Pop), Pop_Config.Child ("skills"),
                   Factor => Concorde.Quantities.To_Real (Size));
+
                if Ownership > 0.0 then
                   declare
                      Shares : constant Natural :=
@@ -215,6 +237,11 @@ package body Concorde.Factions.Create is
                      Remaining_Shares := Remaining_Shares - Shares;
                   end;
                end if;
+
+               if Is_Regiment then
+                  Create_Pop_Regiment (Pop, Army);
+               end if;
+
             end;
          end loop;
 
@@ -295,6 +322,62 @@ package body Concorde.Factions.Create is
          end;
       end loop;
    end Create_Factions;
+
+   -------------------------
+   -- Create_Pop_Regiment --
+   -------------------------
+
+   procedure Create_Pop_Regiment
+     (Pop  : Concorde.Db.Pop_Reference;
+      Army : Concorde.Db.Army_Reference)
+   is
+      function Choose_Unit
+         return Concorde.Db.Unit_Reference;
+
+      -----------------
+      -- Choose_Unit --
+      -----------------
+
+      function Choose_Unit
+        return Concorde.Db.Unit_Reference
+      is
+      begin
+         for Stock_Item of
+           Concorde.Db.Stock_Item.Select_By_Has_Stock
+             (Concorde.Db.Pop.Get (Pop).Get_Has_Stock_Reference)
+         loop
+            declare
+               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+                 Concorde.Commodities.Get_Commodity (Stock_Item.Commodity);
+            begin
+               if Concorde.Commodities.Is_Skill (Commodity) then
+                  declare
+                     Skill : constant Concorde.Db.Skill_Reference :=
+                       Concorde.Db.Skill.Get_Skill (Stock_Item.Commodity)
+                       .Get_Skill_Reference;
+                  begin
+                     for Unit of
+                       Concorde.Db.Unit.Select_By_Skill (Skill)
+                     loop
+                        return Unit.Get_Unit_Reference;
+                     end loop;
+                  end;
+               end if;
+            end;
+         end loop;
+
+         raise Constraint_Error with
+           "unable to find a unit type to match pop skills";
+      end Choose_Unit;
+
+   begin
+      Concorde.Db.Regiment.Create
+        (Army     => Army,
+         Pop      => Pop,
+         Unit     => Choose_Unit,
+         Strength => 1_000,
+         Morale   => 1.0);
+   end Create_Pop_Regiment;
 
    ----------------------
    -- Find_Home_Sector --

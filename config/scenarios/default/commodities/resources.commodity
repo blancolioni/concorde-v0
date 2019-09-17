@@ -1,0 +1,7 @@
+iron-ore = {
+   base-price = 0.1
+}
+
+oil = {
+   base-price = 0.1
+}

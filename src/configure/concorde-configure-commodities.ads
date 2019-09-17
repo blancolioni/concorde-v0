@@ -17,6 +17,16 @@ package Concorde.Configure.Commodities is
       Config    : Tropos.Configuration;
       Factor    : Non_Negative_Real := 1.0);
 
+   procedure Configure_Constructed
+     (Constructed : Concorde.Db.Constructed_Reference;
+      Config      : Tropos.Configuration;
+      Factor      : Non_Negative_Real := 1.0);
+
+   procedure Configure_Supplied
+     (Supplied : Concorde.Db.Supplied_Reference;
+      Config    : Tropos.Configuration;
+      Factor    : Non_Negative_Real := 1.0);
+
    function Next_Commodity_Index return Positive;
 
 end Concorde.Configure.Commodities;

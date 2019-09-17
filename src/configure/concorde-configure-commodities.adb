@@ -8,10 +8,12 @@ with Concorde.Money;
 
 with Concorde.Db.Commodity_Class;
 with Concorde.Db.Commodity;
+with Concorde.Db.Construction_Input;
 with Concorde.Db.Property_Entry;
 with Concorde.Db.Resource;
 with Concorde.Db.Skill;
 with Concorde.Db.Stock_Item;
+with Concorde.Db.Supply_Input;
 
 package body Concorde.Configure.Commodities is
 
@@ -173,6 +175,45 @@ package body Concorde.Configure.Commodities is
       end loop;
    end Configure_Commodity;
 
+   ---------------------------
+   -- Configure_Constructed --
+   ---------------------------
+
+   procedure Configure_Constructed
+     (Constructed : Concorde.Db.Constructed_Reference;
+      Config      : Tropos.Configuration;
+      Factor      : Non_Negative_Real := 1.0)
+   is
+      Stock_Config : constant Tropos.Configuration :=
+        (if Config.Contains ("build")
+         then Config.Child ("build")
+         else Config);
+   begin
+      for Item_Config of Stock_Config loop
+         if Concorde.Commodities.Exists (Item_Config.Config_Name) then
+            declare
+               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+                 Concorde.Commodities.Get (Item_Config.Config_Name);
+               Quantity  : constant Concorde.Quantities.Quantity_Type :=
+                 Concorde.Quantities.Scale
+                   (Concorde.Quantities.To_Quantity
+                      (Real (Float'(Item_Config.Value))),
+                    Factor);
+            begin
+               Concorde.Db.Construction_Input.Create
+                 (Constructed => Constructed,
+                  Commodity   =>
+                    Concorde.Commodities.To_Database_Reference (Commodity),
+                  Quantity    => Quantity);
+            end;
+         else
+            raise Constraint_Error with
+              "no such commodity in stock configuration: "
+              & Item_Config.Config_Name;
+         end if;
+      end loop;
+   end Configure_Constructed;
+
    ---------------------
    -- Configure_Stock --
    ---------------------
@@ -229,6 +270,45 @@ package body Concorde.Configure.Commodities is
          end if;
       end loop;
    end Configure_Stock;
+
+   ------------------------
+   -- Configure_Supplied --
+   ------------------------
+
+   procedure Configure_Supplied
+     (Supplied : Concorde.Db.Supplied_Reference;
+      Config    : Tropos.Configuration;
+      Factor    : Non_Negative_Real := 1.0)
+   is
+      Stock_Config : constant Tropos.Configuration :=
+        (if Config.Contains ("supply")
+         then Config.Child ("supply")
+         else Config);
+   begin
+      for Item_Config of Stock_Config loop
+         if Concorde.Commodities.Exists (Item_Config.Config_Name) then
+            declare
+               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+                 Concorde.Commodities.Get (Item_Config.Config_Name);
+               Quantity  : constant Concorde.Quantities.Quantity_Type :=
+                 Concorde.Quantities.Scale
+                   (Concorde.Quantities.To_Quantity
+                      (Real (Float'(Item_Config.Value))),
+                    Factor);
+            begin
+               Concorde.Db.Supply_Input.Create
+                 (Supplied => Supplied,
+                  Commodity   =>
+                    Concorde.Commodities.To_Database_Reference (Commodity),
+                  Quantity    => Quantity);
+            end;
+         else
+            raise Constraint_Error with
+              "no such commodity in stock configuration: "
+              & Item_Config.Config_Name;
+         end if;
+      end loop;
+   end Configure_Supplied;
 
    --------------------------
    -- Next_Commodity_Index --

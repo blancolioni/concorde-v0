@@ -13,3 +13,7 @@ administration = {
 operator = {
   education = secondary
 }
+
+infantry-training = {
+   education = secondary
+}
