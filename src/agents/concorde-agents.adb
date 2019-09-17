@@ -218,21 +218,42 @@ package body Concorde.Agents is
       Tag     : String)
    is
       use type Concorde.Money.Money_Type;
+      use type Concorde.Db.Account_Reference;
       Rec : constant Concorde.Db.Account.Account_Type :=
-              Concorde.Db.Account.Get (Account);
+        Concorde.Db.Account.Get (Account);
+      Guarantor : constant Concorde.Db.Account_Reference :=
+        Rec.Guarantor;
       Old_Cash : constant Concorde.Money.Money_Type := Rec.Cash;
       New_Cash : constant Concorde.Money.Money_Type := Old_Cash - Cash;
    begin
-      Concorde.Db.Account.Update_Account (Account)
-        .Set_Cash (New_Cash)
-        .Set_Spend (Rec.Spend + Cash)
-        .Done;
-      Concorde.Db.Historical_Account.Create
-        (Account    => Account,
-         Time_Stamp => Concorde.Calendar.Clock,
-         Tag        => Tag,
-         Change     => Concorde.Money.Zero - Cash,
-         Cash       => New_Cash);
+      if New_Cash < Concorde.Money.Zero
+        and then Guarantor /= Concorde.Db.Null_Account_Reference
+      then
+         Concorde.Db.Account.Update_Account (Account)
+           .Set_Cash (Concorde.Money.Zero)
+           .Set_Spend (Rec.Spend + Cash)
+           .Done;
+         Concorde.Db.Historical_Account.Create
+           (Account    => Account,
+            Time_Stamp => Concorde.Calendar.Clock,
+            Tag        => Tag,
+            Change     => Concorde.Money.Zero - Cash,
+            Cash       => Concorde.Money.Zero);
+         Remove_Cash (Guarantor, Cash,
+                      "xfer acct"
+                      & Concorde.Db.To_String (Account));
+      else
+         Concorde.Db.Account.Update_Account (Account)
+           .Set_Cash (New_Cash)
+           .Set_Spend (Rec.Spend + Cash)
+           .Done;
+         Concorde.Db.Historical_Account.Create
+           (Account    => Account,
+            Time_Stamp => Concorde.Calendar.Clock,
+            Tag        => Tag,
+            Change     => Concorde.Money.Zero - Cash,
+            Cash       => New_Cash);
+      end if;
    end Remove_Cash;
 
 end Concorde.Agents;
