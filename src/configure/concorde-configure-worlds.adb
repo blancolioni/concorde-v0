@@ -54,13 +54,6 @@ package body Concorde.Configure.Worlds is
            (Rec.Name & ": creating surface with "
             & Tile_Count'Image & " tiles");
          Surface.Create_Voronoi_Partition (Tile_Count);
-
-         Ada.Text_IO.Put_Line
-           (Rec.Name & ": saving"
-            & Concorde.Surfaces.Surface_Tile_Count'Image
-              (Surface.Tile_Count)
-            & " tiles to database");
-
          Save_Surface (Surface, Rec);
 
          Ada.Text_IO.Put_Line

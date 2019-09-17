@@ -44,34 +44,27 @@ package body Concorde.Configure.Terrain is
                      Hazard   => Get_Real (Config, "hazard") / 100.0,
                      Is_Water => Config.Get ("is_water"));
    begin
-      if False
-        and then Config.Contains ("resource")
-      then
-         for Resource_Config of Config.Child ("resource").Child ("type") loop
-            declare
-               use Concorde.Db;
-               Index    : constant String := Resource_Config.Config_Name;
-               Name     : constant String := Resource_Config.Value;
-               Resource : constant Resource_Reference :=
-                            Concorde.Db.Resource.Get_Reference_By_Tag (Name);
-               Chance   : constant Natural :=
-                            Config.Child ("resource")
-                            .Child ("chance")
-                            .Get (Index);
-            begin
-               if Resource = Null_Resource_Reference then
-                  raise Constraint_Error with
-                    "in terrain " & Config.Config_Name
-                    & ": unknown resource: " & Name;
-               end if;
+      for Resource_Config of Config.Child ("resource") loop
+         declare
+            use Concorde.Db;
+            Resource : constant Resource_Reference :=
+              Concorde.Db.Resource.Get_Reference_By_Tag
+                (Resource_Config.Config_Name);
+            Chance   : constant Natural :=
+              Resource_Config.Value;
+         begin
+            if Resource = Null_Resource_Reference then
+               raise Constraint_Error with
+                 "in terrain " & Config.Config_Name
+                 & ": unknown resource: " & Resource_Config.Config_Name;
+            end if;
 
-               Concorde.Db.Terrain_Resource.Create
-                 (Terrain  => Terrain,
-                  Resource => Resource,
-                  Chance   => Real (Chance) / 100.0);
-            end;
-         end loop;
-      end if;
+            Concorde.Db.Terrain_Resource.Create
+              (Terrain  => Terrain,
+               Resource => Resource,
+               Chance   => Real (Chance) / 100.0);
+         end;
+      end loop;
    end Configure_Terrain;
 
 end Concorde.Configure.Terrain;

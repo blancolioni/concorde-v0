@@ -1,3 +1,7 @@
+ammunition = {
+   base-price = 15
+}   
+
 small-arms = {
-   base-price = 20
+   base-price = 75
 }

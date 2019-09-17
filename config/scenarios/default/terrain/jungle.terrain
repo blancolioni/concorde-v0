@@ -1,16 +1,8 @@
 name = Jungle
 color = "#004b49"
 hazard = 0.05
-resource = { type = { 1 = fruit
-                      2 = funghi
-                      3 = herb
-                      4 = vegetables
-                      5 = water
-                    }
-             chance = { 1 = 100
-                        2 = 100
-                        3 = 100
-                        4 = 100
-                        5 = 100
-                      }
-           }
+resource = {
+   fissile = 15 
+   hydrocarbon = 20 
+   oil = 20 
+}

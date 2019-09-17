@@ -1,18 +1,9 @@
 name = Forest
 color = "#F5DEB3"
 hazard = 0.02
-resource = { type = { 1 = carbonite
-                      2 = fruit
-                      3 = funghi
-                      4 = herb
-                      5 = vegetables
-                      6 = water
-                    }
-             chance = { 1 = 20
-                        2 = 75
-                        3 = 50
-                        4 = 50
-                        5 = 100
-                        6 = 75
-                      }
-           }
+resource = {
+	wood = 100	
+   hydrocarbon = 2
+   oil = 2
+   precious = 1 
+}

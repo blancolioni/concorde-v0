@@ -1,20 +1,10 @@
 name = Volcanic
 color = "#cf1020"
 hazard = 0.08
-resource = { type = { 1 = aluminium
-                      2 = copper
-                      3 = fissile
-                      4 = hydrocarbon
-                      5 = iron
-                      6 = precious
-                      7 = "rare-minerals"
-                    }
-             chance = { 1 = 10
-                        2 = 15
-                        3 = 10
-                        4 = 25
-                        5 = 40
-                        6 = 15
-                        7 = 40
-                      }
-           }
+resource = {
+	sulphur = 60
+    fissile = 15 
+    hydrocarbon = 20 
+    oil = 20 
+    precious = 4 
+}

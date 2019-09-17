@@ -1,20 +1,10 @@
 name = Grassland
 color = "#018E0E"
 hazard = 0.01
-resource = { type = { 1 = funghi
-                      2 = fruit
-                      3 = grains
-                      4 = herb
-                      5 = livestock
-                      6 = vegetables
-                      7 = water
-                    }
-             chance = { 1 = 20
-                        2 = 20
-                        3 = 50
-                        4 = 30
-                        5 = 40
-                        6 = 30
-                        7 = 25
-                      }
-           }
+resource = {
+   salt = 20 
+   fissile = 15 
+   hydrocarbon = 20 
+   oil = 20 
+   precious = 4 
+}
