@@ -2,6 +2,7 @@ with Tropos.Reader;
 
 with Concorde.Commodities;
 
+with Concorde.Db.Commodity_Class;
 with Concorde.Db.Production;
 with Concorde.Db.Input_Item;
 with Concorde.Db.Output_Item;
@@ -20,7 +21,8 @@ package body Concorde.Configure.Production is
       Create : not null access
         procedure (Production : Concorde.Db.Production_Reference;
                    Commodity  : Concorde.Db.Commodity_Reference;
-                   Quantity : Concorde.Quantities.Quantity_Type));
+                   Category   : Concorde.Db.Commodity_Class_Reference;
+                   Quantity   : Concorde.Quantities.Quantity_Type));
 
    --------------------------
    -- Configure_Production --
@@ -94,7 +96,8 @@ package body Concorde.Configure.Production is
       Create     : not null access
         procedure (Production : Concorde.Db.Production_Reference;
                    Commodity  : Concorde.Db.Commodity_Reference;
-                   Quantity : Concorde.Quantities.Quantity_Type))
+                   Category   : Concorde.Db.Commodity_Class_Reference;
+                   Quantity   : Concorde.Quantities.Quantity_Type))
    is
    begin
       for Item of Config loop
@@ -102,11 +105,26 @@ package body Concorde.Configure.Production is
             Create (Production,
                     Concorde.Commodities.To_Database_Reference
                       (Concorde.Commodities.Get (Item.Config_Name)),
+                    Concorde.Db.Null_Commodity_Class_Reference,
                     Concorde.Quantities.To_Quantity
                       (Real (Float'(Item.Value))));
          else
-            raise Constraint_Error with
-              "undefined commodity: " & Item.Config_Name;
+            declare
+               use type Concorde.Db.Commodity_Class_Reference;
+               Class : constant Concorde.Db.Commodity_Class_Reference :=
+                 Concorde.Db.Commodity_Class.Get_Reference_By_Tag
+                   (Item.Config_Name);
+            begin
+               if Class /= Concorde.Db.Null_Commodity_Class_Reference then
+                  Create (Production, Concorde.Db.Null_Commodity_Reference,
+                          Class,
+                          Concorde.Quantities.To_Quantity
+                            (Real (Float'(Item.Value))));
+               else
+                  raise Constraint_Error with
+                    "no such commodity or class: " & Item.Config_Name;
+               end if;
+            end;
          end if;
       end loop;
    end Configure_Production_Items;
