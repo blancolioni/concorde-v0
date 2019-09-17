@@ -721,6 +721,12 @@ package body Concorde.Managers.Pops is
         (others => 0.0);
       Education : Real := 0.0;
 
+      Available : Concorde.Quantities.Quantity_Type :=
+        Concorde.Quantities.Zero;
+
+      Missing   : Concorde.Quantities.Quantity_Type :=
+        Concorde.Quantities.Zero;
+
       procedure Apply
         (Commodity : Concorde.Commodities.Commodity_Reference;
          Quantity  : Concorde.Quantities.Quantity_Type;
@@ -741,6 +747,11 @@ package body Concorde.Managers.Pops is
          Value     : Concorde.Money.Money_Type)
       is
          pragma Unreferenced (Value);
+
+         use type Concorde.Quantities.Quantity_Type;
+
+         Have : constant Concorde.Quantities.Quantity_Type :=
+           Manager.Stock_Quantity (Commodity);
 
          procedure Update
            (Acc       : in out Real;
@@ -763,6 +774,8 @@ package body Concorde.Managers.Pops is
             if Has_Property (Commodity, P) then
                Acc := Acc +
                  Concorde.Quantities.To_Real (Quantity)
+                 * Get_Property (Commodity, P)
+                 + Concorde.Quantities.To_Real (Available)
                  * Get_Property (Commodity, P);
             end if;
 
@@ -776,6 +789,7 @@ package body Concorde.Managers.Pops is
                   end if;
                end;
             end if;
+
          end Update;
 
       begin
@@ -785,6 +799,12 @@ package body Concorde.Managers.Pops is
          Update (Health_Set (2), "health-1");
          Update (Health_Set (3), "health-1");
          Update (Education, "education");
+
+         Missing := Missing +
+           Quantity - Concorde.Quantities.Min (Have, Quantity);
+
+         Available := Available + Concorde.Quantities.Min (Have, Quantity);
+
       end Apply;
 
       --------------
@@ -802,7 +822,7 @@ package body Concorde.Managers.Pops is
          Fn        : constant Concorde.Utility.Utility_Function :=
                        Manager.Utility_Fns.Element (Commodity);
       begin
-         return Fn.Evaluate (X / Size);
+         return Fn.Evaluate (X / Size) + 1.0;
       end Evaluate;
 
    begin
@@ -818,6 +838,7 @@ package body Concorde.Managers.Pops is
       end loop;
 
       declare
+         use type Concorde.Quantities.Quantity_Type;
          Hour_Utility : constant Real :=
            Evaluate ("hours", Hours);
          Happy_Utility : constant Real :=
@@ -826,11 +847,20 @@ package body Concorde.Managers.Pops is
            Evaluate ("health", Health);
          Education_Utility : constant Real :=
            Evaluate ("education", Education);
-      begin
-         return Hour_Utility
+         Base_Utility : constant Real :=
+           Hour_Utility
            + Happy_Utility
            + Health_Utility
            + Education_Utility;
+         Availability_Factor : constant Real :=
+           0.5
+           + Concorde.Quantities.To_Real (Available)
+           / Concorde.Quantities.To_Real (Available + Missing);
+         Final_Utility : constant Real :=
+           (if Base_Utility < 0.0 then Base_Utility
+            else Base_Utility * Availability_Factor);
+      begin
+         return Final_Utility;
       end;
 
    end Evaluate_Utility;
