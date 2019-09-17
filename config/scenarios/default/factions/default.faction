@@ -80,6 +80,16 @@ capital-sector = {
    residential = 100
 }
 
+military = {
+   salary = 1
+   supply = {
+      basic-takeout = 20
+	  grain = 60
+	  vegetables = 40
+	  fruit = 10
+	  }
+}
+
 sector-use = {
    farmland = {
       count = 1

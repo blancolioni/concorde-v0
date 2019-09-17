@@ -60,8 +60,9 @@ package body Concorde.Factions.Create is
       Zone_Config : Tropos.Configuration);
 
    procedure Create_Pop_Regiment
-     (Pop  : Concorde.Db.Pop_Reference;
-      Army : Concorde.Db.Army_Reference);
+     (Pop    : Concorde.Db.Pop_Reference;
+      Army   : Concorde.Db.Army_Reference;
+      Supply : Tropos.Configuration);
 
    --------------------
    -- Create_Faction --
@@ -243,7 +244,9 @@ package body Concorde.Factions.Create is
                end if;
 
                if Is_Regiment then
-                  Create_Pop_Regiment (Pop, Army);
+                  Create_Pop_Regiment
+                    (Pop, Army,
+                     Setup.Child ("military"));
                end if;
 
             end;
@@ -332,8 +335,9 @@ package body Concorde.Factions.Create is
    -------------------------
 
    procedure Create_Pop_Regiment
-     (Pop  : Concorde.Db.Pop_Reference;
-      Army : Concorde.Db.Army_Reference)
+     (Pop    : Concorde.Db.Pop_Reference;
+      Army   : Concorde.Db.Army_Reference;
+      Supply : Tropos.Configuration)
    is
       function Choose_Unit
          return Concorde.Db.Unit_Reference;
@@ -374,14 +378,19 @@ package body Concorde.Factions.Create is
            "unable to find a unit type to match pop skills";
       end Choose_Unit;
 
+      Regiment : constant Concorde.Db.Regiment_Reference :=
+        Concorde.Db.Regiment.Create
+          (Army         => Army,
+           Pop          => Pop,
+           Unit         => Choose_Unit,
+           Strength     => 1_000,
+           Morale       => 1.0,
+           Organisation => 1.0);
+      Supplied : constant Concorde.Db.Supplied_Reference :=
+        Concorde.Db.Regiment.Get (Regiment).Get_Supplied_Reference;
    begin
-      Concorde.Db.Regiment.Create
-        (Army         => Army,
-         Pop          => Pop,
-         Unit         => Choose_Unit,
-         Strength     => 1_000,
-         Morale       => 1.0,
-         Organisation => 1.0);
+      Concorde.Configure.Commodities.Configure_Supplied
+        (Supplied, Supply);
    end Create_Pop_Regiment;
 
    ----------------------

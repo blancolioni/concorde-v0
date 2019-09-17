@@ -1,11 +1,14 @@
 with Concorde.Managers.Agents;
 
 with Concorde.Commodities;
+with Concorde.Stock;
+
 with Concorde.Money;
 with Concorde.Quantities;
 
 with Concorde.Db.Army;
 with Concorde.Db.Market;
+with Concorde.Db.Pop;
 with Concorde.Db.Regiment;
 with Concorde.Db.Supply_Input;
 with Concorde.Db.Unit;
@@ -116,23 +119,35 @@ package body Concorde.Managers.Armies is
          declare
             Unit : constant Concorde.Db.Unit.Unit_Type :=
               Concorde.Db.Unit.Get (Regiment.Unit);
+
+            procedure Add_Supply
+              (Supplied : Concorde.Db.Supplied_Reference);
+
+            procedure Add_Supply
+              (Supplied : Concorde.Db.Supplied_Reference)
+            is
+            begin
+               for Supply_Input of
+                 Concorde.Db.Supply_Input.Select_By_Supplied (Supplied)
+               loop
+                  declare
+                     Commodity : constant Commodities.Commodity_Reference :=
+                       Commodities.Get_Commodity (Supply_Input.Commodity);
+                  begin
+                     Daily.Add_Quantity
+                       (Commodity,
+                        Supply_Input.Quantity,
+                        Manager.Current_Ask_Price
+                          (Commodity, Supply_Input.Quantity));
+                  end;
+               end loop;
+            end Add_Supply;
+
          begin
-            for Supply_Input of
-              Concorde.Db.Supply_Input.Select_By_Supplied
-                (Unit.Get_Supplied_Reference)
-            loop
-               declare
-                  Commodity : constant Commodities.Commodity_Reference :=
-                    Commodities.Get_Commodity (Supply_Input.Commodity);
-               begin
-                  Daily.Add_Quantity
-                    (Commodity,
-                     Supply_Input.Quantity,
-                     Manager.Current_Ask_Price
-                       (Commodity, Supply_Input.Quantity));
-               end;
-            end loop;
+            Add_Supply (Unit.Get_Supplied_Reference);
+            Add_Supply (Regiment.Get_Supplied_Reference);
          end;
+
       end loop;
 
       Manager.Log
@@ -141,10 +156,16 @@ package body Concorde.Managers.Armies is
 
    end Create_Planning;
 
+   -------------------------
+   -- Execute_Consumption --
+   -------------------------
+
    overriding procedure Execute_Consumption
      (Manager : in out Root_Army_Manager)
    is
       Daily : Concorde.Commodities.Stock_Type;
+      Food  : Concorde.Commodities.Stock_Type;
+      Count : Natural := 0;
    begin
       for Regiment of
         Concorde.Db.Regiment.Select_By_Army (Manager.Army)
@@ -152,23 +173,43 @@ package body Concorde.Managers.Armies is
          declare
             Unit : constant Concorde.Db.Unit.Unit_Type :=
               Concorde.Db.Unit.Get (Regiment.Unit);
+
+            procedure Add
+              (Stock : in out Concorde.Commodities.Stock_Type;
+               Supplied : Concorde.Db.Supplied_Reference);
+
+            ---------
+            -- Add --
+            ---------
+
+            procedure Add
+              (Stock    : in out Concorde.Commodities.Stock_Type;
+               Supplied : Concorde.Db.Supplied_Reference)
+            is
+            begin
+               for Supply_Input of
+                 Concorde.Db.Supply_Input.Select_By_Supplied (Supplied)
+               loop
+                  declare
+                     Commodity : constant Commodities.Commodity_Reference :=
+                       Commodities.Get_Commodity (Supply_Input.Commodity);
+                  begin
+                     Stock.Add_Quantity
+                       (Commodity,
+                        Supply_Input.Quantity,
+                        Manager.Current_Ask_Price
+                          (Commodity, Supply_Input.Quantity));
+                  end;
+               end loop;
+            end Add;
+
          begin
-            for Supply_Input of
-              Concorde.Db.Supply_Input.Select_By_Supplied
-                (Unit.Get_Supplied_Reference)
-            loop
-               declare
-                  Commodity : constant Commodities.Commodity_Reference :=
-                    Commodities.Get_Commodity (Supply_Input.Commodity);
-               begin
-                  Daily.Add_Quantity
-                    (Commodity,
-                     Supply_Input.Quantity,
-                     Manager.Current_Ask_Price
-                       (Commodity, Supply_Input.Quantity));
-               end;
-            end loop;
+            Add (Daily, Unit.Get_Supplied_Reference);
+            Add (Food, Regiment.Get_Supplied_Reference);
          end;
+
+         Count := Count + 1;
+
       end loop;
 
       declare
@@ -176,6 +217,11 @@ package body Concorde.Managers.Armies is
          Organisation : Unit_Real := 1.0;
 
          procedure Consume
+           (Commodity : Concorde.Commodities.Commodity_Reference;
+            Quantity  : Concorde.Quantities.Quantity_Type;
+            Value     : Concorde.Money.Money_Type);
+
+         procedure Transfer
            (Commodity : Concorde.Commodities.Commodity_Reference;
             Quantity  : Concorde.Quantities.Quantity_Type;
             Value     : Concorde.Money.Money_Type);
@@ -204,8 +250,59 @@ package body Concorde.Managers.Armies is
             Manager.Remove_Stock (Commodity, Quantity);
          end Consume;
 
+         --------------
+         -- Transfer --
+         --------------
+
+         procedure Transfer
+           (Commodity : Concorde.Commodities.Commodity_Reference;
+            Quantity  : Concorde.Quantities.Quantity_Type;
+            Value     : Concorde.Money.Money_Type)
+         is
+            use Concorde.Quantities;
+            Have     : constant Quantity_Type :=
+              Manager.Stock_Quantity (Commodity);
+            Consume  : constant Quantity_Type := Min (Have, Quantity);
+            Factor   : constant Real :=
+              To_Real (Consume) / To_Real (Quantity);
+            Price    : constant Concorde.Money.Price_Type :=
+              Concorde.Money.Price (Value, Quantity);
+            Ref      : constant Concorde.Db.Commodity_Reference :=
+              Concorde.Commodities.To_Database_Reference
+                (Commodity);
+         begin
+            Manager.Remove_Stock (Commodity, Consume);
+
+            for Regiment of
+              Concorde.Db.Regiment.Select_By_Army (Manager.Army)
+            loop
+               declare
+                  Input              : constant Concorde.Db.Supply_Input
+                    .Supply_Input_Type :=
+                      Concorde.Db.Supply_Input.Get_By_Supply_Input
+                        (Regiment.Get_Supplied_Reference, Ref);
+                  Want               : constant Quantity_Type :=
+                    (if Input.Has_Element then Input.Quantity else Zero);
+                  Transfered : constant Quantity_Type :=
+                    Scale (Want, Factor);
+               begin
+                  if Transfered > Zero then
+                     Concorde.Stock.Add_Stock
+                       (To       =>
+                          Concorde.Db.Pop.Get (Regiment.Pop)
+                        .Get_Has_Stock_Reference,
+                        Item     => Commodity,
+                        Quantity => Transfered,
+                        Value    =>
+                          Concorde.Money.Total (Price, Transfered));
+                  end if;
+               end;
+            end loop;
+         end Transfer;
+
       begin
          Daily.Iterate (Consume'Access);
+         Food.Iterate (Transfer'Access);
 
          for Regiment of
            Concorde.Db.Regiment.Select_By_Army (Manager.Army)
