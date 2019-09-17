@@ -1,3 +1,4 @@
+with Ada.Calendar;
 with Ada.Containers.Vectors;
 with Ada.Text_IO;
 
@@ -569,6 +570,9 @@ package body Concorde.Managers.Pops is
 
       end Show_Work;
 
+      Now : constant Ada.Calendar.Time :=
+        Ada.Calendar.Clock;
+
    begin
 
       Manager.Log ("planning budget: " & Concorde.Money.Show (Budget));
@@ -637,6 +641,16 @@ package body Concorde.Managers.Pops is
       if False then
          Show_Work;
       end if;
+
+      declare
+         use Ada.Calendar;
+         Interval : constant Duration :=
+           Clock - Now;
+      begin
+         Manager.Log ("planning complete in "
+                      & Real_Images.Approximate_Image
+                        (Real (Interval) * 1000.0) & "ms");
+      end;
 
    end Create_Planning;
 
