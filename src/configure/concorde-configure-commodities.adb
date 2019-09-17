@@ -138,7 +138,7 @@ package body Concorde.Configure.Commodities is
                   Concorde.Db.Property_Entry.Create
                     (Has_Properties => Has_Properties,
                      Property       =>
-                       Concorde.Properties.Property
+                       Concorde.Properties.Get_Reference
                          (Property_Config.Config_Name
                           & Integer'Image (-I)),
                      Value          =>
@@ -157,7 +157,8 @@ package body Concorde.Configure.Commodities is
                Concorde.Db.Property_Entry.Create
                  (Has_Properties => Has_Properties,
                   Property       =>
-                    Concorde.Properties.Property (Property_Config.Config_Name),
+                    Concorde.Properties.Get_Reference
+                      (Property_Config.Config_Name),
                   Value          =>
                     Real (Float'(Property_Config.Value)));
             exception

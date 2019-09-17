@@ -5,7 +5,6 @@ with Ada.Strings.Unbounded;
 with Concorde.Db.Commodity;
 with Concorde.Db.Commodity_Class;
 with Concorde.Db.Lease;
-with Concorde.Db.Property_Entry;
 with Concorde.Db.Sector_Title;
 with Concorde.Db.Stock_Item;
 with Concorde.Db.Zone;
@@ -43,6 +42,7 @@ package body Concorde.Commodities is
          Initial_Price          : Concorde.Money.Price_Type;
          Leased_Commodity       : Commodity_Reference;
          Lease_Days             : Natural;
+         Properties             : Concorde.Properties.Property_List;
          Is_Lease               : Boolean;
          Is_Skill               : Boolean;
          Is_Title               : Boolean;
@@ -125,12 +125,15 @@ package body Concorde.Commodities is
          Initial_Price          => Item.Initial_Price,
          Leased_Commodity       => 1,
          Lease_Days             => 0,
+         Properties             => <>,
          Is_Lease               => Item.Top_Record = R_Lease,
          Is_Skill               => Item.Top_Record = R_Skill,
          Is_Title               => Item.Top_Record = R_Sector_Title,
          Is_Zone                => Item.Top_Record = R_Zone,
          Is_Sector_Title        => Item.Top_Record = R_Sector_Title);
    begin
+
+      Rec.Properties.Create_List (Rec.Has_Properties);
 
       if Rec.Is_Lease then
          declare
@@ -410,10 +413,7 @@ package body Concorde.Commodities is
       return Real
    is
    begin
-      return Concorde.Db.Property_Entry.Get_By_Property_Entry
-        (Has_Properties => Vector (Commodity).Has_Properties,
-         Property       => Property)
-        .Value;
+      return Vector (Commodity).Properties.Get_Property (Property);
    end Get_Property;
 
    ------------------
@@ -480,10 +480,7 @@ package body Concorde.Commodities is
       return Boolean
    is
    begin
-      return Concorde.Db.Property_Entry.Is_Property_Entry
-        (Has_Properties =>
-           Vector (Commodity).Has_Properties,
-         Property       => Property);
+      return Vector (Commodity).Properties.Has_Property (Property);
    end Has_Property;
 
    -------------------
