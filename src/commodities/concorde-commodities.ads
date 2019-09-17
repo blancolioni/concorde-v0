@@ -113,6 +113,8 @@ package Concorde.Commodities is
 
    type Stock_Type is tagged private;
 
+   procedure Clear (Stock : in out Stock_Type);
+
    function Get_Quantity
      (Stock     : Stock_Type;
       Commodity : Commodity_Reference)
@@ -135,6 +137,12 @@ package Concorde.Commodities is
       Value     : Concorde.Money.Money_Type);
 
    procedure Set_Quantity
+     (Stock     : in out Stock_Type;
+      Commodity : Commodity_Reference;
+      Quantity  : Concorde.Quantities.Quantity_Type;
+      Price_Per : Concorde.Money.Price_Type);
+
+   procedure Add_Quantity
      (Stock     : in out Stock_Type;
       Commodity : Commodity_Reference;
       Quantity  : Concorde.Quantities.Quantity_Type;

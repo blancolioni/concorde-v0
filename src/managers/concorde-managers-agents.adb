@@ -3,6 +3,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with WL.Random;
 
 with Concorde.Agents;
+with Concorde.Random;
 with Concorde.Stock;
 
 with Concorde.Db.Account;
@@ -42,11 +43,12 @@ package body Concorde.Managers.Agents is
       if M.Update_Count = 0 then
          M.Update_Count :=
            WL.Random.Random_Number (1, Manager.Planning_Cycle);
+         M.Set_Next_Update_Delay
+           (Concorde.Calendar.Days (Concorde.Random.Unit_Random + 0.5));
       else
          M.Update_Count := M.Update_Count + 1;
+         M.Set_Next_Update_Delay (Concorde.Calendar.Days (1));
       end if;
-
-      M.Set_Next_Update_Delay (Concorde.Calendar.Days (1));
 
    end Activate;
 

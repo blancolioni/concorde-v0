@@ -3,6 +3,7 @@ with Commodities;
 with Construction;
 with Factions;
 with Localisation;
+with Managed;
 with Names;
 with Pops;
 with Technology;
@@ -23,7 +24,7 @@ record Unit : Localised, Technological, Constructed, Supplied is
    key Skill;
 end Unit;
 
-record Army : Agent, Has_Name, Supplied is
+record Army : Agent, Has_Name, Supplied, Managed is
    key Faction;
    key World;
    key World_Sector;
@@ -33,8 +34,9 @@ record Regiment : Supplied is
    key Army;
    key Pop;
    Unit;
-   Strength : Natural;
-   Morale   : Long_Float;
+   Strength     : Natural;
+   Morale       : Long_Float;
+   Organisation : Long_Float;
 end Regiment;
 
 end Armies;

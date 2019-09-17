@@ -1,3 +1,4 @@
+with Concorde.Managers.Armies;
 with Concorde.Managers.Factions;
 with Concorde.Managers.Installations;
 with Concorde.Managers.Pops;
@@ -22,6 +23,9 @@ package body Concorde.Managers.Loader is
       Register.Insert
         ("default-faction",
          Concorde.Managers.Factions.Create_Default_Manager'Access);
+      Register.Insert
+        ("default-army",
+         Concorde.Managers.Armies.Create_Default_Manager'Access);
       Register.Insert
         ("faction-company",
          Concorde.Managers.Factions.Create_Faction_Company_Manager'Access);

@@ -100,6 +100,8 @@ installations = {
 		 basic-meal = 100
 		 regular-meal = 50
 		 luxury-meal = 10
+		 small-arms = 100
+		 fuel = 100
       }
     }
 }

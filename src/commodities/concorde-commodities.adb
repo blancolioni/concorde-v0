@@ -98,6 +98,29 @@ package body Concorde.Commodities is
    end Add;
 
    ------------------
+   -- Add_Quantity --
+   ------------------
+
+   procedure Add_Quantity
+     (Stock     : in out Stock_Type;
+      Commodity : Commodity_Reference;
+      Quantity  : Concorde.Quantities.Quantity_Type;
+      Price_Per : Concorde.Money.Price_Type)
+   is
+      use Concorde.Money, Concorde.Quantities;
+   begin
+      for Rec of Stock.List loop
+         if Rec.Commodity = Commodity then
+            Rec.Quantity := Rec.Quantity + Quantity;
+            Rec.Value := Rec.Value
+              + Concorde.Money.Total (Price_Per, Quantity);
+            return;
+         end if;
+      end loop;
+      Stock.Set_Quantity (Commodity, Quantity, Price_Per);
+   end Add_Quantity;
+
+   ------------------
    -- Add_To_Cache --
    ------------------
 
@@ -220,6 +243,15 @@ package body Concorde.Commodities is
       end if;
 
    end Check_Cache;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Stock : in out Stock_Type) is
+   begin
+      Stock := (others => <>);
+   end Clear;
 
    ------------------
    -- Create_Lease --

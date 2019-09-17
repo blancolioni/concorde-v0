@@ -138,6 +138,10 @@ package body Concorde.Factions.Create is
              (Account      =>
                 Concorde.Agents.New_Account
                   (Concorde.Money.Zero, Account),
+              Active       => True,
+              Scheduled    => False,
+              Next_Event   => Concorde.Calendar.Clock,
+              Manager      => "default-army",
               Name         => "1st Colonial Army",
               Capacity     => Concorde.Quantities.To_Quantity (1.0e6),
               Faction      => Faction,
@@ -372,11 +376,12 @@ package body Concorde.Factions.Create is
 
    begin
       Concorde.Db.Regiment.Create
-        (Army     => Army,
-         Pop      => Pop,
-         Unit     => Choose_Unit,
-         Strength => 1_000,
-         Morale   => 1.0);
+        (Army         => Army,
+         Pop          => Pop,
+         Unit         => Choose_Unit,
+         Strength     => 1_000,
+         Morale       => 1.0,
+         Organisation => 1.0);
    end Create_Pop_Regiment;
 
    ----------------------
