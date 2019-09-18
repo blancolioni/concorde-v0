@@ -123,6 +123,10 @@ package body Concorde.Managers.Armies is
             procedure Add_Supply
               (Supplied : Concorde.Db.Supplied_Reference);
 
+            ----------------
+            -- Add_Supply --
+            ----------------
+
             procedure Add_Supply
               (Supplied : Concorde.Db.Supplied_Reference)
             is
@@ -247,7 +251,7 @@ package body Concorde.Managers.Armies is
                                 To_Real (Consumed)
                                 / To_Real (Quantity));
             end if;
-            Manager.Remove_Stock (Commodity, Quantity);
+            Manager.Remove_Stock (Commodity, Consumed);
          end Consume;
 
          --------------
