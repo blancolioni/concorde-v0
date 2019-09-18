@@ -168,12 +168,13 @@ package body Concorde.Markets is
          use type Concorde.Db.Market_Offer_Reference;
          Old_Offer : constant Concorde.Db.Market_Offer_Reference :=
            Concorde.Db.Market_Offer.Get_Reference_By_Market_Offer
-             (Market, Agent, Ref, Offer);
+             (Market, Agent, Ref);
          Priority  : constant Real :=
            Offer_Priority (Offer, Price);
       begin
          if Old_Offer /= Concorde.Db.Null_Market_Offer_Reference then
             Concorde.Db.Market_Offer.Update_Market_Offer (Old_Offer)
+              .Set_Offer (Offer)
               .Set_Original (Quantity)
               .Set_Quantity (Quantity)
               .Set_Priority (Priority)
@@ -935,13 +936,14 @@ package body Concorde.Markets is
       Offer     : Concorde.Db.Offer_Type)
       return Concorde.Quantities.Quantity_Type
    is
+      use type Concorde.Db.Offer_Type;
       Ref  : constant Concorde.Db.Commodity_Reference :=
         Concorde.Commodities.To_Database_Reference (Commodity);
       Item : constant Concorde.Db.Market_Offer.Market_Offer_Type :=
         Concorde.Db.Market_Offer.Get_By_Market_Offer
-          (Market, Agent, Ref, Offer);
+          (Market, Agent, Ref);
    begin
-      if Item.Has_Element then
+      if Item.Has_Element and then Item.Offer = Offer then
          return Item.Quantity;
       else
          return Concorde.Quantities.Zero;

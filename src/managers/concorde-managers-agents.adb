@@ -580,14 +580,16 @@ package body Concorde.Managers.Agents is
       Commodity : Concorde.Commodities.Commodity_Reference;
       Quantity  : Concorde.Quantities.Quantity_Type)
    is
+      use type Concorde.Db.Offer_Type;
       Ask : constant Concorde.Db.Market_Offer.Market_Offer_Type :=
         Concorde.Db.Market_Offer.Get_By_Market_Offer
           (Market    => Manager.Market,
            Agent     => Manager.Agent,
-           Commodity => Commodities.To_Database_Reference (Commodity),
-           Offer     => Concorde.Db.Ask);
+           Commodity => Commodities.To_Database_Reference (Commodity));
    begin
-      if Ask.Has_Element then
+      if Ask.Has_Element
+        and then Ask.Offer = Concorde.Db.Ask
+      then
          declare
             use Concorde.Quantities;
             Ask_Quantity : constant Quantity_Type := Ask.Quantity;

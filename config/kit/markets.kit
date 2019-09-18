@@ -35,7 +35,7 @@ record Market_Offer is
    key Market_Commodity with Market, Commodity;
    key Priority_Offer with Market, Commodity, Offer, Priority;
    key Agent_Offer with Market, Commodity, Agent, Offer, Priority;
-   unique key Market_Offer with Market, Agent, Commodity, Offer;
+   unique key Market_Offer with Market, Agent, Commodity;
 end Market_Offer;
 
 record Historical_Offer is
