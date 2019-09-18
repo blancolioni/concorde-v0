@@ -280,7 +280,12 @@ package body Concorde.Stock is
             Stock : constant Concorde.Db.Stock_Item.Stock_Item_Type :=
                       Concorde.Db.Stock_Item.Get_By_Stock_Item
                         (From, Ref);
+            pragma Assert (Stock.Has_Element);
+
             Available : constant Quantity_Type := Stock.Quantity;
+            Stock_Value : constant Money_Type := Stock.Value;
+            Removed_Value : constant Money_Type :=
+              Adjust (Stock_Value, To_Real (Quantity) / To_Real (Available));
          begin
             if Available < Quantity then
                Ada.Text_IO.Put_Line
@@ -292,19 +297,18 @@ package body Concorde.Stock is
                   & Image (Available));
             end if;
 
-            pragma Assert (Stock.Has_Element);
             pragma Assert (Available >= Quantity);
 
-            Value := Total (Price (Stock.Value, Stock.Quantity), Quantity);
+            Value := Removed_Value;
 
-            if Value = Stock.Value and then Quantity < Stock.Quantity then
-               Value := Stock.Value - To_Money (0.01);
-            end if;
+            pragma Assert (Value <= Stock_Value);
+            pragma Assert (Value < Stock_Value
+                           or else Quantity = Available);
 
             Concorde.Db.Stock_Item.Update_Stock_Item
               (Stock.Get_Stock_Item_Reference)
-              .Set_Quantity (Stock.Quantity - Quantity)
-              .Set_Value (Stock.Value - Value)
+              .Set_Quantity (Available - Quantity)
+              .Set_Value (Stock_Value - Value)
               .Done;
          end;
          Register_Stock (From, Item);
