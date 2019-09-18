@@ -25,3 +25,7 @@ chemistry = {
 metallurgy = {
    education = secondary
 }
+
+gunsmith = {
+   education = secondary
+}
