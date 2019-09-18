@@ -784,10 +784,20 @@ package body Concorde.Commodities is
       Title_Zone : Commodity_Reference)
       return Commodity_Reference
    is
+      use type Concorde.Db.Commodity_Reference;
+      Tag : constant String := Title_Tag (Sector, Title_Zone);
+      Ref : constant Concorde.Db.Commodity_Reference :=
+        Concorde.Db.Commodity.Get_Reference_By_Tag (Tag);
    begin
-      return Get_Commodity
-        (Concorde.Db.Commodity.Get_Reference_By_Tag
-           (Title_Tag (Sector, Title_Zone)));
+      if Ref = Concorde.Db.Null_Commodity_Reference then
+         raise Constraint_Error with
+           "no title for sector"
+           & Db.To_String (Sector)
+           & " and zone "
+           & Local_Name (Title_Zone);
+      else
+         return Get_Commodity (Ref);
+      end if;
    end Title_Commodity;
 
    ---------------
