@@ -1,4 +1,5 @@
 with Ada.Calendar;
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Vectors;
 with Ada.Text_IO;
 
@@ -583,6 +584,10 @@ package body Concorde.Managers.Pops is
 
       Manager.Log ("planning budget: " & Concorde.Money.Show (Budget));
 
+      if Budget <= Concorde.Money.Zero then
+         return;
+      end if;
+
       Work.Clear;
 
       for Commodity of Concorde.Commodities.All_Commodities loop
@@ -991,6 +996,20 @@ package body Concorde.Managers.Pops is
       Production_Cost : Concorde.Money.Money_Type :=
                           Concorde.Money.Zero;
 
+      type Bid_Record is
+         record
+            Commodity  : Concorde.Commodities.Commodity_Reference;
+            Quantity   : Concorde.Quantities.Quantity_Type;
+            Price      : Concorde.Money.Price_Type;
+            Total_Cost : Concorde.Money.Money_Type;
+            Capacity   : Non_Negative_Real;
+         end record;
+
+      package Bid_Lists is
+        new Ada.Containers.Doubly_Linked_Lists (Bid_Record);
+
+      Bids : Bid_Lists.List;
+
       function Constrain
         (Commodity : Concorde.Commodities.Commodity_Reference;
          Required  : Concorde.Quantities.Quantity_Type)
@@ -1099,6 +1118,9 @@ package body Concorde.Managers.Pops is
          return Cost;
       end Zone_Cost;
 
+      Budget : constant Concorde.Money.Money_Type :=
+        Concorde.Money.Adjust (Manager.Current_Cash, 0.5);
+
    begin
 
       declare
@@ -1111,6 +1133,14 @@ package body Concorde.Managers.Pops is
          end if;
 
          if Manager.Production = Null_Production_Reference then
+            return;
+         end if;
+      end;
+
+      declare
+         use Concorde.Money;
+      begin
+         if Budget <= Zero then
             return;
          end if;
       end;
@@ -1146,79 +1176,116 @@ package body Concorde.Managers.Pops is
       Manager.Log ("skill capacity: "
                    & Real_Images.Approximate_Image (Max_Capacity));
 
-      for Input_Item of
-        Concorde.Db.Input_Item.Select_By_Production (Manager.Production)
-      loop
-         declare
-            This_Capacity : constant Non_Negative_Real :=
-              Constrain
-                (Concorde.Commodities.Get_Commodity (Input_Item.Commodity),
-                 Input_Item.Quantity);
-         begin
-            if This_Capacity < Max_Capacity then
-               declare
-                  use Concorde.Quantities, Concorde.Money;
+      declare
+         use Concorde.Quantities, Concorde.Money;
+         Total_Quantity : Quantity_Type := Zero;
+         Total_Cost     : Money_Type    := Zero;
+      begin
+         for Input_Item of
+           Concorde.Db.Input_Item.Select_By_Production (Manager.Production)
+         loop
+            declare
+               This_Capacity : constant Non_Negative_Real :=
+                 Constrain
+                   (Concorde.Commodities.Get_Commodity (Input_Item.Commodity),
+                    Input_Item.Quantity);
+            begin
+               if This_Capacity < Max_Capacity then
+                  declare
 
-                  Commodity : constant Commodities.Commodity_Reference :=
-                    Commodities.Get_Commodity
-                      (Input_Item.Commodity);
+                     Commodity : constant Commodities.Commodity_Reference :=
+                       Commodities.Get_Commodity
+                         (Input_Item.Commodity);
 
-                  function Calculate_Bid_Quantity return Quantity_Type;
-
-                  ----------------------------
-                  -- Calculate_Bid_Quantity --
-                  ----------------------------
-
-                  function Calculate_Bid_Quantity return Quantity_Type is
-                     Required_Quantity : constant Quantity_Type :=
+                     Quantity : constant Quantity_Type :=
                        Scale (Input_Item.Quantity,
                               Max_Capacity - This_Capacity);
-                     Available_Quantity : constant Quantity_Type :=
-                       Manager.Current_Ask_Quantity (Commodity);
-                     Bid_Limit          : constant Quantity_Type :=
-                       Required_Quantity;
---                         Min (Required_Quantity, Available_Quantity);
-                     Price              : constant Price_Type :=
-                       Manager.Current_Ask_Price (Commodity, Bid_Limit);
-                     Total_Cost         : constant Money_Type :=
-                       Total (Price, Bid_Limit);
-                     Max_Cost           : constant Money_Type :=
-                       Manager.Current_Cash;
-                     Bid_Quantity       : constant Quantity_Type :=
-                       (if Total_Cost <= Max_Cost
-                        then Bid_Limit
-                        else Get_Quantity
-                          (Max_Cost, Price));
-                  begin
-                     Manager.Log
-                       (Concorde.Commodities.Local_Name (Commodity)
-                        & ": available "
-                        & Show (Available_Quantity)
-                        & "; required "
-                        & Show (Required_Quantity)
-                        & "; bid limit "
-                        & Show (Bid_Limit)
-                        & "; total cost "
-                        & Show (Total_Cost)
-                        & "; max cost "
-                        & Show (Max_Cost)
-                        & "; bid quantity "
-                        & Show (Bid_Quantity));
-                     return Bid_Quantity;
-                  end Calculate_Bid_Quantity;
 
-                  Bid_Quantity : constant Quantity_Type :=
-                    Calculate_Bid_Quantity;
-               begin
-                  if Bid_Quantity > Zero then
-                     Manager.Create_Bid
-                       (Commodity, Bid_Quantity,
-                        Manager.Current_Ask_Price
-                          (Commodity, Bid_Quantity));
+                     Price    : constant Price_Type :=
+                       Manager.Current_Ask_Price (Commodity, Quantity);
+
+                  begin
+                     Bids.Append
+                       (Bid_Record'
+                          (Commodity => Commodity,
+                           Quantity  => Quantity,
+                           Price     => Price,
+                           Total_Cost => Total (Price, Quantity),
+                           Capacity   => Max_Capacity - This_Capacity));
+                     Total_Quantity := Total_Quantity + Quantity;
+                     Total_Cost := Total_Cost + Total (Price, Quantity);
+                  end;
+               end if;
+            end;
+         end loop;
+
+         if Total_Cost > Budget then
+            declare
+
+               Remaining : Money_Type := Total_Cost - Budget;
+               Total_Score : Non_Negative_Real := 0.0;
+
+               function Score (Bid : Bid_Record) return Real
+               is (if Bid.Total_Cost = Zero then Real'Last
+                   else Bid.Capacity / To_Real (Bid.Total_Cost));
+
+               function Provides_Less
+                 (Left, Right : Bid_Record)
+                  return Boolean
+               is (Score (Left) < Score (Right));
+
+               package Return_Sorting is
+                 new Bid_Lists.Generic_Sorting (Provides_Less);
+
+            begin
+               Return_Sorting.Sort (Bids);
+
+               for Bid of Bids loop
+                  if Bid.Total_Cost > Zero then
+                     Manager.Log
+                       (Show (Bid.Quantity)
+                        & " "
+                        & Commodities.Local_Name (Bid.Commodity)
+                        & " @ "
+                        & Show (Bid.Price)
+                        & "; total "
+                        & Show (Bid.Total_Cost)
+                        & "; capacity "
+                        & Real_Images.Approximate_Image (Bid.Capacity)
+                        & " score "
+                        & Real_Images.Approximate_Image (Score (Bid)));
+
+                     Total_Score := Total_Score + Score (Bid);
                   end if;
-               end;
-            end if;
-         end;
+               end loop;
+
+               for Bid of Bids loop
+                  if Bid.Total_Cost > Zero then
+                     declare
+                        Contribution : constant Money_Type :=
+                          Adjust (Bid.Total_Cost, Score (Bid) / Total_Score);
+                        Final        : constant Money_Type :=
+                          Min (Contribution, Remaining);
+                     begin
+                        Bid.Capacity := Bid.Capacity
+                          * To_Real (Bid.Total_Cost - Final)
+                          / To_Real (Bid.Total_Cost);
+                        Bid.Quantity := Get_Quantity (Final, Bid.Price);
+                        Bid.Total_Cost := Bid.Total_Cost - Final;
+                        Remaining := Remaining - Final;
+                        exit when Remaining = Zero;
+                     end;
+                  end if;
+               end loop;
+            end;
+         end if;
+      end;
+
+      for Bid of Bids loop
+         Manager.Create_Bid
+           (Commodity => Bid.Commodity,
+            Quantity  => Bid.Quantity,
+            Price     => Bid.Price);
       end loop;
 
       for Input_Item of
