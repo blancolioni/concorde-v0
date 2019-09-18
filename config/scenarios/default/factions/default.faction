@@ -19,6 +19,18 @@ pops = {
 	  regiment = yes
 	  }
    pop = {
+      size = 100
+	  cash = 1K
+	  skills = { chemistry = 1 }
+	  faction-share = 1%
+	  }
+   pop = {
+      size = 100
+	  cash = 1K
+	  skills = { gunsmith = 1 }
+	  faction-share = 1%
+	  }
+   pop = {
       size = 1K
 	  cash = 10K
 	  skills = { farming = 1 }
@@ -77,6 +89,7 @@ ships = {
 capital-sector = {
    administration = 10 
    commercial = 10 
+   industrial = 10
    residential = 100
 }
 
@@ -110,8 +123,13 @@ installations = {
 		 basic-meal = 100
 		 regular-meal = 50
 		 luxury-meal = 10
-		 small-arms = 100
-		 fuel = 100
+		 small-arms = 10
+		 fuel = 10
+		 steel = 100
+		 ammunition = 100
+		 sulphur = 1000
+		 coal = 1000
+		 iron = 1000
       }
     }
 }
