@@ -1,4 +1,4 @@
-producer Artisan.Farm is
+abstract producer Artisan.Farm_Template is
 
    Zone => Farmland;
    
@@ -6,8 +6,6 @@ producer Artisan.Farm is
    
    Efficiency => (Administration => 1);
    
-   Outputs => ((Grain => 100),
-               (Vegetables => 50),
-			   (Fruit => 20));
+   Outputs => <>;
 			  
-end Artisan.Farm;
+end Artisan.Farm_Template;

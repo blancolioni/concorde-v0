@@ -2,7 +2,6 @@ name = Forest
 color = "#F5DEB3"
 hazard = 0.02
 resource = {
-	wood = 100	
    hydrocarbon = 2
    oil = 2
    precious = 1 

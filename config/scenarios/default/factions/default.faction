@@ -1,4 +1,4 @@
-cash = 10M
+cash = 10K
 
 pops = {
    pop = {
@@ -108,6 +108,10 @@ sector-use = {
       count = 1
 	  zones = { farm = 5K }
 	  }
+   mine = {
+      count = 3
+	  zones = { mine = 5K }
+      }
 }
 
 installations = {

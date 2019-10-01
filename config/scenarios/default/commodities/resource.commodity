@@ -29,7 +29,3 @@ hydrocarbon = {
 precious = {
    base-price = 5
 }
-
-wood = {
-   base-price = 1
-}

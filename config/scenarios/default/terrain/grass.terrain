@@ -2,9 +2,8 @@ name = Grassland
 color = "#018E0E"
 hazard = 0.01
 resource = {
-   salt = 20 
-   fissile = 15 
-   hydrocarbon = 20 
-   oil = 20 
-   precious = 4 
+   fissile = 2
+   hydrocarbon = 5
+   oil = 5 
+   precious = 1
 }
