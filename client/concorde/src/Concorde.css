@@ -1,0 +1,21 @@
+.concorde-shell-output {
+    min-height: 200px;
+    height: 100%;
+    width: 100%;
+    border: 1px solid black;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.navbar-dark {
+    color:white;
+  }
+
+.concorde-dashboard-item {
+    background-color: white;
+    color: black;
+}
+
+.concorde-dashboard-titlebar {
+    background-color: black;
+    color:white;
+}

@@ -6,8 +6,6 @@ with WL.Localisation;
 with WL.Processes;
 with WL.Random.Names;
 
---  with Gnoga.Application.Multi_Connect;
-
 with Tropos.Reader;
 with Tropos.Writer;
 
@@ -17,7 +15,7 @@ with Concorde.Paths;
 with Concorde.Color;
 with Concorde.Random;
 
---  with Concorde.UI.Gnoga_UI;
+with Concorde.UI.Web_UI;
 
 with Concorde.Calendar;
 with Concorde.Configure;
@@ -25,11 +23,7 @@ with Concorde.Configure.Scenarios;
 with Concorde.Factions.Create;
 with Concorde.Logging;
 with Concorde.Logs;
---  with Concorde.Markets;
---  with Concorde.Repl;
---  with Concorde.Sessions;
 
---  with Concorde.Commands.Loader;
 with Concorde.Managers.Loader;
 with Concorde.Managers.Execution;
 
@@ -357,7 +351,13 @@ begin
 --           Concorde.Sessions.End_Session (Session);
 --        end;
    else
-      null;
+
+      declare
+         Web : Concorde.UI.Web_UI.Web_UI_Type;
+      begin
+         Web.Start;
+      end;
+
 --        Gnoga.Application.Title ("Concorde");
 --
 --        Gnoga.Application.HTML_On_Close ("Application disconnected.");

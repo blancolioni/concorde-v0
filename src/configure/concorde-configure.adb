@@ -119,7 +119,7 @@ package body Concorde.Configure is
             Ada.Text_IO.Put_Line ("root password: " & Password);
          end return;
       else
-         return "";
+         return "root";
       end if;
    end Initial_Root_Password;
 
