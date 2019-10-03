@@ -14,6 +14,7 @@ with Concorde.UI;
 with Marlowe.Database;
 with Concorde.Db.Marlowe_Keys;
 
+with Concorde.Commands.System.Cat;
 with Concorde.Commands.System.Change_Scope;
 with Concorde.Commands.System.List;
 
@@ -64,10 +65,8 @@ package body Concorde.Commands.System is
    --------------------------
 
    procedure Load_System_Commands is
---        Cat                   : Cat_Command;
       Echo                  : Echo_Command;
       History               : History_Command;
---        List                  : List_Command;
       Pause_Command         : Status_Command (Pause_Server);
       Resume_Command        : Status_Command (Resume_Server);
       Stop_Command          : Status_Command (Stop_Server);
@@ -75,7 +74,7 @@ package body Concorde.Commands.System is
       Get_Db_Status_Command : Status_Command (Show_Database_Statistics);
       Update_Speed_Command  : Status_Command (Update_Speed);
    begin
---        Register ("cat", Cat);
+      Register ("cat", Cat.Cat_Command);
       Register ("cd", Change_Scope.Change_Scope_Command);
       Register ("change-scope", Change_Scope.Change_Scope_Command);
       Register ("echo", Echo);
