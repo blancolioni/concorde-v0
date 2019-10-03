@@ -1,409 +1,399 @@
-with Ada.Strings.Fixed;
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Holders;
 with Ada.Strings.Unbounded;
 
-with Concorde.Contexts.Errors;
-with Concorde.Contexts.Root;
-
-with Concorde.Contexts.Faction_Container;
-with Concorde.Contexts.Factions;
+with Concorde.Version;
 
 package body Concorde.Contexts is
 
-   -------------------
-   -- Child_Context --
-   -------------------
+   package Node_Holders is
+     new Ada.Containers.Indefinite_Holders (Context_Node_Interface'Class);
 
-   function Child_Context
-     (Context : Root_Context_Type;
-      Name    : String)
-      return Context_Type
-   is
-      Children : Context_List;
+   type Child_Node_Record is
+      record
+         Name : Ada.Strings.Unbounded.Unbounded_String;
+         Node : Node_Holders.Holder;
+      end record;
+
+   package Child_Node_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Child_Node_Record);
+
+   package Child_Node_Maps is
+     new WL.String_Maps (Child_Node_Lists.Cursor, Child_Node_Lists."=");
+
+   type Simple_Node_Record is
+     new Context_Node_Interface with
+      record
+         Child_List : Child_Node_Lists.List;
+         Child_Map  : Child_Node_Maps.Map;
+      end record;
+
+   overriding function Has_Children
+     (Node : Simple_Node_Record)
+      return Boolean
+   is (True);
+
+   overriding function Has_Child
+     (Node : Simple_Node_Record;
+      Name : String)
+      return Boolean
+   is (Node.Child_Map.Contains (Name));
+
+   overriding function Get_Child
+     (Node  : Simple_Node_Record;
+      Child : String)
+      return Context_Node_Interface'Class
+   is (Child_Node_Lists.Element (Node.Child_Map.Element (Child)).Node.Element);
+
+   overriding procedure Iterate_Children
+     (Node    : Simple_Node_Record;
+      Process : not null access
+        procedure (Name : String;
+                   Child : Context_Node_Interface'Class));
+
+   type Root_Node_Record is new Simple_Node_Record with null record;
+
+   Root : Root_Node_Record := (others => <>);
+
+   type File_Node_Record is
+     new Context_Node_Interface with
+      record
+         Contents : Ada.Strings.Unbounded.Unbounded_String;
+      end record;
+
+   overriding function Has_Children
+     (Node : File_Node_Record)
+      return Boolean
+   is (False);
+
+   overriding function Has_Child
+     (Node : File_Node_Record;
+      Name : String)
+      return Boolean;
+
+   overriding function Get_Child
+     (Node  : File_Node_Record;
+      Child : String)
+      return Context_Node_Interface'Class;
+
+   overriding procedure Iterate_Children
+     (Node    : File_Node_Record;
+      Process : not null access
+        procedure (Name : String;
+                   Child : Context_Node_Interface'Class))
+   is null;
+
+   function Split_Path
+     (Path : String)
+      return String_Vectors.Vector;
+
+   function Follow_Path
+     (Path : String_Vectors.Vector)
+      return Context_Node_Interface'Class;
+
+   --------------------
+   -- Append_History --
+   --------------------
+
+   procedure Append_History
+     (Context : in out Context_Type;
+      Item    : String) is
    begin
-      Root_Context_Type'Class (Context).Get_Child_Contexts (Children);
-      for Child of Children loop
-         if Child.Name = Name then
-            return Child;
+      Context.History.Append (Item);
+   end Append_History;
+
+   ------------------
+   -- Change_Scope --
+   ------------------
+
+   function Change_Scope
+     (Context : in out Context_Type;
+      Path    : String)
+      return Boolean
+   is
+      Old_Path : constant String_Vectors.Vector := Context.Current_Path;
+      New_Path : constant String_Vectors.Vector := Split_Path (Path);
+   begin
+      for Item of New_Path loop
+         if Item = "." then
+            null;
+         elsif Item = ".." then
+            Context.Set_Parent_Scope;
+         elsif Context.Current_Node.Has_Child (Item) then
+            Context.Set_Child_Scope (Item);
+         else
+            Context.Current_Path := Old_Path;
+            return False;
          end if;
       end loop;
-      return Concorde.Contexts.Errors.Error_Context
-        (Name & ": not found in " & Root_Context_Type'Class (Context).Name);
-   end Child_Context;
+      return True;
+   end Change_Scope;
 
-   -------------------
-   -- Child_Context --
-   -------------------
+   --------------------
+   -- Create_Context --
+   --------------------
 
-   overriding function Child_Context
-     (Context : Context_Path;
-      Name    : String)
-      return Context_Type
+   procedure Create_Context
+     (Context       : in out Context_Type;
+      Default_Scope : String)
    is
    begin
-      if Context.List.Is_Empty then
-         return Concorde.Contexts.Root.Root_Context.Child_Context (Name);
-      else
-         return Context.List.First_Element.Child_Context (Name);
-      end if;
-   end Child_Context;
+      Context.Home_Path := Split_Path (Default_Scope);
+      Context.Current_Path := Context.Home_Path;
+      Context.History.Clear;
+   end Create_Context;
 
-   -----------
-   -- Class --
-   -----------
+   ------------------
+   -- Current_Node --
+   ------------------
 
-   overriding function Class
-     (Context : Context_Path)
-      return String
-   is
-      pragma Unreferenced (Context);
-   begin
-      return "path";
-   end Class;
-
-   -------------
-   -- Context --
-   -------------
-
-   function Context
-     (Path : Context_Path)
-      return Context_Type
+   function Current_Node
+     (Context : Context_Type)
+      return Context_Node_Interface'Class
    is
    begin
-      if Path.List.Is_Empty then
-         return Concorde.Contexts.Root.Root_Context;
-      else
-         return Path.List.First_Element;
-      end if;
-   end Context;
-
-   ------------------------
-   -- Get_Child_Contexts --
-   ------------------------
-
-   overriding procedure Get_Child_Contexts
-     (Context  : Context_Path;
-      Children : in out Context_List'Class)
-   is
-   begin
-      if Context.List.Is_Empty then
-         Concorde.Contexts.Root.Root_Context.Get_Child_Contexts (Children);
-      else
-         Context.List.First_Element.Get_Child_Contexts (Children);
-      end if;
-   end Get_Child_Contexts;
-
-   ---------------------
-   -- Get_Child_Names --
-   ---------------------
-
-   procedure Get_Child_Names
-     (Context : Root_Context_Type'Class;
-      Names   : out Child_Name_Lists.List)
-   is
-      procedure Add_Name (Context : Context_Type);
-
-      --------------
-      -- Add_Name --
-      --------------
-
-      procedure Add_Name (Context : Context_Type) is
-      begin
-         Names.Append (Context.Name);
-      end Add_Name;
-
-   begin
-      Names.Clear;
-      Context.Iterate_Contexts (Add_Name'Access);
-   end Get_Child_Names;
+      return Follow_Path (Context.Current_Path);
+   end Current_Node;
 
    -----------------
-   -- Get_Content --
+   -- Follow_Path --
    -----------------
 
-   function Get_Content
-     (Context : Root_Context_Type'Class)
-      return String
+   function Follow_Path
+     (Path : String_Vectors.Vector)
+      return Context_Node_Interface'Class
    is
-      use Ada.Strings.Unbounded;
-      Result : Unbounded_String;
 
-      procedure Add_Line (Line : String);
+      function Go
+        (Current : Context_Node_Interface'Class;
+         Index   : Positive)
+         return Context_Node_Interface'Class;
 
-      --------------
-      -- Add_Line --
-      --------------
+      --------
+      -- Go --
+      --------
 
-      procedure Add_Line (Line : String) is
+      function Go
+        (Current : Context_Node_Interface'Class;
+         Index   : Positive)
+         return Context_Node_Interface'Class
+      is
       begin
-         if Result /= "" then
-            Result := Result & Character'Val (10);
+         if Index > Path.Last_Index then
+            return Current;
+         else
+            return Go (Current.Get_Child (Path.Element (Index)), Index + 1);
          end if;
-         Result := Result & Line;
-      end Add_Line;
+      end Go;
 
    begin
-      Context.Iterate_Content_Lines (Add_Line'Access);
-      return To_String (Result);
-   end Get_Content;
+      return Go (Root, 1);
+   end Follow_Path;
 
-   --------
-   -- Go --
-   --------
+   ---------------
+   -- Get_Child --
+   ---------------
 
-   function Go
-     (Start : Context_Path;
-      Scope : String)
-      return Context_Path
+   overriding function Get_Child
+     (Node  : File_Node_Record;
+      Child : String)
+      return Context_Node_Interface'Class
    is
-      Path    : constant String :=
-                  (if Scope /= "" and then Scope (Scope'Last) = '/'
-                   then Scope
-                   else Scope & "/");
-      Current : Positive := Path'First;
-      Result  : Context_Path;
-
+      pragma Unreferenced (Node);
    begin
+      return (raise Constraint_Error with
+                "not a directory: " & Child);
+   end Get_Child;
 
-      if Path /= "" and then Path (Path'First) = '/' then
-         Result.List.Append (Concorde.Contexts.Root.Root_Context);
-         Current := Current + 1;
+   -----------------
+   -- Get_History --
+   -----------------
+
+   function Get_History
+     (Context : Context_Type; Offset : Integer) return String
+   is
+   begin
+      if Offset < 0 then
+         return Context.History.Element
+           (Context.History.Last_Index + 1 + Offset);
       else
-         Result := Start;
+         return Context.History.Element (Offset);
       end if;
-
-      while Current <= Path'Last loop
-         declare
-            Index : constant Positive :=
-                      Ada.Strings.Fixed.Index (Path, "/", Current);
-            Next  : Positive := Index + 1;
-            Name  : constant String := Path (Current .. Index - 1);
-         begin
-            if Name = "." then
-               null;
-            elsif Name = ".." then
-               Result.To_Parent;
-            elsif Result.Has_Child_Context (Name) then
-               Result.List.Insert
-                 (Result.List.First,
-                  Result.Child_Context (Name));
-            else
-               Result.List.Insert
-                 (Result.List.First,
-                  Concorde.Contexts.Errors.Error_Context
-                    ("scope not found"));
-               exit;
-            end if;
-
-            while Next <= Path'Last
-              and then Path (Next) = '/'
-            loop
-               Next := Next + 1;
-            end loop;
-
-            Current := Next;
-         end;
-      end loop;
-
-      return Result;
-
-   end Go;
+   end Get_History;
 
    ---------------
    -- Has_Child --
    ---------------
 
-   function Has_Child_Context
-     (Context : Root_Context_Type;
-      Name    : String)
+   overriding function Has_Child
+     (Node : File_Node_Record;
+      Name : String)
       return Boolean
    is
-      Children : Child_Name_Lists.List;
+      pragma Unreferenced (Node, Name);
    begin
-      Root_Context_Type'Class (Context).Get_Child_Names (Children);
-      for Child_Name of Children loop
-         if Child_Name = Name then
-            return True;
-         end if;
-      end loop;
       return False;
-   end Has_Child_Context;
+   end Has_Child;
 
-   --------------------------
-   -- Initial_Context_Path --
-   --------------------------
+   --------------------
+   -- History_Length --
+   --------------------
 
-   function Initial_Context_Path
-     (Faction : Concorde.Db.Faction_Reference)
-      return Context_Path
-   is
-      Path : Context_Path;
+   function History_Length (Context : Context_Type) return Natural is
    begin
-      Path.List.Append
-        (Concorde.Contexts.Factions.Faction_Context (Faction));
-      Path.List.Append
-        (Concorde.Contexts.Faction_Container.Faction_Container_Context);
-      Path.List.Append (Concorde.Contexts.Root.Root_Context);
-      return Path;
-   end Initial_Context_Path;
+      return Context.History.Last_Index;
+   end History_Length;
 
-   -------------------------
-   -- Iterate_Child_Names --
-   -------------------------
+   ----------------------
+   -- Iterate_Children --
+   ----------------------
 
-   procedure Iterate_Child_Names
-     (Context : Root_Context_Type'Class;
+   overriding procedure Iterate_Children
+     (Node    : Simple_Node_Record;
       Process : not null access
-        procedure (Name : String))
+        procedure (Name : String;
+                   Child : Context_Node_Interface'Class))
    is
-      Children : Child_Name_Lists.List;
    begin
-      Context.Get_Child_Names (Children);
-      for Name of Children loop
-         Process (Name);
+      for Child of Node.Child_List loop
+         Process (Ada.Strings.Unbounded.To_String (Child.Name),
+                  Child.Node.Element);
       end loop;
-   end Iterate_Child_Names;
+   end Iterate_Children;
 
-   ---------------------------
-   -- Iterate_Content_Lines --
-   ---------------------------
+   ---------------
+   -- Pop_Scope --
+   ---------------
 
-   procedure Iterate_Content_Lines
-     (Context : Root_Context_Type;
-      Process : not null access
-        procedure (Line : String))
-   is
-      List : Child_Name_Lists.List;
-   begin
-      Root_Context_Type'Class (Context).Get_Child_Names (List);
-      for Name of List loop
-         Process (Name);
-      end loop;
-   end Iterate_Content_Lines;
-
-   ---------------------------
-   -- Iterate_Content_Lines --
-   ---------------------------
-
-   overriding procedure Iterate_Content_Lines
-     (Context : Context_Path;
-      Process : not null access
-        procedure (Line : String))
+   procedure Pop_Scope
+     (Context : in out Context_Type)
    is
    begin
-      if Context.List.Is_Empty then
-         Concorde.Contexts.Root.Root_Context.Iterate_Content_Lines
-           (Process);
-      else
-         Context.List.First_Element.Iterate_Content_Lines (Process);
+      Context.Current_Path :=
+        Context.Scope_Stack.Last_Element;
+      Context.Scope_Stack.Delete_Last;
+   end Pop_Scope;
+
+   ----------------
+   -- Push_Scope --
+   ----------------
+
+   procedure Push_Scope
+     (Context : in out Context_Type)
+   is
+   begin
+      Context.Scope_Stack.Append (Context.Current_Path);
+   end Push_Scope;
+
+   ---------------
+   -- Root_Node --
+   ---------------
+
+   function Root_Node return Context_Node_Interface'Class is
+   begin
+      return Root;
+   end Root_Node;
+
+   ---------------------
+   -- Set_Child_Scope --
+   ---------------------
+
+   procedure Set_Child_Scope
+     (Context    : in out Context_Type;
+      Child_Name : String)
+   is
+      pragma Assert (Context.Current_Node.Has_Child (Child_Name));
+   begin
+      Context.Current_Path.Append (Child_Name);
+   end Set_Child_Scope;
+
+   -----------------------
+   -- Set_Default_Scope --
+   -----------------------
+
+   procedure Set_Default_Scope (Context : in out Context_Type) is
+   begin
+      Context.Current_Path := Context.Home_Path;
+   end Set_Default_Scope;
+
+   ----------------------
+   -- Set_Parent_Scope --
+   ----------------------
+
+   procedure Set_Parent_Scope (Context : in out Context_Type) is
+   begin
+      if not Context.Current_Path.Is_Empty then
+         Context.Current_Path.Delete_Last;
       end if;
-   end Iterate_Content_Lines;
+   end Set_Parent_Scope;
 
-   ----------------------
-   -- Iterate_Contexts --
-   ----------------------
+   ---------------
+   -- Set_Value --
+   ---------------
 
-   procedure Iterate_Contexts
-     (Context : Root_Context_Type'Class;
-      Process : not null access
-        procedure (Context : Context_Type))
+   procedure Set_Value
+     (Context : in out Context_Type;
+      Name    : String;
+      Value   : String)
    is
-      Children : Context_List;
    begin
-      Context.Get_Child_Contexts (Children);
-      for Child of Children loop
-         Process (Child);
-      end loop;
-   end Iterate_Contexts;
+      if Context.Environment.Contains (Name) then
+         Context.Environment.Replace (Name, Value);
+      else
+         Context.Environment.Insert (Name, Value);
+      end if;
+   end Set_Value;
 
-   --------------------
-   -- Match_Children --
-   --------------------
+   ----------------
+   -- Split_Path --
+   ----------------
 
-   procedure Match_Children
-     (Context : Root_Context_Type'Class;
-      Pattern : String;
-      Matches : out Child_Name_Lists.List)
+   function Split_Path
+     (Path : String)
+      return String_Vectors.Vector
    is
-      Children : Child_Name_Lists.List;
+      P : constant String :=
+        (if Path (Path'Last) = '/' then Path else Path & '/');
+      Start : Positive := P'First;
+      Index : Positive := Start;
    begin
-      Matches.Clear;
-      Context.Get_Child_Names (Children);
-      for Name of Children loop
-         if Name'Length >= Pattern'Length
-           and then Name (Name'First .. Name'First + Pattern'Length - 1)
-           = Pattern
-         then
-            Matches.Append (Name);
-         end if;
-      end loop;
-   end Match_Children;
+      return Vector : String_Vectors.Vector do
+         for Ch of P loop
+            if Ch = '/' then
+               if Index > Start then
+                  Vector.Append (P (Start .. Index - 1));
+               end if;
 
-   ----------
-   -- Name --
-   ----------
+               Start := Index + 1;
+            end if;
+            Index := Index + 1;
+         end loop;
+      end return;
+   end Split_Path;
 
-   overriding function Name
-     (Context : Context_Path)
+   -----------
+   -- Value --
+   -----------
+
+   function Value
+     (Context : Context_Type;
+      Name    : String;
+      Default : String := "")
       return String
    is
-      function N (Position : Context_Lists.Cursor) return String;
-
-      -------
-      -- N --
-      -------
-
-      function N (Position : Context_Lists.Cursor) return String is
-      begin
-         if not Context_Lists.Has_Element (Position) then
-            return "";
-         elsif not Context_Lists.Has_Element
-           (Context_Lists.Previous (Position))
-         then
-            return Context_Lists.Element (Position).Name;
-         else
-            return Context_Lists.Element (Position).Name
-              & "/" & N (Context_Lists.Previous (Position));
-         end if;
-      end N;
-
    begin
-      if Context.List.Is_Empty
-        or else Context.List.First_Element.Is_Root
-      then
-         return "/";
-      elsif not Context.List.First_Element.Is_Valid then
-         return Context.List.First_Element.Name;
-      else
-         return N (Context.List.Last);
-      end if;
-   end Name;
+      return (if Context.Environment.Contains (Name)
+              then Context.Environment.Element (Name)
+              else Default);
+   end Value;
 
-   --------------
-   -- To_Child --
-   --------------
-
-   procedure To_Child
-     (Path          : in out Context_Path;
-      Child_Context : Context_Type)
-   is
-   begin
-      Path.List.Insert (Path.List.First, Child_Context);
-   end To_Child;
-
-   ---------------
-   -- To_Parent --
-   ---------------
-
-   procedure To_Parent
-     (Path : in out Context_Path)
-   is
-   begin
-      if not Path.List.Is_Empty then
-         Path.List.Delete_First;
-      end if;
-      if Path.List.Is_Empty then
-         Path.List.Append (Concorde.Contexts.Root.Root_Context);
-      end if;
-   end To_Parent;
-
+begin
+   Root.Child_List.Append
+     (Child_Node_Record'
+        (Name => Ada.Strings.Unbounded.To_Unbounded_String ("version.txt"),
+         Node => Node_Holders.To_Holder
+           (File_Node_Record'
+                (Contents =>
+                     Ada.Strings.Unbounded.To_Unbounded_String
+                   (Concorde.Version.Version_String)))));
 end Concorde.Contexts;

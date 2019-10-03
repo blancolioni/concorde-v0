@@ -7,6 +7,7 @@ package Concorde.UI.Models is
    function Handle
      (Model   : in out Root_Concorde_Model;
       State   : in out State_Interface'Class;
+      Client  : Client_Id;
       Request : Concorde.Json.Json_Value'Class)
       return Concorde.Json.Json_Value'Class
    is abstract;

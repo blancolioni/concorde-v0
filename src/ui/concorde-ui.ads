@@ -49,6 +49,7 @@ package Concorde.UI is
 
    function Execute_Command
      (State   : in out State_Interface;
+      Client  : Client_Id;
       Command : String)
       return String
    is abstract;

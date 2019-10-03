@@ -6,18 +6,6 @@ with Concorde.Db.User;
 
 package body Concorde.Sessions is
 
-   --------------------
-   -- Add_To_History --
-   --------------------
-
-   procedure Add_To_History
-     (Session : in out Root_Concorde_Session'Class;
-      Item    : String)
-   is
-   begin
-      Session.Commands.Append (Item);
-   end Add_To_History;
-
    ------------------
    -- Close_Client --
    ------------------
@@ -36,14 +24,21 @@ package body Concorde.Sessions is
 
    overriding function Execute_Command
      (Session : in out Root_Concorde_Session;
+      Client  : Concorde.UI.Client_Id;
       Command : String)
       return String
    is
       Writer : Concorde.Commands.Writers.String_Writer;
+      Position : constant Client_Maps.Cursor :=
+        Session.Client_Map.Find (Client);
    begin
 
-      Concorde.Commands.Execute_Command_Line
-        (Command, Session, Writer);
+      if Client_Maps.Has_Element (Position) then
+         Concorde.Commands.Execute_Command_Line
+           (Command, Session, Session.Client_Map (Position).Context, Writer);
+      else
+         Writer.Put_Error ("bad client");
+      end if;
 
       return Writer.To_String;
 
@@ -62,28 +57,28 @@ package body Concorde.Sessions is
       Model : Concorde.UI.Models.Root_Concorde_Model'Class renames
         Session.Client_Map (Client).Model.Reference;
    begin
-      return Model.Handle (Session, Request);
+      return Model.Handle (Session, Client, Request);
    end Handle_Client_Request;
 
    -------------
    -- History --
    -------------
 
-   function History
-     (Session : Root_Concorde_Session'Class;
-      Offset  : Integer)
-      return String
-   is
-   begin
-      if Offset = 0 then
-         return "";
-      elsif Offset > 0 then
-         return Session.Commands.Element (Offset);
-      else
-         return Session.Commands.Element
-           (Session.Commands.Last_Index + 1 + Offset);
-      end if;
-   end History;
+--     function History
+--       (Session : Root_Concorde_Session'Class;
+--        Offset  : Integer)
+--        return String
+--     is
+--     begin
+--        if Offset = 0 then
+--           return "";
+--        elsif Offset > 0 then
+--           return Session.Commands.Element (Offset);
+--        else
+--           return Session.Commands.Element
+--             (Session.Commands.Last_Index + 1 + Offset);
+--        end if;
+--     end History;
 
    ----------------------
    -- Is_Administrator --
@@ -117,8 +112,9 @@ package body Concorde.Sessions is
         (Session.Last_Client,
          Client_Type'
            (Model =>
-                Client_Holders.To_Holder
-                  (Concorde.UI.Models.Loader.Get (Model_Name))));
+                Model_Holders.To_Holder
+                  (Concorde.UI.Models.Loader.Get (Model_Name)),
+            Context => Session.Default_Context));
       return Session.Last_Client;
    end New_Client;
 
@@ -139,6 +135,7 @@ package body Concorde.Sessions is
            and then User.Password = Password
          then
             Session.User := User.Get_User_Reference;
+            Session.Default_Context.Create_Context ("/");
          end if;
       end return;
    end New_Session;

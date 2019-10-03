@@ -72,7 +72,7 @@ class Shell extends React.Component {
         super(props);
 
         this.state = {
-            output: ["Concorde 0.1.0","Ready"],
+            output: ["Ready"],
             clientId: 0,
         }
 

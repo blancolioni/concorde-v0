@@ -2,6 +2,7 @@ private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 private with Ada.Containers.Indefinite_Vectors;
 private with WL.String_Maps;
 
+with Concorde.Contexts;
 with Concorde.Sessions;
 
 package Concorde.Commands is
@@ -77,7 +78,8 @@ package Concorde.Commands is
 
    procedure Perform
      (Command   : Root_Concorde_Command;
-      Session   : Concorde.Sessions.Concorde_Session;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
       Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List)
    is abstract;
@@ -85,13 +87,15 @@ package Concorde.Commands is
    procedure Execute
      (Command   : Root_Concorde_Command'Class;
       Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
       Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List);
 
    procedure Execute_Command_Line
      (Line    : String;
       Session : in out Concorde.Sessions.Concorde_Session;
-      Writer  : in out Writer_Interface'Class);
+      Context   : in out Concorde.Contexts.Context_Type;
+      Writer    : in out Writer_Interface'Class);
 
    procedure Register
      (Command_Name : String;

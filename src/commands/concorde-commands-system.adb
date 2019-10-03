@@ -14,6 +14,9 @@ with Concorde.UI;
 with Marlowe.Database;
 with Concorde.Db.Marlowe_Keys;
 
+with Concorde.Commands.System.Change_Scope;
+with Concorde.Commands.System.List;
+
 package body Concorde.Commands.System is
 
    type Echo_Command is
@@ -21,7 +24,8 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : Echo_Command;
-      Session   : Concorde.Sessions.Concorde_Session;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
       Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List);
 
@@ -30,7 +34,8 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : History_Command;
-      Session   : Concorde.Sessions.Concorde_Session;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
       Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List);
 
@@ -49,7 +54,8 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : Status_Command;
-      Session   : Concorde.Sessions.Concorde_Session;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
       Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List);
 
@@ -59,7 +65,6 @@ package body Concorde.Commands.System is
 
    procedure Load_System_Commands is
 --        Cat                   : Cat_Command;
---        Change_Scope          : Change_Scope_Command;
       Echo                  : Echo_Command;
       History               : History_Command;
 --        List                  : List_Command;
@@ -71,11 +76,11 @@ package body Concorde.Commands.System is
       Update_Speed_Command  : Status_Command (Update_Speed);
    begin
 --        Register ("cat", Cat);
---        Register ("cd", Change_Scope);
---        Register ("change-scope", Change_Scope);
+      Register ("cd", Change_Scope.Change_Scope_Command);
+      Register ("change-scope", Change_Scope.Change_Scope_Command);
       Register ("echo", Echo);
       Register ("history", History);
---        Register ("ls", List);
+      Register ("ls", List.List_Command);
       Register ("pause", Pause_Command);
       Register ("resume", Resume_Command);
       Register ("update-speed", Update_Speed_Command);
@@ -90,11 +95,12 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : Echo_Command;
-      Session   : Concorde.Sessions.Concorde_Session;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
       Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List)
    is
-      pragma Unreferenced (Command, Session);
+      pragma Unreferenced (Command, Session, Context);
    begin
       for I in 1 .. Argument_Count (Arguments) loop
          if I > 1 then
@@ -109,15 +115,20 @@ package body Concorde.Commands.System is
 
    end Perform;
 
+   -------------
+   -- Perform --
+   -------------
+
    overriding procedure Perform
      (Command   : History_Command;
-      Session   : Concorde.Sessions.Concorde_Session;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
       Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List)
    is
-      pragma Unreferenced (Command, Arguments);
+      pragma Unreferenced (Command, Arguments, Session);
    begin
-      for I in 1 .. Session.History_Length loop
+      for I in 1 .. Context.History_Length loop
          declare
             Index_Image : String (1 .. 5);
             It          : Natural := I;
@@ -130,7 +141,7 @@ package body Concorde.Commands.System is
                   It := It / 10;
                end if;
             end loop;
-            Writer.Put_Line (Index_Image & "  " & Session.History (I));
+            Writer.Put_Line (Index_Image & "  " & Context.Get_History (I));
          end;
       end loop;
    end Perform;
@@ -141,10 +152,12 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : Status_Command;
-      Session   : Concorde.Sessions.Concorde_Session;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
       Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List)
    is
+      pragma Unreferenced (Context);
    begin
       case Command.Command is
          when Pause_Server =>

@@ -39,12 +39,12 @@ package body Concorde.Commands is
       Value     : String);
 
    function Scan_Arguments
-     (Session       : Concorde.Sessions.Concorde_Session;
+     (Context       : Concorde.Contexts.Context_Type;
       Argument_Line : String)
       return Argument_List;
 
    procedure Iterate_Words
-     (Session : Concorde.Sessions.Concorde_Session;
+     (Context : Concorde.Contexts.Context_Type;
       Text    : String;
       Process : not null access
         procedure (Word : String));
@@ -52,7 +52,8 @@ package body Concorde.Commands is
    procedure Execute_Single_Command
      (Command : String;
       Session : in out Concorde.Sessions.Concorde_Session;
-      Writer  : in out Writer_Interface'Class);
+      Context   : in out Concorde.Contexts.Context_Type;
+      Writer    : in out Writer_Interface'Class);
 
    ---------
    -- Add --
@@ -73,6 +74,7 @@ package body Concorde.Commands is
    procedure Execute
      (Command   : Root_Concorde_Command'Class;
       Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
       Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List)
    is
@@ -84,7 +86,7 @@ package body Concorde.Commands is
            ("You must be an administrator to perform this action");
          return;
       end if;
-      Command.Perform (Session, Writer, Arguments);
+      Command.Perform (Session, Context, Writer, Arguments);
    end Execute;
 
    --------------------------
@@ -94,7 +96,8 @@ package body Concorde.Commands is
    procedure Execute_Command_Line
      (Line    : String;
       Session : in out Concorde.Sessions.Concorde_Session;
-      Writer  : in out Writer_Interface'Class)
+      Context   : in out Concorde.Contexts.Context_Type;
+      Writer    : in out Writer_Interface'Class)
    is
 
       function Is_Integer (Image : String) return Boolean;
@@ -125,12 +128,12 @@ package body Concorde.Commands is
       end if;
 
       if Line = "!!" then
-         if Session.History_Length > 0 then
+         if Context.History_Length > 0 then
             declare
-               Command : constant String := Session.History (-1);
+               Command : constant String := Context.Get_History (-1);
             begin
                Writer.Put_Line (Command);
-               Execute_Single_Command (Command, Session, Writer);
+               Execute_Single_Command (Command, Session, Context, Writer);
             end;
          else
             Writer.Put_Error ("!!: event not found");
@@ -145,13 +148,13 @@ package body Concorde.Commands is
             Image : constant String := Line (Line'First + 1 .. Line'Last);
             X     : constant Integer := Integer'Value (Image);
          begin
-            if abs X <= Session.History_Length then
+            if abs X <= Context.History_Length then
                declare
                   Command : constant String :=
-                              Session.History (X);
+                              Context.Get_History (X);
                begin
                   Writer.Put_Line (Command);
-                  Execute_Single_Command (Command, Session, Writer);
+                  Execute_Single_Command (Command, Session, Context, Writer);
                end;
             else
                Writer.Put_Error (Line & ": event not found");
@@ -160,8 +163,8 @@ package body Concorde.Commands is
          end;
       end if;
 
-      Session.Add_To_History (Line);
-      Execute_Single_Command (Line, Session, Writer);
+      Context.Append_History (Line);
+      Execute_Single_Command (Line, Session, Context, Writer);
 
    end Execute_Command_Line;
 
@@ -172,7 +175,8 @@ package body Concorde.Commands is
    procedure Execute_Single_Command
      (Command : String;
       Session : in out Concorde.Sessions.Concorde_Session;
-      Writer  : in out Writer_Interface'Class)
+      Context   : in out Concorde.Contexts.Context_Type;
+      Writer    : in out Writer_Interface'Class)
    is
       Extended_Line : constant String := Command & ' ';
       First         : constant Positive :=
@@ -193,10 +197,10 @@ package body Concorde.Commands is
                        Map.Element (Command_Name);
          Arguments : constant Argument_List :=
                        Scan_Arguments
-                         (Session,
+                         (Context,
                           Extended_Line (Index + 1 .. Extended_Line'Last));
       begin
-         Command.Execute (Session, Writer, Arguments);
+         Command.Execute (Session, Context, Writer, Arguments);
       end;
    end Execute_Single_Command;
 
@@ -205,7 +209,7 @@ package body Concorde.Commands is
    -------------------
 
    procedure Iterate_Words
-     (Session : Concorde.Sessions.Concorde_Session;
+     (Context : Concorde.Contexts.Context_Type;
       Text    : String;
       Process : not null access
         procedure (Word : String))
@@ -244,7 +248,7 @@ package body Concorde.Commands is
             declare
                Name : constant String := Buffer (Var_Index .. Index);
                Value : constant String :=
-                         Session.Environment_Value (Name, "");
+                         Context.Value (Name, "");
             begin
                Index := Var_Index - 1;
                for Ch of Value loop
@@ -425,7 +429,7 @@ package body Concorde.Commands is
    --------------------
 
    function Scan_Arguments
-     (Session       : Concorde.Sessions.Concorde_Session;
+     (Context       : Concorde.Contexts.Context_Type;
       Argument_Line : String)
       return Argument_List
    is
@@ -479,7 +483,7 @@ package body Concorde.Commands is
       end Process_Argument;
 
    begin
-      Iterate_Words (Session, Argument_Line, Process_Argument'Access);
+      Iterate_Words (Context, Argument_Line, Process_Argument'Access);
       return Arguments;
    end Scan_Arguments;
 

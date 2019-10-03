@@ -1,151 +1,113 @@
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-
-with Concorde.Db;
+private with Ada.Containers.Indefinite_Vectors;
+private with Ada.Containers.Vectors;
+private with WL.String_Maps;
 
 package Concorde.Contexts is
 
-   type Root_Context_Type is abstract tagged private;
-   subtype Context_Type is Root_Context_Type'Class;
+   type Context_Node_Interface is interface;
 
-   package Child_Name_Lists is
-     new Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
-
-   type Context_List is tagged private;
-
-   function Class
-     (Context : Root_Context_Type)
-      return String
+   function Has_Children
+     (Node : Context_Node_Interface)
+      return Boolean
       is abstract;
 
-   function Name
-     (Context : Root_Context_Type)
-      return String
+   function Has_Child
+     (Node : Context_Node_Interface;
+      Name : String)
+      return Boolean
       is abstract;
 
-   procedure Get_Child_Contexts
-     (Context  : Root_Context_Type;
-      Children : in out Context_List'Class)
+   function Get_Child
+     (Node  : Context_Node_Interface;
+      Child : String)
+      return Context_Node_Interface'Class
+      is abstract;
+
+   procedure Iterate_Children
+     (Node    : Context_Node_Interface;
+      Process : not null access
+        procedure (Name : String;
+                   Child : Context_Node_Interface'Class))
    is abstract;
 
-   function Get_Content
-     (Context : Root_Context_Type'Class)
+   function Root_Node return Context_Node_Interface'Class;
+
+   type Context_Type is tagged private;
+
+   procedure Create_Context
+     (Context : in out Context_Type;
+      Default_Scope : String);
+
+   function Current_Node
+     (Context : Context_Type)
+     return Context_Node_Interface'Class;
+
+   procedure Set_Default_Scope
+     (Context : in out Context_Type);
+
+   function Change_Scope
+     (Context : in out Context_Type;
+      Path    : String)
+     return Boolean;
+
+   procedure Push_Scope
+     (Context : in out Context_Type);
+
+   procedure Pop_Scope
+     (Context : in out Context_Type);
+
+   function Value
+     (Context : Context_Type;
+      Name    : String;
+      Default : String := "")
       return String;
 
-   procedure Iterate_Contexts
-     (Context : Root_Context_Type'Class;
-      Process : not null access
-        procedure (Context : Context_Type));
+   procedure Set_Value
+     (Context : in out Context_Type;
+      Name    : String;
+      Value   : String);
 
-   procedure Iterate_Content_Lines
-     (Context : Root_Context_Type;
-      Process : not null access
-        procedure (Line : String));
+   function History_Length
+     (Context : Context_Type)
+      return Natural;
 
-   function Is_Root (Context : Root_Context_Type) return Boolean;
-   function Is_Valid (Context : Root_Context_Type) return Boolean;
+   function Get_History
+     (Context : Context_Type;
+      Offset  : Integer)
+      return String
+     with Pre => Offset /= 0 and then abs Offset < History_Length (Context);
 
-   function Has_Child_Context
-     (Context : Root_Context_Type;
-      Name    : String)
-      return Boolean;
-
-   function Child_Context
-     (Context : Root_Context_Type;
-      Name    : String)
-      return Context_Type
-     with Pre'Class =>
-       Root_Context_Type'Class (Context).Has_Child_Context (Name);
-
-   procedure Get_Child_Names
-     (Context : Root_Context_Type'Class;
-      Names   : out Child_Name_Lists.List);
-
-   procedure Iterate_Child_Names
-     (Context : Root_Context_Type'Class;
-      Process : not null access
-        procedure (Name : String));
-
-   procedure Match_Children
-     (Context : Root_Context_Type'Class;
-      Pattern : String;
-      Matches : out Child_Name_Lists.List);
-
-   type Context_Path is
-     new Root_Context_Type with private;
-
-   function Context
-     (Path : Context_Path)
-      return Context_Type;
-
-   procedure To_Parent
-     (Path : in out Context_Path);
-
-   procedure To_Child
-     (Path          : in out Context_Path;
-      Child_Context : Context_Type);
-
-   function Go
-     (Start : Context_Path;
-      Scope : String)
-      return Context_Path;
-
-   function Initial_Context_Path
-     (Faction : Concorde.Db.Faction_Reference)
-      return Context_Path;
+   procedure Append_History
+     (Context : in out Context_Type;
+      Item    : String);
 
 private
 
-   type Root_Context_Type is abstract tagged
+   package String_Vectors is
+     new Ada.Containers.Indefinite_Vectors (Positive, String);
+
+   package Scope_Vectors is
+     new Ada.Containers.Vectors
+       (Positive, String_Vectors.Vector, String_Vectors."=");
+
+   package Environment_Maps is
+     new WL.String_Maps (String);
+
+   type Context_Type is tagged
       record
-         null;
+         History      : String_Vectors.Vector;
+         Current_Path : String_Vectors.Vector;
+         Home_Path    : String_Vectors.Vector;
+         Environment  : Environment_Maps.Map;
+         Scope_Stack  : Scope_Vectors.Vector;
       end record;
 
-   function Is_Root (Context : Root_Context_Type) return Boolean
-   is (False);
+   procedure Set_Parent_Scope
+     (Context : in out Context_Type);
 
-   function Is_Valid (Context : Root_Context_Type) return Boolean
-   is (True);
-
-   package Context_Lists is
-     new Ada.Containers.Indefinite_Doubly_Linked_Lists (Context_Type);
-
-   type Context_List is new Context_Lists.List with null record;
-
-   type Context_Path is new Root_Context_Type with
-      record
-         List : Context_Lists.List;
-      end record;
-
-   overriding function Class
-     (Context : Context_Path)
-      return String;
-
-   overriding function Name
-     (Context : Context_Path)
-      return String;
-
-   overriding function Is_Valid (Context : Context_Path) return Boolean
-   is (not Context.List.Is_Empty and then Context.Context.Is_Valid);
-
-   overriding function Has_Child_Context
-     (Context : Context_Path;
-      Name    : String)
-      return Boolean
-   is (not Context.List.Is_Empty
-       and then Context.List.First_Element.Has_Child_Context (Name));
-
-   overriding function Child_Context
-     (Context : Context_Path;
-      Name    : String)
-      return Context_Type;
-
-   overriding procedure Get_Child_Contexts
-     (Context  : Context_Path;
-      Children : in out Context_List'Class);
-
-   overriding procedure Iterate_Content_Lines
-     (Context : Context_Path;
-      Process : not null access
-        procedure (Line : String));
+   procedure Set_Child_Scope
+     (Context    : in out Context_Type;
+      Child_Name : String)
+     with Pre => Current_Node (Context).Has_Child (Child_Name);
 
 end Concorde.Contexts;

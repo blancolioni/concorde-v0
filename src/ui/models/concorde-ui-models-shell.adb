@@ -9,6 +9,7 @@ package body Concorde.UI.Models.Shell is
    overriding function Handle
      (Model   : in out Shell_Model_Type;
       State   : in out State_Interface'Class;
+      Client  : Client_Id;
       Request : Concorde.Json.Json_Value'Class)
       return Concorde.Json.Json_Value'Class;
 
@@ -19,6 +20,7 @@ package body Concorde.UI.Models.Shell is
    overriding function Handle
      (Model   : in out Shell_Model_Type;
       State   : in out State_Interface'Class;
+      Client  : Client_Id;
       Request : Concorde.Json.Json_Value'Class)
       return Concorde.Json.Json_Value'Class
    is
@@ -26,7 +28,7 @@ package body Concorde.UI.Models.Shell is
       Command : constant String :=
         Concorde.Json.Json_Object (Request).Get_Property ("data");
       Result  : constant String :=
-        State.Execute_Command (Command);
+        State.Execute_Command (Client, Command);
       Response : Concorde.Json.Json_Object;
    begin
       Response.Set_Property ("data", Result);
