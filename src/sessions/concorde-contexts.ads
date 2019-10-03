@@ -6,6 +6,11 @@ package Concorde.Contexts is
 
    type Context_Node_Interface is interface;
 
+   function Contents
+     (Node : Context_Node_Interface)
+      return String
+      is abstract;
+
    function Has_Children
      (Node : Context_Node_Interface)
       return Boolean

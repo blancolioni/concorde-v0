@@ -28,6 +28,10 @@ package body Concorde.Contexts is
          Child_Map  : Child_Node_Maps.Map;
       end record;
 
+   overriding function Contents
+     (Node : Simple_Node_Record)
+      return String;
+
    overriding function Has_Children
      (Node : Simple_Node_Record)
       return Boolean
@@ -60,6 +64,11 @@ package body Concorde.Contexts is
       record
          Contents : Ada.Strings.Unbounded.Unbounded_String;
       end record;
+
+   overriding function Contents
+     (Node : File_Node_Record)
+      return String
+   is (Ada.Strings.Unbounded.To_String (Node.Contents));
 
    overriding function Has_Children
      (Node : File_Node_Record)
@@ -128,6 +137,26 @@ package body Concorde.Contexts is
       end loop;
       return True;
    end Change_Scope;
+
+   --------------
+   -- Contents --
+   --------------
+
+   overriding function Contents
+     (Node : Simple_Node_Record)
+      return String
+   is
+      use Ada.Strings.Unbounded;
+      Result : Unbounded_String;
+   begin
+      for Item of Node.Child_List loop
+         if Result /= Null_Unbounded_String then
+            Result := Result & " ";
+         end if;
+         Result := Result & Item.Name;
+      end loop;
+      return To_String (Result);
+   end Contents;
 
    --------------------
    -- Create_Context --
@@ -396,4 +425,7 @@ begin
                 (Contents =>
                      Ada.Strings.Unbounded.To_Unbounded_String
                    (Concorde.Version.Version_String)))));
+   Root.Child_Map.Insert
+     ("version.txt", Root.Child_List.Last);
+
 end Concorde.Contexts;
