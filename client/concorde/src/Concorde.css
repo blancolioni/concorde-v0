@@ -19,3 +19,7 @@
     background-color: black;
     color:white;
 }
+
+.concorde-shell-table td {
+    padding: 0px;
+}

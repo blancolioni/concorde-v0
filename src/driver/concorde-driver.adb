@@ -15,9 +15,11 @@ with Concorde.Paths;
 with Concorde.Color;
 with Concorde.Random;
 
-with Concorde.UI.Web_UI;
+with Concorde.UI.Launch;
 
 with Concorde.Calendar;
+with Concorde.Commands.Loader;
+
 with Concorde.Configure;
 with Concorde.Configure.Scenarios;
 with Concorde.Factions.Create;
@@ -287,7 +289,7 @@ begin
    end if;
 
    Concorde.Managers.Loader.Register_Managers;
---     Concorde.Commands.Loader.Load_Commands;
+   Concorde.Commands.Loader.Load_Commands;
 
    Concorde.Logging.Start_Logging;
 
@@ -353,25 +355,12 @@ begin
    else
 
       declare
-         Web : Concorde.UI.Web_UI.Web_UI_Type;
+         UI : constant Concorde.UI.UI_Interface'Class :=
+           Concorde.UI.Launch.Get_UI ("aws");
       begin
-         Web.Start;
+         UI.Start;
       end;
 
---        Gnoga.Application.Title ("Concorde");
---
---        Gnoga.Application.HTML_On_Close ("Application disconnected.");
---
---        Gnoga.Application.Multi_Connect.Initialize
---          (Port    => 8080,
---           Boot    => "concorde.html",
---           Verbose => True);
---
---        Gnoga.Application.Multi_Connect.On_Connect_Handler
---      (Event => Concorde.UI.Gnoga_UI.On_Connect_Default'Unrestricted_Access,
---           Path  => "default");
---
---        Gnoga.Application.Multi_Connect.Message_Loop;
    end if;
 
    Updates_Running := False;

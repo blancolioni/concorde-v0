@@ -8,16 +8,16 @@ package body Concorde.Commands is
      new Writer_Interface with null record;
 
    overriding procedure Put
-     (Writer : Null_Writer_Record;
+     (Writer : in out Null_Writer_Record;
       Text   : String)
    is null;
 
    overriding procedure New_Line
-     (Writer : Null_Writer_Record)
+     (Writer : in out Null_Writer_Record)
    is null;
 
    overriding procedure Put_Error
-     (Writer : Null_Writer_Record;
+     (Writer : in out Null_Writer_Record;
       Text   : String);
 
    package Command_Maps is
@@ -51,8 +51,8 @@ package body Concorde.Commands is
 
    procedure Execute_Single_Command
      (Command : String;
-      Session : Concorde.Sessions.Concorde_Session;
-      Writer  : Writer_Interface'Class);
+      Session : in out Concorde.Sessions.Concorde_Session;
+      Writer  : in out Writer_Interface'Class);
 
    ---------
    -- Add --
@@ -72,13 +72,13 @@ package body Concorde.Commands is
 
    procedure Execute
      (Command   : Root_Concorde_Command'Class;
-      Session   : Concorde.Sessions.Concorde_Session;
-      Writer    : Writer_Interface'Class;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List)
    is
    begin
       if Command.Administrator_Only
-        and then not Session.Administrator
+        and then not Session.Is_Administrator
       then
          Writer.Put_Error
            ("You must be an administrator to perform this action");
@@ -93,8 +93,8 @@ package body Concorde.Commands is
 
    procedure Execute_Command_Line
      (Line    : String;
-      Session : Concorde.Sessions.Concorde_Session;
-      Writer  : Writer_Interface'Class)
+      Session : in out Concorde.Sessions.Concorde_Session;
+      Writer  : in out Writer_Interface'Class)
    is
 
       function Is_Integer (Image : String) return Boolean;
@@ -171,8 +171,8 @@ package body Concorde.Commands is
 
    procedure Execute_Single_Command
      (Command : String;
-      Session : Concorde.Sessions.Concorde_Session;
-      Writer  : Writer_Interface'Class)
+      Session : in out Concorde.Sessions.Concorde_Session;
+      Writer  : in out Writer_Interface'Class)
    is
       Extended_Line : constant String := Command & ' ';
       First         : constant Positive :=
@@ -334,7 +334,7 @@ package body Concorde.Commands is
    ---------------
 
    overriding procedure Put_Error
-     (Writer : Null_Writer_Record;
+     (Writer : in out Null_Writer_Record;
       Text   : String)
    is
       pragma Unreferenced (Writer);
@@ -345,7 +345,7 @@ package body Concorde.Commands is
    end Put_Error;
 
    procedure Put_Identifier_List
-     (Writer : Writer_Interface'Class;
+     (Writer : in out Writer_Interface'Class;
       List   : Identifier_List)
    is
       package Sorting is
@@ -400,7 +400,7 @@ package body Concorde.Commands is
    --------------
 
    procedure Put_Line
-     (Writer : Writer_Interface'Class;
+     (Writer : in out Writer_Interface'Class;
       Text   : String)
    is
    begin

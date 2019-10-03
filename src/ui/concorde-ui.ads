@@ -1,12 +1,21 @@
+with Concorde.Json;
+
 package Concorde.UI is
 
    type Client_Id is new Natural;
 
-   type UI_Interface is limited interface;
+   type UI_Interface is interface;
 
    procedure Start
-     (Item  : in out UI_Interface)
+     (Item  : UI_Interface)
    is abstract;
+
+   procedure Stop
+     (Item    : UI_Interface;
+      Message : String)
+   is abstract;
+
+   function Current_UI return UI_Interface'Class;
 
    type State_Interface is interface;
 
@@ -28,7 +37,8 @@ package Concorde.UI is
      with Pre'Class => State.Valid;
 
    function New_Client
-     (State : in out State_Interface)
+     (State      : in out State_Interface;
+      Model_Name : String)
       return Client_Id
       is abstract;
 
@@ -37,11 +47,21 @@ package Concorde.UI is
       Client : Client_Id)
    is abstract;
 
-   type State_Update_Interface is interface;
-
-   procedure Execute
-     (Update : State_Update_Interface;
-      State  : in out State_Interface'Class)
+   function Execute_Command
+     (State   : in out State_Interface;
+      Command : String)
+      return String
    is abstract;
+
+   function Handle_Client_Request
+     (State   : in out State_Interface;
+      Client  : Client_Id;
+      Request : Concorde.Json.Json_Value'Class)
+      return Concorde.Json.Json_Value'Class
+   is abstract;
+
+private
+
+   procedure On_UI_Started (UI : UI_Interface'Class);
 
 end Concorde.UI;

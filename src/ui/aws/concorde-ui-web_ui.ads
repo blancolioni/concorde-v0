@@ -1,17 +1,5 @@
 package Concorde.UI.Web_UI is
 
-   type Web_UI_Type is
-     limited new UI_Interface with private;
-
-   overriding procedure Start
-     (Web_UI  : in out Web_UI_Type);
-
-private
-
-   type Web_UI_Type is
-     limited new UI_Interface with
-      record
-         null;
-      end record;
+   function Get_Web_UI return UI_Interface'Class;
 
 end Concorde.UI.Web_UI;

@@ -9,27 +9,27 @@ package Concorde.Commands is
    type Writer_Interface is limited interface;
 
    procedure Put
-     (Writer : Writer_Interface;
+     (Writer : in out Writer_Interface;
       Text   : String)
    is abstract;
 
    procedure New_Line
-     (Writer : Writer_Interface)
+     (Writer : in out Writer_Interface)
    is abstract;
 
    procedure Put_Error
-     (Writer  : Writer_Interface;
+     (Writer  : in out Writer_Interface;
       Message : String)
    is abstract;
 
    procedure Put_Line
-     (Writer : Writer_Interface'Class;
+     (Writer : in out Writer_Interface'Class;
       Text   : String);
 
    type Identifier_List is private;
 
    procedure Put_Identifier_List
-     (Writer : Writer_Interface'Class;
+     (Writer : in out Writer_Interface'Class;
       List   : Identifier_List);
 
    procedure Add
@@ -78,20 +78,20 @@ package Concorde.Commands is
    procedure Perform
      (Command   : Root_Concorde_Command;
       Session   : Concorde.Sessions.Concorde_Session;
-      Writer    : Writer_Interface'Class;
+      Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List)
    is abstract;
 
    procedure Execute
      (Command   : Root_Concorde_Command'Class;
-      Session   : Concorde.Sessions.Concorde_Session;
-      Writer    : Writer_Interface'Class;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Writer    : in out Writer_Interface'Class;
       Arguments : Argument_List);
 
    procedure Execute_Command_Line
      (Line    : String;
-      Session : Concorde.Sessions.Concorde_Session;
-      Writer  : Writer_Interface'Class);
+      Session : in out Concorde.Sessions.Concorde_Session;
+      Writer  : in out Writer_Interface'Class);
 
    procedure Register
      (Command_Name : String;

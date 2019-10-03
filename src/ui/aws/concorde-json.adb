@@ -20,6 +20,11 @@ package body Concorde.Json is
      (Value : String_Json_Value)
       return String;
 
+   overriding function Image
+     (Value : String_Json_Value)
+      return String
+   is (Ada.Strings.Unbounded.To_String (Value.Text));
+
    type Integer_Json_Value is
      new Json_Value with
       record
@@ -39,6 +44,8 @@ package body Concorde.Json is
    overriding function Serialize
      (Value : Boolean_Json_Value)
       return String;
+
+   function To_Safe_String (Text : String) return String;
 
    ------------
    -- Append --
@@ -60,6 +67,36 @@ package body Concorde.Json is
         Boolean_Json_Value'
           (Value => Bool);
    end Boolean_Value;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   function Get_Property
+     (Object : Json_Object'Class;
+      Name   : String)
+      return Json_Value'Class
+   is
+   begin
+      if Object.Properties.Contains (Name) then
+         return Object.Properties (Name);
+      else
+         return Null_Value;
+      end if;
+   end Get_Property;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   function Get_Property
+     (Object : Json_Object'Class;
+      Name   : String)
+      return String
+   is
+   begin
+      return Object.Get_Property (Name).Image;
+   end Get_Property;
 
    -------------------
    -- Integer_Value --
@@ -124,7 +161,7 @@ package body Concorde.Json is
      (Value : String_Json_Value)
       return String
    is (""""
-       & Ada.Strings.Unbounded.To_String (Value.Text)
+       & To_Safe_String (Ada.Strings.Unbounded.To_String (Value.Text))
        & """");
 
    overriding function Serialize
@@ -200,7 +237,25 @@ package body Concorde.Json is
    function String_Value (Text : String) return Json_Value'Class is
    begin
       return Result : constant String_Json_Value := String_Json_Value'
-        (Text => Ada.Strings.Unbounded.To_Unbounded_String (Text));
+        (Text =>
+           Ada.Strings.Unbounded.To_Unbounded_String
+             (Text));
    end String_Value;
+
+   --------------------
+   -- To_Safe_String --
+   --------------------
+
+   function To_Safe_String (Text : String) return String is
+   begin
+      for I in Text'Range loop
+         if Character'Pos (Text (I)) = 10 then
+            return Text (Text'First .. I - 1)
+              & "\n"
+              & To_Safe_String (Text (I + 1 .. Text'Last));
+         end if;
+      end loop;
+      return Text;
+   end To_Safe_String;
 
 end Concorde.Json;

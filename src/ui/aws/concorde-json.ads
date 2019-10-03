@@ -15,10 +15,24 @@ package Concorde.Json is
       return String
       is abstract;
 
+   function Image
+     (Value : Json_Value)
+      return String;
+
    type Json_Object is new Json_Value with private;
 
    overriding function Serialize
      (Value : Json_Object)
+      return String;
+
+   function Get_Property
+     (Object : Json_Object'Class;
+      Name   : String)
+      return Json_Value'Class;
+
+   function Get_Property
+     (Object : Json_Object'Class;
+      Name   : String)
       return String;
 
    procedure Set_Property
@@ -55,6 +69,11 @@ private
 
    type Json_Value is abstract tagged null record;
 
+   function Image
+     (Value : Json_Value)
+      return String
+   is (Json_Value'Class (Value).Serialize);
+
    package Json_Value_Maps is
      new WL.String_Maps (Json_Value'Class);
 
@@ -66,9 +85,15 @@ private
          Properties : Json_Value_Maps.Map;
       end record;
 
+   overriding function Image (Object : Json_Object) return String
+   is ("[Object]");
+
    type Json_Array is new Json_Value with
       record
          Vector : Json_Value_Vectors.Vector;
       end record;
+
+   overriding function Image (Item : Json_Array) return String
+   is ("[Array]");
 
 end Concorde.Json;

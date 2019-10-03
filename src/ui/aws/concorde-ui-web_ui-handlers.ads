@@ -10,4 +10,7 @@ package Concorde.UI.Web_UI.Handlers is
    function Handle_New_Client
      return Routes.Request_Handler'Class;
 
+   function Handle_Client_Request
+     return Routes.Request_Handler'Class;
+
 end Concorde.UI.Web_UI.Handlers;

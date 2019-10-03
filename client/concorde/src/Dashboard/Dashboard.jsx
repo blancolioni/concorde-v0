@@ -32,7 +32,10 @@ class DashboardItem extends React.Component {
                 this.setState({
                     isLoaded: true,
                     clientId: result.clientId,
-                })
+                });
+                if (this.props.onConnected) {
+                    this.props.onConnected (result.clientId);
+                }
             }
         )
     }
@@ -45,7 +48,7 @@ class DashboardItem extends React.Component {
         } else {
             return (
                 <div className="concorde-dashboard-item">
-                    <DashboardTitleBar text={this.props.model} clientId={this.state.clientId}></DashboardTitleBar>
+                    <DashboardTitleBar text={this.props.title} clientId={this.state.clientId}></DashboardTitleBar>
                     <div className="concorde-dashboard-body">
                         {this.props.children}
                     </div>
@@ -61,11 +64,8 @@ class Dashboard extends React.Component {
             <div className="container">
                 <div className="row">
                     <div className="col-12">
-                        <DashboardItem title="Shell" model="shell">
-                            <Shell>
-
-                            </Shell>
-                        </DashboardItem>
+                        <Shell>
+                        </Shell>
                     </div>
                 </div>
             </div>
@@ -73,4 +73,4 @@ class Dashboard extends React.Component {
     }
 }
 
-export { Dashboard };
+export { Dashboard, DashboardItem };

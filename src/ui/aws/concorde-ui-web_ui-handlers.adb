@@ -3,6 +3,17 @@ with Concorde.UI.Web_UI.Handlers.Login;
 
 package body Concorde.UI.Web_UI.Handlers is
 
+   ---------------------------
+   -- Handle_Client_Request --
+   ---------------------------
+
+   function Handle_Client_Request
+     return Routes.Request_Handler'Class
+   is
+   begin
+      return Handler : Clients.Client_Request_Handler;
+   end Handle_Client_Request;
+
    ------------------
    -- Handle_Login --
    ------------------

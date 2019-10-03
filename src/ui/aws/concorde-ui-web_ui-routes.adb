@@ -1,7 +1,8 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Holders;
+with Ada.Containers.Indefinite_Vectors;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
-with Ada.Text_IO;
 
 with WL.Guids;
 
@@ -46,6 +47,13 @@ package body Concorde.UI.Web_UI.Routes is
       Template   : String)
      return Parameter_Container;
 
+   package String_Vectors is
+     new Ada.Containers.Indefinite_Vectors (Positive, String);
+
+   function Split_Path
+     (Path : String)
+      return String_Vectors.Vector;
+
    ---------------
    -- Add_Route --
    ---------------
@@ -71,26 +79,56 @@ package body Concorde.UI.Web_UI.Routes is
       Template   : String)
       return Parameter_Container
    is
-      pragma Unreferenced (Template);
+      Ts : constant String_Vectors.Vector := Split_Path (Template);
+      Us : constant String_Vectors.Vector :=
+        Split_Path (AWS.Status.URI (Request));
       Ps : constant AWS.Parameters.List :=
         AWS.Status.Parameters (Request);
+
+      Result : Parameter_Container;
+
+      procedure Param
+        (Name, Value : String);
+
+      -----------
+      -- Param --
+      -----------
+
+      procedure Param
+        (Name, Value : String)
+      is
+      begin
+         if Result.Contains (Name) then
+            Result.Replace (Name, Value);
+         else
+            Result.Insert (Name, Value);
+         end if;
+      end Param;
+
    begin
-      return Result : Parameter_Container do
-         for I in 1 .. Ps.Count loop
-            declare
-               Name  : constant String :=
-                 Ps.Get_Name (I);
-               Value : constant String :=
-                 Ps.Get_Value (I);
-            begin
-               if Result.Contains (Name) then
-                  Result.Replace (Name, Value);
-               else
-                  Result.Insert (Name, Value);
-               end if;
-            end;
-         end loop;
-      end return;
+      for I in 1 .. Ts.Last_Index loop
+         declare
+            Item : constant String := Ts.Element (I);
+         begin
+            if Ada.Strings.Fixed.Head (Item, 1) = ":" then
+               Param (Item (Item'First + 1 .. Item'Last), Us.Element (I));
+            end if;
+         end;
+      end loop;
+
+      for I in 1 .. Ps.Count loop
+         declare
+            Name  : constant String :=
+              Ps.Get_Name (I);
+            Value : constant String :=
+              Ps.Get_Value (I);
+         begin
+            Param (Name, Value);
+         end;
+      end loop;
+
+      return Result;
+
    end Get_Parameters;
 
    ------------
@@ -117,11 +155,6 @@ package body Concorde.UI.Web_UI.Routes is
                  Parameters.Parameter ("id");
                Response   : AWS.Response.Data;
             begin
-               Ada.Text_IO.Put_Line
-                 (Method'Image & " "
-                  & AWS.Status.URI (Request)
-                  & " [" & State_Id & "]");
-
                case Method is
                   when AWS.Status.GET =>
                      if State_Id = ""
@@ -279,7 +312,32 @@ package body Concorde.UI.Web_UI.Routes is
       return Boolean
    is
    begin
-      return Template = URI;
+      if Template = URI then
+         return True;
+      elsif Ada.Strings.Fixed.Index (Template, ":") = 0 then
+         return False;
+      end if;
+
+      declare
+         Template_Path : constant String_Vectors.Vector :=
+           Split_Path (Template);
+         URI_Path      : constant String_Vectors.Vector :=
+           Split_Path (URI);
+      begin
+
+         if Template_Path.Last_Index /= URI_Path.Last_Index then
+            return False;
+         end if;
+
+         for I in 1 .. Template_Path.Last_Index loop
+            if Template_Path (I) /= URI_Path (I)
+              and then Ada.Strings.Fixed.Head (Template_Path (I), 1) /= ":"
+            then
+               return False;
+            end if;
+         end loop;
+         return True;
+      end;
    end Match;
 
    ---------------
@@ -300,5 +358,32 @@ package body Concorde.UI.Web_UI.Routes is
          return "";
       end if;
    end Parameter;
+
+   ----------------
+   -- Split_Path --
+   ----------------
+
+   function Split_Path
+     (Path : String)
+      return String_Vectors.Vector
+   is
+      P : constant String :=
+        (if Path (Path'Last) = '/' then Path else Path & '/');
+      Start : Positive := P'First;
+      Index : Positive := Start;
+   begin
+      return Vector : String_Vectors.Vector do
+         for Ch of P loop
+            if Ch = '/' then
+               if Index > Start then
+                  Vector.Append (P (Start .. Index - 1));
+               end if;
+
+               Start := Index + 1;
+            end if;
+            Index := Index + 1;
+         end loop;
+      end return;
+   end Split_Path;
 
 end Concorde.UI.Web_UI.Routes;
