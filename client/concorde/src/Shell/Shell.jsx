@@ -81,15 +81,22 @@ class Shell extends React.Component {
     }
 
     sendCommand(cmd) {
-        userService.postRequest('client/' + this.state.clientId, {data: cmd})
+
+    this.setState(state => {
+        return {
+            ...state,
+            output: state.output.concat ('> ' + cmd)
+        }                    
+    });
+
+    userService.postRequest('client/' + this.state.clientId, {data: cmd})
         .then((result) => result.json())   
         .then((resp) => {
             this.setState(state => {
                 return {
                     ...state,
                     output: state.output.concat (resp.data.split('\n'))
-                }
-                    
+                }                    
             });
         });
     }
