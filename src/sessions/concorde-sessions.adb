@@ -135,7 +135,9 @@ package body Concorde.Sessions is
            and then User.Password = Password
          then
             Session.User := User.Get_User_Reference;
-            Session.Default_Context.Create_Context ("/");
+            Session.Default_Context.Create_Context
+              (Root          => Concorde.Contexts.System_Root,
+               Default_Scope => "/");
          end if;
       end return;
    end New_Session;

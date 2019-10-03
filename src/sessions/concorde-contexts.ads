@@ -1,3 +1,4 @@
+private with Ada.Containers.Indefinite_Holders;
 private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Containers.Vectors;
 private with WL.String_Maps;
@@ -35,12 +36,13 @@ package Concorde.Contexts is
                    Child : Context_Node_Interface'Class))
    is abstract;
 
-   function Root_Node return Context_Node_Interface'Class;
+   function System_Root return Context_Node_Interface'Class;
 
    type Context_Type is tagged private;
 
    procedure Create_Context
-     (Context : in out Context_Type;
+     (Context       : in out Context_Type;
+      Root          : Context_Node_Interface'Class;
       Default_Scope : String);
 
    function Current_Node
@@ -98,6 +100,9 @@ private
    package Environment_Maps is
      new WL.String_Maps (String);
 
+   package Node_Holders is
+     new Ada.Containers.Indefinite_Holders (Context_Node_Interface'Class);
+
    type Context_Type is tagged
       record
          History      : String_Vectors.Vector;
@@ -105,6 +110,7 @@ private
          Home_Path    : String_Vectors.Vector;
          Environment  : Environment_Maps.Map;
          Scope_Stack  : Scope_Vectors.Vector;
+         Root         : Node_Holders.Holder;
       end record;
 
    procedure Set_Parent_Scope

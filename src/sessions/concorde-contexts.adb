@@ -1,13 +1,9 @@
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Containers.Indefinite_Holders;
 with Ada.Strings.Unbounded;
 
 with Concorde.Version;
 
 package body Concorde.Contexts is
-
-   package Node_Holders is
-     new Ada.Containers.Indefinite_Holders (Context_Node_Interface'Class);
 
    type Child_Node_Record is
       record
@@ -57,7 +53,7 @@ package body Concorde.Contexts is
 
    type Root_Node_Record is new Simple_Node_Record with null record;
 
-   Root : Root_Node_Record := (others => <>);
+   System_Root_Node : Root_Node_Record := (others => <>);
 
    type File_Node_Record is
      new Context_Node_Interface with
@@ -97,7 +93,8 @@ package body Concorde.Contexts is
       return String_Vectors.Vector;
 
    function Follow_Path
-     (Path : String_Vectors.Vector)
+     (Root : Context_Node_Interface'Class;
+      Path : String_Vectors.Vector)
       return Context_Node_Interface'Class;
 
    --------------------
@@ -164,9 +161,11 @@ package body Concorde.Contexts is
 
    procedure Create_Context
      (Context       : in out Context_Type;
+      Root          : Context_Node_Interface'Class;
       Default_Scope : String)
    is
    begin
+      Context.Root := Node_Holders.To_Holder (Root);
       Context.Home_Path := Split_Path (Default_Scope);
       Context.Current_Path := Context.Home_Path;
       Context.History.Clear;
@@ -181,7 +180,7 @@ package body Concorde.Contexts is
       return Context_Node_Interface'Class
    is
    begin
-      return Follow_Path (Context.Current_Path);
+      return Follow_Path (Context.Root.Element, Context.Current_Path);
    end Current_Node;
 
    -----------------
@@ -189,7 +188,8 @@ package body Concorde.Contexts is
    -----------------
 
    function Follow_Path
-     (Path : String_Vectors.Vector)
+     (Root : Context_Node_Interface'Class;
+      Path : String_Vectors.Vector)
       return Context_Node_Interface'Class
    is
 
@@ -314,15 +314,6 @@ package body Concorde.Contexts is
       Context.Scope_Stack.Append (Context.Current_Path);
    end Push_Scope;
 
-   ---------------
-   -- Root_Node --
-   ---------------
-
-   function Root_Node return Context_Node_Interface'Class is
-   begin
-      return Root;
-   end Root_Node;
-
    ---------------------
    -- Set_Child_Scope --
    ---------------------
@@ -400,6 +391,15 @@ package body Concorde.Contexts is
       end return;
    end Split_Path;
 
+   -----------------
+   -- System_Root --
+   -----------------
+
+   function System_Root return Context_Node_Interface'Class is
+   begin
+      return System_Root_Node;
+   end System_Root;
+
    -----------
    -- Value --
    -----------
@@ -417,7 +417,7 @@ package body Concorde.Contexts is
    end Value;
 
 begin
-   Root.Child_List.Append
+   System_Root_Node.Child_List.Append
      (Child_Node_Record'
         (Name => Ada.Strings.Unbounded.To_Unbounded_String ("version.txt"),
          Node => Node_Holders.To_Holder
@@ -425,7 +425,7 @@ begin
                 (Contents =>
                      Ada.Strings.Unbounded.To_Unbounded_String
                    (Concorde.Version.Version_String)))));
-   Root.Child_Map.Insert
-     ("version.txt", Root.Child_List.Last);
+   System_Root_Node.Child_Map.Insert
+     ("version.txt", System_Root_Node.Child_List.Last);
 
 end Concorde.Contexts;
