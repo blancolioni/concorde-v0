@@ -58,16 +58,50 @@ class DashboardItem extends React.Component {
     }
 }
 
+class DashboardCell extends React.Component {
+
+    render() {
+        let cellStyle = {
+            gridColumnStart: this.props.anchor.left,
+            gridColumnEnd: this.props.anchor.right,
+            gridRowStart: this.props.anchor.top,
+            gridRowEnd: this.props.anchor.bottom,
+        }
+        return (
+            <div className="concorde-dashboard-cell" style={cellStyle}>
+                <Shell></Shell>
+            </div>
+        );
+    }
+}
+
 class Dashboard extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            layout: [
+                {
+                    anchor: {
+                        left: 1,
+                        top: 1,
+                        right: 7,
+                        bottom: 13,
+                    },
+                    client: 0,
+                },
+            ],
+        }
+    }
+
     render() {
         return (
-            <div className="container">
-                <div className="row">
-                    <div className="col-12">
-                        <Shell>
-                        </Shell>
-                    </div>
-                </div>
+            <div className="concorde-dashboard-grid">
+                {this.state.layout.map((cell) => {
+                    return (
+                        <DashboardCell anchor={cell.anchor} client={cell.client}></DashboardCell>
+                    );
+                })}
             </div>
         );
     }

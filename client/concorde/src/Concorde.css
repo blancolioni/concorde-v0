@@ -6,9 +6,25 @@
     font-family: 'Courier New', Courier, monospace;
 }
 
+.concorde-shell-textarea {
+    height: 100%;
+    width: 100%;
+}
+
 .navbar-dark {
     color:white;
   }
+
+.concorde-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12,1fr);
+    grid-template-rows: repeat(12,1fr);
+    position: absolute;
+    bottom: 10px;
+    top: 60px;
+    left:10px;
+    right:10px;
+}
 
 .concorde-dashboard-item {
     background-color: white;
