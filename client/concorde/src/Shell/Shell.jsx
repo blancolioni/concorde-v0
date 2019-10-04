@@ -18,10 +18,13 @@ function ConsoleText(props) {
     return (
         <div className="concorde-shell-output">
             <table className="concorde-shell-table">
-            {props.lines.map((line) => {
-                return ( <ConsoleLine line={line}></ConsoleLine>);
-                })
-            }
+                <tbody>
+                    {props.lines.map((line) => {
+                        return (
+                            <ConsoleLine line={line}></ConsoleLine> 
+                        );
+                    })}
+                </tbody>
             </table>
         </div>
     );
@@ -82,23 +85,23 @@ class Shell extends React.Component {
 
     sendCommand(cmd) {
 
-    this.setState(state => {
-        return {
-            ...state,
-            output: state.output.concat ('> ' + cmd)
-        }                    
-    });
-
-    userService.postRequest('client/' + this.state.clientId, {data: cmd})
-        .then((result) => result.json())   
-        .then((resp) => {
-            this.setState(state => {
-                return {
-                    ...state,
-                    output: state.output.concat (resp.data.split('\n'))
-                }                    
-            });
+        this.setState(state => {
+            return {
+                ...state,
+                output: state.output.concat ('> ' + cmd)
+            }                    
         });
+
+        userService.postRequest('client/' + this.state.clientId, {data: cmd})
+            .then((result) => result.json())   
+            .then((resp) => {
+                this.setState(state => {
+                    return {
+                        ...state,
+                        output: state.output.concat (resp.data.split('\n'))
+                    }                    
+                });
+            });
     }
 
     onConnected(clientId) {
