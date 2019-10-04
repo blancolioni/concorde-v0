@@ -81,6 +81,11 @@ private
      (Session   : in out Root_Concorde_Session;
       Client    : Concorde.UI.Client_Id);
 
+   overriding function Handle_Message
+     (Session : in out Root_Concorde_Session;
+      Message : Concorde.Json.Json_Value'Class)
+      return Concorde.Json.Json_Value'Class;
+
    overriding function Execute_Command
      (Session : in out Root_Concorde_Session;
       Client  : Concorde.UI.Client_Id;

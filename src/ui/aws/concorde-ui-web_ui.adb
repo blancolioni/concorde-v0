@@ -1,5 +1,6 @@
 with Ada.Text_IO;
 
+with AWS.Net.WebSocket.Registry.Control;
 with AWS.Server;
 with AWS.Status;
 
@@ -7,6 +8,30 @@ with Concorde.UI.Web_UI.Handlers;
 with Concorde.UI.Web_UI.Routes;
 
 package body Concorde.UI.Web_UI is
+
+   type Socket_Type is
+     new AWS.Net.WebSocket.Object with null record;
+
+   overriding procedure On_Close
+     (Socket : in out Socket_Type;
+      Message : String);
+
+   overriding procedure On_Error
+     (Socket  : in out Socket_Type;
+      Message : String);
+
+   overriding procedure On_Message
+     (Socket  : in out Socket_Type;
+      Message : String);
+
+   overriding procedure On_Open
+     (Socket  : in out Socket_Type;
+      Message : String);
+
+   function Create
+     (Socket  : AWS.Net.Socket_Access;
+      Request : AWS.Status.Data)
+      return AWS.Net.WebSocket.Object'Class;
 
    type Web_UI_Type is
      new UI_Interface with
@@ -21,9 +46,26 @@ package body Concorde.UI.Web_UI is
      (Item    : Web_UI_Type;
       Message : String);
 
-   WS : AWS.Server.HTTP;
+   Server : AWS.Server.HTTP;
 
    procedure Create_Routes;
+
+   procedure Create_Socket;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Socket  : AWS.Net.Socket_Access;
+      Request : AWS.Status.Data)
+      return AWS.Net.WebSocket.Object'Class
+   is
+   begin
+      return Socket_Type'
+        (AWS.Net.WebSocket.Object
+           (AWS.Net.WebSocket.Create (Socket, Request)) with null record);
+   end Create;
 
    -------------------
    -- Create_Routes --
@@ -45,6 +87,20 @@ package body Concorde.UI.Web_UI is
          Handler => Handlers.Handle_Client_Request);
    end Create_Routes;
 
+   -------------------
+   -- Create_Socket --
+   -------------------
+
+   procedure Create_Socket is
+   begin
+      Ada.Text_IO.Put_Line ("creating socket");
+      AWS.Net.WebSocket.Registry.Register
+        (URI     => "/socket",
+         Factory => Create'Access);
+      AWS.Net.WebSocket.Registry.Control.Start;
+      Ada.Text_IO.Put_Line ("ready");
+   end Create_Socket;
+
    ----------------
    -- Get_Web_UI --
    ----------------
@@ -53,6 +109,71 @@ package body Concorde.UI.Web_UI is
    begin
       return Web_UI : Web_UI_Type;
    end Get_Web_UI;
+
+   --------------
+   -- On_Close --
+   --------------
+
+   overriding procedure On_Close
+     (Socket  : in out Socket_Type;
+      Message : String)
+   is
+      pragma Unreferenced (Socket);
+   begin
+      Ada.Text_IO.Put_Line
+        ("on-close: " & Message);
+   end On_Close;
+
+   --------------
+   -- On_Error --
+   --------------
+
+   overriding procedure On_Error
+     (Socket  : in out Socket_Type;
+      Message : String)
+   is
+      pragma Unreferenced (Socket);
+   begin
+      Ada.Text_IO.Put_Line
+        ("on-error: " & Message);
+   end On_Error;
+
+   ----------------
+   -- On_Message --
+   ----------------
+
+   overriding procedure On_Message
+     (Socket  : in out Socket_Type;
+      Message : String)
+   is
+   begin
+      Ada.Text_IO.Put_Line
+        ("message: " & Message);
+
+      declare
+         Response : constant String :=
+           Routes.Handle_Socket_Message
+             (Message);
+      begin
+         Ada.Text_IO.Put_Line
+           ("reply: " & Response);
+         Socket.Send (Message => Response);
+      end;
+
+   end On_Message;
+
+   -------------
+   -- On_Open --
+   -------------
+
+   overriding procedure On_Open
+     (Socket  : in out Socket_Type;
+      Message : String)
+   is
+      pragma Unreferenced (Socket);
+   begin
+      Ada.Text_IO.Put_Line (Message);
+   end On_Open;
 
    -----------
    -- Start --
@@ -64,9 +185,10 @@ package body Concorde.UI.Web_UI is
       On_UI_Started (Web_UI);
 
       Create_Routes;
+      Create_Socket;
 
       AWS.Server.Start
-        (Web_Server => WS,
+        (Web_Server => Server,
          Name       => "Concorde",
          Callback   => Routes.Handle'Access,
          Port       => 8080);
@@ -84,7 +206,8 @@ package body Concorde.UI.Web_UI is
       pragma Unreferenced (Item);
    begin
       Ada.Text_IO.Put_Line ("stopping: " & Message);
-      AWS.Server.Shutdown (WS);
+      AWS.Net.WebSocket.Registry.Control.Shutdown;
+      AWS.Server.Shutdown (Server);
    end Stop;
 
 end Concorde.UI.Web_UI;

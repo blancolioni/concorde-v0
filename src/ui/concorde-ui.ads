@@ -4,6 +4,23 @@ package Concorde.UI is
 
    type Client_Id is new Natural;
 
+   type Connection_Interface is interface;
+
+   procedure Send_Message
+     (Connection : in out Connection_Interface;
+      Message    : Concorde.Json.Json_Value'Class)
+   is abstract;
+
+   procedure On_Message
+     (Connection : in out Connection_Interface;
+      Message    : Concorde.Json.Json_Value'Class)
+   is abstract;
+
+   procedure On_Error
+     (Connection : in out Connection_Interface;
+      Message    : Concorde.Json.Json_Value'Class)
+   is abstract;
+
    type UI_Interface is interface;
 
    procedure Start
@@ -45,6 +62,12 @@ package Concorde.UI is
    procedure Close_Client
      (State  : in out State_Interface;
       Client : Client_Id)
+   is abstract;
+
+   function Handle_Message
+     (State : in out State_Interface;
+      Message : Concorde.Json.Json_Value'Class)
+      return Concorde.Json.Json_Value'Class
    is abstract;
 
    function Execute_Command

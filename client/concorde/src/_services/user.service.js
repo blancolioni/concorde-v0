@@ -7,20 +7,33 @@ export const userService = {
     getRequest
 };
 
-const url = 'http://localhost:8080/';
+const serverName = 'localhost';
+const port = '8080';
 
-function login(username, password) {
+const serverUrl = 'http://' + serverName + ':' + port + '/';
+const webSocketUrl = 'ws://' + serverName + ':' + port + '/';
+
+function login(username, password, onMessage) {
     const requestOptions = {
         method: 'POST',
     };
 
-    return fetch(url + 'login?user=' + username + '&password=' + password, requestOptions)
+    return fetch(serverUrl + 'login?user=' + username + '&password=' + password, requestOptions)
         .then(handleResponse)
         .then(data => {
             if (data.id) {
                 localStorage.setItem('id', data.id);
                 localStorage.setItem('user', data.user);
-                localStorage.setItem('base-url', url);
+                localStorage.setItem('base-url', serverUrl);
+
+                const ws = new WebSocket(webSocketUrl + 'socket');
+                ws.onopen = () => {
+                    ws.send(JSON.stringify({ id: data.id}));
+                }
+                ws.onmessage = evt => {
+                    if (onMessage) { onMessage(evt.data); }
+                }
+                localStorage.setItem('ws', ws);
             }
             return data.id;
         });
@@ -37,6 +50,7 @@ function sendRequest(serviceName, requestArgs, fetchArgs) {
 
     return fetch('http://localhost:8080/' + serviceName + '?' + $.param(requestArgs), fetchArgs)
 }
+
 function postRequest(serviceName, args) {
     return sendRequest(serviceName, args, { method: "POST" });
 }

@@ -15,6 +15,20 @@ package Concorde.Json is
       return String
       is abstract;
 
+   function Get_Property
+     (Value : Json_Value;
+      Name  : String)
+      return Json_Value'Class;
+
+   function Get_Property
+     (Value : Json_Value'Class;
+      Name  : String)
+      return String;
+
+   function Deserialize
+     (Text : String)
+      return Json_Value'Class;
+
    function Image
      (Value : Json_Value)
       return String;
@@ -25,15 +39,10 @@ package Concorde.Json is
      (Value : Json_Object)
       return String;
 
-   function Get_Property
-     (Object : Json_Object'Class;
+   overriding function Get_Property
+     (Object : Json_Object;
       Name   : String)
       return Json_Value'Class;
-
-   function Get_Property
-     (Object : Json_Object'Class;
-      Name   : String)
-      return String;
 
    procedure Set_Property
      (Object : in out Json_Object'Class;

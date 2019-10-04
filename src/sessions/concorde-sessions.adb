@@ -62,25 +62,19 @@ package body Concorde.Sessions is
       return Model.Handle (Session, Client, Request);
    end Handle_Client_Request;
 
-   -------------
-   -- History --
-   -------------
+   --------------------
+   -- Handle_Message --
+   --------------------
 
---     function History
---       (Session : Root_Concorde_Session'Class;
---        Offset  : Integer)
---        return String
---     is
---     begin
---        if Offset = 0 then
---           return "";
---        elsif Offset > 0 then
---           return Session.Commands.Element (Offset);
---        else
---           return Session.Commands.Element
---             (Session.Commands.Last_Index + 1 + Offset);
---        end if;
---     end History;
+   overriding function Handle_Message
+     (Session : in out Root_Concorde_Session;
+      Message : Concorde.Json.Json_Value'Class)
+      return Concorde.Json.Json_Value'Class
+   is
+      pragma Unreferenced (Session);
+   begin
+      return Message;
+   end Handle_Message;
 
    ----------------------
    -- Is_Administrator --

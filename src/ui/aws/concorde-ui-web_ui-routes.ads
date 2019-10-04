@@ -49,6 +49,10 @@ package Concorde.UI.Web_UI.Routes is
      (Request : AWS.Status.Data)
       return AWS.Response.Data;
 
+   function Handle_Socket_Message
+     (Message : String)
+      return String;
+
 private
 
    package String_Maps is

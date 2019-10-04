@@ -1,3 +1,4 @@
+with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 
@@ -68,12 +69,266 @@ package body Concorde.Json is
           (Value => Bool);
    end Boolean_Value;
 
+   -----------------
+   -- Deserialize --
+   -----------------
+
+   function Deserialize
+     (Text : String)
+      return Json_Value'Class
+   is
+      use Ada.Characters.Handling;
+
+      Index : Positive := Text'First;
+      Eos   : Boolean := Text = "";
+
+      procedure Next;
+
+      function Current return Character
+      is (if Index in Text'Range then Text (Index) else Character'Val (4));
+
+      function At_Space return Boolean
+      is (Ada.Characters.Handling.Is_Space (Current));
+
+      function Next_Token return String;
+
+      procedure Error (Message : String);
+      procedure Expect (Tok : String);
+
+      function Parse_Value
+        (Start : String)
+         return Json_Value'Class;
+
+      -----------
+      -- Error --
+      -----------
+
+      procedure Error (Message : String) is
+      begin
+         raise Constraint_Error with Message;
+      end Error;
+
+      ------------
+      -- Expect --
+      ------------
+
+      procedure Expect (Tok : String) is
+         Check : constant String := Next_Token;
+      begin
+         if Check /= Tok then
+            raise Constraint_Error with
+              "expected " & Tok & " but found " & Check;
+         end if;
+      end Expect;
+
+      ----------
+      -- Next --
+      ----------
+
+      procedure Next is
+      begin
+         Index := Index + 1;
+         Eos := Index > Text'Last;
+      end Next;
+
+      ----------------
+      -- Next_Token --
+      ----------------
+
+      function Next_Token return String is
+      begin
+         while not Eos and then At_Space loop
+            Next;
+         end loop;
+
+         if Eos then
+            return "";
+         end if;
+
+         if Current = '"' then
+            declare
+               Start : constant Positive := Index;
+            begin
+               Next;
+               while not Eos and then Current /= '"' loop
+                  if Current = '\' then
+                     Next;
+                  end if;
+                  Next;
+               end loop;
+
+               if Eos then
+                  raise Constraint_Error with
+                    "unterminated string";
+               end if;
+
+               declare
+                  Last : constant Positive := Index;
+               begin
+                  Next;
+                  return Text (Start .. Last);
+               end;
+            end;
+         elsif Current in '0' .. '9' then
+            declare
+               Start : constant Positive := Index;
+            begin
+               Next;
+               while not Eos and then Current in '0' .. '9' loop
+                  Next;
+               end loop;
+               return Text (Start .. Index - 1);
+            end;
+         elsif Is_Letter (Current) then
+            declare
+               Start : constant Positive := Index;
+            begin
+               while not Eos and then Is_Alphanumeric (Current) loop
+                  Next;
+               end loop;
+
+               declare
+                  Id : constant String := Text (Start .. Index - 1);
+               begin
+                  if Id = "true" or else Id = "false"
+                    or else Id = "null"
+                  then
+                     return Id;
+                  else
+                     raise Constraint_Error with
+                       "invalid identifier";
+                  end if;
+               end;
+            end;
+         elsif Current in '{' | '}' | '[' | ']' | ',' | ':' then
+            declare
+               Result : constant String := (1 => Current);
+            begin
+               Next;
+               return Result;
+            end;
+         else
+            raise Constraint_Error with
+              "bad character: [" & Current & "]";
+         end if;
+      end Next_Token;
+
+      -----------------
+      -- Parse_Value --
+      -----------------
+
+      function Parse_Value
+        (Start : String)
+         return Json_Value'Class
+      is
+      begin
+         if Start = "true" or else Start = "false" then
+            return Boolean_Value (Boolean'Value (Start));
+         elsif Start = "" or else Start = "null" then
+            return Null_Value;
+         elsif Start (Start'First) in '0' .. '9' | '+' | '-' then
+            return Integer_Value (Integer'Value (Start));
+         elsif Start (Start'First) = '"' then
+            return String_Value (Start (Start'First + 1 .. Start'Last - 1));
+         elsif Start = "[" then
+            declare
+               Arr : Json_Array;
+            begin
+               loop
+                  if Eos then
+                     raise Constraint_Error with
+                       "unterminated array";
+                  end if;
+
+                  declare
+                     Tok : constant String := Next_Token;
+                  begin
+                     if Tok = "]" then
+                        return Arr;
+                     else
+                        Arr.Append (Parse_Value (Tok));
+                        if Tok /= "," then
+                           raise Constraint_Error
+                             with "invalid array";
+                        end if;
+                     end if;
+                  end;
+               end loop;
+            end;
+         elsif Start = "{" then
+            declare
+               Object : Json_Object;
+            begin
+               loop
+                  if Eos then
+                     raise Constraint_Error with
+                       "unterminated object";
+                  end if;
+
+                  declare
+                     Tok : constant String := Next_Token;
+                  begin
+                     if Tok = "}" then
+                        return Object;
+                     elsif Tok = "" or else Tok (Tok'First) /= '"' then
+                        Error ("missing property name");
+                     else
+                        declare
+                           Prop_Name : constant String :=
+                             Tok (Tok'First + 1 .. Tok'Last - 1);
+                        begin
+                           Expect (":");
+
+                           Object.Set_Property
+                             (Prop_Name, Parse_Value (Next_Token));
+
+                           declare
+                              Sep : constant String := Next_Token;
+                           begin
+                              if Sep = "}" then
+                                 return Object;
+                              elsif Sep /= "," then
+                                 Error ("missing ',' or '}'");
+                              end if;
+                           end;
+                        end;
+                     end if;
+                  end;
+               end loop;
+            end;
+         else
+            raise Constraint_Error with
+              "syntax error at [" & Start & "]";
+         end if;
+      end Parse_Value;
+
+   begin
+      return Parse_Value (Next_Token);
+   end Deserialize;
+
    ------------------
    -- Get_Property --
    ------------------
 
    function Get_Property
-     (Object : Json_Object'Class;
+     (Value : Json_Value;
+      Name  : String)
+      return Json_Value'Class
+   is
+   begin
+      if Name = "_toString" then
+         return String_Value (Json_Value'Class (Value).Image);
+      else
+         return Result : Null_Json_Value;
+      end if;
+   end Get_Property;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   overriding function Get_Property
+     (Object : Json_Object;
       Name   : String)
       return Json_Value'Class
    is
@@ -90,12 +345,12 @@ package body Concorde.Json is
    ------------------
 
    function Get_Property
-     (Object : Json_Object'Class;
+     (Value  : Json_Value'Class;
       Name   : String)
       return String
    is
    begin
-      return Object.Get_Property (Name).Image;
+      return Value.Get_Property (Name).Image;
    end Get_Property;
 
    -------------------

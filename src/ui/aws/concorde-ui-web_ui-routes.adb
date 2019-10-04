@@ -302,6 +302,25 @@ package body Concorde.UI.Web_UI.Routes is
       return (raise Route_Error with "bad POST request");
    end Handle_Post;
 
+   ---------------------------
+   -- Handle_Socket_Message --
+   ---------------------------
+
+   function Handle_Socket_Message
+     (Message : String)
+      return String
+   is
+      Json : constant Concorde.Json.Json_Value'Class :=
+        Concorde.Json.Deserialize (Message);
+      State       : constant State_Access :=
+        States.Element (Json.Get_Property ("id"));
+      Result_Json : constant Concorde.Json.Json_Value'Class :=
+        State.Handle_Message
+          (Message    => Json);
+   begin
+      return Result_Json.Serialize;
+   end Handle_Socket_Message;
+
    -----------
    -- Match --
    -----------
