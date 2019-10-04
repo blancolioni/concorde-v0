@@ -85,6 +85,11 @@ private
    package Environment_Maps is
      new WL.String_Maps (String);
 
+   package Node_Id_Holders is
+     new Ada.Containers.Indefinite_Holders
+       (Concorde.File_System.Node_Id'Class,
+        Concorde.File_System."=");
+
    package Node_Holders is
      new Ada.Containers.Indefinite_Holders
        (Concorde.File_System.Node_Interface'Class,
@@ -97,7 +102,7 @@ private
          Home_Path    : String_Vectors.Vector;
          Environment  : Environment_Maps.Map;
          Scope_Stack  : Scope_Vectors.Vector;
-         Root         : Concorde.File_System.Node_Id;
+         Root         : Node_Id_Holders.Holder;
       end record;
 
    procedure Set_Parent_Scope

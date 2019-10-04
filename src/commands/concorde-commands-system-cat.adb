@@ -41,11 +41,10 @@ package body Concorde.Commands.System.Cat is
 
       for I in 1 .. Argument_Count (Arguments) loop
          declare
-            use type Concorde.File_System.Node_Id;
             Node : constant Concorde.File_System.Node_Id :=
               Context.Find_Node (Argument (Arguments, I));
          begin
-            if Node = Concorde.File_System.No_Node_Id then
+            if Node.Is_Empty then
                Writer.Put_Error (Argument (Arguments, I) & ": not found");
                exit;
             end if;

@@ -1,5 +1,6 @@
 with Concorde.File_System.Directories;
 with Concorde.File_System.Proc;
+with Concorde.File_System.Universe;
 
 package body Concorde.File_System.Init is
 
@@ -8,34 +9,39 @@ package body Concorde.File_System.Init is
    ----------------------------
 
    procedure Initialize_File_System is
-      Root_Id : constant Node_Id := Create (Directories.Directory_Node);
-      pragma Assert (Root_Id = Real_Node_Id'First);
-      Root    : constant access Node_Interface'Class :=
-        Update (Root_Id);
+      FS : constant File_System_Interface'Class := Root_Filesystem;
+      Root_Id : constant Node_Id := FS.Create (Directories.Directory_Node);
+      Root    : constant access Node_Interface'Class := Root_Id.Update;
       pragma Assert (not Root.Is_Leaf);
    begin
-
-      Root.Bind_Child
-        (Name => "dev",
-         Child => Create (Directories.Directory_Node));
       Root.Bind_Child
         (Name => "home",
-         Child => Create (Directories.Directory_Node));
+         Child => FS.Create (Directories.Directory_Node));
       Root.Bind_Child
         (Name => "log",
-         Child => Create (Directories.Directory_Node));
+         Child => FS.Create (Directories.Directory_Node));
       Root.Bind_Child
         (Name => "proc",
-         Child => Create (Proc.Create_Proc_File_System));
+         Child => FS.Create (Proc.Create_Proc_File_System));
       Root.Bind_Child
         (Name => "etc",
-         Child => Create (Directories.Directory_Node));
+         Child => FS.Create (Directories.Directory_Node));
+
+      declare
+         Mnt : constant Node_Id := FS.Create (Directories.Directory_Node);
+      begin
+         Root.Bind_Child ("mnt", Mnt);
+         Mnt.Update.Bind_Child
+           (Name  => "universe",
+            Child => FS.Create (Universe.Universe_Node));
+      end;
+
       Root.Bind_Child
         (Name => "root",
-         Child => Create (Directories.Directory_Node));
+         Child => FS.Create (Directories.Directory_Node));
       Root.Bind_Child
         (Name => "tmp",
-         Child => Create (Directories.Directory_Node));
+         Child => FS.Create (Directories.Directory_Node));
    end Initialize_File_System;
 
 end Concorde.File_System.Init;

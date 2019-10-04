@@ -40,7 +40,7 @@ package body Concorde.Commands.System.List is
 
       procedure Put_Item
         (Name  : String;
-         Child : Concorde.File_System.Node_Interface'Class);
+         Child : Concorde.File_System.Node_Id);
 
       --------------
       -- Put_Item --
@@ -48,7 +48,7 @@ package body Concorde.Commands.System.List is
 
       procedure Put_Item
         (Name  : String;
-         Child : Concorde.File_System.Node_Interface'Class)
+         Child : Concorde.File_System.Node_Id)
       is
          pragma Unreferenced (Child);
       begin

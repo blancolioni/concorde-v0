@@ -6,7 +6,7 @@ package body Concorde.File_System.Root is
 
    function System_Root_Node_Id return Node_Id is
    begin
-      return Real_Node_Id'First;
+      return Root_Filesystem.Get_Root_Node_Id;
    end System_Root_Node_Id;
 
 end Concorde.File_System.Root;

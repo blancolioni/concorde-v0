@@ -63,7 +63,7 @@ package body Concorde.Contexts is
       Default_Scope : String)
    is
    begin
-      Context.Root := Root;
+      Context.Root := Node_Id_Holders.To_Holder (Root);
       Context.Home_Path := Split_Path (Default_Scope);
       Context.Current_Path := Context.Home_Path;
       Context.History.Clear;
@@ -79,7 +79,8 @@ package body Concorde.Contexts is
    is
    begin
       return Follow_Path
-        (Concorde.File_System.Get (Context.Root), Context.Current_Path);
+        (Context.Root.Element.Get,
+         Context.Current_Path);
    end Current_Node;
 
    ---------------
@@ -99,34 +100,50 @@ package body Concorde.Contexts is
         Split_Path (Path);
       Full_Path : String_Vectors.Vector := Start;
 
-      It        : Concorde.File_System.Node_Id := Context.Root;
+      function Find
+        (It         : Concorde.File_System.Node_Id;
+         Path_Index : Positive)
+         return Concorde.File_System.Node_Id;
+
+      function Find
+        (It         : Concorde.File_System.Node_Id;
+         Path_Index : Positive)
+         return Concorde.File_System.Node_Id
+      is
+         Node : constant Concorde.File_System.Node_Interface'Class :=
+           It.Get;
+         Name : constant String := Full_Path.Element (Path_Index);
+      begin
+         if Node.Is_Leaf then
+            raise Context_Error with
+              "not a directory: " & Path;
+         elsif not Node.Has_Child (Name) then
+            raise Context_Error with
+              "no such file or directory: " & Path;
+         else
+            declare
+               Child : constant Concorde.File_System.Node_Id :=
+                 Node.Get_Child (Name);
+            begin
+               if Path_Index = Full_Path.Last_Index then
+                  return Child;
+               else
+                  return Find (Child, Path_Index + 1);
+               end if;
+            end;
+         end if;
+      end Find;
 
    begin
 
       Full_Path.Append (Rest);
 
       if Full_Path.Is_Empty then
-         return Context.Root;
+         return Context.Root.Element;
       end if;
 
-      for Name of Full_Path loop
-         declare
-            Node : constant Concorde.File_System.Node_Interface'Class :=
-              Concorde.File_System.Get (It);
-         begin
-            if Node.Is_Leaf then
-               raise Context_Error with
-                 "not a directory: " & Path;
-            elsif not Node.Has_Child (Name) then
-               raise Context_Error with
-                 "no such file or directory: " & Path;
-            else
-               It := Node.Get_Child (Name);
-            end if;
-         end;
-      end loop;
+      return Find (Context.Root.Element, 1);
 
-      return It;
    end Find_Node;
 
    -----------------
@@ -158,8 +175,7 @@ package body Concorde.Contexts is
             return Current;
          else
             return Go
-              (Concorde.File_System.Get
-                 (Current.Get_Child (Path.Element (Index))), Index + 1);
+              (Current.Get_Child (Path.Element (Index)).Get, Index + 1);
          end if;
       end Go;
 

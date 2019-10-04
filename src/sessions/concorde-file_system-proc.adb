@@ -29,11 +29,13 @@ package body Concorde.File_System.Proc is
       return P : Node_Interface'Class := Directories.Directory_Node do
          P.Bind_Child
            (Name  => "status",
-            Child => Create (Files.Dynamic_File_Node (Status_Text'Access)));
+            Child => Root_Filesystem.Create
+              (Files.Dynamic_File_Node (Status_Text'Access)));
          P.Bind_Child
            (Name  => "version",
             Child =>
-              Create (Files.Dynamic_File_Node (Version'Access)));
+              Root_Filesystem.Create
+                (Files.Dynamic_File_Node (Version'Access)));
       end return;
    end Create_Proc_File_System;
 

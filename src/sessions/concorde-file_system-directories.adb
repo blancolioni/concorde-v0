@@ -1,14 +1,18 @@
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Holders;
 with Ada.Strings.Unbounded;
 
 with WL.String_Maps;
 
 package body Concorde.File_System.Directories is
 
+   package Node_Id_Holders is
+     new Ada.Containers.Indefinite_Holders (Node_Id);
+
    type Child_Node_Record is
       record
          Name : Ada.Strings.Unbounded.Unbounded_String;
-         Node : Node_Id;
+         Node : Node_Id_Holders.Holder;
       end record;
 
    package Child_Node_Lists is
@@ -18,20 +22,11 @@ package body Concorde.File_System.Directories is
      new WL.String_Maps (Node_Id);
 
    type Directory_Record is
-     new Node_Interface with
+     new Branch_Node with
       record
          Child_List : Child_Node_Lists.List;
          Child_Map  : Child_Node_Maps.Map;
       end record;
-
-   overriding function Contents
-     (Node : Directory_Record)
-      return String;
-
-   overriding function Is_Leaf
-     (Node : Directory_Record)
-      return Boolean
-   is (False);
 
    overriding function Has_Child
      (Node : Directory_Record;
@@ -49,7 +44,7 @@ package body Concorde.File_System.Directories is
      (Node    : Directory_Record;
       Process : not null access
         procedure (Name : String;
-                   Child : Node_Interface'Class));
+                   Child : Node_Id));
 
    overriding procedure Bind_Child
      (Node  : in out Directory_Record;
@@ -73,30 +68,10 @@ package body Concorde.File_System.Directories is
       Node.Child_List.Append
         (Child_Node_Record'
            (Name => Ada.Strings.Unbounded.To_Unbounded_String (Name),
-            Node => Child));
+            Node => Node_Id_Holders.To_Holder (Child)));
       Node.Child_Map.Insert
         (Name, Child);
    end Bind_Child;
-
-   --------------
-   -- Contents --
-   --------------
-
-   overriding function Contents
-     (Node : Directory_Record)
-      return String
-   is
-      use Ada.Strings.Unbounded;
-      Result : Unbounded_String;
-   begin
-      for Item of Node.Child_List loop
-         if Result /= Null_Unbounded_String then
-            Result := Result & " ";
-         end if;
-         Result := Result & Item.Name;
-      end loop;
-      return To_String (Result);
-   end Contents;
 
    ------------------
    -- Delete_Child --
@@ -136,12 +111,12 @@ package body Concorde.File_System.Directories is
      (Node    : Directory_Record;
       Process : not null access
         procedure (Name : String;
-                   Child : Node_Interface'Class))
+                   Child : Node_Id))
    is
    begin
       for Child of Node.Child_List loop
          Process (Ada.Strings.Unbounded.To_String (Child.Name),
-                  Get (Child.Node));
+                  Child.Node.Element);
       end loop;
    end Iterate_Children;
 
