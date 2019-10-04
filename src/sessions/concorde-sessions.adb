@@ -1,5 +1,7 @@
 with Concorde.Commands.Writers;
 
+with Concorde.File_System.Root;
+
 with Concorde.UI.Models.Loader;
 
 with Concorde.Db.User;
@@ -136,7 +138,7 @@ package body Concorde.Sessions is
          then
             Session.User := User.Get_User_Reference;
             Session.Default_Context.Create_Context
-              (Root          => Concorde.Contexts.System_Root,
+              (Root          => Concorde.File_System.Root.System_Root_Node_Id,
                Default_Scope => "/");
          end if;
       end return;

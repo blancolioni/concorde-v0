@@ -1,4 +1,5 @@
 with Ada.Characters.Handling;
+with Ada.Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
 
@@ -87,6 +88,10 @@ package body Concorde.Commands is
          return;
       end if;
       Command.Perform (Session, Context, Writer, Arguments);
+   exception
+      when E : others =>
+         Writer.Put_Error
+           (Ada.Exceptions.Exception_Message (E));
    end Execute;
 
    --------------------------

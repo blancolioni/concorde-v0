@@ -1,3 +1,5 @@
+with Concorde.File_System;
+
 package body Concorde.Commands.System.List is
 
    type List_Command_Record is
@@ -38,7 +40,7 @@ package body Concorde.Commands.System.List is
 
       procedure Put_Item
         (Name  : String;
-         Child : Concorde.Contexts.Context_Node_Interface'Class);
+         Child : Concorde.File_System.Node_Interface'Class);
 
       --------------
       -- Put_Item --
@@ -46,7 +48,7 @@ package body Concorde.Commands.System.List is
 
       procedure Put_Item
         (Name  : String;
-         Child : Concorde.Contexts.Context_Node_Interface'Class)
+         Child : Concorde.File_System.Node_Interface'Class)
       is
          pragma Unreferenced (Child);
       begin

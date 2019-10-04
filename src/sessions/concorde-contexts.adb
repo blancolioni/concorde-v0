@@ -1,101 +1,13 @@
-with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Unbounded;
-
-with Concorde.Version;
-
 package body Concorde.Contexts is
-
-   type Child_Node_Record is
-      record
-         Name : Ada.Strings.Unbounded.Unbounded_String;
-         Node : Node_Holders.Holder;
-      end record;
-
-   package Child_Node_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Child_Node_Record);
-
-   package Child_Node_Maps is
-     new WL.String_Maps (Child_Node_Lists.Cursor, Child_Node_Lists."=");
-
-   type Simple_Node_Record is
-     new Context_Node_Interface with
-      record
-         Child_List : Child_Node_Lists.List;
-         Child_Map  : Child_Node_Maps.Map;
-      end record;
-
-   overriding function Contents
-     (Node : Simple_Node_Record)
-      return String;
-
-   overriding function Has_Children
-     (Node : Simple_Node_Record)
-      return Boolean
-   is (True);
-
-   overriding function Has_Child
-     (Node : Simple_Node_Record;
-      Name : String)
-      return Boolean
-   is (Node.Child_Map.Contains (Name));
-
-   overriding function Get_Child
-     (Node  : Simple_Node_Record;
-      Child : String)
-      return Context_Node_Interface'Class
-   is (Child_Node_Lists.Element (Node.Child_Map.Element (Child)).Node.Element);
-
-   overriding procedure Iterate_Children
-     (Node    : Simple_Node_Record;
-      Process : not null access
-        procedure (Name : String;
-                   Child : Context_Node_Interface'Class));
-
-   type Root_Node_Record is new Simple_Node_Record with null record;
-
-   System_Root_Node : Root_Node_Record := (others => <>);
-
-   type File_Node_Record is
-     new Context_Node_Interface with
-      record
-         Contents : Ada.Strings.Unbounded.Unbounded_String;
-      end record;
-
-   overriding function Contents
-     (Node : File_Node_Record)
-      return String
-   is (Ada.Strings.Unbounded.To_String (Node.Contents));
-
-   overriding function Has_Children
-     (Node : File_Node_Record)
-      return Boolean
-   is (False);
-
-   overriding function Has_Child
-     (Node : File_Node_Record;
-      Name : String)
-      return Boolean;
-
-   overriding function Get_Child
-     (Node  : File_Node_Record;
-      Child : String)
-      return Context_Node_Interface'Class;
-
-   overriding procedure Iterate_Children
-     (Node    : File_Node_Record;
-      Process : not null access
-        procedure (Name : String;
-                   Child : Context_Node_Interface'Class))
-   is null;
 
    function Split_Path
      (Path : String)
       return String_Vectors.Vector;
 
    function Follow_Path
-     (Root : Context_Node_Interface'Class;
+     (Root : Concorde.File_System.Node_Interface'Class;
       Path : String_Vectors.Vector)
-      return Context_Node_Interface'Class;
+      return Concorde.File_System.Node_Interface'Class;
 
    --------------------
    -- Append_History --
@@ -107,6 +19,12 @@ package body Concorde.Contexts is
    begin
       Context.History.Append (Item);
    end Append_History;
+
+   procedure Bind
+     (Context : in out Context_Type;
+      Scope   : String;
+      Node    : Concorde.File_System.Node_Interface'Class)
+   is null;
 
    ------------------
    -- Change_Scope --
@@ -135,37 +53,17 @@ package body Concorde.Contexts is
       return True;
    end Change_Scope;
 
-   --------------
-   -- Contents --
-   --------------
-
-   overriding function Contents
-     (Node : Simple_Node_Record)
-      return String
-   is
-      use Ada.Strings.Unbounded;
-      Result : Unbounded_String;
-   begin
-      for Item of Node.Child_List loop
-         if Result /= Null_Unbounded_String then
-            Result := Result & " ";
-         end if;
-         Result := Result & Item.Name;
-      end loop;
-      return To_String (Result);
-   end Contents;
-
    --------------------
    -- Create_Context --
    --------------------
 
    procedure Create_Context
      (Context       : in out Context_Type;
-      Root          : Context_Node_Interface'Class;
+      Root          : Concorde.File_System.Node_Id;
       Default_Scope : String)
    is
    begin
-      Context.Root := Node_Holders.To_Holder (Root);
+      Context.Root := Root;
       Context.Home_Path := Split_Path (Default_Scope);
       Context.Current_Path := Context.Home_Path;
       Context.History.Clear;
@@ -177,62 +75,97 @@ package body Concorde.Contexts is
 
    function Current_Node
      (Context : Context_Type)
-      return Context_Node_Interface'Class
+      return Concorde.File_System.Node_Interface'Class
    is
    begin
-      return Follow_Path (Context.Root.Element, Context.Current_Path);
+      return Follow_Path
+        (Concorde.File_System.Get (Context.Root), Context.Current_Path);
    end Current_Node;
+
+   ---------------
+   -- Find_Node --
+   ---------------
+
+   function Find_Node
+     (Context : Context_Type;
+      Path    : String)
+      return Concorde.File_System.Node_Id
+   is
+      Start : constant String_Vectors.Vector :=
+        (if Path'Length > 0 and then Path (Path'First) = '/'
+         then String_Vectors.Empty_Vector
+         else Context.Current_Path);
+      Rest  : constant String_Vectors.Vector :=
+        Split_Path (Path);
+      Full_Path : String_Vectors.Vector := Start;
+
+      It        : Concorde.File_System.Node_Id := Context.Root;
+
+   begin
+
+      Full_Path.Append (Rest);
+
+      if Full_Path.Is_Empty then
+         return Context.Root;
+      end if;
+
+      for Name of Full_Path loop
+         declare
+            Node : constant Concorde.File_System.Node_Interface'Class :=
+              Concorde.File_System.Get (It);
+         begin
+            if Node.Is_Leaf then
+               raise Context_Error with
+                 "not a directory: " & Path;
+            elsif not Node.Has_Child (Name) then
+               raise Context_Error with
+                 "no such file or directory: " & Path;
+            else
+               It := Node.Get_Child (Name);
+            end if;
+         end;
+      end loop;
+
+      return It;
+   end Find_Node;
 
    -----------------
    -- Follow_Path --
    -----------------
 
    function Follow_Path
-     (Root : Context_Node_Interface'Class;
+     (Root : Concorde.File_System.Node_Interface'Class;
       Path : String_Vectors.Vector)
-      return Context_Node_Interface'Class
+      return Concorde.File_System.Node_Interface'Class
    is
 
       function Go
-        (Current : Context_Node_Interface'Class;
+        (Current : Concorde.File_System.Node_Interface'Class;
          Index   : Positive)
-         return Context_Node_Interface'Class;
+         return Concorde.File_System.Node_Interface'Class;
 
       --------
       -- Go --
       --------
 
       function Go
-        (Current : Context_Node_Interface'Class;
+        (Current : Concorde.File_System.Node_Interface'Class;
          Index   : Positive)
-         return Context_Node_Interface'Class
+         return Concorde.File_System.Node_Interface'Class
       is
       begin
          if Index > Path.Last_Index then
             return Current;
          else
-            return Go (Current.Get_Child (Path.Element (Index)), Index + 1);
+            return Go
+              (Concorde.File_System.Get
+                 (Current.Get_Child (Path.Element (Index))), Index + 1);
          end if;
       end Go;
 
    begin
       return Go (Root, 1);
    end Follow_Path;
-
-   ---------------
-   -- Get_Child --
-   ---------------
-
-   overriding function Get_Child
-     (Node  : File_Node_Record;
-      Child : String)
-      return Context_Node_Interface'Class
-   is
-      pragma Unreferenced (Node);
-   begin
-      return (raise Constraint_Error with
-                "not a directory: " & Child);
-   end Get_Child;
 
    -----------------
    -- Get_History --
@@ -250,20 +183,6 @@ package body Concorde.Contexts is
       end if;
    end Get_History;
 
-   ---------------
-   -- Has_Child --
-   ---------------
-
-   overriding function Has_Child
-     (Node : File_Node_Record;
-      Name : String)
-      return Boolean
-   is
-      pragma Unreferenced (Node, Name);
-   begin
-      return False;
-   end Has_Child;
-
    --------------------
    -- History_Length --
    --------------------
@@ -273,22 +192,10 @@ package body Concorde.Contexts is
       return Context.History.Last_Index;
    end History_Length;
 
-   ----------------------
-   -- Iterate_Children --
-   ----------------------
-
-   overriding procedure Iterate_Children
-     (Node    : Simple_Node_Record;
-      Process : not null access
-        procedure (Name : String;
-                   Child : Context_Node_Interface'Class))
-   is
-   begin
-      for Child of Node.Child_List loop
-         Process (Ada.Strings.Unbounded.To_String (Child.Name),
-                  Child.Node.Element);
-      end loop;
-   end Iterate_Children;
+   procedure New_Scope
+     (Context : in out Context_Type;
+      Scope   : String)
+   is null;
 
    ---------------
    -- Pop_Scope --
@@ -391,15 +298,6 @@ package body Concorde.Contexts is
       end return;
    end Split_Path;
 
-   -----------------
-   -- System_Root --
-   -----------------
-
-   function System_Root return Context_Node_Interface'Class is
-   begin
-      return System_Root_Node;
-   end System_Root;
-
    -----------
    -- Value --
    -----------
@@ -416,16 +314,19 @@ package body Concorde.Contexts is
               else Default);
    end Value;
 
-begin
-   System_Root_Node.Child_List.Append
-     (Child_Node_Record'
-        (Name => Ada.Strings.Unbounded.To_Unbounded_String ("version.txt"),
-         Node => Node_Holders.To_Holder
-           (File_Node_Record'
-                (Contents =>
-                     Ada.Strings.Unbounded.To_Unbounded_String
-                   (Concorde.Version.Version_String)))));
-   System_Root_Node.Child_Map.Insert
-     ("version.txt", System_Root_Node.Child_List.Last);
+--  begin
+--
+--     System_Root_Node.Bind_Child
+--       ("version.txt",
+--        (File_Node_Record'
+--             (Contents =>
+--                Ada.Strings.Unbounded.To_Unbounded_String
+--                  (Concorde.Version.Version_String))));
+--
+--     System_Root_Node.Bind_Child
+--       ("home",
+--        Simple_Node_Record'
+--          (Child_List => <>,
+--           Child_Map  => <>));
 
 end Concorde.Contexts;

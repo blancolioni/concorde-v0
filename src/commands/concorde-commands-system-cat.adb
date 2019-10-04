@@ -1,3 +1,5 @@
+with Concorde.File_System;
+
 package body Concorde.Commands.System.Cat is
 
    type Cat_Command_Record is
@@ -37,19 +39,22 @@ package body Concorde.Commands.System.Cat is
          return;
       end if;
 
-      Context.Push_Scope;
-
       for I in 1 .. Argument_Count (Arguments) loop
-         if not Context.Change_Scope (Argument (Arguments, I)) then
-            Writer.Put_Error (Argument (Arguments, I) & ": not found");
-            exit;
-         end if;
+         declare
+            use type Concorde.File_System.Node_Id;
+            Node : constant Concorde.File_System.Node_Id :=
+              Context.Find_Node (Argument (Arguments, I));
+         begin
+            if Node = Concorde.File_System.No_Node_Id then
+               Writer.Put_Error (Argument (Arguments, I) & ": not found");
+               exit;
+            end if;
 
-         Writer.Put_Line (Context.Current_Node.Contents);
+            Writer.Put_Line
+              (Concorde.File_System.Get (Node).Contents);
+         end;
 
       end loop;
-
-      Context.Pop_Scope;
 
    end Perform;
 

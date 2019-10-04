@@ -29,6 +29,7 @@ with Concorde.Logs;
 with Concorde.Managers.Loader;
 with Concorde.Managers.Execution;
 
+with Concorde.File_System.Init;
 with Concorde.Updates.Control;
 
 with Concorde.Db.Database;
@@ -303,10 +304,11 @@ begin
    Ada.Text_IO.Put_Line ("starting server ...");
 
    Concorde.Calendar.Load_Clock;
---     Concorde.Markets.Initialize_Markets;
 
    Ada.Text_IO.Put_Line
      ("Start date: " & Concorde.Calendar.Image (Concorde.Calendar.Clock));
+
+   Concorde.File_System.Init.Initialize_File_System;
 
    Concorde.Updates.Control.Start_Updates;
    Updates_Running := True;

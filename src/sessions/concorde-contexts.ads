@@ -3,51 +3,27 @@ private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Containers.Vectors;
 private with WL.String_Maps;
 
+with Concorde.File_System;
+
 package Concorde.Contexts is
 
-   type Context_Node_Interface is interface;
-
-   function Contents
-     (Node : Context_Node_Interface)
-      return String
-      is abstract;
-
-   function Has_Children
-     (Node : Context_Node_Interface)
-      return Boolean
-      is abstract;
-
-   function Has_Child
-     (Node : Context_Node_Interface;
-      Name : String)
-      return Boolean
-      is abstract;
-
-   function Get_Child
-     (Node  : Context_Node_Interface;
-      Child : String)
-      return Context_Node_Interface'Class
-      is abstract;
-
-   procedure Iterate_Children
-     (Node    : Context_Node_Interface;
-      Process : not null access
-        procedure (Name : String;
-                   Child : Context_Node_Interface'Class))
-   is abstract;
-
-   function System_Root return Context_Node_Interface'Class;
+   Context_Error           : exception;
 
    type Context_Type is tagged private;
 
    procedure Create_Context
      (Context       : in out Context_Type;
-      Root          : Context_Node_Interface'Class;
+      Root          : Concorde.File_System.Node_Id;
       Default_Scope : String);
 
    function Current_Node
      (Context : Context_Type)
-     return Context_Node_Interface'Class;
+     return Concorde.File_System.Node_Interface'Class;
+
+   function Find_Node
+     (Context : Context_Type;
+      Path    : String)
+      return Concorde.File_System.Node_Id;
 
    procedure Set_Default_Scope
      (Context : in out Context_Type);
@@ -56,6 +32,15 @@ package Concorde.Contexts is
      (Context : in out Context_Type;
       Path    : String)
      return Boolean;
+
+   procedure New_Scope
+     (Context : in out Context_Type;
+      Scope   : String);
+
+   procedure Bind
+     (Context : in out Context_Type;
+      Scope   : String;
+      Node    : Concorde.File_System.Node_Interface'Class);
 
    procedure Push_Scope
      (Context : in out Context_Type);
@@ -101,7 +86,9 @@ private
      new WL.String_Maps (String);
 
    package Node_Holders is
-     new Ada.Containers.Indefinite_Holders (Context_Node_Interface'Class);
+     new Ada.Containers.Indefinite_Holders
+       (Concorde.File_System.Node_Interface'Class,
+        Concorde.File_System."=");
 
    type Context_Type is tagged
       record
@@ -110,7 +97,7 @@ private
          Home_Path    : String_Vectors.Vector;
          Environment  : Environment_Maps.Map;
          Scope_Stack  : Scope_Vectors.Vector;
-         Root         : Node_Holders.Holder;
+         Root         : Concorde.File_System.Node_Id;
       end record;
 
    procedure Set_Parent_Scope
