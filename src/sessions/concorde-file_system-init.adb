@@ -1,4 +1,5 @@
 with Concorde.File_System.Directories;
+with Concorde.File_System.Home;
 with Concorde.File_System.Proc;
 with Concorde.File_System.Universe;
 
@@ -14,9 +15,11 @@ package body Concorde.File_System.Init is
       Root    : constant access Node_Interface'Class := Root_Id.Update;
       pragma Assert (not Root.Is_Leaf);
    begin
+
       Root.Bind_Child
         (Name => "home",
-         Child => FS.Create (Directories.Directory_Node));
+         Child => FS.Create (Home.Home_Node));
+
       Root.Bind_Child
         (Name => "log",
          Child => FS.Create (Directories.Directory_Node));
