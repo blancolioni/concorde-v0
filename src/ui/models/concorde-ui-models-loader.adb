@@ -1,5 +1,6 @@
 with WL.String_Maps;
 
+with Concorde.UI.Models.Markets;
 with Concorde.UI.Models.Shell;
 
 package body Concorde.UI.Models.Loader is
@@ -39,6 +40,8 @@ package body Concorde.UI.Models.Loader is
    begin
       if Map.Is_Empty then
          Add ("shell", Concorde.UI.Models.Shell.Shell_Model'Access);
+         Add ("market-price",
+              Concorde.UI.Models.Markets.Market_Price_Model'Access);
       end if;
    end Check_Map;
 
