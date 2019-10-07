@@ -36,6 +36,10 @@
     color:white;
 }
 
+.concorde-dashboard-cell {
+    overflow-y: auto;
+}
+
 .concorde-shell-table td {
     padding: 0px;
 }
