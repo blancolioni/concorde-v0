@@ -14,7 +14,7 @@ package body Concorde.UI.Web_UI.Handlers.Clients is
       Model_Name     : constant String :=
         Parameters.Parameter ("model");
       Model_Argument : constant String :=
-        Parameters.Parameter ("model-arg");
+        Parameters.Parameter ("modelArg");
       New_Client_Id  : constant Client_Id :=
         State.New_Client (Model_Name, Model_Argument);
    begin

@@ -26,7 +26,7 @@ class DashboardItem extends React.Component {
 
     componentDidMount() {
         
-        userService.postRequest('new-client', { model: this.props.model})
+        userService.postRequest('new-client', { model: this.props.model, modelArg: this.props.modelArg})
         .then(response => response.json())
         .then(
             result => {
