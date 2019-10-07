@@ -11,10 +11,12 @@ package body Concorde.UI.Web_UI.Handlers.Clients is
       return Concorde.Json.Json_Value'Class
    is
       pragma Unreferenced (Handler);
-      Model_Name    : constant String :=
+      Model_Name     : constant String :=
         Parameters.Parameter ("model");
-      New_Client_Id : constant Client_Id :=
-        State.New_Client (Model_Name);
+      Model_Argument : constant String :=
+        Parameters.Parameter ("model-arg");
+      New_Client_Id  : constant Client_Id :=
+        State.New_Client (Model_Name, Model_Argument);
    begin
       return Response : Concorde.Json.Json_Object do
          if New_Client_Id = 0 then

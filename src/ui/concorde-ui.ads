@@ -54,8 +54,9 @@ package Concorde.UI is
      with Pre'Class => State.Valid;
 
    function New_Client
-     (State      : in out State_Interface;
-      Model_Name : String)
+     (State          : in out State_Interface;
+      Model_Name     : String;
+      Model_Argument : String)
       return Client_Id
       is abstract;
 
