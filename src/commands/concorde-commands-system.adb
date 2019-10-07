@@ -17,6 +17,7 @@ with Concorde.Db.Marlowe_Keys;
 with Concorde.Commands.System.Cat;
 with Concorde.Commands.System.Change_Scope;
 with Concorde.Commands.System.List;
+with Concorde.Commands.System.Show;
 
 package body Concorde.Commands.System is
 
@@ -82,6 +83,7 @@ package body Concorde.Commands.System is
       Register ("ls", List.List_Command);
       Register ("pause", Pause_Command);
       Register ("resume", Resume_Command);
+      Register ("show", Show.Show_Command);
       Register ("update-speed", Update_Speed_Command);
       Register ("stop-server", Stop_Command);
       Register ("status", Get_Status_Command);

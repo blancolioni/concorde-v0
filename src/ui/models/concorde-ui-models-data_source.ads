@@ -6,6 +6,10 @@ package Concorde.UI.Models.Data_Source is
    type Root_Data_Source_Model is
      abstract new Root_Concorde_Model with private;
 
+   overriding function Default_View_Name
+     (Model : Root_Data_Source_Model)
+      return String;
+
    function Column_Count
      (Data_Source : Root_Data_Source_Model)
       return Natural
@@ -67,5 +71,10 @@ private
       record
          null;
       end record;
+
+   overriding function Default_View_Name
+     (Model : Root_Data_Source_Model)
+      return String
+   is ("Table");
 
 end Concorde.UI.Models.Data_Source;

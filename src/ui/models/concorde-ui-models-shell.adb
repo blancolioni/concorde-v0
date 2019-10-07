@@ -11,6 +11,11 @@ package body Concorde.UI.Models.Shell is
       return String
    is ("shell");
 
+   overriding function Default_View_Name
+     (Model : Shell_Model_Type)
+      return String
+   is ("Shell");
+
    overriding function Handle
      (Model   : in out Shell_Model_Type;
       State   : in out State_Interface'Class;
@@ -32,11 +37,9 @@ package body Concorde.UI.Models.Shell is
       pragma Unreferenced (Model);
       Command : constant String :=
         Concorde.Json.Json_Object (Request).Get_Property ("data");
-      Result  : constant String :=
-        State.Execute_Command (Client, Command);
-      Response : Concorde.Json.Json_Object;
+      Response : constant Concorde.Json.Json_Value'Class :=
+          State.Execute_Command (Client, Command);
    begin
-      Response.Set_Property ("data", Result);
       return Response;
    end Handle;
 

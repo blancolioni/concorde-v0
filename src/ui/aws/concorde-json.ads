@@ -66,6 +66,10 @@ package Concorde.Json is
       Name   : String;
       Value  : Boolean);
 
+   procedure Copy
+     (To   : in out Json_Object'Class;
+      From : Json_Object'Class);
+
    type Json_Array is new Json_Value with private;
 
    overriding function Serialize

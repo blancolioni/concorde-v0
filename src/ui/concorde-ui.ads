@@ -60,6 +60,13 @@ package Concorde.UI is
       return Client_Id
       is abstract;
 
+   procedure Replace_Model
+     (State          : in out State_Interface;
+      Client         : Client_Id;
+      Model_Name     : String;
+      Model_Argument : String)
+      is abstract;
+
    procedure Close_Client
      (State  : in out State_Interface;
       Client : Client_Id)
@@ -75,7 +82,7 @@ package Concorde.UI is
      (State   : in out State_Interface;
       Client  : Client_Id;
       Command : String)
-      return String
+      return Concorde.Json.Json_Value'Class
    is abstract;
 
    function Handle_Client_Request

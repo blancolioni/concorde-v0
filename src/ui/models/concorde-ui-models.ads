@@ -7,6 +7,11 @@ package Concorde.UI.Models is
    function Name (Model : Root_Concorde_Model) return String
                   is abstract;
 
+   function Default_View_Name
+     (Model : Root_Concorde_Model)
+      return String
+      is abstract;
+
    function Handle
      (Model   : in out Root_Concorde_Model;
       State   : in out State_Interface'Class;

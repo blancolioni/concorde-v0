@@ -28,21 +28,26 @@ package body Concorde.Sessions is
      (Session : in out Root_Concorde_Session;
       Client  : Concorde.UI.Client_Id;
       Command : String)
-      return String
+      return Concorde.Json.Json_Value'Class
    is
-      Writer : Concorde.Commands.Writers.String_Writer;
+      Writer : Concorde.Commands.Writers.Json_Writer;
       Position : constant Client_Maps.Cursor :=
         Session.Client_Map.Find (Client);
    begin
 
       if Client_Maps.Has_Element (Position) then
-         Concorde.Commands.Execute_Command_Line
-           (Command, Session, Session.Client_Map (Position).Context, Writer);
+         declare
+            Context : Concorde.Contexts.Context_Type renames
+              Session.Client_Map (Position).Context;
+         begin
+            Concorde.Commands.Execute_Command_Line
+              (Command, Session, Context, Writer);
+         end;
       else
          Writer.Put_Error ("bad client");
       end if;
 
-      return Writer.To_String;
+      return Writer.To_Json;
 
    end Execute_Command;
 
@@ -139,6 +144,23 @@ package body Concorde.Sessions is
          end if;
       end return;
    end New_Session;
+
+   -------------------
+   -- Replace_Model --
+   -------------------
+
+   overriding procedure Replace_Model
+     (Session        : in out Root_Concorde_Session;
+      Client         : Concorde.UI.Client_Id;
+      Model_Name     : String;
+      Model_Argument : String)
+   is
+   begin
+      Session.Client_Map (Client).Model :=
+        Model_Holders.To_Holder
+          (Concorde.UI.Models.Loader.Get
+             (Model_Name, Model_Argument));
+   end Replace_Model;
 
    ---------------
    -- User_Name --

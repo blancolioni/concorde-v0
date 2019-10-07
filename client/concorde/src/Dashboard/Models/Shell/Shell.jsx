@@ -98,7 +98,7 @@ class Shell extends React.Component {
                 this.setState(state => {
                     return {
                         ...state,
-                        output: state.output.concat (resp.data.split('\n'))
+                        output: state.output.concat (resp.standardOutput).concat (resp.standardError),
                     }                    
                 });
             });

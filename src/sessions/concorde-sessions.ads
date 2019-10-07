@@ -78,6 +78,12 @@ private
       Model_Argument : String)
       return Concorde.UI.Client_Id;
 
+   overriding procedure Replace_Model
+     (Session        : in out Root_Concorde_Session;
+      Client         : Concorde.UI.Client_Id;
+      Model_Name     : String;
+      Model_Argument : String);
+
    overriding procedure Close_Client
      (Session   : in out Root_Concorde_Session;
       Client    : Concorde.UI.Client_Id);
@@ -91,7 +97,7 @@ private
      (Session : in out Root_Concorde_Session;
       Client  : Concorde.UI.Client_Id;
       Command : String)
-      return String;
+      return Concorde.Json.Json_Value'Class;
 
    overriding function Handle_Client_Request
      (Session : in out Root_Concorde_Session;

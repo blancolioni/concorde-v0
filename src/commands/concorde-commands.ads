@@ -3,6 +3,7 @@ private with Ada.Containers.Indefinite_Vectors;
 private with WL.String_Maps;
 
 with Concorde.Contexts;
+with Concorde.Json;
 with Concorde.Sessions;
 
 package Concorde.Commands is
@@ -26,6 +27,11 @@ package Concorde.Commands is
    procedure Put_Line
      (Writer : in out Writer_Interface'Class;
       Text   : String);
+
+   procedure Control
+     (Writer : in out Writer_Interface;
+      Packet : Concorde.Json.Json_Value'Class)
+   is null;
 
    type Identifier_List is private;
 

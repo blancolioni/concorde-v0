@@ -69,6 +69,22 @@ package body Concorde.Json is
           (Value => Bool);
    end Boolean_Value;
 
+   ----------
+   -- Copy --
+   ----------
+
+   procedure Copy
+     (To   : in out Json_Object'Class;
+      From : Json_Object'Class)
+   is
+   begin
+      for Position in From.Properties.Iterate loop
+         To.Set_Property
+           (Json_Value_Maps.Key (Position),
+            Json_Value_Maps.Element (Position));
+      end loop;
+   end Copy;
+
    -----------------
    -- Deserialize --
    -----------------

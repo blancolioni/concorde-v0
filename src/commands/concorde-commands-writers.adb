@@ -1,5 +1,17 @@
 package body Concorde.Commands.Writers is
 
+   ----------
+   -- Copy --
+   ----------
+
+   overriding procedure Control
+     (Writer : in out Json_Writer;
+      Packet : Concorde.Json.Json_Value'Class)
+   is
+   begin
+      Writer.Control.Append (Packet);
+   end Control;
+
    --------------
    -- New_Line --
    --------------
@@ -11,14 +23,44 @@ package body Concorde.Commands.Writers is
         & Character'Val (10);
    end New_Line;
 
+   --------------
+   -- New_Line --
+   --------------
+
+   overriding procedure New_Line (Writer : in out Json_Writer) is
+      use Ada.Strings.Unbounded;
+   begin
+      Writer.Output_Lines.Append
+        (Concorde.Json.String_Value
+           (Ada.Strings.Unbounded.To_String (Writer.Current_Output)));
+      Writer.Current_Output :=
+        Ada.Strings.Unbounded.Null_Unbounded_String;
+   end New_Line;
+
    ---------
    -- Put --
    ---------
 
-   overriding procedure Put (Writer : in out String_Writer; Text : String) is
+   overriding procedure Put
+     (Writer : in out String_Writer;
+      Text   : String)
+   is
       use Ada.Strings.Unbounded;
    begin
       Writer.Target := Writer.Target & Text;
+   end Put;
+
+   ---------
+   -- Put --
+   ---------
+
+   overriding procedure Put
+     (Writer : in out Json_Writer;
+      Text   : String)
+   is
+      use Ada.Strings.Unbounded;
+   begin
+      Writer.Current_Output := Writer.Current_Output & Text;
    end Put;
 
    ---------------
@@ -32,6 +74,38 @@ package body Concorde.Commands.Writers is
    begin
       Writer.Put_Line (Message);
    end Put_Error;
+
+   ---------------
+   -- Put_Error --
+   ---------------
+
+   overriding procedure Put_Error
+     (Writer  : in out Json_Writer;
+      Message : String)
+   is
+   begin
+      Writer.Error_Lines.Append
+        (Concorde.Json.String_Value (Message));
+   end Put_Error;
+
+   -------------
+   -- To_Json --
+   -------------
+
+   function To_Json
+     (Writer : Json_Writer)
+      return Concorde.Json.Json_Value'Class
+   is
+   begin
+      return Object : Concorde.Json.Json_Object do
+         Object.Set_Property
+           ("standardOutput", Writer.Output_Lines);
+         Object.Set_Property
+           ("standardError", Writer.Error_Lines);
+         Object.Set_Property
+           ("control", Writer.Control);
+      end return;
+   end To_Json;
 
    ---------------
    -- To_String --
