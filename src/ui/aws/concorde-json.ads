@@ -10,6 +10,8 @@ package Concorde.Json is
    function String_Value (Text : String) return Json_Value'Class;
    function Integer_Value (Int : Integer) return Json_Value'Class;
 
+   function Is_Null (Value : Json_Value'Class) return Boolean;
+
    function Serialize
      (Value : Json_Value)
       return String

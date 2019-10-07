@@ -405,4 +405,21 @@ package body Concorde.UI.Web_UI.Routes is
       end return;
    end Split_Path;
 
+   -------------
+   -- To_Json --
+   -------------
+
+   function To_Json
+     (Container : Parameter_Container)
+      return Concorde.Json.Json_Value'Class
+   is
+   begin
+      return Json : Concorde.Json.Json_Object do
+         for Position in Container.Iterate loop
+            Json.Set_Property (String_Maps.Key (Position),
+                               String_Maps.Element (Position));
+         end loop;
+      end return;
+   end To_Json;
+
 end Concorde.UI.Web_UI.Routes;

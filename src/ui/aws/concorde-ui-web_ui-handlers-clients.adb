@@ -44,12 +44,10 @@ package body Concorde.UI.Web_UI.Handlers.Clients is
       return Concorde.Json.Json_Value'Class
    is
       pragma Unreferenced (Handler);
-      Request : Concorde.Json.Json_Object;
    begin
-      Request.Set_Property ("data", Parameters.Parameter ("data"));
       return State.Handle_Client_Request
         (Client  => Client_Id'Value (Parameters.Parameter ("client")),
-         Request => Request);
+         Request => Parameters.To_Json);
    end Handle_Post;
 
 end Concorde.UI.Web_UI.Handlers.Clients;

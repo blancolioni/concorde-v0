@@ -17,6 +17,8 @@ class Table extends React.Component {
             headings: [],
             data: [],
             clientId: 0,
+            sortColumn: 3,
+            sortAscending: false,
         }
 
         this.onConnected = this.onConnected.bind(this);
@@ -24,7 +26,7 @@ class Table extends React.Component {
 
     onConnected(clientId) {
 
-        userService.postRequest('client/' + clientId, {data: 'get'})
+        userService.postRequest('client/' + clientId, {data: 'get', sort: 3, ascending: false})
             .then((result) => result.json())   
             .then((resp) => {
                 this.setState(state => {
@@ -46,7 +48,7 @@ class Table extends React.Component {
                     <thead>
                         <tr>
                             {this.state.headings.map((heading) => {
-                                return <th>{heading}</th>
+                                return <th>{heading.label}</th>
                                 })
                             }
                         </tr>
@@ -54,8 +56,8 @@ class Table extends React.Component {
                     <tbody>
                         {this.state.data.map((row) => {
                             return (<tr>
-                                {row.map((cell) => {
-                                    return (<td>{cell}</td>);
+                                {this.state.headings.map((heading) => {
+                                    return (<td>{row[heading.id]}</td>);
                                 })}
                             </tr>);
                         })}

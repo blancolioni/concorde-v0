@@ -14,7 +14,11 @@ package Concorde.UI.Web_UI.Routes is
    function Parameter
      (Container : Parameter_Container;
       Name      : String)
-     return String;
+      return String;
+
+   function To_Json
+     (Container : Parameter_Container)
+      return Concorde.Json.Json_Value'Class;
 
    type Request_Handler is abstract tagged private;
 

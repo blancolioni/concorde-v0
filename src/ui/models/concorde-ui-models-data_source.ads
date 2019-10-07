@@ -1,3 +1,6 @@
+with Concorde.UI.Models.Renderers;
+with Concorde.UI.Models.Values;
+
 package Concorde.UI.Models.Data_Source is
 
    type Root_Data_Source_Model is
@@ -13,10 +16,31 @@ package Concorde.UI.Models.Data_Source is
       return Natural
       is abstract;
 
-   function Column_Heading
+   function Column_Heading_Id
      (Data_Source : Root_Data_Source_Model;
       Column      : Positive)
       return String
+      is abstract
+     with Pre'Class => Column <= Data_Source.Column_Count;
+
+   function Column_Heading_Label
+     (Data_Source : Root_Data_Source_Model;
+      Column      : Positive)
+      return String
+      is abstract
+     with Pre'Class => Column <= Data_Source.Column_Count;
+
+   function Column_Renderer
+     (Data_Source : Root_Data_Source_Model;
+      Column      : Positive)
+      return Renderers.Render_Interface'Class
+      is abstract
+     with Pre'Class => Column <= Data_Source.Column_Count;
+
+   function Column_Type
+     (Data_Source : Root_Data_Source_Model;
+      Column      : Positive)
+      return Values.Model_Value_Data_Type
       is abstract
      with Pre'Class => Column <= Data_Source.Column_Count;
 
@@ -24,7 +48,7 @@ package Concorde.UI.Models.Data_Source is
      (Data_Source : Root_Data_Source_Model;
       Row         : Positive;
       Column      : Positive)
-      return String
+      return Values.Model_Value_Type
       is abstract
      with Pre'Class => Row <= Data_Source.Row_Count
      and then Column <= Data_Source.Column_Count;

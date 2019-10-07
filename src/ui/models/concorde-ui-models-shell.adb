@@ -6,6 +6,11 @@ package body Concorde.UI.Models.Shell is
          null;
       end record;
 
+   overriding function Name
+     (Model : Shell_Model_Type)
+      return String
+   is ("shell");
+
    overriding function Handle
      (Model   : in out Shell_Model_Type;
       State   : in out State_Interface'Class;
