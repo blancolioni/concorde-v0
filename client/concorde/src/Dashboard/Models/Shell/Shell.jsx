@@ -1,8 +1,8 @@
 import React from 'react';
-import { userService } from '../_services';
-import { DashboardItem } from '../Dashboard';
+import { userService } from '../../../_services';
+import { DashboardItem } from '../..';
 
-import '../Concorde.css';
+import '../../../Concorde.css';
 
 function ConsoleLine(props) {
     return (

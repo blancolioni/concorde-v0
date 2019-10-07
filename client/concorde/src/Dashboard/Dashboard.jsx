@@ -1,5 +1,6 @@
 import React from 'react';
-import { Shell } from '../Shell';
+import { Shell } from './Models/Shell';
+import { Table } from './Models/Table';
 import { userService } from '../_services';
 
 class DashboardTitleBar extends React.Component {
@@ -69,7 +70,7 @@ class DashboardCell extends React.Component {
         }
         return (
             <div className="concorde-dashboard-cell" style={cellStyle}>
-                <Shell></Shell>
+                <Table></Table>
             </div>
         );
     }
@@ -86,7 +87,7 @@ class Dashboard extends React.Component {
                         left: 1,
                         top: 1,
                         right: 7,
-                        bottom: 13,
+                        bottom: 7,
                     },
                     client: 0,
                 },
