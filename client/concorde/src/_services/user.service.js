@@ -25,13 +25,21 @@ function login(username, password, onMessage) {
                 localStorage.setItem('id', data.id);
                 localStorage.setItem('user', data.user);
                 localStorage.setItem('base-url', serverUrl);
-
+                
                 const ws = new WebSocket(webSocketUrl + 'socket');
                 ws.onopen = () => {
                     ws.send(JSON.stringify({ id: data.id}));
                 }
                 ws.onmessage = evt => {
                     if (onMessage) { onMessage(evt.data); }
+                }
+                ws.onerror = () => {
+                    logout();
+                    document.location.reload(true);
+                }
+                ws.onclose = () => {
+                    logout();
+                    document.location.reload(true);
                 }
                 localStorage.setItem('ws', ws);
             }

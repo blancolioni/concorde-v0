@@ -11,16 +11,6 @@ package Concorde.UI is
       Message    : Concorde.Json.Json_Value'Class)
    is abstract;
 
-   procedure On_Message
-     (Connection : in out Connection_Interface;
-      Message    : Concorde.Json.Json_Value'Class)
-   is abstract;
-
-   procedure On_Error
-     (Connection : in out Connection_Interface;
-      Message    : Concorde.Json.Json_Value'Class)
-   is abstract;
-
    type UI_Interface is interface;
 
    procedure Start

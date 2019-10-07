@@ -10,7 +10,9 @@ with Concorde.UI.Web_UI.Routes;
 package body Concorde.UI.Web_UI is
 
    type Socket_Type is
-     new AWS.Net.WebSocket.Object with null record;
+     new AWS.Net.WebSocket.Object
+     and Concorde.UI.Connection_Interface
+   with null record;
 
    overriding procedure On_Close
      (Socket : in out Socket_Type;
@@ -27,6 +29,10 @@ package body Concorde.UI.Web_UI is
    overriding procedure On_Open
      (Socket  : in out Socket_Type;
       Message : String);
+
+   overriding procedure Send_Message
+     (Socket     : in out Socket_Type;
+      Message    : Concorde.Json.Json_Value'Class);
 
    function Create
      (Socket  : AWS.Net.Socket_Access;
@@ -93,12 +99,10 @@ package body Concorde.UI.Web_UI is
 
    procedure Create_Socket is
    begin
-      Ada.Text_IO.Put_Line ("creating socket");
       AWS.Net.WebSocket.Registry.Register
         (URI     => "/socket",
          Factory => Create'Access);
       AWS.Net.WebSocket.Registry.Control.Start;
-      Ada.Text_IO.Put_Line ("ready");
    end Create_Socket;
 
    ----------------
@@ -174,6 +178,19 @@ package body Concorde.UI.Web_UI is
    begin
       Ada.Text_IO.Put_Line (Message);
    end On_Open;
+
+   ------------------
+   -- Send_Message --
+   ------------------
+
+   overriding procedure Send_Message
+     (Socket     : in out Socket_Type;
+      Message    : Concorde.Json.Json_Value'Class)
+   is
+   begin
+      Socket.Send
+        (Message => Message.Serialize);
+   end Send_Message;
 
    -----------
    -- Start --
