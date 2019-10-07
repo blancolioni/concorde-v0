@@ -8,7 +8,16 @@ class DashboardTitleBar extends React.Component {
     render() {
         return (
                 <div className="concorde-dashboard-titlebar">
-                    {this.props.text} - {localStorage.getItem('user')} - {this.props.clientId}
+                    <span>{this.props.text} - {localStorage.getItem('user')} - {this.props.clientId}</span>
+                    <span className="concorde-titlebar-right">
+                        <button onClick={(e) => this.props.onDashboardCommand('splitHorizontal',e)}>
+                            <i class="fas fa-grip-lines-vertical"></i>
+                        </button>
+                        <button onClick={(e) => this.props.onDashboardCommand('splitVertical',e)}>
+                            <i class="fas fa-grip-lines"></i>
+                        </button>
+                        <i class="fas fa-window-close"></i>
+                    </span>
                 </div>
         );
     }
@@ -49,7 +58,7 @@ class DashboardItem extends React.Component {
         } else {
             return (
                 <div className="concorde-dashboard-item">
-                    <DashboardTitleBar text={this.props.title} clientId={this.state.clientId}></DashboardTitleBar>
+                    <DashboardTitleBar text={this.props.title} clientId={this.state.clientId} onDashboardCommand={this.props.onDashboardCommand}></DashboardTitleBar>
                     <div className="concorde-dashboard-body">
                         {this.props.children}
                     </div>
@@ -61,16 +70,69 @@ class DashboardItem extends React.Component {
 
 class DashboardCell extends React.Component {
 
+    constructor(props) {
+        super(props)
+        this.state = {
+            anchor: this.props.anchor,
+        }
+        this.splitHorizontal = this.splitHorizontal.bind(this);
+        this.splitVertical = this.splitVertical.bind(this);
+        this.onDashboardCommand = this.onDashboardCommand.bind(this);
+        this.commands = {
+            splitHorizontal: this.splitHorizontal,
+            splitVertical: this.splitVertical,
+        }
+    }
+
+    splitHorizontal() {
+        const anchor = this.state.anchor;
+        const newCellAnchor = {
+            ...anchor,
+            left: anchor.left + (anchor.right - anchor.left) / 2,
+        }
+        this.setState((state) => {
+            return { ...state,
+               anchor: {
+                    ...anchor,
+                    right: newCellAnchor.left,
+                   },
+             }
+        });
+        this.props.newCell(newCellAnchor);
+
+    }
+
+    splitVertical() {
+        const anchor = this.state.anchor;
+        const newCellAnchor = {
+            ...anchor,
+            top: anchor.top + (anchor.bottom - anchor.top) / 2,
+        }
+        this.setState((state) => {
+            return { ...state,
+               anchor: {
+                    ...anchor,
+                    bottom: newCellAnchor.top,
+                   },
+             }
+        });
+        this.props.newCell(newCellAnchor);
+
+    }
+    onDashboardCommand(cmd,evt) {
+        this.commands[cmd]();
+    }
+
     render() {
         let cellStyle = {
-            gridColumnStart: this.props.anchor.left,
-            gridColumnEnd: this.props.anchor.right,
-            gridRowStart: this.props.anchor.top,
-            gridRowEnd: this.props.anchor.bottom,
+            gridColumnStart: this.state.anchor.left,
+            gridColumnEnd: this.state.anchor.right,
+            gridRowStart: this.state.anchor.top,
+            gridRowEnd: this.state.anchor.bottom,
         }
         return (
             <div className="concorde-dashboard-cell" style={cellStyle}>
-                <Table></Table>
+                <Shell onDashboardCommand={this.onDashboardCommand}></Shell>
             </div>
         );
     }
@@ -86,13 +148,26 @@ class Dashboard extends React.Component {
                     anchor: {
                         left: 1,
                         top: 1,
-                        right: 7,
-                        bottom: 7,
+                        right: 13,
+                        bottom: 13,
                     },
                     client: 0,
                 },
             ],
         }
+        this.newCell = this.newCell.bind(this);
+    }
+
+    newCell(anchor) {
+        this.setState((state) => {
+            return { ...state,
+                layout: [
+                    ...state.layout, {
+                        anchor: anchor,
+                        client: 0,
+                    }
+                ]}
+            });
     }
 
     render() {
@@ -100,7 +175,7 @@ class Dashboard extends React.Component {
             <div className="concorde-dashboard-grid">
                 {this.state.layout.map((cell) => {
                     return (
-                        <DashboardCell anchor={cell.anchor} client={cell.client}></DashboardCell>
+                        <DashboardCell anchor={cell.anchor} client={cell.client} newCell={this.newCell}></DashboardCell>
                     );
                 })}
             </div>

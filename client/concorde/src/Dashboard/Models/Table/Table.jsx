@@ -54,7 +54,7 @@ class Table extends React.Component {
 
     render() {
         return (
-            <DashboardItem title={this.state.tableName} model={this.state.tableModel} modelArg={this.state.tableArg} onConnected={this.onConnected} >
+            <DashboardItem title={this.state.tableName} model={this.state.tableModel} modelArg={this.state.tableArg} onConnected={this.onConnected} onDashboardCommand={this.props.onDashboardCommand}>
                 <table className="table-sm concorde-sortable-table">
                     <thead>
                         <tr>

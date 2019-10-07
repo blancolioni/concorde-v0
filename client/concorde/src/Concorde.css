@@ -47,3 +47,7 @@
 .concorde-sortable-table thead > tr {
     cursor: pointer;
 }
+
+.concorde-titlebar-right {
+    float: right;
+}
