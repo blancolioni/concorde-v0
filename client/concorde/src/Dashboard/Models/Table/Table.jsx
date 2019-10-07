@@ -17,16 +17,17 @@ class Table extends React.Component {
             headings: [],
             data: [],
             clientId: 0,
-            sortColumn: 3,
-            sortAscending: false,
+            sortColumn: 1,
+            sortAscending: true,
         }
 
         this.onConnected = this.onConnected.bind(this);
+        this.onColumnHeaderClick = this.onColumnHeaderClick.bind(this);
     }
 
-    onConnected(clientId) {
+    getData(clientId, sortColumn, sortAscending) {
 
-        userService.postRequest('client/' + clientId, {data: 'get', sort: 3, ascending: false})
+        userService.postRequest('client/' + clientId, {data: 'get', sort: sortColumn + 1, ascending: sortAscending})
             .then((result) => result.json())   
             .then((resp) => {
                 this.setState(state => {
@@ -35,20 +36,36 @@ class Table extends React.Component {
                         clientId: clientId,
                         headings: resp.table.headings,
                         data: resp.table.data,
+                        sortColumn: sortColumn,
+                        sortAscending: sortAscending,
                     }                    
                 });
             });
 
     }
 
+    onConnected(clientId) {
+        this.getData(clientId, 1, true);
+    }
+    
+    onColumnHeaderClick(index) {
+        this.getData(this.state.clientId, index, this.state.sortColumn == index ? !this.state.sortAscending : false);
+    }
+
     render() {
         return (
             <DashboardItem title={this.state.tableName} model={this.state.tableModel} modelArg={this.state.tableArg} onConnected={this.onConnected} >
-                <table className="table-sm">
+                <table className="table-sm concorde-sortable-table">
                     <thead>
                         <tr>
-                            {this.state.headings.map((heading) => {
-                                return <th>{heading.label}</th>
+                            {this.state.headings.map((heading,index) => {
+                                return (
+                                    <th
+                                        onClick={(e) => this.onColumnHeaderClick(index)}
+                                        columnIndex={index}
+                                    >
+                                        {heading.label} {index == this.state.sortColumn && (this.state.sortAscending ? (<i class="fas fa-sort-up"></i>) : (<i class="fas fa-sort-down"></i>))}</th>
+                                    );
                                 })
                             }
                         </tr>

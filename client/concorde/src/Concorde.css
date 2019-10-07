@@ -43,3 +43,7 @@
 .concorde-shell-table td {
     padding: 0px;
 }
+
+.concorde-sortable-table thead > tr {
+    cursor: pointer;
+}
