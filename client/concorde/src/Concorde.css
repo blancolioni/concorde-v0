@@ -36,6 +36,18 @@
     color:white;
 }
 
+.concorde-dashboard-cell {
+    overflow-y: auto;
+}
+
 .concorde-shell-table td {
     padding: 0px;
+}
+
+.concorde-sortable-table thead > tr {
+    cursor: pointer;
+}
+
+.concorde-titlebar-right {
+    float: right;
 }

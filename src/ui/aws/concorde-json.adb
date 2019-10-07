@@ -363,6 +363,15 @@ package body Concorde.Json is
         (Value => Int);
    end Integer_Value;
 
+   -------------
+   -- Is_Null --
+   -------------
+
+   function Is_Null (Value : Json_Value'Class) return Boolean is
+   begin
+      return Value in Null_Json_Value'Class;
+   end Is_Null;
+
    ----------------
    -- Null_Value --
    ----------------

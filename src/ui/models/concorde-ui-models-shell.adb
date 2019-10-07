@@ -6,6 +6,11 @@ package body Concorde.UI.Models.Shell is
          null;
       end record;
 
+   overriding function Name
+     (Model : Shell_Model_Type)
+      return String
+   is ("shell");
+
    overriding function Handle
      (Model   : in out Shell_Model_Type;
       State   : in out State_Interface'Class;
@@ -39,7 +44,11 @@ package body Concorde.UI.Models.Shell is
    -- Shell_Model --
    -----------------
 
-   function Shell_Model return Root_Concorde_Model'Class is
+   function Shell_Model
+     (Arguments : String)
+      return Root_Concorde_Model'Class
+   is
+      pragma Unreferenced (Arguments);
    begin
       return Model : Shell_Model_Type;
    end Shell_Model;

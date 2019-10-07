@@ -1,8 +1,8 @@
 import React from 'react';
-import { userService } from '../_services';
-import { DashboardItem } from '../Dashboard';
+import { userService } from '../../../_services';
+import { DashboardItem } from '../..';
 
-import '../Concorde.css';
+import '../../../Concorde.css';
 
 function ConsoleLine(props) {
     return (
@@ -116,7 +116,7 @@ class Shell extends React.Component {
 
     render() {
         return (
-            <DashboardItem title="Concorde Shell" model="shell" onConnected={this.onConnected}>
+            <DashboardItem title="Concorde Shell" model="shell" onConnected={this.onConnected} onDashboardCommand={this.props.onDashboardCommand}>
                 <ConsoleText lines={this.state.output}></ConsoleText>
                 <ConsoleInput onCommand={this.sendCommand}></ConsoleInput>
             </DashboardItem>

@@ -93,8 +93,9 @@ package body Concorde.Sessions is
    ----------------
 
    overriding function New_Client
-     (Session    : in out Root_Concorde_Session;
-      Model_Name : String)
+     (Session        : in out Root_Concorde_Session;
+      Model_Name     : String;
+      Model_Argument : String)
       return Concorde.UI.Client_Id
    is
       use type Concorde.UI.Client_Id;
@@ -109,7 +110,8 @@ package body Concorde.Sessions is
          Client_Type'
            (Model =>
                 Model_Holders.To_Holder
-                  (Concorde.UI.Models.Loader.Get (Model_Name)),
+              (Concorde.UI.Models.Loader.Get
+                   (Model_Name, Model_Argument)),
             Context => Session.Default_Context));
       return Session.Last_Client;
    end New_Client;

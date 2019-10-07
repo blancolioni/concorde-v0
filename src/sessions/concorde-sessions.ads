@@ -73,8 +73,9 @@ private
       return String;
 
    overriding function New_Client
-     (Session    : in out Root_Concorde_Session;
-      Model_Name : String)
+     (Session        : in out Root_Concorde_Session;
+      Model_Name     : String;
+      Model_Argument : String)
       return Concorde.UI.Client_Id;
 
    overriding procedure Close_Client
