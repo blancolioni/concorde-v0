@@ -10,13 +10,15 @@ class DashboardTitleBar extends React.Component {
                 <div className="concorde-dashboard-titlebar">
                     <span>{this.props.text} - {localStorage.getItem('user')} - {this.props.clientId}</span>
                     <span className="concorde-titlebar-right">
-                        <button onClick={(e) => this.props.onDashboardCommand('splitHorizontal',e)}>
+                        <button className="concorde-titlebar-button" onClick={(e) => this.props.onDashboardCommand('splitHorizontal',e)}>
                             <i class="fas fa-grip-lines-vertical"></i>
                         </button>
-                        <button onClick={(e) => this.props.onDashboardCommand('splitVertical',e)}>
+                        <button className="concorde-titlebar-button" onClick={(e) => this.props.onDashboardCommand('splitVertical',e)}>
                             <i class="fas fa-grip-lines"></i>
                         </button>
-                        <i class="fas fa-window-close"></i>
+                        <button className="concorde-titlebar-button" onClick={(e) => this.props.onDashboardCommand('closeDashboardItem',e)}>
+                            <i class="fas fa-window-close"></i>
+                        </button>
                     </span>
                 </div>
         );
