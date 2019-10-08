@@ -46,7 +46,7 @@ class Table extends React.Component {
     }
     
     onColumnHeaderClick(index) {
-        this.getData(this.state.clientId, index, this.state.sortColumn == index ? !this.state.sortAscending : false);
+        this.getData(this.state.clientId, index, this.state.sortColumn === index ? !this.state.sortAscending : false);
     }
 
     render() {
@@ -61,7 +61,7 @@ class Table extends React.Component {
                                         onClick={(e) => this.onColumnHeaderClick(index)}
                                         columnIndex={index}
                                     >
-                                        {heading.label} {index == this.state.sortColumn && (this.state.sortAscending ? (<i class="fas fa-sort-up"></i>) : (<i class="fas fa-sort-down"></i>))}</th>
+                                        {heading.label} {index === this.state.sortColumn && (this.state.sortAscending ? (<i class="fas fa-sort-up"></i>) : (<i class="fas fa-sort-down"></i>))}</th>
                                     );
                                 })
                             }

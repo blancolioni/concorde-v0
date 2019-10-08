@@ -19,9 +19,9 @@ function ConsoleText(props) {
         <div className="concorde-shell-output">
             <table className="concorde-shell-table">
                 <tbody>
-                    {props.lines.map((line) => {
+                    {props.lines.map((line,index) => {
                         return (
-                            <ConsoleLine line={line}></ConsoleLine> 
+                            <ConsoleLine key={index} line={line}></ConsoleLine> 
                         );
                     })}
                 </tbody>
@@ -47,7 +47,7 @@ class ConsoleInput extends React.Component {
     }
 
     handleKeyPress(e) {
-      if(e.charCode==13){
+      if(e.charCode === 13){
           let cmd = this.state.input;
           e.target.value = '';
           this.setState({
@@ -59,11 +59,11 @@ class ConsoleInput extends React.Component {
     
     render() {
       return (
-            <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                    <span class="input-group-text">{localStorage.getItem('admin') ? '&gt;' : '#'}</span>
+            <div className="input-group mb-3">
+                <div className="input-group-prepend">
+                    <span className="input-group-text">{localStorage.getItem('admin') ? '&gt;' : '#'}</span>
                 </div>
-            <input type="text" class="form-control" aria-label="Command" onKeyPress={this.handleKeyPress} onChange={this.handleTextChange} />
+            <input type="text" className="form-control" aria-label="Command" onKeyPress={this.handleKeyPress} onChange={this.handleTextChange} />
             </div>
         );
      }

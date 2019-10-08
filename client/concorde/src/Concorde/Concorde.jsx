@@ -19,7 +19,6 @@ class Concorde extends React.Component {
     }
 
     render() {
-        const { sessionId } = this.state;
         return (
             <div>
                 <Toolbar></Toolbar>
