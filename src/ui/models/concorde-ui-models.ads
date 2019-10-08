@@ -12,6 +12,11 @@ package Concorde.UI.Models is
       return String
       is abstract;
 
+   procedure Start
+     (Model     : in out Root_Concorde_Model;
+      Arguments : String)
+   is null;
+
    function Handle
      (Model   : in out Root_Concorde_Model;
       State   : in out State_Interface'Class;

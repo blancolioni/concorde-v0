@@ -110,14 +110,20 @@ package body Concorde.Sessions is
       end if;
 
       Session.Last_Client := Session.Last_Client + 1;
-      Session.Client_Map.Insert
-        (Session.Last_Client,
-         Client_Type'
-           (Model =>
-                Model_Holders.To_Holder
-              (Concorde.UI.Models.Loader.Get
-                   (Model_Name, Model_Argument)),
-            Context => Session.Default_Context));
+
+      declare
+         Model : Concorde.UI.Models.Root_Concorde_Model'Class :=
+           Concorde.UI.Models.Loader.Get (Model_Name);
+      begin
+         Model.Start (Model_Argument);
+         Session.Client_Map.Insert
+           (Session.Last_Client,
+            Client_Type'
+              (Model =>
+                Model_Holders.To_Holder (Model),
+               Context => Session.Default_Context));
+      end;
+
       return Session.Last_Client;
    end New_Client;
 
@@ -155,11 +161,12 @@ package body Concorde.Sessions is
       Model_Name     : String;
       Model_Argument : String)
    is
+      Model : Concorde.UI.Models.Root_Concorde_Model'Class :=
+        Concorde.UI.Models.Loader.Get (Model_Name);
    begin
+      Model.Start (Model_Argument);
       Session.Client_Map (Client).Model :=
-        Model_Holders.To_Holder
-          (Concorde.UI.Models.Loader.Get
-             (Model_Name, Model_Argument));
+        Model_Holders.To_Holder (Model);
    end Replace_Model;
 
    ---------------

@@ -48,10 +48,8 @@ package body Concorde.UI.Models.Shell is
    -----------------
 
    function Shell_Model
-     (Arguments : String)
       return Root_Concorde_Model'Class
    is
-      pragma Unreferenced (Arguments);
    begin
       return Model : Shell_Model_Type;
    end Shell_Model;

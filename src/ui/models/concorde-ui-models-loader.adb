@@ -5,11 +5,8 @@ with Concorde.UI.Models.Shell;
 
 package body Concorde.UI.Models.Loader is
 
-   type Model_Creator is access
-     function (Argument : String) return Root_Concorde_Model'Class;
-
    package Model_Maps is
-     new WL.String_Maps (Model_Creator);
+     new WL.String_Maps (Root_Concorde_Model'Class);
 
    Map : Model_Maps.Map;
 
@@ -23,25 +20,25 @@ package body Concorde.UI.Models.Loader is
 
       procedure Add
         (Name    : String;
-         Creator : Model_Creator);
+         Model   : Root_Concorde_Model'Class);
 
       ---------
       -- Add --
       ---------
 
       procedure Add
-        (Name    : String;
-         Creator : Model_Creator)
+        (Name  : String;
+         Model : Root_Concorde_Model'Class)
       is
       begin
-         Map.Insert (Name, Creator);
+         Map.Insert (Name, Model);
       end Add;
 
    begin
       if Map.Is_Empty then
-         Add ("shell", Concorde.UI.Models.Shell.Shell_Model'Access);
+         Add ("shell", Concorde.UI.Models.Shell.Shell_Model);
          Add ("market-price",
-              Concorde.UI.Models.Markets.Market_Price_Model'Access);
+              Concorde.UI.Models.Markets.Market_Price_Model);
       end if;
    end Check_Map;
 
@@ -60,13 +57,12 @@ package body Concorde.UI.Models.Loader is
    ---------
 
    function Get
-     (Model_Name : String;
-      Argument   : String)
+     (Model_Name : String)
       return Root_Concorde_Model'Class
    is
    begin
       Check_Map;
-      return Map.Element (Model_Name) (Argument);
+      return Map.Element (Model_Name);
    end Get;
 
 end Concorde.UI.Models.Loader;

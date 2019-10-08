@@ -38,11 +38,16 @@ package body Concorde.UI.Models.Markets is
    type Market_Price_Model_Type is
      new Concorde.UI.Models.Data_Source.Root_Data_Source_Model with
       record
-         Market   : Concorde.Db.Market_Reference;
+         Market   : Concorde.Db.Market_Reference :=
+           Concorde.Db.Null_Market_Reference;
          Headings : String_Vectors.Vector;
          Ids      : String_Vectors.Vector;
          Data     : Market_Table.Vector;
       end record;
+
+   overriding procedure Start
+     (Model      : in out Market_Price_Model_Type;
+      World_Name : String);
 
    overriding function Name
      (Model : Market_Price_Model_Type)
@@ -139,66 +144,80 @@ package body Concorde.UI.Models.Markets is
    ------------------------
 
    function Market_Price_Model
-     (World_Name : String)
       return Root_Concorde_Model'Class
    is
-      World : constant Concorde.Db.World_Reference :=
+   begin
+      return Model : Market_Price_Model_Type;
+   end Market_Price_Model;
+
+   -----------
+   -- Start --
+   -----------
+
+   overriding procedure Start
+     (Model      : in out Market_Price_Model_Type;
+      World_Name : String)
+   is
+      World  : constant Concorde.Db.World_Reference :=
         Concorde.Db.World.First_Reference_By_Name (World_Name);
       Market : constant Concorde.Db.Market_Reference :=
         Concorde.Db.Market.Get_Reference_By_World (World);
    begin
-      return Model : Market_Price_Model_Type do
-         Model.Market := Market;
-         Model.Ids.Append ("id");
-         Model.Ids.Append ("name");
-         Model.Ids.Append ("supply");
-         Model.Ids.Append ("demand");
-         Model.Ids.Append ("price");
+      Model.Ids.Clear;
+      Model.Headings.Clear;
+      Model.Data.Clear;
 
-         Model.Headings.Append ("Id");
-         Model.Headings.Append ("Commodity");
-         Model.Headings.Append ("Supply");
-         Model.Headings.Append ("Demand");
-         Model.Headings.Append ("Price");
+      Model.Market := Market;
+      Model.Ids.Append ("id");
+      Model.Ids.Append ("name");
+      Model.Ids.Append ("supply");
+      Model.Ids.Append ("demand");
+      Model.Ids.Append ("price");
 
-         declare
-            use Concorde.Commodities;
+      Model.Headings.Append ("Id");
+      Model.Headings.Append ("Commodity");
+      Model.Headings.Append ("Supply");
+      Model.Headings.Append ("Demand");
+      Model.Headings.Append ("Price");
 
-            procedure Add_Row
-              (Commodity : Commodity_Reference);
+      declare
+         use Concorde.Commodities;
 
-            -------------
-            -- Add_Row --
-            -------------
+         procedure Add_Row
+           (Commodity : Commodity_Reference);
 
-            procedure Add_Row
-              (Commodity : Commodity_Reference)
-            is
-               use Concorde.Markets;
-               use Concorde.Quantities, Concorde.Money;
-               Supply : constant Quantity_Type :=
-                 Historical_Offer_Quantity
-                   (Market, Commodity, Db.Ask, Calendar.Days (1));
-               Demand : constant Quantity_Type :=
-                 Historical_Offer_Quantity
-                   (Market, Commodity, Db.Bid, Calendar.Days (1));
-               Price  : constant Price_Type :=
-                 Historical_Mean_Price (Market, Commodity);
-            begin
-               Model.Data.Append
-                 (Market_Price_Row'
-                    (Commodity => Commodity,
-                     Supply    => To_Real (Supply),
-                     Demand    => To_Real (Demand),
-                     Price     => To_Real (Price)));
-            end Add_Row;
+         -------------
+         -- Add_Row --
+         -------------
 
+         procedure Add_Row
+           (Commodity : Commodity_Reference)
+         is
+            use Concorde.Markets;
+            use Concorde.Quantities, Concorde.Money;
+            Supply : constant Quantity_Type :=
+              Historical_Offer_Quantity
+                (Market, Commodity, Db.Ask, Calendar.Days (1));
+            Demand : constant Quantity_Type :=
+              Historical_Offer_Quantity
+                (Market, Commodity, Db.Bid, Calendar.Days (1));
+            Price  : constant Price_Type :=
+              Historical_Mean_Price (Market, Commodity);
          begin
-            for Commodity of Concorde.Commodities.All_Commodities loop
-               Add_Row (Commodity);
-            end loop;
-         end;
-      end return;
-   end Market_Price_Model;
+            Model.Data.Append
+              (Market_Price_Row'
+                 (Commodity => Commodity,
+                  Supply    => To_Real (Supply),
+                  Demand    => To_Real (Demand),
+                  Price     => To_Real (Price)));
+         end Add_Row;
+
+      begin
+         for Commodity of Concorde.Commodities.All_Commodities loop
+            Add_Row (Commodity);
+         end loop;
+      end;
+
+   end Start;
 
 end Concorde.UI.Models.Markets;
