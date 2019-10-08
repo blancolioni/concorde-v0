@@ -82,6 +82,9 @@ class DashboardCell extends React.Component {
         this.state = {
             anchor: this.props.anchor,
             view: Shell,
+            title: "Concorde Shell",
+            model: "shell",
+            modelArgs: "",
         }
         this.splitHorizontal = this.splitHorizontal.bind(this);
         this.splitVertical = this.splitVertical.bind(this);
@@ -100,6 +103,9 @@ class DashboardCell extends React.Component {
                     this.setState((state) => {
                         return { ...state,
                                  view: viewMap[cmd.view],
+                                 model: cmd.model,
+                                 modelArgs: cmd.modelArgs,
+                                 title: cmd.view,
                             };
                     });
                 }
@@ -157,6 +163,9 @@ class DashboardCell extends React.Component {
         return (
             <div className="concorde-dashboard-cell" style={cellStyle}>
                 <View
+                   title={this.state.title}
+                   model={this.state.model}
+                   modelArgs={this.state.modelArgs}
                    onDashboardCommand={this.onDashboardCommand}
                    controlHandler={this.controlHandler}
                    />                       

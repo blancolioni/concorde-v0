@@ -10,14 +10,11 @@ class Table extends React.Component {
         super(props);
 
         this.state = {
-            tableName: 'Oefeh I Prices',
-            tableModel: "market-price",
-            tableArg: "Oefeh I",
             tableData: [],
             headings: [],
             data: [],
             clientId: 0,
-            sortColumn: 1,
+            sortColumn: -1,
             sortAscending: true,
         }
 
@@ -45,7 +42,7 @@ class Table extends React.Component {
     }
 
     onConnected(clientId) {
-        this.getData(clientId, 1, true);
+        this.getData(clientId, -1, true);
     }
     
     onColumnHeaderClick(index) {
@@ -54,7 +51,7 @@ class Table extends React.Component {
 
     render() {
         return (
-            <DashboardItem title={this.state.tableName} model={this.state.tableModel} modelArg={this.state.tableArg} onConnected={this.onConnected} onDashboardCommand={this.props.onDashboardCommand}>
+            <DashboardItem title={this.props.title} model={this.props.model} modelArg={this.props.modelArgs} onConnected={this.onConnected} onDashboardCommand={this.props.onDashboardCommand}>
                 <table className="table-sm concorde-sortable-table">
                     <thead>
                         <tr>
