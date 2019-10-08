@@ -150,20 +150,11 @@ package body Concorde.UI.Web_UI is
      (Socket  : in out Socket_Type;
       Message : String)
    is
+      Response : constant String :=
+        Routes.Handle_Socket_Message
+          (Message);
    begin
-      Ada.Text_IO.Put_Line
-        ("message: " & Message);
-
-      declare
-         Response : constant String :=
-           Routes.Handle_Socket_Message
-             (Message);
-      begin
-         Ada.Text_IO.Put_Line
-           ("reply: " & Response);
-         Socket.Send (Message => Response);
-      end;
-
+      Socket.Send (Message => Response);
    end On_Message;
 
    -------------
