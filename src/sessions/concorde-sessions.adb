@@ -4,6 +4,7 @@ with Concorde.File_System.Root;
 
 with Concorde.UI.Models.Loader;
 
+with Concorde.Db.Faction;
 with Concorde.Db.User;
 
 package body Concorde.Sessions is
@@ -144,9 +145,26 @@ package body Concorde.Sessions is
            and then User.Password = Password
          then
             Session.User := User.Get_User_Reference;
-            Session.Default_Context.Create_Context
-              (Root          => Concorde.File_System.Root.System_Root_Node_Id,
-               Default_Scope => "/");
+
+            declare
+               Faction : constant Concorde.Db.Faction.Faction_Type :=
+                 Concorde.Db.Faction.First_By_User
+                   (User.Get_User_Reference);
+            begin
+               if Faction.Has_Element then
+                  Session.Default_Context.Create_Context
+                    (Root          =>
+                       Concorde.File_System.Root.System_Root_Node_Id,
+                     Default_Scope => "/home/" & Faction.Name);
+               elsif User.Administrator then
+                  Session.Default_Context.Create_Context
+                    (Root          =>
+                       Concorde.File_System.Root.System_Root_Node_Id,
+                     Default_Scope => "/");
+               else
+                  Session.User := Concorde.Db.Null_User_Reference;
+               end if;
+            end;
          end if;
       end return;
    end New_Session;
