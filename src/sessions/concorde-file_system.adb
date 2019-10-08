@@ -272,4 +272,18 @@ package body Concorde.File_System is
       return Root_FS.Node_Vector.Reference (Index).Element;
    end Update;
 
+   ------------
+   -- Update --
+   ------------
+
+   overriding function Update
+     (Node : Read_Only_Node_Id)
+      return access Node_Interface'Class
+   is
+      pragma Unreferenced (Node);
+   begin
+      return (raise Constraint_Error with
+                "update: read-only filesystem");
+   end Update;
+
 end Concorde.File_System;

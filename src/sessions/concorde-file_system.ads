@@ -42,7 +42,8 @@ package Concorde.File_System is
      (Node   : in out Node_Interface;
       Name   : String)
    is abstract
-     with Pre'Class => not Is_Leaf (Node) and then Has_Child (Node, Name);
+     with Pre'Class => not Is_Leaf (Node)
+     and then Has_Child (Node_Interface'Class (Node), Name);
 
    procedure Iterate_Children
      (Node    : Node_Interface;
@@ -61,6 +62,13 @@ package Concorde.File_System is
      (Node : Node_Id_Interface)
       return access Node_Interface'Class
       is abstract;
+
+   type Read_Only_Node_Id is
+     abstract new Node_Id_Interface with private;
+
+   overriding function Update
+     (Node : Read_Only_Node_Id)
+      return access Node_Interface'Class;
 
    type File_System_Interface is interface;
 
@@ -89,6 +97,9 @@ package Concorde.File_System is
      abstract new Node_Interface with private;
 
 private
+
+   type Read_Only_Node_Id is
+     abstract new Node_Id_Interface with null record;
 
    type Leaf_Node is
      abstract new Node_Interface with null record;
