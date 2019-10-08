@@ -1,4 +1,5 @@
 import React from 'react';
+import { Galaxy } from './Models/Galaxy';
 import { Shell } from './Models/Shell';
 import { Table } from './Models/Table';
 import { userService } from '../_services';
@@ -11,13 +12,13 @@ class DashboardTitleBar extends React.Component {
                     <span>{this.props.text} - {localStorage.getItem('user')} - {this.props.clientId}</span>
                     <span className="concorde-titlebar-right">
                         <button className="concorde-titlebar-button" onClick={(e) => this.props.onDashboardCommand('splitHorizontal',e)}>
-                            <i class="fas fa-grip-lines-vertical"></i>
+                            <i className="fas fa-grip-lines-vertical"></i>
                         </button>
                         <button className="concorde-titlebar-button" onClick={(e) => this.props.onDashboardCommand('splitVertical',e)}>
-                            <i class="fas fa-grip-lines"></i>
+                            <i className="fas fa-grip-lines"></i>
                         </button>
                         <button className="concorde-titlebar-button" onClick={(e) => this.props.onDashboardCommand('closeDashboardItem',e)}>
-                            <i class="fas fa-window-close"></i>
+                            <i className="fas fa-window-close"></i>
                         </button>
                     </span>
                 </div>
@@ -73,6 +74,7 @@ class DashboardItem extends React.Component {
 const viewMap = {
     Shell: Shell,
     Table: Table,
+    Galaxy: Galaxy,
 }
 
 class DashboardCell extends React.Component {
@@ -97,8 +99,8 @@ class DashboardCell extends React.Component {
     }
 
     controlHandler(packet) {
-        packet.map((cmd) => {
-            if (cmd.control == 'replace-view') {
+        for(const cmd of packet) {
+            if (cmd.control === 'replace-view') {
                 if (viewMap[cmd.view]) {
                     this.setState((state) => {
                         return { ...state,
@@ -110,7 +112,7 @@ class DashboardCell extends React.Component {
                     });
                 }
             }
-        });
+        }
     }
 
     splitHorizontal() {
@@ -209,9 +211,9 @@ class Dashboard extends React.Component {
     render() {
         return (
             <div className="concorde-dashboard-grid">
-                {this.state.layout.map((cell) => {
+                {this.state.layout.map((cell,index) => {
                     return (
-                        <DashboardCell anchor={cell.anchor} client={cell.client} newCell={this.newCell}></DashboardCell>
+                        <DashboardCell key={index} anchor={cell.anchor} client={cell.client} newCell={this.newCell}></DashboardCell>
                     );
                 })}
             </div>
