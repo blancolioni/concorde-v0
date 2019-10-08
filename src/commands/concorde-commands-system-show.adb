@@ -1,4 +1,5 @@
 with Concorde.Json;
+with Concorde.UI.Models.Loader;
 
 package body Concorde.Commands.System.Show is
 
@@ -25,24 +26,36 @@ package body Concorde.Commands.System.Show is
    is
       pragma Unreferenced (Command, Session, Context);
       Response : Concorde.Json.Json_Object;
-      View_Name : constant String :=
-        Argument (Arguments, "view", "Table");
       Model_Name : constant String :=
-        Argument (Arguments, "model");
-      Model_Args : constant String :=
-        Argument (Arguments, "model-args", "");
+        Argument (Arguments, 1);
    begin
-      Response.Set_Property
-        ("control", "replace-view");
-      Response.Set_Property
-        ("view", View_Name);
-      Response.Set_Property
-        ("model", Model_Name);
-      Response.Set_Property
-        ("modelArg", Model_Args);
-      Writer.Control (Response);
-      Writer.Put_Line ("Loading " & View_Name & "/" & Model_Name &
-                         " " & Model_Args);
+      if not Concorde.UI.Models.Loader.Exists (Model_Name) then
+         Writer.Put_Error
+           (Model_Name & ": no such model");
+         return;
+      end if;
+
+      declare
+         View_Name  : constant String :=
+           Argument (Arguments, "view",
+                     Concorde.UI.Models.Loader.Get (Model_Name)
+                     .Default_View_Name);
+         Model_Args : constant String :=
+           Argument (Arguments, "model-args", "");
+      begin
+         Response.Set_Property
+           ("control", "replace-view");
+         Response.Set_Property
+           ("view", View_Name);
+         Response.Set_Property
+           ("model", Model_Name);
+         Response.Set_Property
+           ("modelArg", Model_Args);
+         Writer.Control (Response);
+         Writer.Put_Line ("Loading " & View_Name & "/" & Model_Name &
+                            " " & Model_Args);
+      end;
+
    end Perform;
 
    ------------------
