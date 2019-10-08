@@ -2,6 +2,8 @@ import React from 'react';
 
 import { userService } from '../../_services';
 
+const allowEmptyPassword = true;
+
 class LoginPage extends React.Component {
     constructor(props) {
         super(props);
@@ -32,7 +34,7 @@ class LoginPage extends React.Component {
         const { username, password, returnUrl } = this.state;
 
         // stop here if form is invalid
-        if (!(username && password)) {
+        if (!(username && (password || allowEmptyPassword))) {
             return;
         }
 
@@ -67,7 +69,7 @@ class LoginPage extends React.Component {
                     <div className={'form-group' + (submitted && !password ? ' has-error' : '')}>
                         <label htmlFor="password">Password</label>
                         <input type="password" className="form-control" name="password" value={password} onChange={this.handleChange} />
-                        {submitted && !password &&
+                        {submitted && !password && !allowEmptyPassword &&
                             <div className="help-block">Password is required</div>
                         }
                     </div>
