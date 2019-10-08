@@ -49,8 +49,21 @@ package body Concorde.Commands.System.Cat is
                exit;
             end if;
 
-            Writer.Put_Line
-              (Concorde.File_System.Get (Node).Contents);
+            declare
+               Contents : constant String :=
+                 Concorde.File_System.Get (Node).Contents;
+               Start : Positive := Contents'First;
+            begin
+               for I in Contents'Range loop
+                  if Contents (I) = Character'Val (10) then
+                     Writer.Put_Line (Contents (Start .. I));
+                     Start := I + 1;
+                  end if;
+               end loop;
+               if Start <= Contents'Last then
+                  Writer.Put_Line (Contents (Start .. Contents'Last));
+               end if;
+            end;
          end;
 
       end loop;
