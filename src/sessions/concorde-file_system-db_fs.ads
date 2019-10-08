@@ -20,6 +20,9 @@ generic
      (Handle  : Container_Handle;
       Process : not null access
         procedure (Rec : Record_Interface'Class));
+   with function Contents
+     (Item : Record_Interface'Class)
+     return String;
    with function "=" (Left, Right : Record_Reference) return Boolean is <>;
 package Concorde.File_System.Db_FS is
 

@@ -93,7 +93,7 @@ package body Concorde.File_System.Db_FS is
       Rec : constant Record_Interface'Class :=
         Get_Record (Node.Ref);
    begin
-      return Rec.Name;
+      return Contents (Rec);
    end Contents;
 
    ------------------

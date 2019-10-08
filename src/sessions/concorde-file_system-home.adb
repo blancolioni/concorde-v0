@@ -1,3 +1,6 @@
+with Ada.Containers.Indefinite_Vectors;
+with Ada.Strings.Unbounded;
+
 with Concorde.File_System.Db_FS;
 
 with Concorde.Db.Faction;
@@ -20,6 +23,10 @@ package body Concorde.File_System.Home is
       Process : not null access
         procedure (World : Concorde.Db.World.World_Interface'Class));
 
+   function World_Contents
+     (World : Concorde.Db.World.World_Type)
+      return String;
+
    package World_Directory is
      new Concorde.File_System.Db_FS
        (Container_Handle      => Concorde.Db.Faction_Reference,
@@ -30,6 +37,7 @@ package body Concorde.File_System.Home is
         Null_Record_Reference => Concorde.Db.Null_World_Reference,
         Record_Interface      => Concorde.Db.World.World_Interface,
         Iterate               => Iterate_Owned_Worlds,
+        Contents              => World_Contents,
         "="                   => Concorde.Db."=");
 
    type Faction_Node_Id is
@@ -343,5 +351,57 @@ package body Concorde.File_System.Home is
       return (raise Constraint_Error with
                 "read-only filesystem");
    end Update;
+
+   --------------------
+   -- World_Contents --
+   --------------------
+
+   function World_Contents
+     (World : Concorde.Db.World.World_Type)
+      return String
+   is
+      package String_Vectors is
+        new Ada.Containers.Indefinite_Vectors (Positive, String);
+
+      Headings : String_Vectors.Vector;
+      Values   : String_Vectors.Vector;
+
+      procedure Add (Field_Name : String);
+
+      function Collate return String;
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add (Field_Name : String) is
+      begin
+         Headings.Append (Field_Name);
+         Values.Append (World.Get (Field_Name));
+      end Add;
+
+      -------------
+      -- Collate --
+      -------------
+
+      function Collate return String is
+         use Ada.Strings.Unbounded;
+         Result : Unbounded_String;
+      begin
+         for I in 1 .. Headings.Last_Index loop
+            Result := Result & Headings.Element (I) & ": "
+              & Values.Element (I) & Character'Val (10);
+         end loop;
+         return To_String (Result);
+      end Collate;
+
+   begin
+      Add ("name");
+      Add ("category");
+      Add ("climate");
+      Add ("habitability");
+
+      return Collate;
+   end World_Contents;
 
 end Concorde.File_System.Home;
