@@ -1,7 +1,41 @@
-with Ada.Containers.Vectors;
 with Ada.Exceptions;
 
 package body Concorde.UI.Models.Data_Source is
+
+   ----------------
+   -- Add_Column --
+   ----------------
+
+   procedure Add_Column
+     (Model    : in out Simple_Data_Source_Model'Class;
+      Id       : String;
+      Label    : String;
+      Col_Type : Values.Model_Value_Data_Type;
+      Renderer : Renderers.Render_Interface'Class :=
+        Renderers.Default_Renderer)
+   is
+   begin
+      Model.Column_Ids.Append (Id);
+      Model.Column_Labels.Append (Label);
+      Model.Column_Types.Append (Col_Type);
+      Model.Column_Renderers.Append (Renderer);
+   end Add_Column;
+
+   -------------
+   -- Add_Row --
+   -------------
+
+   procedure Add_Row
+     (Model : in out Simple_Data_Source_Model'Class;
+      Row   : Model_Value_Array)
+   is
+      New_Row : Simple_Data_Source_Rows.Vector;
+   begin
+      for Value of Row loop
+         New_Row.Append (Value);
+      end loop;
+      Model.Data.Append (New_Row);
+   end Add_Row;
 
    ------------
    -- Handle --
