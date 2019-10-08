@@ -70,20 +70,41 @@ class DashboardItem extends React.Component {
     }
 }
 
+const viewMap = {
+    Shell: Shell,
+    Table: Table,
+}
+
 class DashboardCell extends React.Component {
 
     constructor(props) {
         super(props)
         this.state = {
             anchor: this.props.anchor,
+            view: Shell,
         }
         this.splitHorizontal = this.splitHorizontal.bind(this);
         this.splitVertical = this.splitVertical.bind(this);
         this.onDashboardCommand = this.onDashboardCommand.bind(this);
+        this.controlHandler = this.controlHandler.bind(this);
         this.commands = {
             splitHorizontal: this.splitHorizontal,
             splitVertical: this.splitVertical,
         }
+    }
+
+    controlHandler(packet) {
+        packet.map((cmd) => {
+            if (cmd.control == 'replace-view') {
+                if (viewMap[cmd.view]) {
+                    this.setState((state) => {
+                        return { ...state,
+                                 view: viewMap[cmd.view],
+                            };
+                    });
+                }
+            }
+        });
     }
 
     splitHorizontal() {
@@ -132,9 +153,13 @@ class DashboardCell extends React.Component {
             gridRowStart: this.state.anchor.top,
             gridRowEnd: this.state.anchor.bottom,
         }
+        const View = this.state.view;
         return (
             <div className="concorde-dashboard-cell" style={cellStyle}>
-                <Shell onDashboardCommand={this.onDashboardCommand}></Shell>
+                <View
+                   onDashboardCommand={this.onDashboardCommand}
+                   controlHandler={this.controlHandler}
+                   />                       
             </div>
         );
     }

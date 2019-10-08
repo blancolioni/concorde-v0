@@ -101,6 +101,9 @@ class Shell extends React.Component {
                         output: state.output.concat (resp.standardOutput).concat (resp.standardError),
                     }                    
                 });
+                if (this.props.controlHandler && resp.control) {
+                    this.props.controlHandler (resp.control);
+                }
             });
     }
 
