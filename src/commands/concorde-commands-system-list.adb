@@ -58,7 +58,17 @@ package body Concorde.Commands.System.List is
    begin
 
       if Arg_Count = 0 then
-         Context.Current_Node.Iterate_Children (Put_Item'Access);
+         declare
+            Current : constant Concorde.File_System.Node_Interface'Class :=
+              Context.Current_Node;
+         begin
+            if Current.Is_Leaf then
+               Writer.Put_Error
+                 (". is not a directory");
+            else
+               Current.Iterate_Children (Put_Item'Access);
+            end if;
+         end;
       elsif Arg_Count = 1 then
          Context.Push_Scope;
          if Context.Change_Scope (Argument (Arguments, 1)) then
