@@ -8,7 +8,7 @@ class GalaxyCanvas extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      cameraXYZ: { x: 0, y: 0, z: 100 },
+      cameraXYZ: { x: 0, y: 0, z: 25 },
       scene: null,
     }
     this.mountRef = React.createRef();
@@ -84,11 +84,11 @@ class Galaxy extends React.Component {
 
   loadScene(scene, data) {
     for (const item of data) {
-      const geometry = new THREE.SphereGeometry(10, 32, 32);
+      const geometry = new THREE.SphereGeometry(0.5 * item.mass, 32, 32);
       const material = new THREE.MeshLambertMaterial({color: 0xfd59d7});
       const star = new THREE.Mesh(geometry, material);
-      scene.add(star);
-      break;
+      star.position.set(item.x, item.y, item.z);
+      scene.add(star);      
     }
 
     var light = new THREE.PointLight(0xFFFF00);

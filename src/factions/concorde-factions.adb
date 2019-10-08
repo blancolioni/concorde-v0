@@ -15,6 +15,18 @@ package body Concorde.Factions is
       return Concorde.Db.World.Get (Capital_World (Faction)).Star_System;
    end Capital_System;
 
+   --------------------
+   -- Capital_System --
+   --------------------
+
+   function Capital_System
+     (Faction : Faction_Type'Class)
+      return Concorde.Db.Star_System_Reference
+   is
+   begin
+      return Capital_System (Faction.Reference);
+   end Capital_System;
+
    -------------------
    -- Capital_World --
    -------------------
@@ -25,6 +37,18 @@ package body Concorde.Factions is
    is
    begin
       return Concorde.Db.Faction.Get (Faction).Capital_World;
+   end Capital_World;
+
+   -------------------
+   -- Capital_World --
+   -------------------
+
+   function Capital_World
+     (Faction : Faction_Type'Class)
+      return Concorde.Db.World_Reference
+   is
+   begin
+      return Capital_World (Faction.Reference);
    end Capital_World;
 
    -----------
@@ -66,6 +90,19 @@ package body Concorde.Factions is
    begin
       return Get (Faction.Get_Faction_Reference);
    end Get;
+
+   ----------------------
+   -- Get_User_Faction --
+   ----------------------
+
+   function Get_User_Faction
+     (Reference : Concorde.Db.User_Reference)
+      return Faction_Type'Class
+   is
+   begin
+      return Get
+        (Concorde.Db.Faction.First_Reference_By_User (Reference));
+   end Get_User_Faction;
 
    -----------------
    -- Has_Element --

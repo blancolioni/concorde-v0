@@ -14,6 +14,10 @@ package Concorde.Factions is
      (Reference : Concorde.Db.Owner_Reference)
       return Faction_Type'Class;
 
+   function Get_User_Faction
+     (Reference : Concorde.Db.User_Reference)
+      return Faction_Type'Class;
+
    function Has_Element
      (Faction : Faction_Type'Class)
      return Boolean;
@@ -25,6 +29,14 @@ package Concorde.Factions is
    function Color
      (Faction : Faction_Type'Class)
       return Concorde.Color.Concorde_Color;
+
+   function Capital_World
+     (Faction : Faction_Type'Class)
+      return Concorde.Db.World_Reference;
+
+   function Capital_System
+     (Faction : Faction_Type'Class)
+      return Concorde.Db.Star_System_Reference;
 
    function Name
      (Faction : Concorde.Db.Faction_Reference)

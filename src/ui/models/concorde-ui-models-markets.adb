@@ -160,6 +160,7 @@ package body Concorde.UI.Models.Markets is
       User       : Concorde.Db.User_Reference;
       World_Name : String)
    is
+      pragma Unreferenced (User);
       World  : constant Concorde.Db.World_Reference :=
         Concorde.Db.World.First_Reference_By_Name (World_Name);
       Market : constant Concorde.Db.Market_Reference :=
