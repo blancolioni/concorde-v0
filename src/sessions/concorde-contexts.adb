@@ -43,6 +43,9 @@ package body Concorde.Contexts is
             null;
          elsif Item = ".." then
             Context.Set_Parent_Scope;
+         elsif Context.Current_Node.Is_Leaf then
+            Context.Current_Path := Old_Path;
+            return False;
          elsif Context.Current_Node.Has_Child (Item) then
             Context.Set_Child_Scope (Item);
          else
@@ -82,6 +85,26 @@ package body Concorde.Contexts is
         (Context.Root.Element.Get,
          Context.Current_Path);
    end Current_Node;
+
+   -------------------
+   -- Current_Scope --
+   -------------------
+
+   function Current_Scope
+     (Context : Context_Type)
+      return String
+   is
+      function Get (Index : Positive) return String
+      is (if Index > Context.Current_Path.Last_Index
+          then ""
+          elsif Index = Context.Current_Path.Last_Index
+          then Context.Current_Path.Last_Element
+          else Context.Current_Path.Element (Index)
+          & "/" & Get (Index + 1));
+
+   begin
+      return "/" & Get (1);
+   end Current_Scope;
 
    ---------------
    -- Find_Node --

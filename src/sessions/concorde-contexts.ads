@@ -16,6 +16,10 @@ package Concorde.Contexts is
       Root          : Concorde.File_System.Node_Id;
       Default_Scope : String);
 
+   function Current_Scope
+     (Context : Context_Type)
+      return String;
+
    function Current_Node
      (Context : Context_Type)
      return Concorde.File_System.Node_Interface'Class;
