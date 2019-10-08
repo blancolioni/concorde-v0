@@ -1,4 +1,6 @@
 with Ada.Calendar.Formatting;
+with Ada.Exceptions;
+with Ada.Text_IO;
 
 with Marlowe.Version;
 with Kit.Version;
@@ -20,6 +22,16 @@ with Concorde.Commands.System.List;
 with Concorde.Commands.System.Show;
 
 package body Concorde.Commands.System is
+
+   type Pwd_Command is
+     new Root_Concorde_Command with null record;
+
+   overriding procedure Perform
+     (Command   : Pwd_Command;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
+      Writer    : in out Writer_Interface'Class;
+      Arguments : Argument_List);
 
    type Echo_Command is
      new Root_Concorde_Command with null record;
@@ -68,6 +80,7 @@ package body Concorde.Commands.System is
    procedure Load_System_Commands is
       Echo                  : Echo_Command;
       History               : History_Command;
+      Pwd                   : Pwd_Command;
       Pause_Command         : Status_Command (Pause_Server);
       Resume_Command        : Status_Command (Resume_Server);
       Stop_Command          : Status_Command (Stop_Server);
@@ -82,12 +95,23 @@ package body Concorde.Commands.System is
       Register ("history", History);
       Register ("ls", List.List_Command);
       Register ("pause", Pause_Command);
+      Register ("pwd", Pwd);
       Register ("resume", Resume_Command);
       Register ("show", Show.Show_Command);
       Register ("update-speed", Update_Speed_Command);
       Register ("stop-server", Stop_Command);
       Register ("status", Get_Status_Command);
       Register ("db-status", Get_Db_Status_Command);
+   exception
+      when E : others =>
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            "caught exception while loading system commands: "
+            & Ada.Exceptions.Exception_Name (E));
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            Ada.Exceptions.Exception_Message (E));
+         raise Program_Error;
    end Load_System_Commands;
 
    -------------
@@ -145,6 +169,23 @@ package body Concorde.Commands.System is
             Writer.Put_Line (Index_Image & "  " & Context.Get_History (I));
          end;
       end loop;
+   end Perform;
+
+   -------------
+   -- Perform --
+   -------------
+
+   overriding procedure Perform
+     (Command   : Pwd_Command;
+      Session   : in out Concorde.Sessions.Concorde_Session;
+      Context   : in out Concorde.Contexts.Context_Type;
+      Writer    : in out Writer_Interface'Class;
+      Arguments : Argument_List)
+   is
+      pragma Unreferenced (Command, Session, Arguments);
+   begin
+      Writer.Put_Line
+        (Context.Current_Scope);
    end Perform;
 
    -------------
