@@ -1,5 +1,6 @@
 with WL.String_Maps;
 
+with Concorde.UI.Models.Galaxy;
 with Concorde.UI.Models.Markets;
 with Concorde.UI.Models.Shell;
 
@@ -39,6 +40,8 @@ package body Concorde.UI.Models.Loader is
          Add ("shell", Concorde.UI.Models.Shell.Shell_Model);
          Add ("market-price",
               Concorde.UI.Models.Markets.Market_Price_Model);
+         Add ("galaxy",
+              Concorde.UI.Models.Galaxy.Galaxy_Model);
       end if;
    end Check_Map;
 
