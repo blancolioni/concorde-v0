@@ -1,3 +1,4 @@
+with Concorde.Db;
 with Concorde.Json;
 
 package Concorde.UI.Models is
@@ -14,6 +15,7 @@ package Concorde.UI.Models is
 
    procedure Start
      (Model     : in out Root_Concorde_Model;
+      User      : Concorde.Db.User_Reference;
       Arguments : String)
    is null;
 

@@ -47,6 +47,7 @@ package body Concorde.UI.Models.Markets is
 
    overriding procedure Start
      (Model      : in out Market_Price_Model_Type;
+      User       : Concorde.Db.User_Reference;
       World_Name : String);
 
    overriding function Name
@@ -156,6 +157,7 @@ package body Concorde.UI.Models.Markets is
 
    overriding procedure Start
      (Model      : in out Market_Price_Model_Type;
+      User       : Concorde.Db.User_Reference;
       World_Name : String)
    is
       World  : constant Concorde.Db.World_Reference :=

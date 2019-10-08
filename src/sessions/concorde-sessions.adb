@@ -116,7 +116,7 @@ package body Concorde.Sessions is
          Model : Concorde.UI.Models.Root_Concorde_Model'Class :=
            Concorde.UI.Models.Loader.Get (Model_Name);
       begin
-         Model.Start (Model_Argument);
+         Model.Start (Session.User, Model_Argument);
          Session.Client_Map.Insert
            (Session.Last_Client,
             Client_Type'
@@ -182,7 +182,7 @@ package body Concorde.Sessions is
       Model : Concorde.UI.Models.Root_Concorde_Model'Class :=
         Concorde.UI.Models.Loader.Get (Model_Name);
    begin
-      Model.Start (Model_Argument);
+      Model.Start (Session.User, Model_Argument);
       Session.Client_Map (Client).Model :=
         Model_Holders.To_Holder (Model);
    end Replace_Model;

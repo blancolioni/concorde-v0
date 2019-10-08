@@ -13,12 +13,18 @@ package body Concorde.UI.Models.Galaxy is
 
    overriding procedure Start
      (Model     : in out Galaxy_Model_Type;
+      User      : Concorde.Db.User_Reference;
       Arguments : String);
 
    overriding function Name
      (Model : Galaxy_Model_Type)
       return String
    is ("galaxy-data-source");
+
+   overriding function Default_View_Name
+     (Model : Galaxy_Model_Type)
+      return String
+   is ("Galaxy");
 
    ------------------------
    -- Galaxy_Model --
@@ -37,6 +43,7 @@ package body Concorde.UI.Models.Galaxy is
 
    overriding procedure Start
      (Model     : in out Galaxy_Model_Type;
+      User      : Concorde.Db.User_Reference;
       Arguments : String)
    is
       pragma Unreferenced (Arguments);
