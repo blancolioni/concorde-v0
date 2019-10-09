@@ -1,6 +1,6 @@
 import React from 'react';
 import { userService } from '../../../_services';
-import { DashboardItem } from '../..';
+import DashboardItem from '../../DashboardItem';
 
 import '../../../Concorde.css';
 
@@ -119,7 +119,13 @@ class Shell extends React.Component {
 
     render() {
         return (
-            <DashboardItem title="Concorde Shell" model="shell" onConnected={this.onConnected} onDashboardCommand={this.props.onDashboardCommand}>
+            <DashboardItem 
+                title="Concorde Shell" 
+                model="shell" 
+                onConnected={this.onConnected} 
+                onDashboardCommand={this.props.onDashboardCommand}
+                boxId={this.props.boxId}
+            >
                 <ConsoleText lines={this.state.output}></ConsoleText>
                 <ConsoleInput onCommand={this.sendCommand}></ConsoleInput>
             </DashboardItem>

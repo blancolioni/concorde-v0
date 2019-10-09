@@ -1,6 +1,6 @@
 import React from 'react'
 import * as THREE from "three";
-import { DashboardItem } from '../..';
+import DashboardItem from '../../DashboardItem';
 import { userService } from '../../../_services';
 import { isTryStatement } from '@babel/types';
 import { TetrahedronGeometry } from 'three';

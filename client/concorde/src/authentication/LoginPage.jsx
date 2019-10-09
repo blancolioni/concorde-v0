@@ -1,6 +1,8 @@
 import React from 'react';
+import { connect } from 'react-redux'
+import { login } from '../redux/actions/login';
 
-import { userService } from '../../_services';
+import { userService } from '../_services';
 
 const allowEmptyPassword = true;
 
@@ -42,8 +44,7 @@ class LoginPage extends React.Component {
         userService.login(username, password)
             .then(
                 user => {
-                    const { from } = this.props.location.state || { from: { pathname: "/" } };
-                    this.props.history.push(from);
+                    this.props.login(user);
                 },
                 error => {
                     document.location.reload();
@@ -88,4 +89,7 @@ class LoginPage extends React.Component {
     }
 }
 
-export { LoginPage }; 
+export default connect(
+    null,
+    { login }
+)(LoginPage)
