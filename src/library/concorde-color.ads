@@ -16,4 +16,10 @@ package Concorde.Color is
      (Color : Concorde_Color)
       return String;
 
+   function To_Html_String
+     (R, G, B : Unit_Real;
+      Alpha   : Unit_Real := 1.0)
+      return String
+   is (To_Html_String ((R, G, B, Alpha)));
+
 end Concorde.Color;

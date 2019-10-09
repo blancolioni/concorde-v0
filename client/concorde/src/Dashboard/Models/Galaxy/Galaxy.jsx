@@ -2,6 +2,8 @@ import React from 'react'
 import * as THREE from "three";
 import { DashboardItem } from '../..';
 import { userService } from '../../../_services';
+import { isTryStatement } from '@babel/types';
+import { TetrahedronGeometry } from 'three';
 
 class GalaxyCanvas extends React.Component {
 
@@ -83,17 +85,20 @@ class Galaxy extends React.Component {
   }
 
   loadScene(scene, data) {
-    for (const item of data) {
-      const geometry = new THREE.SphereGeometry(0.5 * item.mass, 32, 32);
-      const material = new THREE.MeshLambertMaterial({color: 0xfd59d7});
-      const star = new THREE.Mesh(geometry, material);
+    let textureLoader = new THREE.TextureLoader();
+    let starTexture = textureLoader.load("textures/galaxy/star.png");
+
+    const material = new THREE.SpriteMaterial( { map: starTexture, color: 0xffffff, fog: true } );
+
+  for (const item of data) {
+      const star = new THREE.Sprite(material);
       star.position.set(item.x, item.y, item.z);
       scene.add(star);      
     }
 
-    var light = new THREE.PointLight(0xFFFF00);
-    light.position.set(10, 0, 25);
-    scene.add(light);
+    // var light = new THREE.PointLight(0xFFFFFF);
+    // light.position.set(10, 0, 25);
+    // scene.add(light);
   }
 
   setScene(scene) {

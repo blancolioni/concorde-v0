@@ -106,7 +106,7 @@ package body Concorde.Configure.Galaxies is
       use Concorde.Elementary_Functions;
       use Concorde.Real_Images;
 
-      Stored_Nearest_Count : constant := 12;
+      Stored_Nearest_Count : constant := 24;
 
       Volume     : constant Non_Negative_Real :=
                      4.0 * Ada.Numerics.Pi / 3.0

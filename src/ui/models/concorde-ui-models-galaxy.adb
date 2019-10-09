@@ -1,6 +1,7 @@
 with Concorde.UI.Models.Data_Source;
 with Concorde.UI.Models.Values;
 
+with Concorde.Color;
 with Concorde.Solar_System;
 
 with Concorde.Factions;
@@ -88,6 +89,11 @@ package body Concorde.UI.Models.Galaxy is
          Label    => "Mass",
          Col_Type => Values.Real_Type);
 
+      Model.Add_Column
+        (Id       => "color",
+         Label    => "Color",
+         Col_Type => Values.Text_Type);
+
       declare
 
          procedure Add_Row
@@ -108,14 +114,17 @@ package body Concorde.UI.Models.Galaxy is
             Star : constant Concorde.Db.Star.Star_Type :=
               Concorde.Db.Star.First_By_Star_System
                 (Star_System.Get_Star_System_Reference);
-
+            Color : constant String :=
+                      Concorde.Color.To_Html_String
+                        (Star.Red, Star.Green, Star.Blue);
          begin
             Model.Add_Row
               ((T (Star_System.Name),
                R (Star_System.X - Position.X),
                R (Star_System.Y - Position.Y),
                R (Star_System.Z - Position.Z),
-               R (Star.Mass / Concorde.Solar_System.Solar_Mass)));
+               R (Star.Mass / Concorde.Solar_System.Solar_Mass),
+               T (Color)));
          end Add_Row;
 
       begin
