@@ -1,6 +1,6 @@
 import React from 'react';
 import { userService } from '../../../_services';
-import { DashboardItem } from '../..';
+import DashboardItem from '../../DashboardItem';
 
 import '../../../Concorde.css';
 
