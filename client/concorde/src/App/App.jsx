@@ -1,21 +1,19 @@
 import React from 'react';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import { connect } from 'react-redux'
 
-import { PrivateRoute } from '../_components';
 import { Concorde } from '../Concorde';
-import { LoginPage } from '../authentication/LoginPage';
+import { LoginPage } from '../authentication';
 
-class App extends React.Component {
-    render() {
-        return (
-                    <Router>
-                        <div>
-                            <PrivateRoute exact path="/" component={Concorde} />
-                            <Route path="/login" component={LoginPage} />
-                        </div>
-                    </Router>
-        );
+function App(props) {
+    if (props.loggedIn) {
+        return (<Concorde></Concorde>);
+    } else {
+        return (<LoginPage></LoginPage>);
     }
 }
 
-export { App }; 
+function mapStateToProps(state) {
+    return { loggedIn: state.login.loggedIn }
+}
+
+export default connect(mapStateToProps)(App);

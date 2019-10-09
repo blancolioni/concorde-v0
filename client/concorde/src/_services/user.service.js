@@ -42,6 +42,10 @@ function login(username, password, onMessage) {
                     document.location.reload(true);
                 }
                 localStorage.setItem('ws', ws);
+                return {
+                    user: data.user,
+                    id: data.id,
+                };
             }
             return data.id;
         });
