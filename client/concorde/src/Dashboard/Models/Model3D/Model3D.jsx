@@ -1,6 +1,8 @@
 import React from 'react'
 import * as THREE from "three";
 
+import { OrbitControls } from './OrbitControls.js';
+
 import { userService } from '../../../_services'
 import DashboardItem from '../../DashboardItem';
 
@@ -32,6 +34,20 @@ class ModelCanvas extends React.Component {
     this.mountRef.current.appendChild( renderer.domElement );
     
     let camera = this.props.initScene(scene, width, height);
+
+    let controls = new OrbitControls( camera, renderer.domElement );
+
+				//controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
+
+    controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+    controls.dampingFactor = 0.05;
+
+    controls.screenSpacePanning = false;
+
+    controls.minDistance = 5;
+    controls.maxDistance = 50
+
+    controls.maxPolarAngle = Math.PI / 2;
 
     if (this.props.mouseMove) {
       let mouse = this.mouse;
