@@ -10,6 +10,8 @@ with AWS.Messages;
 with AWS.Parameters;
 with AWS.Response.Set;
 
+with Concorde.UI.Web_UI.Logging;
+
 package body Concorde.UI.Web_UI.Routes is
 
    package Request_Handler_Holders is
@@ -53,6 +55,8 @@ package body Concorde.UI.Web_UI.Routes is
    function Split_Path
      (Path : String)
       return String_Vectors.Vector;
+
+   function Handle (Request : AWS.Status.Data) return AWS.Response.Data;
 
    ---------------
    -- Add_Route --
@@ -286,6 +290,25 @@ package body Concorde.UI.Web_UI.Routes is
    begin
       return (raise Route_Error with "bad GET request");
    end Handle_Get;
+
+   -------------------------
+   -- Handle_Http_Request --
+   -------------------------
+
+   function Handle_Http_Request
+     (Request : AWS.Status.Data)
+      return AWS.Response.Data
+   is
+   begin
+      declare
+         Response : constant AWS.Response.Data :=
+           Handle (Request);
+      begin
+         Concorde.UI.Web_UI.Logging.Log_Request
+           (Request, Response);
+         return Response;
+      end;
+   end Handle_Http_Request;
 
    -----------------
    -- Handle_Post --

@@ -49,7 +49,7 @@ package Concorde.UI.Web_UI.Routes is
       Path    : String;
       Handler : Request_Handler'Class);
 
-   function Handle
+   function Handle_Http_Request
      (Request : AWS.Status.Data)
       return AWS.Response.Data;
 

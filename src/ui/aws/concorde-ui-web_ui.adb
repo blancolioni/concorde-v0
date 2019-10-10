@@ -1,10 +1,9 @@
-with Ada.Text_IO;
-
 with AWS.Net.WebSocket.Registry.Control;
 with AWS.Server;
 with AWS.Status;
 
 with Concorde.UI.Web_UI.Handlers;
+with Concorde.UI.Web_UI.Logging;
 with Concorde.UI.Web_UI.Routes;
 
 package body Concorde.UI.Web_UI is
@@ -124,8 +123,7 @@ package body Concorde.UI.Web_UI is
    is
       pragma Unreferenced (Socket);
    begin
-      Ada.Text_IO.Put_Line
-        ("on-close: " & Message);
+      null;
    end On_Close;
 
    --------------
@@ -138,8 +136,7 @@ package body Concorde.UI.Web_UI is
    is
       pragma Unreferenced (Socket);
    begin
-      Ada.Text_IO.Put_Line
-        ("on-error: " & Message);
+      null;
    end On_Error;
 
    ----------------
@@ -167,7 +164,7 @@ package body Concorde.UI.Web_UI is
    is
       pragma Unreferenced (Socket);
    begin
-      Ada.Text_IO.Put_Line (Message);
+      null;
    end On_Open;
 
    ------------------
@@ -190,6 +187,8 @@ package body Concorde.UI.Web_UI is
    overriding procedure Start (Web_UI : Web_UI_Type) is
    begin
 
+      Logging.On_Starting;
+
       On_UI_Started (Web_UI);
 
       Create_Routes;
@@ -198,8 +197,9 @@ package body Concorde.UI.Web_UI is
       AWS.Server.Start
         (Web_Server => Server,
          Name       => "Concorde",
-         Callback   => Routes.Handle'Access,
+         Callback   => Routes.Handle_Http_Request'Access,
          Port       => 8080);
+
       AWS.Server.Wait;
    end Start;
 
@@ -213,9 +213,10 @@ package body Concorde.UI.Web_UI is
    is
       pragma Unreferenced (Item);
    begin
-      Ada.Text_IO.Put_Line ("stopping: " & Message);
+      Logging.On_Stopping (Message);
       AWS.Net.WebSocket.Registry.Control.Shutdown;
       AWS.Server.Shutdown (Server);
+      Logging.On_Stop;
    end Stop;
 
 end Concorde.UI.Web_UI;
