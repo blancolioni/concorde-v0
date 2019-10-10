@@ -2,6 +2,7 @@ import React from 'react'
 import * as THREE from "three";
 
 import { OrbitControls } from './OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from './CSS2DRenderer.js';
 
 import { userService } from '../../../_services'
 import DashboardItem from '../../DashboardItem';
@@ -33,9 +34,15 @@ class ModelCanvas extends React.Component {
     renderer.setSize(width, height);
     this.mountRef.current.appendChild( renderer.domElement );
     
+    var labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize( width, height );
+		labelRenderer.domElement.style.position = 'absolute';
+		labelRenderer.domElement.style.top = 0;
+    this.mountRef.current.appendChild( labelRenderer.domElement );
+    
     let camera = this.props.initScene(scene, width, height);
 
-    let controls = new OrbitControls( camera, renderer.domElement );
+    let controls = new OrbitControls( camera, labelRenderer.domElement );
 
 				//controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
 
@@ -65,6 +72,7 @@ class ModelCanvas extends React.Component {
     var animate = function () {
       requestAnimationFrame( animate );
       renderer.render( scene, camera );
+      labelRenderer.render (scene, camera);
       if (mouseMove) {
         mouseMove(mouse);
       }

@@ -1,5 +1,6 @@
 import React from 'react'
 import * as THREE from "three";
+import { CSS2DObject } from '../Model3D/CSS2DRenderer.js';
 
 import { Model3D } from '../Model3D';
 
@@ -48,6 +49,13 @@ loadScene(data) {
         const star = new THREE.Sprite(material);
         star.position.set(item.x, item.y, item.z);
         star.name = item.name;
+				var starDiv = document.createElement( 'div' );
+				starDiv.className = 'concorde-star-label';
+				starDiv.textContent = star.name;
+				starDiv.style.marginTop = '-1em';
+				var starLabel = new CSS2DObject( starDiv );
+				starLabel.position.set( 0.5, -0.1, 0 );
+        star.add( starLabel );
         this.state.scene.add(star);      
       }
   }
@@ -57,7 +65,7 @@ loadScene(data) {
     const { scene, camera, raycaster } = this.state;
 
     let intersectedObject = this.state.intersectedObject;
-    
+
     if (raycaster) {
       raycaster.setFromCamera(mouse, camera);
 
@@ -74,8 +82,6 @@ loadScene(data) {
           intersectedObject = intersects[ 0 ].object;
           intersectedObject.currentHex = intersectedObject.material.color.getHex();
           intersectedObject.material.color.setHex( 0xffff00 );
-          
-          console.log("intersect", intersectedObject);
         }
       } 
       else
