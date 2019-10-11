@@ -1,4 +1,4 @@
-import { INIT_BOXES, SPLIT, SET_CLIENT } from '../actionTypes';
+import { INIT_BOXES, SPLIT, SET_CLIENT, LOGOUT } from '../actionTypes';
 import { Box, splitVertical, setChildComponent } from '../../Dashboard/Box';
 
 const initialState = {    
@@ -44,6 +44,9 @@ export default function reducer(state = initialState, action) {
                 nextId: action.payload.contents.nextId,
                 boxes: action.payload.contents.boxes,
             }
+
+        case LOGOUT:
+            return initialState;
 
         default:
             return state;
