@@ -28,21 +28,60 @@ package body Concorde.Sessions is
    -----------------------
 
    function Default_Dashboard return Concorde.Json.Json_Value'Class is
-      Dashboard : Concorde.Json.Json_Object;
-      Boxes     : Concorde.Json.Json_Array;
-      Box       : Concorde.Json.Json_Object;
-      Anchor    : Concorde.Json.Json_Object;
+
+      Boxes : Concorde.Json.Json_Array;
+
+      procedure Add_Box
+        (Id : Natural;
+         Left, Top : Positive;
+         Right, Bottom : Positive;
+         Child_1       : Natural := 0;
+         Child_2       : Natural := 0);
+
+      procedure Add_Box
+        (Id            : Natural;
+         Left, Top     : Positive;
+         Right, Bottom : Positive;
+         Child_1       : Natural := 0;
+         Child_2       : Natural := 0)
+      is
+         Box    : Concorde.Json.Json_Object;
+      begin
+
+         Box.Set_Property ("id", Id);
+
+         declare
+            Anchor : Concorde.Json.Json_Object;
+         begin
+            Anchor.Set_Property ("left", Left);
+            Anchor.Set_Property ("top", Top);
+            Anchor.Set_Property ("right", Right);
+            Anchor.Set_Property ("bottom", Bottom);
+            Box.Set_Property ("anchor", Anchor);
+         end;
+
+         if Child_1 > 0 then
+            declare
+               Child_Boxes : Concorde.Json.Json_Array;
+            begin
+               Child_Boxes.Append (Json.Integer_Value (Child_1));
+               Child_Boxes.Append (Json.Integer_Value (Child_2));
+               Box.Set_Property ("childBoxes", Child_Boxes);
+            end;
+         end if;
+
+         Boxes.Append (Box);
+      end Add_Box;
+
    begin
-      Dashboard.Set_Property ("nextId", 1);
-      Anchor.Set_Property ("left", 1);
-      Anchor.Set_Property ("top", 1);
-      Anchor.Set_Property ("right", 13);
-      Anchor.Set_Property ("bottom", 13);
-      Box.Set_Property ("anchor", Anchor);
-      Box.Set_Property ("id", 0);
-      Boxes.Append (Box);
-      Dashboard.Set_Property ("boxes", Boxes);
-      return Dashboard;
+      Add_Box (0, 1, 1, 13, 13, 1, 2);
+      Add_Box (1, 1, 1, 13, 11);
+      Add_Box (2, 1, 11, 13, 13);
+
+      return Dashboard : Concorde.Json.Json_Object do
+         Dashboard.Set_Property ("nextId", 3);
+         Dashboard.Set_Property ("boxes", Boxes);
+      end return;
    end Default_Dashboard;
 
    ---------------------
