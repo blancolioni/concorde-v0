@@ -14,11 +14,13 @@ class World extends React.Component {
       camera: null,
       raycaster: null,
       intersectedObject: null,
+      rotation: 0,
     }
 
     this.initScene = this.initScene.bind(this);
     this.loadScene = this.loadScene.bind(this);
     this.mouseMove = this.mouseMove.bind(this);
+    this.beforeRender = this.beforeRender.bind(this);
 }
 
 initScene(scene, width, height) {
@@ -89,11 +91,22 @@ loadScene(data) {
       side: THREE.DoubleSide, vertexColors: THREE.VertexColors
     } );
     let mesh = new THREE.Mesh( geometry, material );
+    this.setState({worldMesh: mesh});
     this.state.scene.add( mesh );
   }
 
   mouseMove(mouse) {
 
+  }
+
+  beforeRender() {
+    if (this.state.worldMesh) {
+      let rot = this.state.rotation;
+      this.state.worldMesh.rotateOnAxis(new THREE.Vector3(0, 0, 1), 0.001);
+      this.setState(state => {
+        return { ...state, rotation: rot + 0.01 }
+      });
+    }
   }
 
   render () {
@@ -106,6 +119,7 @@ loadScene(data) {
         initScene={this.initScene}
         loadScene={this.loadScene}
         mouseMove={this.mouseMove}
+        beforeRender={this.beforeRender}
       >
       </Model3D>
       );

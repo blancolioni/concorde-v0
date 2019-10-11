@@ -33,7 +33,9 @@ class ModelCanvas extends React.Component {
     let width = itemElement.clientWidth; 
     let height = itemElement.clientHeight - 30;
 
-    var renderer = new THREE.WebGLRenderer();
+    var renderer = new THREE.WebGLRenderer({ 
+      antialias: true,
+    });
     renderer.setSize(width, height);
     this.mountRef.current.appendChild( renderer.domElement );
     
@@ -71,9 +73,11 @@ class ModelCanvas extends React.Component {
 
     let mouse = this.mouse;
     let mouseMove = this.props.mouseMove;
+    let beforeRender = this.props.beforeRender;
 
     var animate = function () {
       requestAnimationFrame( animate );
+      if (beforeRender) beforeRender();
       renderer.render( scene, camera );
       labelRenderer.render (scene, camera);
       if (mouseMove) {
@@ -135,6 +139,7 @@ onConnected(clientId) {
             onSceneCreated={this.setScene}
             initScene={this.props.initScene || null}
             mouseMove={this.props.mouseMove || null}
+            beforeRender={this.props.beforeRender || null}
           >
           </ModelCanvas>
         </DashboardItem>
