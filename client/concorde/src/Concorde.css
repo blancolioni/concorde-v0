@@ -29,6 +29,8 @@
 .concorde-dashboard-item {
     background-color: white;
     color: black;
+    width: 100%;
+    height: 100%;
 }
 
 .concorde-dashboard-titlebar {

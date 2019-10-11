@@ -27,8 +27,11 @@ class ModelCanvas extends React.Component {
         scene: scene,
       });
 
-    let width = 800; 
-    let height = 600;
+    let itemElement = this.mountRef.current.closest(".concorde-dashboard-item");
+    console.log("model3d", itemElement.clientWidth, itemElement.clientHeight);
+
+    let width = itemElement.clientWidth; 
+    let height = itemElement.clientHeight - 30;
 
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(width, height);
