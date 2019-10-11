@@ -335,7 +335,7 @@ package body Concorde.Json is
       if Name = "_toString" then
          return String_Value (Json_Value'Class (Value).Image);
       else
-         return Result : Null_Json_Value;
+         return Null_Value;
       end if;
    end Get_Property;
 
@@ -352,7 +352,7 @@ package body Concorde.Json is
       if Object.Properties.Contains (Name) then
          return Object.Properties (Name);
       else
-         return Null_Value;
+         return Json_Value (Object).Get_Property (Name);
       end if;
    end Get_Property;
 
