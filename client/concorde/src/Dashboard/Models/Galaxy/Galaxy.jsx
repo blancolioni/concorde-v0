@@ -44,7 +44,7 @@ loadScene(data) {
     let textureLoader = new THREE.TextureLoader();
     let starTexture = textureLoader.load("textures/galaxy/star.png");
 
-    for (const item of data.table) {
+    for (const item of data.table.data) {
         const material = new THREE.SpriteMaterial( { map: starTexture, color: item.color } );
         const star = new THREE.Sprite(material);
         star.position.set(item.x, item.y, item.z);

@@ -116,7 +116,7 @@ onConnected(clientId) {
     userService.postRequest('client/' + clientId, {data: 'get', sort: 0, ascending: true})
     .then((result) => result.json())   
     .then((resp) => {
-        this.props.loadScene(resp.data);
+        this.props.loadScene(resp);
     });
   }
 

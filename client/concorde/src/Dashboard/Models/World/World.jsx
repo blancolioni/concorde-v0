@@ -56,7 +56,7 @@ loadScene(data) {
     let colors = [];
     let geometry = new THREE.BufferGeometry();
 
-    for (const sector of data) {
+    for (const sector of data.data) {
       const vs = sector.vertices;
       const color = { r: sector.r, g: sector.g, b: sector.b };
 
@@ -112,15 +112,15 @@ loadScene(data) {
   render () {
       return (
         <Model3D
-        title={this.props.title} 
-        model={this.props.model} 
-        modelArg={this.props.modelArgs} 
-        onDashboardCommand={this.props.onDashboardCommand}
-        initScene={this.initScene}
-        loadScene={this.loadScene}
-        mouseMove={this.mouseMove}
-        beforeRender={this.beforeRender}
-      >
+          title={this.props.title} 
+          model={this.props.model} 
+          modelArg={this.props.modelArgs} 
+          onDashboardCommand={this.props.onDashboardCommand}
+          initScene={this.initScene}
+          loadScene={this.loadScene}
+          mouseMove={this.mouseMove}
+          beforeRender={this.beforeRender}
+        >
       </Model3D>
       );
   }
