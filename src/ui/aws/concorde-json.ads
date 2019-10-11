@@ -9,6 +9,7 @@ package Concorde.Json is
    function Boolean_Value (Bool : Boolean) return Json_Value'Class;
    function String_Value (Text : String) return Json_Value'Class;
    function Integer_Value (Int : Integer) return Json_Value'Class;
+   function Float_Value (F : Float) return Json_Value'Class;
 
    function Is_Null (Value : Json_Value'Class) return Boolean;
 

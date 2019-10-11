@@ -36,6 +36,16 @@ package body Concorde.Json is
      (Value : Integer_Json_Value)
       return String;
 
+   type Float_Json_Value is
+     new Json_Value with
+      record
+         Value : Float;
+      end record;
+
+   overriding function Serialize
+     (Value : Float_Json_Value)
+      return String;
+
    type Boolean_Json_Value is
      new Json_Value with
       record
@@ -322,6 +332,16 @@ package body Concorde.Json is
       return Parse_Value (Next_Token);
    end Deserialize;
 
+   -----------------
+   -- Float_Value --
+   -----------------
+
+   function Float_Value (F : Float) return Json_Value'Class is
+   begin
+      return Result : constant Float_Json_Value := Float_Json_Value'
+        (Value => F);
+   end Float_Value;
+
    ------------------
    -- Get_Property --
    ------------------
@@ -446,6 +466,11 @@ package body Concorde.Json is
 
    overriding function Serialize
      (Value : Integer_Json_Value)
+      return String
+   is (Ada.Strings.Fixed.Trim (Value.Value'Image, Ada.Strings.Left));
+
+   overriding function Serialize
+     (Value : Float_Json_Value)
       return String
    is (Ada.Strings.Fixed.Trim (Value.Value'Image, Ada.Strings.Left));
 
