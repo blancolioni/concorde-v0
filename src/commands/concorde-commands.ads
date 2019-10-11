@@ -33,6 +33,11 @@ package Concorde.Commands is
       Packet : Concorde.Json.Json_Value'Class)
    is null;
 
+   procedure Return_Value
+     (Writer : in out Writer_Interface;
+      Value  : Concorde.Json.Json_Value'Class)
+   is null;
+
    type Identifier_List is private;
 
    procedure Put_Identifier_List

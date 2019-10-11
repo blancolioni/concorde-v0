@@ -88,6 +88,18 @@ package body Concorde.Commands.Writers is
         (Concorde.Json.String_Value (Message));
    end Put_Error;
 
+   ------------------
+   -- Return_Value --
+   ------------------
+
+   overriding procedure Return_Value
+     (Writer : in out Json_Writer;
+      Value  : Concorde.Json.Json_Value'Class)
+   is
+   begin
+      Writer.Result.Set_Property ("result", Value);
+   end Return_Value;
+
    -------------
    -- To_Json --
    -------------
@@ -104,6 +116,14 @@ package body Concorde.Commands.Writers is
            ("standardError", Writer.Error_Lines);
          Object.Set_Property
            ("control", Writer.Control);
+         declare
+            Value : constant Json.Json_Value'Class :=
+              Writer.Result.Get_Property ("result");
+         begin
+            Object.Set_Property
+              ("result", Value);
+         end;
+
       end return;
    end To_Json;
 
