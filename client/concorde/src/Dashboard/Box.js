@@ -1,4 +1,4 @@
-export default class Box {
+class Box {
 
     constructor(id, left, top = null, right = null, bottom = null) {
         this.id = id;
@@ -16,43 +16,40 @@ export default class Box {
         }
         this.childBoxes = null;
         this.childComponent = null;
-
-        this.splitVertical = this.splitVertical.bind(this);
-        this.concatLeaves = this.concatLeaves.bind(this);
-        this.mapLeaves = this.mapLeaves.bind(this);
     }
+}
 
-    splitVertical(topId,bottomId) {
-        const { left, top, right, bottom } = this.anchor;
-        const newBox = new Box(this.id, this.anchor);
-        const topChild = new Box(topId, left, top, right, top + (bottom - top) / 2);
-        topChild.childComponent = this.childComponent;
-        const bottomChild = new Box(bottomId, left, topChild.anchor.bottom, right, bottom);
-        newBox.childBoxes = [topId, bottomId];
-        return [ newBox, topChild, bottomChild];
-    }
+function splitVertical(box, topId,bottomId) {
+    const { left, top, right, bottom } = box.anchor;
+    const newBox = new Box(box.id, box.anchor);
+    const topChild = new Box(topId, left, top, right, top + (bottom - top) / 2);
+    topChild.childComponent = box.childComponent;
+    const bottomChild = new Box(bottomId, left, topChild.anchor.bottom, right, bottom);
+    newBox.childBoxes = [topId, bottomId];
+    return [ newBox, topChild, bottomChild];
+}
 
-    concatLeaves(get) {
-        if (this.childBoxes) {
-            let acc = []
-            for (const child of this.childBoxes) {
-                acc = acc.concat(get(child).concatLeaves(get));
-            }
-            return acc;
-        } else {
-            return [this];
+function concatLeaves(box, get) {
+    if (box.childBoxes) {
+        let acc = []
+        for (const child of box.childBoxes) {
+            acc = acc.concat(concatLeaves(get(child), get));
         }
-
-    }
-
-    mapLeaves(get, f) {
-        let acc = this.concatLeaves(get, this);
-        console.log(acc);
-        return acc.map(f);
-    }
-
-    setChildComponent(title, view, model, client) {
-        this.childComponent = { title, view, model, client };
+        return acc;
+    } else {
+        return [box];
     }
 
 }
+
+function mapLeaves(box, get, f) {
+    let acc = concatLeaves(box, get, box);
+    console.log('mapLeaves', acc);
+    return acc.map(f);
+}
+
+function setChildComponent(box, title, view, model, client) {
+    box.childComponent = { title, view, model, client };
+}
+
+export { Box, splitVertical, concatLeaves, mapLeaves, setChildComponent }

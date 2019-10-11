@@ -1,4 +1,4 @@
-import { SPLIT, SET_CLIENT } from '../actionTypes';
+import { SPLIT, SET_CLIENT, INIT_BOXES } from '../actionTypes';
 
 export const splitVertical = boxId => ({
     type: SPLIT,
@@ -15,3 +15,10 @@ export const setClient = contents => ({
         },
     });
     
+export const initBoxes = contents => ({
+    type: INIT_BOXES,
+    payload: {
+        contents,
+        },
+    });
+ 

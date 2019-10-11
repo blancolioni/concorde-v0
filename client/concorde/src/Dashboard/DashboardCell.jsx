@@ -24,7 +24,9 @@ class DashboardCell extends React.Component {
     }
 
     componentDidMount() {
-        if (!this.state.loaded) {
+        const boxId = this.props.boxId;
+        const box = this.props.boxes[boxId];
+        if (!box.childComponent) {
             userService.postRequest('new-client', { model: 'shell', modelArg: ''})
             .then(response => response.json())
             .then(
