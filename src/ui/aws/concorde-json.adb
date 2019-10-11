@@ -533,6 +533,11 @@ package body Concorde.Json is
             return Text (Text'First .. I - 1)
               & "\n"
               & To_Safe_String (Text (I + 1 .. Text'Last));
+         elsif Text (I) = '"' then
+            return Text (Text'First .. I - 1)
+              & "\"
+              & Text (I)
+              & To_Safe_String (Text (I + 1 .. Text'Last));
          end if;
       end loop;
       return Text;
