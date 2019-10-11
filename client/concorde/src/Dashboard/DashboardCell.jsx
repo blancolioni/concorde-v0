@@ -4,11 +4,13 @@ import { connect } from 'react-redux'
 import { userService } from '../_services';
 import { setClient } from '../redux/actions/boxes';
 
+import { Command } from './Models/Command';
 import { Galaxy } from './Models/Galaxy';
 import { Shell } from './Models/Shell';
 import { Table } from './Models/Table';
 
 const viewMap = {
+    Command: Command,
     Shell: Shell,
     Table: Table,
     Galaxy: Galaxy,
@@ -22,10 +24,10 @@ class DashboardCell extends React.Component {
         if (!box.childComponent) {
             this.props.setClient({
                 boxId: this.props.boxId,
-                view: Shell,
+                view: Command,
                 model: 'shell',
                 modelArgs: '',
-                title: 'Concorde Shell',
+                title: 'Command',
                 client: 0,
             });
         }
