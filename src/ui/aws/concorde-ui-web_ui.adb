@@ -87,6 +87,10 @@ package body Concorde.UI.Web_UI is
          Path    => "/new-client",
          Handler => Handlers.Handle_New_Client);
       Routes.Add_Route
+        (Method  => AWS.Status.GET,
+         Path    => "/environment/:name",
+         Handler => Handlers.Handle_Environment_Request);
+      Routes.Add_Route
         (Method  => AWS.Status.POST,
          Path    => "/client/:client",
          Handler => Handlers.Handle_Client_Request);

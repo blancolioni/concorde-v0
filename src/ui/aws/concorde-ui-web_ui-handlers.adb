@@ -1,4 +1,5 @@
 with Concorde.UI.Web_UI.Handlers.Clients;
+with Concorde.UI.Web_UI.Handlers.Sessions;
 with Concorde.UI.Web_UI.Handlers.Login;
 
 package body Concorde.UI.Web_UI.Handlers is
@@ -13,6 +14,17 @@ package body Concorde.UI.Web_UI.Handlers is
    begin
       return Handler : Clients.Client_Request_Handler;
    end Handle_Client_Request;
+
+   --------------------------------
+   -- Handle_Environment_Request --
+   --------------------------------
+
+   function Handle_Environment_Request
+     return Routes.Request_Handler'Class
+   is
+   begin
+      return Handler : Sessions.Environment_Handler;
+   end Handle_Environment_Request;
 
    ------------------
    -- Handle_Login --
