@@ -9,6 +9,8 @@ with Concorde.Db.User;
 
 package body Concorde.Sessions is
 
+   function Default_Dashboard return Concorde.Json.Json_Value'Class;
+
    ------------------
    -- Close_Client --
    ------------------
@@ -20,6 +22,28 @@ package body Concorde.Sessions is
    begin
       Session.Client_Map.Delete (Client);
    end Close_Client;
+
+   -----------------------
+   -- Default_Dashboard --
+   -----------------------
+
+   function Default_Dashboard return Concorde.Json.Json_Value'Class is
+      Dashboard : Concorde.Json.Json_Object;
+      Boxes     : Concorde.Json.Json_Array;
+      Box       : Concorde.Json.Json_Object;
+      Anchor    : Concorde.Json.Json_Object;
+   begin
+      Dashboard.Set_Property ("nextId", 1);
+      Anchor.Set_Property ("left", 1);
+      Anchor.Set_Property ("top", 1);
+      Anchor.Set_Property ("right", 13);
+      Anchor.Set_Property ("bottom", 13);
+      Box.Set_Property ("anchor", Anchor);
+      Box.Set_Property ("id", 0);
+      Boxes.Append (Box);
+      Dashboard.Set_Property ("boxes", Boxes);
+      return Dashboard;
+   end Default_Dashboard;
 
    ---------------------
    -- Execute_Command --
@@ -150,17 +174,22 @@ package body Concorde.Sessions is
                Faction : constant Concorde.Db.Faction.Faction_Type :=
                  Concorde.Db.Faction.First_By_User
                    (User.Get_User_Reference);
+               Home    : constant String :=
+                 (if Faction.Has_Element
+                  then "/home/" & Faction.Name
+                  else "/");
             begin
-               if Faction.Has_Element then
+               if Faction.Has_Element
+                 or else User.Administrator
+               then
                   Session.Default_Context.Create_Context
                     (Root          =>
                        Concorde.File_System.Root.System_Root_Node_Id,
-                     Default_Scope => "/home/" & Faction.Name);
-               elsif User.Administrator then
-                  Session.Default_Context.Create_Context
-                    (Root          =>
-                       Concorde.File_System.Root.System_Root_Node_Id,
-                     Default_Scope => "/");
+                     Default_Scope => Home);
+                  Session.Environment.Insert
+                    ("HOME", Concorde.Json.String_Value (Home));
+                  Session.Environment.Insert
+                    ("DASHBOARD", Default_Dashboard);
                else
                   Session.User := Concorde.Db.Null_User_Reference;
                end if;

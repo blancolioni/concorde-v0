@@ -82,6 +82,18 @@ package Concorde.UI is
       return Concorde.Json.Json_Value'Class
    is abstract;
 
+   function Environment_Value
+     (State : State_Interface;
+      Name  : String)
+      return Concorde.Json.Json_Value'Class
+   is abstract;
+
+   function Environment_Value
+     (State : State_Interface'Class;
+      Name  : String)
+      return String
+   is (State.Environment_Value (Name).Image);
+
 private
 
    procedure On_UI_Started (UI : UI_Interface'Class);

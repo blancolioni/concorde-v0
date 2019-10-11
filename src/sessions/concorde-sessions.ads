@@ -1,5 +1,6 @@
 private with Ada.Containers.Indefinite_Holders;
 private with Ada.Containers.Ordered_Maps;
+private with WL.String_Maps;
 
 private with Concorde.Json;
 
@@ -50,6 +51,9 @@ private
      new Ada.Containers.Ordered_Maps
        (Concorde.UI.Client_Id, Client_Type, Concorde.UI."<");
 
+   package Environment_Maps is
+     new WL.String_Maps (Concorde.Json.Json_Value'Class, Concorde.Json."=");
+
    type Root_Concorde_Session is
      new Concorde.UI.State_Interface with
       record
@@ -58,6 +62,7 @@ private
          Last_Client     : Concorde.UI.Client_Id := 0;
          Client_Map      : Client_Maps.Map;
          Default_Context : Concorde.Contexts.Context_Type;
+         Environment     : Environment_Maps.Map;
       end record;
 
    overriding function Valid
@@ -104,6 +109,14 @@ private
       Client  : Concorde.UI.Client_Id;
       Request : Concorde.Json.Json_Value'Class)
       return Concorde.Json.Json_Value'Class;
+
+   overriding function Environment_Value
+     (Session : Root_Concorde_Session;
+      Name  : String)
+      return Concorde.Json.Json_Value'Class
+   is (if Session.Environment.Contains (Name)
+       then Session.Environment.Element (Name)
+       else Concorde.Json.Null_Value);
 
    function Default_Context
      (Session : Root_Concorde_Session'Class)
