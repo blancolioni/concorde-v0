@@ -8,12 +8,14 @@ import { Command } from './Models/Command';
 import { Galaxy } from './Models/Galaxy';
 import { Shell } from './Models/Shell';
 import { Table } from './Models/Table';
+import { World } from './Models/World';
 
 const viewMap = {
     Command: Command,
     Shell: Shell,
     Table: Table,
     Galaxy: Galaxy,
+    World: World,
 }
 
 class DashboardCell extends React.Component {

@@ -108,22 +108,13 @@ onConnected(clientId) {
   this.getData(clientId);
 }
 
-getData(clientId) {
-  userService.postRequest('client/' + clientId, {data: 'get', sort: 0, ascending: true})
-  .then((result) => result.json())   
-  .then((resp) => {
-      this.props.loadScene(resp.table.data);
-      this.setState(state => {
-          return {
-              ...state,
-              clientId: clientId,
-              headings: resp.table.headings,
-              data: resp.table.data,
-          }                    
-      });
-  });
-
-}
+  getData(clientId) {
+    userService.postRequest('client/' + clientId, {data: 'get', sort: 0, ascending: true})
+    .then((result) => result.json())   
+    .then((resp) => {
+        this.props.loadScene(resp.data);
+    });
+  }
 
   setScene(scene) {
     this.setState({
