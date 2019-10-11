@@ -25,6 +25,9 @@ package Concorde.Sessions is
       Password  : String)
      return Concorde.UI.State_Interface'Class;
 
+   function New_Administrator_Session
+      return Concorde.UI.State_Interface'Class;
+
    type Root_Concorde_Session is
      new Concorde.UI.State_Interface with private;
 

@@ -118,6 +118,19 @@ package body Concorde.Sessions is
       return Concorde.Db.User.Get (Session.User).Administrator;
    end Is_Administrator;
 
+   -------------------------------
+   -- New_Administrator_Session --
+   -------------------------------
+
+   function New_Administrator_Session
+     return Concorde.UI.State_Interface'Class
+   is
+      User : constant Concorde.Db.User.User_Type :=
+        Concorde.Db.User.Get_By_Login ("root");
+   begin
+      return New_Session (User.Login, User.Password);
+   end New_Administrator_Session;
+
    ----------------
    -- New_Client --
    ----------------
