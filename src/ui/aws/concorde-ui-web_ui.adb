@@ -204,7 +204,6 @@ package body Concorde.UI.Web_UI is
          Callback   => Routes.Handle_Http_Request'Access,
          Port       => 8080);
 
-      AWS.Server.Wait;
    end Start;
 
    ----------
