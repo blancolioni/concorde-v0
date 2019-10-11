@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { connect } from 'react-redux'
-import { splitVertical } from '../redux/actions/boxes';
+import { splitVertical, splitHorizontal } from '../redux/actions/boxes';
 
 function DashboardTitleBar(props) {
 
@@ -9,7 +9,7 @@ function DashboardTitleBar(props) {
         <div className="concorde-dashboard-titlebar">
             <span>{props.text} - {localStorage.getItem('user')} - {props.clientId}</span>
             <span className="concorde-titlebar-right">
-                <button className="concorde-titlebar-button" onClick={(e) => props.onDashboardCommand('splitHorizontal',e)}>
+                <button className="concorde-titlebar-button" onClick={(e) => props.splitHorizontal(props.boxId)}>
                     <i className="fas fa-grip-lines-vertical"></i>
                 </button>
                 <button className="concorde-titlebar-button" onClick={() => props.splitVertical(props.boxId)}>
@@ -25,5 +25,5 @@ function DashboardTitleBar(props) {
 
 export default connect(
     null,
-    { splitVertical }
+    { splitVertical, splitHorizontal }
 )(DashboardTitleBar)

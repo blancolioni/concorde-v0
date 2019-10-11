@@ -1,5 +1,5 @@
 import { INIT_BOXES, SPLIT, SET_CLIENT, LOGOUT } from '../actionTypes';
-import { Box, splitVertical, setChildComponent } from '../../Dashboard/Box';
+import { Box, splitVertical, setChildComponent, splitHorizontal } from '../../Dashboard/Box';
 
 const initialState = {    
     nextId: 0,
@@ -11,15 +11,16 @@ export default function reducer(state = initialState, action) {
         case SPLIT:
             console.log('SPLIT', action.payload, state.boxes)
             let splitBox = state.boxes[action.payload.boxId];
-            let [newParent, topChild, bottomChild] = splitVertical(splitBox, state.nextId, state.nextId + 1);
+            let splitFn = action.payload.vertical ? splitVertical : splitHorizontal;
+            let [newParent, child1, child2] = splitFn(splitBox, state.nextId, state.nextId + 1);
             return {
                 ...state,
                 nextId: state.nextId + 2,
                 boxes: {
                     ...state.boxes,
                     [action.payload.boxId]: newParent,
-                    [state.nextId]: topChild,
-                    [state.nextId+1]: bottomChild,
+                    [state.nextId]: child1,
+                    [state.nextId+1]: child2,
                 }
             }
 

@@ -8,6 +8,14 @@ export const splitVertical = boxId => ({
         },
     });
 
+export const splitHorizontal = boxId => ({
+    type: SPLIT,
+    payload: {
+        vertical: false,
+        boxId: boxId,
+        },
+    });
+
 export const setClient = contents => ({
     type: SET_CLIENT,
     payload: {
