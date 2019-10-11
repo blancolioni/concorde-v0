@@ -16,38 +16,18 @@ const viewMap = {
 
 class DashboardCell extends React.Component {
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            loaded: false,
-        }
-    }
-
     componentDidMount() {
         const boxId = this.props.boxId;
         const box = this.props.boxes[boxId];
         if (!box.childComponent) {
-            userService.postRequest('new-client', { model: 'shell', modelArg: ''})
-            .then(response => response.json())
-            .then(
-                result => {
-                    this.props.setClient({
-                        boxId: this.props.boxId,
-                        view: Shell,
-                        model: 'shell',
-                        modelArgs: '',
-                        title: 'Concorde Shell',
-                        client: result.clientId,
-                    });
-                    this.setState({
-                        loaded: true,
-                    });
-                    if (this.props.onConnected) {
-                        this.props.onConnected (result.clientId);
-                    }
-                }
-            )
-    
+            this.props.setClient({
+                boxId: this.props.boxId,
+                view: Shell,
+                model: 'shell',
+                modelArgs: '',
+                title: 'Concorde Shell',
+                client: 0,
+            });
         }
     }
 
