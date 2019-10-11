@@ -7,9 +7,8 @@ package body Concorde.Commands.System.Cat is
 
    overriding procedure Perform
      (Command   : Cat_Command_Record;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List);
 
    -----------------
@@ -27,12 +26,11 @@ package body Concorde.Commands.System.Cat is
 
    overriding procedure Perform
      (Command   : Cat_Command_Record;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List)
    is
-      pragma Unreferenced (Command, Session);
+      pragma Unreferenced (Command);
    begin
       if Argument_Count (Arguments) = 0 then
          Writer.Put_Error ("Usage: cat file [ files ... ]");

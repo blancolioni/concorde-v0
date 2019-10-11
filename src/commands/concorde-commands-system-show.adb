@@ -1,5 +1,6 @@
 with Concorde.Json;
 with Concorde.UI.Models.Loader;
+with Concorde.Writers;
 
 package body Concorde.Commands.System.Show is
 
@@ -8,9 +9,8 @@ package body Concorde.Commands.System.Show is
 
    overriding procedure Perform
      (Command   : Show_Command_Record;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List);
 
    -------------
@@ -19,12 +19,11 @@ package body Concorde.Commands.System.Show is
 
    overriding procedure Perform
      (Command   : Show_Command_Record;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List)
    is
-      pragma Unreferenced (Command, Session, Context);
+      pragma Unreferenced (Command, Context);
       Response : Concorde.Json.Json_Object;
       Model_Name : constant String :=
         Argument (Arguments, 1);

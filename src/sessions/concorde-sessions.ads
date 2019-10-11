@@ -3,6 +3,7 @@ private with Ada.Containers.Ordered_Maps;
 private with WL.String_Maps;
 
 private with Concorde.Json;
+private with Concorde.Writers;
 
 with Concorde.Contexts;
 with Concorde.Signals;
@@ -57,15 +58,58 @@ private
    package Environment_Maps is
      new WL.String_Maps (Concorde.Json.Json_Value'Class, Concorde.Json."=");
 
+   type Context_Updater is access
+     procedure (Context : in out Concorde.Contexts.Context_Type);
+
+   protected type Session_Data is
+
+      procedure Create_Client
+        (User           : Concorde.Db.User_Reference;
+         Context        : Concorde.Contexts.Context_Type;
+         Model_Name     : String;
+         Model_Argument : String;
+         Client_Id      : out Concorde.UI.Client_Id);
+
+      procedure Close_Client
+        (Client_Id      : Concorde.UI.Client_Id);
+
+      procedure Execute_Command
+        (Client_Id : Concorde.UI.Client_Id;
+         Writer    : in out Concorde.Writers.Writer_Interface'Class;
+         Command   : String);
+
+      function Get_Model
+        (Client_Id : Concorde.UI.Client_Id)
+         return Concorde.UI.Models.Root_Concorde_Model'Class;
+
+      procedure Set_Model
+        (Client_Id : Concorde.UI.Client_Id;
+         Model     : Concorde.UI.Models.Root_Concorde_Model'Class);
+
+      procedure Set_Environment_Value
+        (Name : String;
+         Value : Json.Json_Value'Class);
+
+      function Get_Environment_Value
+        (Name : String)
+         return Json.Json_Value'Class;
+
+   private
+
+      Last_Client     : Concorde.UI.Client_Id := 0;
+      Client_Map      : Client_Maps.Map;
+      Environment     : Environment_Maps.Map;
+   end Session_Data;
+
+   type Session_Data_Access is access Session_Data;
+
    type Root_Concorde_Session is
      new Concorde.UI.State_Interface with
       record
          User            : Concorde.Db.User_Reference :=
            Concorde.Db.Null_User_Reference;
-         Last_Client     : Concorde.UI.Client_Id := 0;
-         Client_Map      : Client_Maps.Map;
          Default_Context : Concorde.Contexts.Context_Type;
-         Environment     : Environment_Maps.Map;
+         Data            : Session_Data_Access;
       end record;
 
    overriding function Valid
@@ -117,9 +161,7 @@ private
      (Session : Root_Concorde_Session;
       Name  : String)
       return Concorde.Json.Json_Value'Class
-   is (if Session.Environment.Contains (Name)
-       then Session.Environment.Element (Name)
-       else Concorde.Json.Null_Value);
+   is (Session.Data.Get_Environment_Value (Name));
 
    function Default_Context
      (Session : Root_Concorde_Session'Class)

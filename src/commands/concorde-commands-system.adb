@@ -28,9 +28,8 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : Pwd_Command;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List);
 
    type Echo_Command is
@@ -38,9 +37,8 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : Echo_Command;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List);
 
    type History_Command is
@@ -48,9 +46,8 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : History_Command;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List);
 
    type Status_Command_Type is
@@ -68,9 +65,8 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : Status_Command;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List);
 
    --------------------------
@@ -120,12 +116,11 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : Echo_Command;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List)
    is
-      pragma Unreferenced (Command, Session, Context);
+      pragma Unreferenced (Command, Context);
    begin
       for I in 1 .. Argument_Count (Arguments) loop
          if I > 1 then
@@ -146,12 +141,11 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : History_Command;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List)
    is
-      pragma Unreferenced (Command, Arguments, Session);
+      pragma Unreferenced (Command, Arguments);
    begin
       for I in 1 .. Context.History_Length loop
          declare
@@ -177,12 +171,11 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : Pwd_Command;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List)
    is
-      pragma Unreferenced (Command, Session, Arguments);
+      pragma Unreferenced (Command, Arguments);
    begin
       Writer.Put_Line
         (Context.Current_Scope);
@@ -194,12 +187,10 @@ package body Concorde.Commands.System is
 
    overriding procedure Perform
      (Command   : Status_Command;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List)
    is
-      pragma Unreferenced (Context);
    begin
       case Command.Command is
          when Pause_Server =>
@@ -210,7 +201,7 @@ package body Concorde.Commands.System is
             Concorde.UI.Current_UI.Stop
               (Argument (Arguments, "message", "stop server command"));
             Writer.Put_Line
-              (Session.User_Name
+              (Context.User_Name
                & ": server stopped via stop-server command");
          when Update_Speed =>
 
@@ -250,7 +241,7 @@ package body Concorde.Commands.System is
                Advance_Per_Second : Duration;
                Start_Time         : Ada.Calendar.Time;
             begin
-               Writer.Put_Line ("logged in as " & Session.User_Name);
+               Writer.Put_Line ("logged in as " & Context.User_Name);
                Concorde.Updates.Control.Get_Status
                  (Start_Time, Paused, Advance_Per_Second);
                Writer.Put_Line

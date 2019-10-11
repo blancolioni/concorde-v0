@@ -1,11 +1,12 @@
 private with Ada.Strings.Unbounded;
 
 with Concorde.Json;
+with Concorde.Writers;
 
 package Concorde.Commands.Writers is
 
    type String_Writer is
-     new Writer_Interface with private;
+     new Concorde.Writers.Writer_Interface with private;
 
    overriding procedure Put
      (Writer : in out String_Writer;
@@ -21,7 +22,7 @@ package Concorde.Commands.Writers is
    function To_String (Writer : String_Writer) return String;
 
    type Json_Writer is
-     new Writer_Interface with private;
+     new Concorde.Writers.Writer_Interface with private;
 
    overriding procedure Put
      (Writer : in out Json_Writer;
@@ -49,13 +50,13 @@ package Concorde.Commands.Writers is
 private
 
    type String_Writer is
-     new Writer_Interface with
+     new Concorde.Writers.Writer_Interface with
       record
          Target : Ada.Strings.Unbounded.Unbounded_String;
       end record;
 
    type Json_Writer is
-     new Writer_Interface with
+     new Concorde.Writers.Writer_Interface with
       record
          Output_Lines     : Concorde.Json.Json_Array;
          Error_Lines      : Concorde.Json.Json_Array;

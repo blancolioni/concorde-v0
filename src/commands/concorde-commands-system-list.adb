@@ -1,4 +1,5 @@
 with Concorde.File_System;
+with Concorde.Writers;
 
 package body Concorde.Commands.System.List is
 
@@ -7,9 +8,8 @@ package body Concorde.Commands.System.List is
 
    overriding procedure Perform
      (Command   : List_Command_Record;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List);
 
    ------------------
@@ -27,14 +27,13 @@ package body Concorde.Commands.System.List is
 
    overriding procedure Perform
      (Command   : List_Command_Record;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List)
    is
-      pragma Unreferenced (Command, Session);
+      pragma Unreferenced (Command);
 
-      Ids : Identifier_List;
+      Ids : Concorde.Writers.Identifier_List;
       Arg_Count : constant Natural :=
         Argument_Count (Arguments);
 
@@ -52,7 +51,7 @@ package body Concorde.Commands.System.List is
       is
          pragma Unreferenced (Child);
       begin
-         Add (Ids, Name);
+         Concorde.Writers.Add (Ids, Name);
       end Put_Item;
 
    begin

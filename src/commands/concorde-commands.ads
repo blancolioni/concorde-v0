@@ -1,54 +1,11 @@
-private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 private with Ada.Containers.Indefinite_Vectors;
 private with WL.String_Maps;
 
 with Concorde.Contexts;
 with Concorde.Json;
-with Concorde.Sessions;
+with Concorde.Writers;
 
 package Concorde.Commands is
-
-   type Writer_Interface is limited interface;
-
-   procedure Put
-     (Writer : in out Writer_Interface;
-      Text   : String)
-   is abstract;
-
-   procedure New_Line
-     (Writer : in out Writer_Interface)
-   is abstract;
-
-   procedure Put_Error
-     (Writer  : in out Writer_Interface;
-      Message : String)
-   is abstract;
-
-   procedure Put_Line
-     (Writer : in out Writer_Interface'Class;
-      Text   : String);
-
-   procedure Control
-     (Writer : in out Writer_Interface;
-      Packet : Concorde.Json.Json_Value'Class)
-   is null;
-
-   procedure Return_Value
-     (Writer : in out Writer_Interface;
-      Value  : Concorde.Json.Json_Value'Class)
-   is null;
-
-   type Identifier_List is private;
-
-   procedure Put_Identifier_List
-     (Writer : in out Writer_Interface'Class;
-      List   : Identifier_List);
-
-   procedure Add
-     (To         : in out Identifier_List;
-      Identifier : String);
-
-   function Null_Writer return Writer_Interface'Class;
 
    type Argument_List is private;
 
@@ -89,38 +46,27 @@ package Concorde.Commands is
 
    procedure Perform
      (Command   : Root_Concorde_Command;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List)
    is abstract;
 
    procedure Execute
      (Command   : Root_Concorde_Command'Class;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List);
 
    procedure Execute_Command_Line
      (Line    : String;
-      Session : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class);
+      Writer    : in out Concorde.Writers.Writer_Interface'Class);
 
    procedure Register
      (Command_Name : String;
       Command      : Root_Concorde_Command'Class);
 
 private
-
-   package String_Lists is
-     new Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
-
-   type Identifier_List is
-      record
-         List : String_Lists.List;
-      end record;
 
    type Root_Concorde_Command is abstract tagged null record;
 

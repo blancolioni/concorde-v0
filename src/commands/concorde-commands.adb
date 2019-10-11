@@ -1,25 +1,8 @@
 with Ada.Characters.Handling;
 with Ada.Exceptions;
 with Ada.Strings.Fixed;
-with Ada.Text_IO;
 
 package body Concorde.Commands is
-
-   type Null_Writer_Record is
-     new Writer_Interface with null record;
-
-   overriding procedure Put
-     (Writer : in out Null_Writer_Record;
-      Text   : String)
-   is null;
-
-   overriding procedure New_Line
-     (Writer : in out Null_Writer_Record)
-   is null;
-
-   overriding procedure Put_Error
-     (Writer : in out Null_Writer_Record;
-      Text   : String);
 
    package Command_Maps is
      new WL.String_Maps (Root_Concorde_Command'Class);
@@ -52,21 +35,8 @@ package body Concorde.Commands is
 
    procedure Execute_Single_Command
      (Command : String;
-      Session : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class);
-
-   ---------
-   -- Add --
-   ---------
-
-   procedure Add
-     (To         : in out Identifier_List;
-      Identifier : String)
-   is
-   begin
-      To.List.Append (Identifier);
-   end Add;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class);
 
    -------------
    -- Execute --
@@ -74,20 +44,19 @@ package body Concorde.Commands is
 
    procedure Execute
      (Command   : Root_Concorde_Command'Class;
-      Session   : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class;
+      Writer    : in out Concorde.Writers.Writer_Interface'Class;
       Arguments : Argument_List)
    is
    begin
       if Command.Administrator_Only
-        and then not Session.Is_Administrator
+        and then not Context.Is_Administrator
       then
          Writer.Put_Error
            ("You must be an administrator to perform this action");
          return;
       end if;
-      Command.Perform (Session, Context, Writer, Arguments);
+      Command.Perform (Context, Writer, Arguments);
    exception
       when E : others =>
          Writer.Put_Error
@@ -100,9 +69,8 @@ package body Concorde.Commands is
 
    procedure Execute_Command_Line
      (Line    : String;
-      Session : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class)
+      Writer    : in out Concorde.Writers.Writer_Interface'Class)
    is
 
       function Is_Integer (Image : String) return Boolean;
@@ -138,7 +106,7 @@ package body Concorde.Commands is
                Command : constant String := Context.Get_History (-1);
             begin
                Writer.Put_Line (Command);
-               Execute_Single_Command (Command, Session, Context, Writer);
+               Execute_Single_Command (Command, Context, Writer);
             end;
          else
             Writer.Put_Error ("!!: event not found");
@@ -159,7 +127,7 @@ package body Concorde.Commands is
                               Context.Get_History (X);
                begin
                   Writer.Put_Line (Command);
-                  Execute_Single_Command (Command, Session, Context, Writer);
+                  Execute_Single_Command (Command, Context, Writer);
                end;
             else
                Writer.Put_Error (Line & ": event not found");
@@ -169,7 +137,7 @@ package body Concorde.Commands is
       end if;
 
       Context.Append_History (Line);
-      Execute_Single_Command (Line, Session, Context, Writer);
+      Execute_Single_Command (Line, Context, Writer);
 
    end Execute_Command_Line;
 
@@ -179,9 +147,8 @@ package body Concorde.Commands is
 
    procedure Execute_Single_Command
      (Command : String;
-      Session : in out Concorde.Sessions.Concorde_Session;
       Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Writer_Interface'Class)
+      Writer    : in out Concorde.Writers.Writer_Interface'Class)
    is
       Extended_Line : constant String := Command & ' ';
       First         : constant Positive :=
@@ -205,7 +172,7 @@ package body Concorde.Commands is
                          (Context,
                           Extended_Line (Index + 1 .. Extended_Line'Last));
       begin
-         Command.Execute (Session, Context, Writer, Arguments);
+         Command.Execute (Context, Writer, Arguments);
       end;
    end Execute_Single_Command;
 
@@ -328,94 +295,6 @@ package body Concorde.Commands is
       end if;
 
    end Iterate_Words;
-
-   -----------------
-   -- Null_Writer --
-   -----------------
-
-   function Null_Writer return Writer_Interface'Class is
-   begin
-      return Writer : Null_Writer_Record;
-   end Null_Writer;
-
-   ---------------
-   -- Put_Error --
-   ---------------
-
-   overriding procedure Put_Error
-     (Writer : in out Null_Writer_Record;
-      Text   : String)
-   is
-      pragma Unreferenced (Writer);
-   begin
-      Ada.Text_IO.Put_Line
-        (Ada.Text_IO.Standard_Error,
-         "ERROR: " & Text);
-   end Put_Error;
-
-   procedure Put_Identifier_List
-     (Writer : in out Writer_Interface'Class;
-      List   : Identifier_List)
-   is
-      package Sorting is
-        new String_Lists.Generic_Sorting ("<");
-
-      Ids : String_Lists.List := List.List;
-      Longest : Natural := 0;
-      Cols    : Positive := 1;
-      Col_Index : Positive;
-      Field_Width : Positive;
-      Screen_Width : constant := 72;
-
-   begin
-      Sorting.Sort (Ids);
-      for Id of Ids loop
-         if Id'Length > Longest then
-            Longest := Id'Length;
-         end if;
-      end loop;
-
-      if Longest = 0 then
-         return;
-      end if;
-
-      Cols := Natural'Max (Natural'Min (Screen_Width / (Longest + 2), 6), 1);
-      Field_Width := Screen_Width / Cols;
-
-      Col_Index := 1;
-
-      for Id of Ids loop
-         declare
-            Field : String (1 .. Field_Width) := (others => ' ');
-         begin
-            Field (1 .. Id'Length) := Id;
-            Writer.Put (Field);
-         end;
-         if Col_Index = Cols then
-            Col_Index := 1;
-            Writer.New_Line;
-         else
-            Col_Index := Col_Index + 1;
-         end if;
-      end loop;
-
-      if Col_Index /= 1 then
-         Writer.New_Line;
-      end if;
-   end Put_Identifier_List;
-
-   --------------
-   -- Put_Line --
-   --------------
-
-   procedure Put_Line
-     (Writer : in out Writer_Interface'Class;
-      Text   : String)
-   is
-   begin
-      Writer.Put (Text);
-      Writer.New_Line;
-   end Put_Line;
 
    --------------
    -- Register --

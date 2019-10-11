@@ -2,6 +2,7 @@ private with Ada.Containers.Indefinite_Holders;
 private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Containers.Vectors;
 private with WL.String_Maps;
+private with Concorde.Db;
 
 with Concorde.File_System;
 
@@ -10,6 +11,18 @@ package Concorde.Contexts is
    Context_Error           : exception;
 
    type Context_Type is tagged private;
+
+   function Is_Valid
+     (Context : Context_Type)
+      return Boolean;
+
+   function Is_Administrator
+     (Context : Context_Type)
+      return Boolean;
+
+   function User_Name
+     (Context : Context_Type)
+      return String;
 
    procedure Create_Context
      (Context       : in out Context_Type;
@@ -101,12 +114,16 @@ private
 
    type Context_Type is tagged
       record
-         History      : String_Vectors.Vector;
-         Current_Path : String_Vectors.Vector;
-         Home_Path    : String_Vectors.Vector;
-         Environment  : Environment_Maps.Map;
-         Scope_Stack  : Scope_Vectors.Vector;
-         Root         : Node_Id_Holders.Holder;
+         Is_Valid         : Boolean := False;
+         Is_Administrator : Boolean := False;
+         User             : Concorde.Db.User_Reference :=
+           Concorde.Db.Null_User_Reference;
+         History          : String_Vectors.Vector;
+         Current_Path     : String_Vectors.Vector;
+         Home_Path        : String_Vectors.Vector;
+         Environment      : Environment_Maps.Map;
+         Scope_Stack      : Scope_Vectors.Vector;
+         Root             : Node_Id_Holders.Holder;
       end record;
 
    procedure Set_Parent_Scope
@@ -116,5 +133,15 @@ private
      (Context    : in out Context_Type;
       Child_Name : String)
      with Pre => Current_Node (Context).Has_Child (Child_Name);
+
+   function Is_Valid
+     (Context : Context_Type)
+      return Boolean
+   is (Context.Is_Valid);
+
+   function Is_Administrator
+     (Context : Context_Type)
+      return Boolean
+   is (Context.Is_Administrator);
 
 end Concorde.Contexts;

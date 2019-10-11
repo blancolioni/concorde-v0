@@ -1,3 +1,5 @@
+with Concorde.Db.User;
+
 package body Concorde.Contexts is
 
    function Split_Path
@@ -337,6 +339,18 @@ package body Concorde.Contexts is
       end return;
    end Split_Path;
 
+   ---------------
+   -- User_Name --
+   ---------------
+
+   function User_Name
+     (Context : Context_Type)
+      return String
+   is
+   begin
+      return Concorde.Db.User.Get (Context.User).Login;
+   end User_Name;
+
    -----------
    -- Value --
    -----------
@@ -352,20 +366,5 @@ package body Concorde.Contexts is
               then Context.Environment.Element (Name)
               else Default);
    end Value;
-
---  begin
---
---     System_Root_Node.Bind_Child
---       ("version.txt",
---        (File_Node_Record'
---             (Contents =>
---                Ada.Strings.Unbounded.To_Unbounded_String
---                  (Concorde.Version.Version_String))));
---
---     System_Root_Node.Bind_Child
---       ("home",
---        Simple_Node_Record'
---          (Child_List => <>,
---           Child_Map  => <>));
 
 end Concorde.Contexts;
