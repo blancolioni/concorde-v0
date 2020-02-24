@@ -481,7 +481,7 @@ package body Concorde.Factions.Create is
    begin
 
       Queue.Append (Concorde.Star_Systems.First);
-      Checked.Insert
+      Checked.Include
         (Concorde.Star_Systems.Name (Concorde.Star_Systems.First));
 
       while not Queue.Is_Empty loop
@@ -519,7 +519,7 @@ package body Concorde.Factions.Create is
                                      Name (Neighbour.To);
                begin
                   if not Checked.Contains (Neighbour_Name) then
-                     Checked.Insert (Neighbour_Name);
+                     Checked.Include (Neighbour_Name);
                      Queue.Append (Neighbour.To);
                   end if;
                end;
