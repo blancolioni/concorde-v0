@@ -335,6 +335,9 @@ begin
                   Process.Tick;
                end loop;
             end loop;
+
+            Process.Finish;
+
          end;
 
          Ada.Text_IO.New_Line;
