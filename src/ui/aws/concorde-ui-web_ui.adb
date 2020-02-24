@@ -45,12 +45,13 @@ package body Concorde.UI.Web_UI is
       end record;
 
    overriding procedure Start
-     (Web_UI  : Web_UI_Type);
+     (Web_UI  : in out Web_UI_Type);
 
    overriding procedure Stop
-     (Item    : Web_UI_Type;
+     (Item    : in out Web_UI_Type;
       Message : String);
 
+   Local_Web_UI : aliased Web_UI_Type;
    Server : AWS.Server.HTTP;
 
    procedure Create_Routes;
@@ -112,9 +113,9 @@ package body Concorde.UI.Web_UI is
    -- Get_Web_UI --
    ----------------
 
-   function Get_Web_UI return UI_Interface'Class is
+   function Get_Web_UI return Concorde_UI is
    begin
-      return Web_UI : Web_UI_Type;
+      return Local_Web_UI'Access;
    end Get_Web_UI;
 
    --------------
@@ -188,12 +189,11 @@ package body Concorde.UI.Web_UI is
    -- Start --
    -----------
 
-   overriding procedure Start (Web_UI : Web_UI_Type) is
+   overriding procedure Start (Web_UI  : in out Web_UI_Type) is
+      pragma Unreferenced (Web_UI);
    begin
 
       Logging.On_Starting;
-
-      On_UI_Started (Web_UI);
 
       Create_Routes;
       Create_Socket;
@@ -211,7 +211,7 @@ package body Concorde.UI.Web_UI is
    ----------
 
    overriding procedure Stop
-     (Item    : Web_UI_Type;
+     (Item    : in out Web_UI_Type;
       Message : String)
    is
       pragma Unreferenced (Item);

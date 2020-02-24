@@ -2,6 +2,6 @@ package Concorde.UI.Launch is
 
    function Get_UI
      (Name : String)
-      return UI_Interface'Class;
+      return Concorde_UI;
 
 end Concorde.UI.Launch;

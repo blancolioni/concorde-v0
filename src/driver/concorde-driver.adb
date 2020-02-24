@@ -69,13 +69,13 @@ procedure Concorde.Driver is
 
 begin
 
-   if not Ada.Directories.Exists ("options.txt") then
+   if not Ada.Directories.Exists (".concorde-options") then
       Ada.Directories.Copy_File
         (Source_Name => Concorde.Paths.Config_File ("default-options.txt"),
-         Target_Name => "options.txt");
+         Target_Name => ".concorde-options");
    end if;
 
-   WL.Command_Line.Load_Defaults ("options.txt");
+   WL.Command_Line.Load_Defaults (".concorde-options");
 
    WL.Localisation.Read_Localisation
      (Concorde.Paths.Config_File
@@ -360,17 +360,17 @@ begin
    else
 
       declare
-         UI : constant Concorde.UI.UI_Interface'Class :=
-           Concorde.UI.Launch.Get_UI ("aws");
+         UI : constant Concorde.UI.Concorde_UI :=
+           Concorde.UI.Launch.Get_UI (Concorde.Options.User_Interface);
       begin
          UI.Start;
-
-         Ada.Text_IO.Put ("Press return to exit");
-         Ada.Text_IO.Flush;
-         Ada.Text_IO.Skip_Line;
-         Ada.Text_IO.Put_Line ("Stopping ...");
-
-         UI.Stop ("Server going down");
+--
+--           Ada.Text_IO.Put ("Press return to exit");
+--           Ada.Text_IO.Flush;
+--           Ada.Text_IO.Skip_Line;
+--           Ada.Text_IO.Put_Line ("Stopping ...");
+--
+--           UI.Stop ("Server going down");
 
       end;
 

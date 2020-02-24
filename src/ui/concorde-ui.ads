@@ -14,15 +14,17 @@ package Concorde.UI is
    type UI_Interface is interface;
 
    procedure Start
-     (Item  : UI_Interface)
+     (Item  : in out UI_Interface)
    is abstract;
 
    procedure Stop
-     (Item    : UI_Interface;
+     (Item    : in out UI_Interface;
       Message : String)
    is abstract;
 
-   function Current_UI return UI_Interface'Class;
+   type Concorde_UI is access all UI_Interface'Class;
+
+   function Current_UI return Concorde_UI;
 
    type State_Interface is interface;
 
@@ -96,6 +98,8 @@ package Concorde.UI is
 
 private
 
-   procedure On_UI_Started (UI : UI_Interface'Class);
+   Local_Current_UI : Concorde_UI;
+
+   function Current_UI return Concorde_UI is (Local_Current_UI);
 
 end Concorde.UI;

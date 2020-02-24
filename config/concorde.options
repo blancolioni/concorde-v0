@@ -13,6 +13,8 @@ package Concorde.Options is
    Create                  : Boolean;
    System_Count            : Natural;
    
+   User_Interface          : String;
+   
    Add_Faction             : Boolean;
    Account_Name            : String;
    Faction_Name            : String;
