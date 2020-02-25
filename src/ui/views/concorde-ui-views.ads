@@ -14,25 +14,43 @@ package Concorde.UI.Views is
 
    type Measurement is private;
 
-   function Absolute (M : Real) return Measurement;
-   function Relative (M : Real) return Measurement;
+   function Screen (M : Real) return Measurement;
+   function View (M : Real) return Measurement;
+
+   function Is_Screen (M : Measurement) return Boolean;
+   function Is_View (M : Measurement) return Boolean;
 
    function Measure
-     (M     : Measurement;
-      Scale : Non_Negative_Real)
+     (M     : Measurement)
       return Real;
 
    type Draw_Command_Interface is interface;
 
    subtype Draw_Command is Draw_Command_Interface'Class;
 
+   type Real_Property is (Line_Width);
+
    type Draw_Command_Factory is interface;
 
-   function Move_To
+   function Move
      (Factory : Draw_Command_Factory;
-      X, Y    : Real)
+      Relative : Boolean;
+      Move_X   : Measurement;
+      Move_Y   : Measurement)
       return Draw_Command
       is abstract;
+
+   function Move_To
+     (Factory  : Draw_Command_Factory'Class;
+      X, Y     : Real)
+      return Draw_Command
+   is (Factory.Move (False, View (X), View (Y)));
+
+   function Move
+     (Factory  : Draw_Command_Factory'Class;
+      X, Y     : Real)
+      return Draw_Command
+   is (Factory.Move (True, Screen (X), Screen (Y)));
 
    function Line_To
      (Factory : Draw_Command_Factory;
@@ -55,11 +73,49 @@ package Concorde.UI.Views is
       return Concorde.UI.Views.Draw_Command
       is abstract;
 
+   function Property
+     (Factory : Draw_Command_Factory;
+      Prop    : Real_Property;
+      Value   : Real)
+      return Draw_Command
+      is abstract;
+
    function Color
      (Factory : Draw_Command_Factory;
       To      : Concorde.Color.Concorde_Color)
       return Draw_Command
       is abstract;
+
+   function Font
+     (Factory  : Draw_Command_Factory;
+      Family   : String;
+      Size     : Non_Negative_Real;
+      Bold     : Boolean := False;
+      Italic   : Boolean := False)
+      return Draw_Command
+      is abstract;
+
+   function Text
+     (Factor : Draw_Command_Factory;
+      S      : String)
+      return Draw_Command
+      is abstract;
+
+   function Save
+     (Factory : Draw_Command_Factory)
+      return Draw_Command
+      is abstract;
+
+   function Restore
+     (Factory : Draw_Command_Factory)
+      return Draw_Command
+      is abstract;
+
+   function Line_Width
+     (Factory : Draw_Command_Factory'Class;
+      Width   : Non_Negative_Real)
+      return Draw_Command
+   is (Factory.Property (Line_Width, Width));
 
    function Color
      (Factory : Draw_Command_Factory'Class;
@@ -87,7 +143,12 @@ package Concorde.UI.Views is
       return String
       is abstract;
 
-   function Display_Area
+   function Full_Size
+     (Object : View_Object_Interface)
+      return View_Port
+      is abstract;
+
+   function Initial_View
      (Object : View_Object_Interface)
       return View_Port
       is abstract;
@@ -128,13 +189,12 @@ package Concorde.UI.Views is
    type View_Interface is interface;
 
    procedure Draw
-     (View   : in out View_Interface;
-      Object : View_Object_Interface'Class)
+     (View   : in out View_Interface)
    is abstract;
 
 private
 
-   type Measurement_Type is (Absolute, Relative);
+   type Measurement_Type is (Screen, View);
 
    type Measurement is
       record
@@ -142,17 +202,20 @@ private
          Value   : Real;
       end record;
 
-   function Absolute (M : Real) return Measurement is (Absolute, M);
+   function Screen (M : Real) return Measurement is (Screen, M);
 
-   function Relative (M : Real) return Measurement is (Relative, M);
+   function View (M : Real) return Measurement is (View, M);
+
+   function Is_Screen (M : Measurement) return Boolean
+   is (M.Measure = Screen);
+
+   function Is_View (M : Measurement) return Boolean
+   is (M.Measure = View);
 
    function Measure
-     (M     : Measurement;
-      Scale : Non_Negative_Real)
+     (M     : Measurement)
       return Real
-   is (case M.Measure is
-          when Absolute => M.Value,
-          when Relative => M.Value * Scale);
+   is (M.Value);
 
    package Draw_Command_Lists is
      new Ada.Containers.Indefinite_Doubly_Linked_Lists

@@ -1,3 +1,4 @@
+private with Ada.Containers.Indefinite_Holders;
 private with Concorde.Color;
 
 with Cairo;
@@ -21,32 +22,39 @@ private package Concorde.UI.Cairo_Views is
 
    type Cairo_View is access all Cairo_View_Record'Class;
 
-   function Create_View return Cairo_View;
+   function Create_View
+     (Object : Concorde.UI.Views.View_Object_Interface'Class)
+     return Cairo_View;
 
 private
+
+   package View_Object_Holders is
+     new Ada.Containers.Indefinite_Holders
+       (Concorde.UI.Views.View_Object_Interface'Class,
+        Concorde.UI.Views."=");
 
    type Cairo_View_Record is
      new Concorde.UI.Views.View_Interface with
       record
-         Commands : Concorde.UI.Views.Draw_Command_List;
-         Width    : Natural := 0;
-         Height   : Natural := 0;
-         Surface  : Cairo.Cairo_Surface := Cairo.Null_Surface;
-         Centre_X : Real    := 0.0;
-         Centre_Y : Real    := 0.0;
-         Scale    : Real    := 5.0;
+         Commands    : Concorde.UI.Views.Draw_Command_List;
+         Width       : Natural := 0;
+         Height      : Natural := 0;
+         Surface     : Cairo.Cairo_Surface := Cairo.Null_Surface;
+         View_Object : View_Object_Holders.Holder;
+         View_Port   : Concorde.UI.Views.View_Port;
       end record;
 
    overriding procedure Draw
-     (View   : in out Cairo_View_Record;
-      Object : Concorde.UI.Views.View_Object_Interface'Class);
+     (View   : in out Cairo_View_Record);
 
    type Cairo_Command_Factory is
      new Concorde.UI.Views.Draw_Command_Factory with null record;
 
-   overriding function Move_To
-     (Factory : Cairo_Command_Factory;
-      X, Y    : Real)
+   overriding function Move
+     (Factory  : Cairo_Command_Factory;
+      Relative : Boolean;
+      Move_X   : Concorde.UI.Views.Measurement;
+      Move_Y   : Concorde.UI.Views.Measurement)
       return Concorde.UI.Views.Draw_Command;
 
    overriding function Line_To
@@ -61,10 +69,37 @@ private
       Finish  : Real := 360.0)
       return Concorde.UI.Views.Draw_Command;
 
+   overriding function Font
+     (Factory  : Cairo_Command_Factory;
+      Family   : String;
+      Size     : Non_Negative_Real;
+      Bold     : Boolean := False;
+      Italic   : Boolean := False)
+      return Concorde.UI.Views.Draw_Command;
+
+   overriding function Text
+     (Factory  : Cairo_Command_Factory;
+      S        : String)
+      return Concorde.UI.Views.Draw_Command;
+
+   overriding function Save
+     (Factory  : Cairo_Command_Factory)
+      return Concorde.UI.Views.Draw_Command;
+
+   overriding function Restore
+     (Factory  : Cairo_Command_Factory)
+      return Concorde.UI.Views.Draw_Command;
+
    overriding function Render
      (Factory  : Cairo_Command_Factory;
       Fill     : Boolean := False;
       Preserve : Boolean := False)
+      return Concorde.UI.Views.Draw_Command;
+
+   overriding function Property
+     (Factory : Cairo_Command_Factory;
+      Prop    : Concorde.UI.Views.Real_Property;
+      Value   : Real)
       return Concorde.UI.Views.Draw_Command;
 
    overriding function Color
@@ -74,10 +109,12 @@ private
 
    type Draw_Context is
       record
-         Cr     : Cairo.Cairo_Context;
-         X, Y   : Real;
-         Scale  : Non_Negative_Real := 1.0;
-         Filled : Boolean := False;
+         Cr                 : Cairo.Cairo_Context;
+         X, Y               : Real;
+         Centre_X, Centre_Y : Real;
+         Width, Height      : Real;
+         Scale              : Non_Negative_Real := 1.0;
+         Filled             : Boolean := False;
       end record;
 
    type Root_Cairo_Draw_Command is

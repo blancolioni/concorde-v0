@@ -13,6 +13,9 @@ with Gtk.Window;
 
 with Cairo;
 
+with Concorde.Db.Faction;
+with Concorde.Handles.Faction;
+
 with Concorde.UI.Views.Galaxy;
 with Concorde.UI.Cairo_Views;
 
@@ -104,7 +107,7 @@ package body Concorde.UI.Gtk_UI is
       Clear (UI.Surface);
 
       UI.View.Set_Size (UI.Width, UI.Height);
-      UI.View.Draw (UI.Top_Object.Element);
+      UI.View.Draw;
 
       declare
          Cr : constant Cairo.Cairo_Context :=
@@ -174,11 +177,17 @@ package body Concorde.UI.Gtk_UI is
       UI.Draw.On_Configure_Event (Configure_Handler'Access);
       UI.Draw.On_Draw (Draw_Handler'Access);
 
-      UI.View := Concorde.UI.Cairo_Views.Create_View;
-
       UI.Top_Object :=
         View_Object_Holders.To_Holder
-          (Concorde.UI.Views.Galaxy.Galaxy_View);
+          (Concorde.UI.Views.Galaxy.Galaxy_View
+             (Concorde.Handles.Faction.Get
+                (Concorde.Db.Faction.First_Reference_By_Top_Record
+                     (Concorde.Db.R_Faction))));
+
+      UI.View :=
+        Concorde.UI.Cairo_Views.Create_View
+          (UI.Top_Object.Element);
+
       UI.Window.Maximize;
       UI.Window.Show_All;
 
