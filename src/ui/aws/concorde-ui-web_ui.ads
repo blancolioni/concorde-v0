@@ -1,5 +1,5 @@
 package Concorde.UI.Web_UI is
 
-   function Get_Web_UI return Concorde_UI;
+   function Get_Web_UI return UI_Type;
 
 end Concorde.UI.Web_UI;

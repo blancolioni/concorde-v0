@@ -22,9 +22,9 @@ package Concorde.UI is
       Message : String)
    is abstract;
 
-   type Concorde_UI is access all UI_Interface'Class;
+   type UI_Type is access all UI_Interface'Class;
 
-   function Current_UI return Concorde_UI;
+   function Current_UI return UI_Type;
 
    type State_Interface is interface;
 
@@ -98,8 +98,8 @@ package Concorde.UI is
 
 private
 
-   Local_Current_UI : Concorde_UI;
+   Local_Current_UI : UI_Type;
 
-   function Current_UI return Concorde_UI is (Local_Current_UI);
+   function Current_UI return UI_Type is (Local_Current_UI);
 
 end Concorde.UI;

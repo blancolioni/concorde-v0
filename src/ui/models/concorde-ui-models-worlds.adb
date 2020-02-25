@@ -86,9 +86,11 @@ package body Concorde.UI.Models.Worlds is
             Object.Set_Property ("vertices", Vertices);
 
             declare
+               use type Concorde.Db.Faction_Reference;
                Color : constant Concorde.Color.Concorde_Color :=
-                 Concorde.Terrain.Color
-                   (Sector.Terrain);
+                 (if Sector.Owner = Concorde.Db.Null_Faction_Reference
+                  then Concorde.Terrain.Color (Sector.Terrain)
+                  else Concorde.Factions.Get (Sector.Owner).Color);
             begin
                Object.Set_Property
                  ("r", Json.Float_Value (Float (Color.Red)));

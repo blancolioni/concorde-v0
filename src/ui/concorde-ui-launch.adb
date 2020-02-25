@@ -7,7 +7,7 @@ package body Concorde.UI.Launch is
    -- Get_UI --
    ------------
 
-   function Get_UI (Name : String) return Concorde_UI is
+   function Get_UI (Name : String) return UI_Type is
    begin
       if Name = "" then
          return Concorde.UI.Gtk_UI.Get_Gtk_UI;

@@ -360,7 +360,7 @@ begin
    else
 
       declare
-         UI : constant Concorde.UI.Concorde_UI :=
+         UI : constant Concorde.UI.UI_Type :=
            Concorde.UI.Launch.Get_UI (Concorde.Options.User_Interface);
       begin
          UI.Start;

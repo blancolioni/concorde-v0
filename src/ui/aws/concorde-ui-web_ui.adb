@@ -113,7 +113,7 @@ package body Concorde.UI.Web_UI is
    -- Get_Web_UI --
    ----------------
 
-   function Get_Web_UI return Concorde_UI is
+   function Get_Web_UI return UI_Type is
    begin
       return Local_Web_UI'Access;
    end Get_Web_UI;
