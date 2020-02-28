@@ -5,7 +5,6 @@ with Ada.Text_IO;
 
 with Ada.Numerics.Long_Elementary_Functions;
 
-with WL.Processes;
 with WL.String_Sets;
 
 with Concorde.Elementary_Functions;
@@ -102,7 +101,8 @@ package body Concorde.Configure.Galaxies is
       Radius_Y           : Non_Negative_Real;
       Radius_Z           : Non_Negative_Real;
       Create_Coordinates : Biased_Coordinate_Generator;
-      Names              : WL.Random.Names.Name_Generator)
+      Names              : WL.Random.Names.Name_Generator;
+      Progress           : in out Progress_Interface'Class)
    is
       use Concorde.Elementary_Functions;
       use Concorde.Real_Images;
@@ -154,8 +154,6 @@ package body Concorde.Configure.Galaxies is
       is ((From.X - To.X) ** 2
           + (From.Y - To.Y) ** 2
           + (From.Z - To.Z) ** 2);
-
-      Process : WL.Processes.Process_Type;
 
       Name_Set : WL.String_Sets.Set;
 
@@ -210,11 +208,10 @@ package body Concorde.Configure.Galaxies is
         ("Minimum star distance: "
          & Approximate_Image (Minimum_Distance));
 
-      Process.Start_Bar
-        (Name            => "Gen coordinates  ",
-         Finish          => Number_Of_Systems,
-         With_Percentage => True,
-         Bar_Length      => 40);
+      Progress.Add_Work_Item ("generate-coordinates", Number_Of_Systems);
+      Progress.Add_Work_Item ("find-distances", Number_Of_Systems);
+      Progress.Add_Work_Item ("update-database", Number_Of_Systems);
+      Progress.Add_Work_Item ("save-distances", Number_Of_Systems);
 
       for I in 1 .. Number_Of_Systems loop
 
@@ -245,17 +242,9 @@ package body Concorde.Configure.Galaxies is
             end loop;
 
             Vector.Append (Rec);
-            Process.Tick;
+            Progress.Step;
          end;
       end loop;
-
-      Process.Finish;
-
-      Process.Start_Bar
-        (Name            => "Finding distances",
-         Finish          => Number_Of_Systems,
-         With_Percentage => True,
-         Bar_Length      => 40);
 
       for I in 1 .. Number_Of_Systems loop
          declare
@@ -297,17 +286,9 @@ package body Concorde.Configure.Galaxies is
             end if;
 
             Vector.Replace_Element (I, From);
-            Process.Tick;
+            Progress.Step;
          end;
       end loop;
-
-      Process.Finish;
-
-      Process.Start_Bar
-        (Name            => "Updating database",
-         Finish          => Number_Of_Systems,
-         With_Percentage => True,
-         Bar_Length      => 40);
 
       for I in 1 .. Number_Of_Systems loop
 
@@ -403,18 +384,10 @@ package body Concorde.Configure.Galaxies is
                      1, 2, 0);
                   Ada.Text_IO.New_Line;
                end if;
-               Process.Tick;
+               Progress.Step;
             end;
          end;
       end loop;
-
-      Process.Finish;
-
-      Process.Start_Bar
-        (Name            => "Saving distances ",
-         Finish          => Number_Of_Systems,
-         With_Percentage => True,
-         Bar_Length      => 40);
 
       for I in 1 .. Number_Of_Systems loop
          declare
@@ -432,11 +405,11 @@ package body Concorde.Configure.Galaxies is
                       (Vector.Element (I),
                            Vector.Element (Nearest.To))));
             end loop;
-            Process.Tick;
+            Progress.Step;
          end;
       end loop;
 
-      Process.Finish;
+      Progress.Finish;
 
    end Generate_Galaxy;
 
