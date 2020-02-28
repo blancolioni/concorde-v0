@@ -53,6 +53,7 @@ package Nazar.Interfaces.Text_Writer is
      (Writer          : in out Text_Writer_Interface'Class;
       Names           : String_Lists.List;
       Available_Width : Natural := 72;
+      Max_Columns     : Positive := 12;
       Sorted          : Boolean := True;
       Down_First      : Boolean := True);
 

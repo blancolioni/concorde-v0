@@ -83,10 +83,15 @@ package body Nazar.Interfaces.Text_Writer is
       end if;
    end Put_Lines;
 
+   ---------------
+   -- Put_Names --
+   ---------------
+
    procedure Put_Names
      (Writer          : in out Text_Writer_Interface'Class;
       Names           : String_Lists.List;
       Available_Width : Natural := 72;
+      Max_Columns     : Positive := 12;
       Sorted          : Boolean := True;
       Down_First      : Boolean := True)
    is
@@ -95,12 +100,15 @@ package body Nazar.Interfaces.Text_Writer is
       package Sorting is
         new String_Lists.Generic_Sorting ("<");
 
+      Count : constant Natural :=
+        Natural (Names.Length);
       Ids          : String_Lists.List := Names;
       Longest      : Natural := 0;
       Cols         : Positive := 1;
       Col_Index    : Positive;
       Field_Width  : Positive;
-
+      Total_Width  : Natural := 0;
+      Single_Line  : Boolean := False;
    begin
 
       if Sorted then
@@ -111,37 +119,57 @@ package body Nazar.Interfaces.Text_Writer is
          if Id'Length > Longest then
             Longest := Id'Length;
          end if;
+         Total_Width := Total_Width + Id'Length;
       end loop;
 
       if Longest = 0 then
          return;
       end if;
 
-      Cols := Natural'Max
-        (Natural'Min (Available_Width / (Longest + 2), 6), 1);
-      Field_Width := Available_Width / Cols;
-
-      Col_Index := 1;
-
-      for Id of Ids loop
-         declare
-            Field : String (1 .. Field_Width) := (others => ' ');
-         begin
-            Field (1 .. Id'Length) := Id;
-            Writer.Put (Field);
-         end;
-         if Col_Index = Cols then
-            Col_Index := 1;
-            Writer.New_Line;
-         else
-            Col_Index := Col_Index + 1;
-         end if;
-      end loop;
-
-      if Col_Index /= 1 then
-         Writer.New_Line;
+      if Total_Width + 2 * (Count - 1) < Available_Width then
+         Single_Line := True;
       end if;
 
+      if Single_Line then
+         declare
+            First : Boolean := True;
+         begin
+            for Id of Ids loop
+               if First then
+                  First := False;
+               else
+                  Writer.Put ("  ");
+               end if;
+               Writer.Put (Id);
+            end loop;
+            Writer.New_Line;
+         end;
+      else
+         Cols := Natural'Max
+           (Natural'Min (Available_Width / (Longest + 2), Max_Columns), 1);
+         Field_Width := Available_Width / Cols;
+
+         Col_Index := 1;
+
+         for Id of Ids loop
+            declare
+               Field : String (1 .. Field_Width) := (others => ' ');
+            begin
+               Field (1 .. Id'Length) := Id;
+               Writer.Put (Field);
+            end;
+            if Col_Index = Cols then
+               Col_Index := 1;
+               Writer.New_Line;
+            else
+               Col_Index := Col_Index + 1;
+            end if;
+         end loop;
+
+         if Col_Index /= 1 then
+            Writer.New_Line;
+         end if;
+      end if;
    end Put_Names;
 
 end Nazar.Interfaces.Text_Writer;
