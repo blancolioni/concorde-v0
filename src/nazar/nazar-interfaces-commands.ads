@@ -4,7 +4,24 @@ package Nazar.Interfaces.Commands is
 
    type Command_Interface is interface;
 
+   function Version (Command : Command_Interface) return String is abstract;
+   function Usage (Command : Command_Interface) return String is abstract;
+   function Help (Command : Command_Interface) return String is abstract;
+
    type Arguments_Interface is interface;
+
+   function Check_Bindings
+     (Arguments : Arguments_Interface;
+      Binding_OK : not null access
+        function (Name, Value : String) return Boolean)
+      return Boolean
+      is abstract;
+
+   function Check
+     (Command   : Command_Interface;
+      Arguments : Arguments_Interface'Class)
+      return Boolean
+      is abstract;
 
    procedure Execute
      (Command   : Command_Interface;

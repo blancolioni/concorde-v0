@@ -46,4 +46,27 @@ package body Nazar.Interfaces.Text_Writer is
       Writer.Put_Line (Standard_Text, Line);
    end Put_Line;
 
+   ---------------
+   -- Put_Lines --
+   ---------------
+
+   procedure Put_Lines
+     (Writer    : in out Text_Writer_Interface'Class;
+      Lines     : String;
+      Separator : Character := Character'Val (10))
+   is
+      Start : Positive := Lines'First;
+   begin
+      for I in Lines'Range loop
+         if Lines (I) = Separator then
+            Writer.Put_Line (Lines (Start .. I - 1));
+            Start := I + 1;
+         end if;
+      end loop;
+
+      if Start <= Lines'Last then
+         Writer.Put (Lines (Start .. Lines'Last));
+      end if;
+   end Put_Lines;
+
 end Nazar.Interfaces.Text_Writer;

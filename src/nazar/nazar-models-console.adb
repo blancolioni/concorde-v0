@@ -3,6 +3,7 @@ with Ada.Strings.Fixed;
 
 with Nazar.Version;
 
+with Nazar.Interfaces.Text_Writer;
 with Nazar.Models.Console.Commands;
 
 package body Nazar.Models.Console is
@@ -51,8 +52,21 @@ package body Nazar.Models.Console is
    is
    begin
       if Model.Commands.Contains (Command.Name) then
-         Model.Commands.Element (Command.Name).Execute
-           (Command, Model);
+         declare
+            Cmd : constant Nazar.Interfaces.Commands.Command_Interface'Class :=
+              Model.Commands.Element (Command.Name);
+         begin
+            if Command.Has_Binding ("help") then
+               Model.Put_Lines
+                 (Cmd.Usage & Cmd.Help);
+            elsif Command.Has_Binding ("version") then
+               Model.Put_Lines (Cmd.Version);
+            elsif not Cmd.Check (Command) then
+               Model.Put_Lines (Cmd.Usage);
+            else
+               Cmd.Execute (Command, Model);
+            end if;
+         end;
       else
          Model.Put_Line
            (Nazar.Interfaces.Text_Writer.Error_Text,
@@ -204,28 +218,15 @@ package body Nazar.Models.Console is
         ("CURRENT_SCOPE", Default_Scope);
 
       Model.Set_Command
-        ("echo", Commands.Echo_Command);
-
-      Model.Set_Command
         ("cat", Commands.Cat_Command (Model.Scope));
+      Model.Set_Command
+        ("cd", Commands.Change_Scope_Command (Model.Scope));
+      Model.Set_Command
+        ("echo", Commands.Echo_Command);
+      Model.Set_Command
+        ("ls", Commands.List_Command (Model.Scope));
 
    end Initialize;
-
-   ------------------------------
-   -- Internal_Command_Version --
-   ------------------------------
-
-   procedure Internal_Command_Version
-     (Command_Name : String;
-      Writer       : in out
-        Nazar.Interfaces.Text_Writer.Text_Writer_Interface'Class)
-   is
-   begin
-      Writer.Put_Line (Command_Name
-                       & " (" & Nazar.Version.Repository_Name
-                       & " builtins) "
-                       & Nazar.Version.Version_String);
-   end Internal_Command_Version;
 
    -------------------
    -- Iterate_Lines --
@@ -528,5 +529,21 @@ package body Nazar.Models.Console is
          Model.Commands.Insert (Name, Command);
       end if;
    end Set_Command;
+
+   -------------
+   -- Version --
+   -------------
+
+   overriding function Version
+     (Command : Internal_Command)
+      return String
+   is
+   begin
+      return Nazar.Interfaces.Text_Writer.Line
+        (Ada.Strings.Unbounded.To_String (Command.Name)
+         & " (" & Nazar.Version.Repository_Name
+         & " builtins) "
+         & Nazar.Version.Version_String);
+   end Version;
 
 end Nazar.Models.Console;

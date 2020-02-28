@@ -35,4 +35,16 @@ package Nazar.Interfaces.Text_Writer is
      (Writer : in out Text_Writer_Interface'Class;
       Line   : String);
 
+   procedure Put_Lines
+     (Writer    : in out Text_Writer_Interface'Class;
+      Lines     : String;
+      Separator : Character := Character'Val (10));
+
+   function Line (Text : String) return String;
+
+private
+
+   function Line (Text : String) return String
+   is (Text & Character'Val (10));
+
 end Nazar.Interfaces.Text_Writer;

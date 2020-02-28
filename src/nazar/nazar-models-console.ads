@@ -2,7 +2,6 @@ private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Unbounded;
 private with WL.String_Maps;
 
-private with Nazar.Interfaces.Text_Writer;
 private with Nazar.Models.Scope;
 
 with Nazar.Interfaces.Commands;
@@ -36,6 +35,12 @@ package Nazar.Models.Console is
      (Command : Console_Command;
       Name    : String)
       return String;
+
+   overriding function Check_Bindings
+     (Command    : Console_Command;
+      Binding_OK : not null access
+        function (Name, Value : String) return Boolean)
+      return Boolean;
 
    type Root_Console_Model is
      new Nazar.Models.Text_Writer.Root_Text_Writer_Model
@@ -124,6 +129,15 @@ private
       return String
    is (Command.Map.Element (Name));
 
+   overriding function Check_Bindings
+     (Command : Console_Command;
+      Binding_OK : not null access
+        function (Name, Value : String) return Boolean)
+      return Boolean
+   is (for all Position in Command.Map.Iterate =>
+          Binding_OK (String_Maps.Key (Position),
+                      String_Maps.Element (Position)));
+
    type Environment_Access is
      access all Nazar.Interfaces.Strings.String_Environment_Interface'Class;
 
@@ -144,13 +158,13 @@ private
    type Internal_Command is
      abstract new Nazar.Interfaces.Commands.Command_Interface with
       record
+         Name  : Ada.Strings.Unbounded.Unbounded_String;
          Scope : Nazar.Models.Scope.Nazar_Scope_Model;
       end record;
 
-   procedure Internal_Command_Version
-     (Command_Name : String;
-      Writer       : in out
-        Nazar.Interfaces.Text_Writer.Text_Writer_Interface'Class);
+   overriding function Version
+     (Command : Internal_Command)
+      return String;
 
    procedure Iterate_Lines
      (Lines   : String;
