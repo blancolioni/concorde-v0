@@ -4,41 +4,9 @@ with Nazar.Interfaces.Text_Writer;
 
 package body Nazar.Views.Text_Console is
 
-   type Command_Signal_Handler is
-     new Nazar.Signals.Signal_Handler_Interface with
-      record
-         Callback : Nazar.Views.Console.Command_Callback;
-      end record;
-
-   overriding function Handle
-     (Handler     : Command_Signal_Handler;
-      Source      : Nazar.Signals.Signal_Source_Interface'Class;
-      Signal_Data : Nazar.Signals.Signal_Data_Interface'Class;
-      User_Data   : Nazar.Signals.User_Data_Interface'Class)
-      return Boolean;
-
    procedure Put_Class_Line
      (Class : Nazar.Interfaces.Text_Writer.Text_Class;
       Line  : String);
-
-   ------------
-   -- Handle --
-   ------------
-
-   overriding function Handle
-     (Handler     : Command_Signal_Handler;
-      Source      : Nazar.Signals.Signal_Source_Interface'Class;
-      Signal_Data : Nazar.Signals.Signal_Data_Interface'Class;
-      User_Data   : Nazar.Signals.User_Data_Interface'Class)
-      return Boolean
-   is
-      pragma Unreferenced (Source);
-      Command_Data : Nazar.Views.Console.Command_Signal_Data'Class renames
-        Nazar.Views.Console.Command_Signal_Data'Class (Signal_Data);
-   begin
-      Handler.Callback (Command_Data.Command_Line, User_Data);
-      return True;
-   end Handle;
 
    -------------------
    -- Model_Changed --
@@ -52,25 +20,6 @@ package body Nazar.Views.Text_Console is
         (Start   => View.Last_Line,
          Process => Put_Class_Line'Access);
    end Model_Changed;
-
-   ----------------
-   -- On_Command --
-   ----------------
-
-   overriding procedure On_Command
-     (View      : in out Root_Text_Console_View;
-      Handler   : Nazar.Views.Console.Command_Callback;
-      User_Data : Nazar.Signals.User_Data_Interface'Class)
-   is
-      Id : constant Nazar.Signals.Handler_Id :=
-        View.Add_Handler
-          (Signal    => Nazar.Views.Console.Signal_Command,
-           Source    => View,
-           User_Data => User_Data,
-           Handler   => Command_Signal_Handler'(Callback => Handler));
-   begin
-      pragma Unreferenced (Id);
-   end On_Command;
 
    --------------------
    -- Put_Class_Line --

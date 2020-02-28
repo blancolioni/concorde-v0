@@ -11,10 +11,9 @@ package Nazar.Views.Console is
                 User_Data    : Nazar.Signals.User_Data_Interface'Class);
 
    procedure On_Command
-     (View      : in out Console_View_Interface;
+     (View      : in out Console_View_Interface'Class;
       Handler   : Command_Callback;
-      User_Data : Nazar.Signals.User_Data_Interface'Class)
-   is abstract;
+      User_Data : Nazar.Signals.User_Data_Interface'Class);
 
    procedure Set_Prompt_Text
      (View   : in out Console_View_Interface;

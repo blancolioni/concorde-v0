@@ -12,11 +12,6 @@ package Nazar.Views.Text_Console is
 
    type Nazar_Text_Console_View is access all Root_Text_Console_View'Class;
 
-   overriding procedure On_Command
-     (View      : in out Root_Text_Console_View;
-      Handler   : Nazar.Views.Console.Command_Callback;
-      User_Data : Nazar.Signals.User_Data_Interface'Class);
-
    function Text_Console_View
      (Model : not null access Nazar.Models.Text_Writer
       .Root_Text_Writer_Model'Class)
