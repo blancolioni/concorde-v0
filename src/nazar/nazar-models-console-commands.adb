@@ -90,8 +90,7 @@ package body Nazar.Models.Console.Commands is
      (Command   : List_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
-      .Text_Writer_Interface'Class)
-   is null;
+      .Text_Writer_Interface'Class);
 
    -----------------
    -- Cat_Command --
@@ -317,6 +316,76 @@ package body Nazar.Models.Console.Commands is
    is
    begin
       null;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Command   : List_Command_Record;
+      Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Writer    : in out Nazar.Interfaces.Text_Writer
+      .Text_Writer_Interface'Class)
+   is
+
+      procedure Process
+        (Name : String;
+         Node : Nazar.Interfaces.Hierarchy.Node_Reference_Class);
+
+      procedure Process
+        (Name : String;
+         Node : Nazar.Interfaces.Hierarchy.Node_Reference_Class)
+      is
+         List : Nazar.Interfaces.Text_Writer.String_Lists.List;
+
+         procedure Add
+           (Name : String;
+            Node : Nazar.Interfaces.Hierarchy.Node_Reference_Class);
+
+         ---------
+         -- Add --
+         ---------
+
+         procedure Add
+           (Name : String;
+            Node : Nazar.Interfaces.Hierarchy.Node_Reference_Class)
+         is
+            pragma Unreferenced (Node);
+         begin
+            List.Append (Name);
+         end Add;
+
+      begin
+         if Node.Get.Is_Leaf then
+            Add (Name, Node);
+         else
+            Node.Get.Iterate_Children
+              (Add'Access);
+         end if;
+
+         Writer.Put_Names
+           (Names           => List,
+            Available_Width => 72,
+            Sorted          => True,
+            Down_First      => True);
+
+      end Process;
+
+   begin
+      if Arguments.Argument_Count = 0 then
+         Process ("", Command.Scope.Current_Node);
+      elsif Arguments.Argument_Count = 1 then
+         Process (Arguments.Argument (1),
+                  Command.Scope.Get_Node (Arguments.Argument (1)));
+      else
+         for I in 1 .. Arguments.Argument_Count loop
+            Writer.Put_Line
+              (Arguments.Argument (I) & ":");
+            Process (Arguments.Argument (I),
+                     Command.Scope.Get_Node (Arguments.Argument (I)));
+         end loop;
+      end if;
    end Execute;
 
    ----------
