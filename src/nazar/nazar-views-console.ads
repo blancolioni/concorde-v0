@@ -16,6 +16,11 @@ package Nazar.Views.Console is
       User_Data : Nazar.Signals.User_Data_Interface'Class)
    is abstract;
 
+   procedure Set_Prompt_Text
+     (View   : in out Console_View_Interface;
+      Prompt : String)
+   is abstract;
+
    function Signal_Command return Nazar.Signals.Signal_Type;
 
    procedure Emit_Command_Signal

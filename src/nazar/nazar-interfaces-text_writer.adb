@@ -20,6 +20,18 @@ package body Nazar.Interfaces.Text_Writer is
       Writer.Put (Standard_Text, Text);
    end Put;
 
+   ---------------
+   -- Put_Error --
+   ---------------
+
+   procedure Put_Error
+     (Writer  : in out Text_Writer_Interface'Class;
+      Message : String)
+   is
+   begin
+      Writer.Put_Line (Error_Text, Message);
+   end Put_Error;
+
    --------------
    -- Put_Line --
    --------------

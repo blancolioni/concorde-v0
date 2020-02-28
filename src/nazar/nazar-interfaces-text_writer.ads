@@ -37,6 +37,10 @@ package Nazar.Interfaces.Text_Writer is
      (Writer : in out Text_Writer_Interface'Class;
       Line   : String);
 
+   procedure Put_Error
+     (Writer  : in out Text_Writer_Interface'Class;
+      Message : String);
+
    procedure Put_Lines
      (Writer    : in out Text_Writer_Interface'Class;
       Lines     : String;

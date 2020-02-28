@@ -82,6 +82,10 @@ package Nazar.Models.Console is
      (Model : in out Root_Console_Model'Class;
       Item  : String);
 
+   function Get_Prompt_Text
+     (Model : Root_Console_Model'Class)
+      return String;
+
 private
 
    package String_Vectors is
@@ -154,6 +158,11 @@ private
          Environment : Environment_Access;
          Commands    : Command_Maps.Map;
       end record;
+
+   function Get_Prompt_Text
+     (Model : Root_Console_Model'Class)
+      return String
+   is (Model.Scope.Current_Scope & "> ");
 
    type Internal_Command is
      abstract new Nazar.Interfaces.Commands.Command_Interface with

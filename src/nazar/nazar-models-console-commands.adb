@@ -314,8 +314,12 @@ package body Nazar.Models.Console.Commands is
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class)
    is
+      Path : constant String := Arguments.Argument (1);
    begin
-      null;
+      if not Command.Scope.Change_Scope (Arguments.Argument (1)) then
+         Writer.Put_Line
+           (Path & ": not a directory");
+      end if;
    end Execute;
 
    -------------
