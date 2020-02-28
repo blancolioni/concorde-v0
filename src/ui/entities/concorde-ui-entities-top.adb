@@ -10,7 +10,7 @@ package body Concorde.UI.Entities.Top is
    -----------------------
 
    function Create_Top_Entity
-     return Entity_Reference'Class
+     return Entity_Reference
    is
       Top : Nazar.Interfaces.Hierarchy.Node_Reference_Class :=
         Directories.Create_Directory_Node;

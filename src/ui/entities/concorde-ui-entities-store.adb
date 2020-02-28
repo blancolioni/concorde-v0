@@ -40,7 +40,7 @@ package body Concorde.UI.Entities.Store is
 
    function Save_Node
      (Node : Nazar.Interfaces.Hierarchy.Node_Interface'Class)
-      return Entity_Reference'Class
+      return Entity_Reference
    is
    begin
       Node_Store.Append (Node);

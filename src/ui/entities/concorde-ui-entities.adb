@@ -34,7 +34,7 @@ package body Concorde.UI.Entities is
    overriding procedure Bind_Child
      (Node  : in out Leaf_Node;
       Name  : String;
-      Child : Entity_Reference'Class)
+      Child : Entity_Reference)
    is
       pragma Unreferenced (Node, Child);
    begin
@@ -61,7 +61,7 @@ package body Concorde.UI.Entities is
    ----------
 
    function Root
-     return Entity_Reference'Class
+     return Entity_Reference
    is
    begin
       if Root_Holder.Is_Empty then

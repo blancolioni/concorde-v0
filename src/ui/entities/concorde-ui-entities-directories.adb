@@ -41,19 +41,19 @@ package body Concorde.UI.Entities.Directories is
    overriding function Get_Child
      (Node  : Directory_Record;
       Child : String)
-      return Entity_Reference'Class
+      return Entity_Reference
    is (Node.Child_Map.Element (Child));
 
    overriding procedure Iterate_Children
      (Node    : Directory_Record;
       Process : not null access
         procedure (Name : String;
-                   Child : Entity_Reference'Class));
+                   Child : Entity_Reference));
 
    overriding procedure Bind_Child
      (Node  : in out Directory_Record;
       Name  : String;
-      Child : Entity_Reference'Class);
+      Child : Entity_Reference);
 
    overriding procedure Delete_Child
      (Node   : in out Directory_Record;
@@ -66,7 +66,7 @@ package body Concorde.UI.Entities.Directories is
    overriding procedure Bind_Child
      (Node  : in out Directory_Record;
       Name  : String;
-      Child : Entity_Reference'Class)
+      Child : Entity_Reference)
    is
    begin
       Node.Child_List.Append
@@ -90,7 +90,7 @@ package body Concorde.UI.Entities.Directories is
 
       procedure Add_Child
         (Name  : String;
-         Child : Entity_Reference'Class);
+         Child : Entity_Reference);
 
       ---------------
       -- Add_Child --
@@ -98,7 +98,7 @@ package body Concorde.UI.Entities.Directories is
 
       procedure Add_Child
         (Name  : String;
-         Child : Entity_Reference'Class)
+         Child : Entity_Reference)
       is
          pragma Unreferenced (Child);
       begin
@@ -116,7 +116,7 @@ package body Concorde.UI.Entities.Directories is
    ---------------------------
 
    function Create_Directory_Node
-     return Entity_Reference'Class
+     return Entity_Reference
    is
    begin
       return Store.Save_Node
@@ -150,7 +150,7 @@ package body Concorde.UI.Entities.Directories is
      (Node    : Directory_Record;
       Process : not null access
         procedure (Name : String;
-                   Child : Entity_Reference'Class))
+                   Child : Entity_Reference))
    is
    begin
       for Child of Node.Child_List loop

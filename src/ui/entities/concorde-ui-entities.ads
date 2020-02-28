@@ -27,7 +27,7 @@ package Concorde.UI.Entities is
    overriding procedure Bind_Child
      (Node  : in out Leaf_Node;
       Name  : String;
-      Child : Entity_Reference'Class);
+      Child : Entity_Reference);
 
    overriding procedure Delete_Child
      (Node   : in out Leaf_Node;
@@ -37,7 +37,7 @@ package Concorde.UI.Entities is
      (Node    : Leaf_Node;
       Process : not null access
         procedure (Name : String;
-                   Child : Entity_Reference'Class))
+                   Child : Entity_Reference))
    is null;
 
    type Branch_Node is
@@ -48,7 +48,7 @@ package Concorde.UI.Entities is
       return Boolean;
 
    function Root
-     return Entity_Reference'Class;
+     return Entity_Reference;
 
 private
 

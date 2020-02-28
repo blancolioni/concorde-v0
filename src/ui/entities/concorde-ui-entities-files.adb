@@ -31,7 +31,7 @@ package body Concorde.UI.Entities.Files is
    -----------------------
 
    function Dynamic_File_Node
-     (Contents : File_Contents_Function) return Entity_Reference'Class
+     (Contents : File_Contents_Function) return Entity_Reference
    is
    begin
       return Store.Save_Node
@@ -43,7 +43,7 @@ package body Concorde.UI.Entities.Files is
    -- File_Node --
    ---------------
 
-   function File_Node (Contents : String := "") return Entity_Reference'Class
+   function File_Node (Contents : String := "") return Entity_Reference
    is
    begin
       return Store.Save_Node
