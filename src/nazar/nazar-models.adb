@@ -12,6 +12,17 @@ package body Nazar.Models is
       Model.Observers.Append (Observer);
    end Add_Observer;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Model : in out Root_Model_Type)
+   is
+   begin
+      Model.Declare_Property ("identifier", "");
+   end Initialize;
+
    ----------------------
    -- Notify_Observers --
    ----------------------

@@ -210,6 +210,12 @@ package body Nazar.Models.Console is
       Default_Scope : String)
    is
    begin
+      Nazar.Models.Text_Writer.Root_Text_Writer_Model (Model).Initialize;
+
+      Model.Declare_Property
+        (Property_Name => "prompt",
+         Initial_Value => "$CURRENT_SCOPE >");
+
       Model.Environment :=
         Environment_Access (Environment);
       Model.Scope :=

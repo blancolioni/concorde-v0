@@ -1,3 +1,5 @@
+with Nazar.Interfaces.Properties;
+
 with Nazar.Models;
 with Nazar.Signals;
 
@@ -5,7 +7,8 @@ package Nazar.Views is
 
    type Nazar_View_Interface is interface
      and Nazar.Signals.Signal_Source_Interface
-     and Nazar.Signals.Signal_Dispatch_Interface;
+     and Nazar.Signals.Signal_Dispatch_Interface
+     and Nazar.Interfaces.Properties.Property_Container_Interface;
 
    procedure Show (View : in out Nazar_View_Interface) is abstract;
 
@@ -18,8 +21,6 @@ package Nazar.Views is
 
    type Root_View_Type is
      abstract new Nazar_View_Interface
-     and Nazar.Signals.Signal_Source_Interface
-     and Nazar.Signals.Signal_Dispatch_Interface
    with private;
 
    subtype View_Class is Root_View_Type'Class;
@@ -60,9 +61,8 @@ package Nazar.Views is
 private
 
    type Root_View_Type is
-     abstract new Nazar_View_Interface
-     and Nazar.Signals.Signal_Source_Interface
-     and Nazar.Signals.Signal_Dispatch_Interface with
+     abstract new Nazar.Interfaces.Properties.Root_Property_Container
+     and Nazar_View_Interface with
       record
          Dispatch   : Nazar.Signals.Signal_Handler_Container;
          Base_Model : Nazar.Models.Model_Type;

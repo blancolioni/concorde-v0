@@ -149,7 +149,8 @@ package body Nazar.Models.Scope is
    begin
       return Model : constant Nazar_Scope_Model :=
         new Root_Scope_Model'
-          (Observers    => <>,
+          (Nazar.Interfaces.Properties.Root_Property_Container with
+           Observers    => <>,
            Is_Valid     => True,
            Root         => Node_Reference_Holders.To_Holder (Root_Node),
            Default_Path => Split_Path (Default_Scope),

@@ -1,5 +1,7 @@
 private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
+with Nazar.Interfaces.Properties;
+
 package Nazar.Models is
 
    type Model_Observer_Interface is interface;
@@ -8,11 +10,16 @@ package Nazar.Models is
      (Observer : Model_Observer_Interface)
    is abstract;
 
-   type Root_Model_Type is abstract tagged private;
+   type Root_Model_Type is
+     abstract new Nazar.Interfaces.Properties.Property_Container_Interface
+   with private;
 
    subtype Model_Class is Root_Model_Type'Class;
 
    type Model_Type is access all Root_Model_Type'Class;
+
+   procedure Initialize
+     (Model : in out Root_Model_Type);
 
    procedure Add_Observer
      (Model : in out Root_Model_Type'Class;
@@ -31,7 +38,8 @@ private
      new Ada.Containers.Indefinite_Doubly_Linked_Lists
        (Model_Observer_Interface'Class);
 
-   type Root_Model_Type is abstract tagged
+   type Root_Model_Type is
+     abstract new Nazar.Interfaces.Properties.Root_Property_Container with
       record
          Observers : Observer_Lists.List;
       end record;
