@@ -64,7 +64,7 @@ package body Nazar.Models.Console is
             elsif not Cmd.Check (Command) then
                Model.Put_Lines (Cmd.Usage);
             else
-               Cmd.Execute (Command, Model);
+               Cmd.Execute (Command, Model.Environment, Model);
             end if;
          end;
       else

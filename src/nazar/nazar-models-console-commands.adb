@@ -26,6 +26,8 @@ package body Nazar.Models.Console.Commands is
    overriding procedure Execute
      (Command   : Cat_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class);
 
@@ -47,6 +49,8 @@ package body Nazar.Models.Console.Commands is
    overriding procedure Execute
      (Command   : Change_Scope_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class);
 
@@ -68,6 +72,8 @@ package body Nazar.Models.Console.Commands is
    overriding procedure Execute
      (Command   : Echo_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class);
 
@@ -89,6 +95,8 @@ package body Nazar.Models.Console.Commands is
    overriding procedure Execute
      (Command   : List_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class);
 
@@ -239,10 +247,12 @@ package body Nazar.Models.Console.Commands is
    overriding procedure Execute
      (Command   : Echo_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class)
    is
-      pragma Unreferenced (Command);
+      pragma Unreferenced (Command, Environment);
    begin
       for I in 1 .. Arguments.Argument_Count loop
          if I > 1 then
@@ -263,9 +273,12 @@ package body Nazar.Models.Console.Commands is
    overriding procedure Execute
      (Command   : Cat_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class)
    is
+      pragma Unreferenced (Environment);
    begin
       for I in 1 .. Arguments.Argument_Count loop
          declare
@@ -311,12 +324,17 @@ package body Nazar.Models.Console.Commands is
    overriding procedure Execute
      (Command   : Change_Scope_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class)
    is
       Path : constant String := Arguments.Argument (1);
    begin
-      if not Command.Scope.Change_Scope (Arguments.Argument (1)) then
+      if Command.Scope.Change_Scope (Arguments.Argument (1)) then
+         Environment.Set_String_Value
+           ("CURRENT_SCOPE", Command.Scope.Current_Scope);
+      else
          Writer.Put_Line
            (Path & ": not a directory");
       end if;
@@ -329,9 +347,12 @@ package body Nazar.Models.Console.Commands is
    overriding procedure Execute
      (Command   : List_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class)
    is
+      pragma Unreferenced (Environment);
 
       procedure Process
         (Name : String;
