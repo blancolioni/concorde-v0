@@ -1,5 +1,15 @@
 package body Concorde.UI.Views is
 
+   type Partial_View_Type is
+     new View_Interface with
+      record
+         Object            : View_Object_Holders.Holder;
+         Partial_View_Port : View_Port;
+      end record;
+
+   overriding procedure Draw
+     (View   : in out Partial_View_Type);
+
    ---------
    -- Add --
    ---------

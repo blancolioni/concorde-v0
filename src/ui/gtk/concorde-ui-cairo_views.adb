@@ -85,6 +85,16 @@ package body Concorde.UI.Cairo_Views is
      (Command : Color_Command;
       Context : in out Draw_Context);
 
+   type View_Object_Command is new Root_Cairo_Draw_Command with
+      record
+         Object : View_Object_Holders.Holder;
+         Port   : Concorde.UI.Views.View_Port;
+      end record;
+
+   overriding procedure Execute
+     (Command : View_Object_Command;
+      Context : in out Draw_Context);
+
    type Render_Command is new Root_Cairo_Draw_Command with
       record
          Fill     : Boolean;
@@ -240,7 +250,8 @@ package body Concorde.UI.Cairo_Views is
          & "; scale x " & Image (Scale_X) & " y " & Image (Scale_Y));
 
       Clear (View.Surface, Object.Background_Color);
-      Object.Get_Draw_Commands (Factory, Commands);
+      Object.Get_Draw_Commands
+        (Factory, Context.Width, Context.Height, Commands);
       Commands.Iterate (Execute'Access);
    end Draw;
 

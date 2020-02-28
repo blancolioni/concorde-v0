@@ -15,7 +15,7 @@ with Concorde.Paths;
 with Concorde.Color;
 with Concorde.Random;
 
-with Concorde.UI.Launch;
+--  with Concorde.UI.Launch;
 
 with Concorde.Calendar;
 with Concorde.Commands.Loader;
@@ -36,6 +36,12 @@ with Concorde.Db.Database;
 
 with Concorde.Db.Faction;
 with Concorde.Db.User;
+
+with Concorde.UI.Models.Console;
+
+with Nazar.Main;
+with Nazar.Controllers.Console;
+with Nazar.Views.Text_Console;
 
 procedure Concorde.Driver is
    Name_Generator : WL.Random.Names.Name_Generator;
@@ -342,7 +348,26 @@ begin
 
          Ada.Text_IO.New_Line;
       else
-         null;
+
+         Nazar.Main.Init;
+
+         declare
+            use Concorde.UI.Models.Console;
+            use Nazar.Controllers.Console;
+            use Nazar.Views.Text_Console;
+            Model : constant Concorde_Console_Model :=
+              Console_Model;
+            View  : constant Nazar_Text_Console_View :=
+              Text_Console_View (Model);
+            Controller : Root_Console_Controller;
+         begin
+            Controller.Start_Console
+              (Model => Model,
+               View  => View);
+         end;
+
+         Nazar.Main.Stop;
+
       end if;
 
 --        declare
@@ -357,13 +382,13 @@ begin
 --           Concorde.Repl.Execute (Session);
 --           Concorde.Sessions.End_Session (Session);
 --        end;
-   else
-
-      declare
-         UI : constant Concorde.UI.UI_Type :=
-           Concorde.UI.Launch.Get_UI (Concorde.Options.User_Interface);
-      begin
-         UI.Start;
+--     else
+--
+--        declare
+--           UI : constant Concorde.UI.UI_Type :=
+--             Concorde.UI.Launch.Get_UI (Concorde.Options.User_Interface);
+--        begin
+--           UI.Start;
 --
 --           Ada.Text_IO.Put ("Press return to exit");
 --           Ada.Text_IO.Flush;
@@ -372,7 +397,7 @@ begin
 --
 --           UI.Stop ("Server going down");
 
-      end;
+--        end;
 
    end if;
 

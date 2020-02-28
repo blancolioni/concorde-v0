@@ -16,7 +16,7 @@ with Cairo;
 with Concorde.Db.Faction;
 with Concorde.Handles.Faction;
 
-with Concorde.UI.Views.Galaxy;
+with Concorde.UI.Views.Top;
 with Concorde.UI.Cairo_Views;
 
 package body Concorde.UI.Gtk_UI is
@@ -179,7 +179,7 @@ package body Concorde.UI.Gtk_UI is
 
       UI.Top_Object :=
         View_Object_Holders.To_Holder
-          (Concorde.UI.Views.Galaxy.Galaxy_View
+          (Concorde.UI.Views.Top.Top_View
              (Concorde.Handles.Faction.Get
                 (Concorde.Db.Faction.First_Reference_By_Top_Record
                      (Concorde.Db.R_Faction))));

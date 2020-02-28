@@ -1,4 +1,5 @@
 private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
+private with Ada.Containers.Indefinite_Holders;
 
 with Concorde.Color;
 
@@ -168,15 +169,20 @@ package Concorde.UI.Views is
    is abstract;
 
    procedure Get_Draw_Commands
-     (Object   : View_Object_Interface;
-      Factory  : Draw_Command_Factory'Class;
-      Commands : in out Draw_Command_List'Class)
+     (Object        : View_Object_Interface;
+      Factory       : Draw_Command_Factory'Class;
+      Screen_Width  : Non_Negative_Real;
+      Screen_Height : Non_Negative_Real;
+      Commands      : in out Draw_Command_List'Class)
    is abstract;
 
    procedure Iterate_Children
-     (Object : View_Object_Interface;
-      Process : not null access
-        procedure (Child : View_Object_Interface'Class))
+     (Object        : View_Object_Interface;
+      Screen_Width  : Non_Negative_Real;
+      Screen_Height : Non_Negative_Real;
+      Process       : not null access
+        procedure (Child : View_Object_Interface'Class;
+                   Partial : View_Port))
    is abstract;
 
    procedure Iterate_Properties
@@ -191,6 +197,13 @@ package Concorde.UI.Views is
    procedure Draw
      (View   : in out View_Interface)
    is abstract;
+
+   function Partial_View
+     (View   : View_Interface;
+      Object : View_Object_Interface'Class;
+      Port   : View_Port)
+      return View_Interface'Class
+      is abstract;
 
 private
 
@@ -234,5 +247,9 @@ private
       Alpha   : Unit_Real := 1.0)
       return Draw_Command
    is (Factory.Color ((Red, Green, Blue, Alpha)));
+
+   package View_Object_Holders is
+     new Ada.Containers.Indefinite_Holders
+       (View_Object_Interface'Class);
 
 end Concorde.UI.Views;

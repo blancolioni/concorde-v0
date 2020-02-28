@@ -75,9 +75,11 @@ package body Concorde.UI.Views.Galaxy is
    is null;
 
    overriding procedure Get_Draw_Commands
-     (View     : Root_Galaxy_View;
-      Factory  : Draw_Command_Factory'Class;
-      Commands : in out Draw_Command_List'Class);
+     (View          : Root_Galaxy_View;
+      Factory       : Draw_Command_Factory'Class;
+      Screen_Width  : Non_Negative_Real;
+      Screen_Height : Non_Negative_Real;
+      Commands      : in out Draw_Command_List'Class);
 
    overriding procedure Iterate_Children
      (View     : Root_Galaxy_View;
@@ -203,10 +205,13 @@ package body Concorde.UI.Views.Galaxy is
    -----------------------
 
    overriding procedure Get_Draw_Commands
-     (View     : Root_Galaxy_View;
-      Factory  : Draw_Command_Factory'Class;
-      Commands : in out Draw_Command_List'Class)
+     (View          : Root_Galaxy_View;
+      Factory       : Draw_Command_Factory'Class;
+      Screen_Width  : Non_Negative_Real;
+      Screen_Height : Non_Negative_Real;
+      Commands      : in out Draw_Command_List'Class)
    is
+      pragma Unreferenced (Screen_Width, Screen_Height);
    begin
       for Rec of View.Systems loop
          for Link of Rec.Nearby loop

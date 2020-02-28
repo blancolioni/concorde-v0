@@ -6,6 +6,7 @@ with Ada.Text_IO;
 with Ada.Numerics.Long_Elementary_Functions;
 
 with WL.Processes;
+with WL.String_Sets;
 
 with Concorde.Elementary_Functions;
 with Concorde.Random;
@@ -156,6 +157,29 @@ package body Concorde.Configure.Galaxies is
 
       Process : WL.Processes.Process_Type;
 
+      Name_Set : WL.String_Sets.Set;
+
+      function Create_System_Name return String;
+
+      ------------------------
+      -- Create_System_Name --
+      ------------------------
+
+      function Create_System_Name return String is
+      begin
+         loop
+            declare
+               Name : constant String :=
+                 WL.Random.Names.Random_Name (Names);
+            begin
+               if not Name_Set.Contains (Name) then
+                  Name_Set.Include (Name);
+                  return Name;
+               end if;
+            end;
+         end loop;
+      end Create_System_Name;
+
    begin
 
       if Volume = 0.0 then
@@ -290,8 +314,7 @@ package body Concorde.Configure.Galaxies is
          declare
             Gen          : constant Generated_Star_Record :=
                              Vector.Element (I);
-            System_Name  : constant String :=
-                             WL.Random.Names.Random_Name (Names);
+            System_Name  : constant String := Create_System_Name;
             Solar_Masses : constant Non_Negative_Real :=
                              Random_Star_Mass;
             Mass         : constant Non_Negative_Real :=
