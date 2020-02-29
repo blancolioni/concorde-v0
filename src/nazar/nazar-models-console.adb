@@ -161,7 +161,9 @@ package body Nazar.Models.Console is
       Line  : String)
    is
       Command : constant Console_Command :=
-        Model.Parse_Console_Command (Line);
+                  Model.Parse_Console_Command
+                    (Model.Environment.Expand_Environment
+                       (Line));
    begin
       if Command.Valid then
          Model.Execute (Command);
@@ -267,19 +269,16 @@ package body Nazar.Models.Console is
       Process : not null access
         procedure (Word : String))
    is
+      pragma Unreferenced (Model);
       use Ada.Characters.Handling;
       Double_Quote : Boolean := False;
       Single_Quote : Boolean := False;
       Escape       : Boolean := False;
-      Variable     : Boolean := False;
       Skipping     : Boolean := True;
       Buffer       : String (1 .. 1024);
       Index        : Natural := 0;
-      Var_Index    : Natural := 0;
 
       procedure Add (Ch : Character);
-
-      procedure Check_Variable;
 
       ---------
       -- Add --
@@ -290,27 +289,6 @@ package body Nazar.Models.Console is
          Index := Index + 1;
          Buffer (Index) := Ch;
       end Add;
-
-      --------------------
-      -- Check_Variable --
-      --------------------
-
-      procedure Check_Variable is
-      begin
-         if Variable then
-            declare
-               Name  : constant String := Buffer (Var_Index .. Index);
-               Value : constant String :=
-                 Model.Environment.Get_String_Value (Name);
-            begin
-               Index := Var_Index - 1;
-               for Ch of Value loop
-                  Add (Ch);
-               end loop;
-            end;
-            Variable := False;
-         end if;
-      end Check_Variable;
 
    begin
       for Ch of Text loop
@@ -329,12 +307,7 @@ package body Nazar.Models.Console is
                if Ch = '"' then
                   Double_Quote := False;
                else
-                  if Ch = '$' then
-                     Variable := True;
-                     Var_Index := Index + 1;
-                  else
-                     Add (Ch);
-                  end if;
+                  Add (Ch);
                end if;
             elsif Single_Quote then
                if Ch = ''' then
@@ -349,31 +322,18 @@ package body Nazar.Models.Console is
             elsif Ch = '"' then
                Double_Quote := True;
             elsif Is_Space (Ch) then
-               Check_Variable;
                if Index >= Buffer'First then
                   Process (Buffer (Buffer'First .. Index));
                end if;
                Index := 0;
                Skipping := True;
             else
-               if Variable
-                 and then not Is_Alphanumeric (Ch)
-                 and then Ch not in '-' | '_'
-               then
-                  Check_Variable;
-               end if;
-               if Ch = '$' then
-                  Variable := True;
-                  Var_Index := Index + 1;
-               else
-                  Add (Ch);
-               end if;
+               Add (Ch);
             end if;
          end if;
       end loop;
 
       if not Skipping then
-         Check_Variable;
          if Index >= Buffer'First then
             Process (Buffer (Buffer'First .. Index));
          end if;

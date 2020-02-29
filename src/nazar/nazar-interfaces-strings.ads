@@ -20,4 +20,9 @@ package Nazar.Interfaces.Strings is
       Value : String)
    is abstract;
 
+   function Expand_Environment
+     (Environment : String_Environment_Interface'Class;
+      Source_Text : String)
+      return String;
+
 end Nazar.Interfaces.Strings;
