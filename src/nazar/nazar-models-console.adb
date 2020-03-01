@@ -216,7 +216,7 @@ package body Nazar.Models.Console is
 
       Model.Declare_Property
         (Property_Name => "prompt",
-         Initial_Value => "$CURRENT_SCOPE >");
+         Initial_Value => "$CURRENT_SCOPE> ");
 
       Model.Environment :=
         Environment_Access (Environment);

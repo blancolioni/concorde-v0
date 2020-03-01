@@ -2,6 +2,7 @@ private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Unbounded;
 private with WL.String_Maps;
 
+with Nazar.Values;
 private with Nazar.Models.Scope;
 
 with Nazar.Interfaces.Commands;
@@ -162,7 +163,8 @@ private
    function Get_Prompt_Text
      (Model : Root_Console_Model'Class)
       return String
-   is (Model.Scope.Current_Scope & "> ");
+   is (Model.Environment.Expand_Environment
+         (Nazar.Values.Image (Model.Get_Property ("prompt"))));
 
    type Internal_Command is
      abstract new Nazar.Interfaces.Commands.Command_Interface with
