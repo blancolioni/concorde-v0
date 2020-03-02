@@ -8,6 +8,8 @@ package Nazar.Interfaces.Hierarchy is
       return Boolean
       is abstract;
 
+   function No_Node return Node_Reference_Class;
+
    type Node_Interface is interface;
 
    function Is_Leaf
@@ -65,5 +67,27 @@ package Nazar.Interfaces.Hierarchy is
      (Node : Node_Reference_Interface)
       return access Node_Interface'Class
       is abstract;
+
+private
+
+   type Empty_Reference is new Node_Reference_Interface with null record;
+
+   overriding function Is_Empty
+     (Reference : Empty_Reference)
+      return Boolean
+   is (True);
+
+   overriding function Get
+     (Id : Empty_Reference)
+      return Node_Interface'Class
+   is (raise Constraint_Error with "get called on empty reference");
+
+   overriding function Update
+     (Node : Empty_Reference)
+      return access Node_Interface'Class
+   is (raise Constraint_Error with "update called on empty reference");
+
+   function No_Node return Node_Reference_Class
+   is (Empty_Reference'(null record));
 
 end Nazar.Interfaces.Hierarchy;

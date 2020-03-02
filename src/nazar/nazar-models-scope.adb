@@ -92,8 +92,16 @@ package body Nazar.Models.Scope is
          if Index > Path.Last_Index then
             return Current;
          else
-            return Go
-              (Current.Get.Get_Child (Path.Element (Index)), Index + 1);
+            declare
+               Element : constant String := Path.Element (Index);
+            begin
+               if Current.Get.Has_Child (Element) then
+                  return Go
+                    (Current.Get.Get_Child (Element), Index + 1);
+               else
+                  return Nazar.Interfaces.Hierarchy.No_Node;
+               end if;
+            end;
          end if;
       end Go;
 
