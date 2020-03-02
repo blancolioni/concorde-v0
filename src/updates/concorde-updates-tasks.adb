@@ -4,7 +4,6 @@ with Ada.Exceptions;
 with Ada.Text_IO;
 
 with Concorde.Logging;
-with Concorde.Sessions;
 
 package body Concorde.Updates.Tasks is
 
@@ -24,7 +23,7 @@ package body Concorde.Updates.Tasks is
             accept Broadcast (Signal : Concorde.Signals.Signal_Type) do
                Signal_Holder.Replace_Element (Signal);
             end Broadcast;
-            Concorde.Sessions.Broadcast (Signal_Holder.Element);
+--              Concorde.Sessions.Broadcast (Signal_Holder.Element);
          or
             accept Stop;
             exit;
@@ -203,8 +202,8 @@ package body Concorde.Updates.Tasks is
                end;
 
                Previous_Tick := Ada.Calendar.Clock;
-               Broadcast_Task.Broadcast
-                 (Concorde.Sessions.Signal_Clock_Tick);
+--                 Broadcast_Task.Broadcast
+--                   (Concorde.Sessions.Signal_Clock_Tick);
 
                declare
                   List  : Update_Lists.List;

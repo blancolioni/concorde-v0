@@ -1,6 +1,7 @@
 scenario = default
 generate-root-password = yes
 language = en
+user-interface = text
 randomise = no
 create = no
 system-count = 1000

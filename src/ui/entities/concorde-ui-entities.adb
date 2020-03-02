@@ -1,3 +1,5 @@
+with Ada.Strings.Unbounded;
+
 with Concorde.UI.Entities.Top;
 
 package body Concorde.UI.Entities is
@@ -41,6 +43,40 @@ package body Concorde.UI.Entities is
       raise Constraint_Error with
         "bind-child [" & Name & "] called on leaf node";
    end Bind_Child;
+
+   --------------
+   -- Contents --
+   --------------
+
+   overriding function Contents
+     (Node : Branch_Node)
+      return String
+   is
+      use Ada.Strings.Unbounded;
+      Result : Unbounded_String;
+
+      procedure Add_Child
+        (Name  : String;
+         Child : Entity_Reference);
+
+      ---------------
+      -- Add_Child --
+      ---------------
+
+      procedure Add_Child
+        (Name  : String;
+         Child : Entity_Reference)
+      is
+         pragma Unreferenced (Child);
+      begin
+         Append (Result, Name);
+         Append (Result, Character'Val (10));
+      end Add_Child;
+
+   begin
+      Branch_Node'Class (Node).Iterate_Children (Add_Child'Access);
+      return To_String (Result);
+   end Contents;
 
    ------------------
    -- Delete_Child --

@@ -1,4 +1,4 @@
-with Concorde.Json;
+with Nazar.Json;
 
 package Concorde.UI is
 
@@ -8,7 +8,7 @@ package Concorde.UI is
 
    procedure Send_Message
      (Connection : in out Connection_Interface;
-      Message    : Concorde.Json.Json_Value'Class)
+      Message    : Nazar.Json.Json_Value'Class)
    is abstract;
 
    type UI_Interface is interface;
@@ -66,28 +66,28 @@ package Concorde.UI is
 
    function Handle_Message
      (State : in out State_Interface;
-      Message : Concorde.Json.Json_Value'Class)
-      return Concorde.Json.Json_Value'Class
+      Message : Nazar.Json.Json_Value'Class)
+      return Nazar.Json.Json_Value'Class
    is abstract;
 
    function Execute_Command
      (State   : in out State_Interface;
       Client  : Client_Id;
       Command : String)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is abstract;
 
    function Handle_Client_Request
      (State   : in out State_Interface;
       Client  : Client_Id;
-      Request : Concorde.Json.Json_Value'Class)
-      return Concorde.Json.Json_Value'Class
+      Request : Nazar.Json.Json_Value'Class)
+      return Nazar.Json.Json_Value'Class
    is abstract;
 
    function Environment_Value
      (State : State_Interface;
       Name  : String)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is abstract;
 
    function Environment_Value

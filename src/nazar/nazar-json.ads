@@ -1,7 +1,7 @@
 private with Ada.Containers.Indefinite_Vectors;
 private with WL.String_Maps;
 
-package Concorde.Json is
+package Nazar.Json is
 
    type Json_Value is abstract tagged private;
 
@@ -112,4 +112,4 @@ private
    overriding function Image (Item : Json_Array) return String
    is ("[Array]");
 
-end Concorde.Json;
+end Nazar.Json;

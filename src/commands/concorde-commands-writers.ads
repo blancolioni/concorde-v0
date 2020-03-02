@@ -1,6 +1,6 @@
 private with Ada.Strings.Unbounded;
 
-with Concorde.Json;
+with Nazar.Json;
 with Concorde.Writers;
 
 package Concorde.Commands.Writers is
@@ -37,15 +37,15 @@ package Concorde.Commands.Writers is
 
    overriding procedure Control
      (Writer : in out Json_Writer;
-      Packet : Concorde.Json.Json_Value'Class);
+      Packet : Nazar.Json.Json_Value'Class);
 
    overriding procedure Return_Value
      (Writer : in out Json_Writer;
-      Value  : Concorde.Json.Json_Value'Class);
+      Value  : Nazar.Json.Json_Value'Class);
 
    function To_Json
      (Writer : Json_Writer)
-      return Concorde.Json.Json_Value'Class;
+      return Nazar.Json.Json_Value'Class;
 
 private
 
@@ -58,11 +58,11 @@ private
    type Json_Writer is
      new Concorde.Writers.Writer_Interface with
       record
-         Output_Lines     : Concorde.Json.Json_Array;
-         Error_Lines      : Concorde.Json.Json_Array;
+         Output_Lines     : Nazar.Json.Json_Array;
+         Error_Lines      : Nazar.Json.Json_Array;
          Current_Output   : Ada.Strings.Unbounded.Unbounded_String;
-         Control          : Concorde.Json.Json_Array;
-         Result           : Concorde.Json.Json_Object;
+         Control          : Nazar.Json.Json_Array;
+         Result           : Nazar.Json.Json_Object;
       end record;
 
 end Concorde.Commands.Writers;

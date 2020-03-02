@@ -2,7 +2,7 @@ with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 
-package body Concorde.Json is
+package body Nazar.Json is
 
    type Null_Json_Value is
      new Json_Value with null record;
@@ -568,4 +568,4 @@ package body Concorde.Json is
       return Text;
    end To_Safe_String;
 
-end Concorde.Json;
+end Nazar.Json;

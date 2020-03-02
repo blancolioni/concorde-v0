@@ -47,6 +47,10 @@ package Concorde.UI.Entities is
      (Node : Branch_Node)
       return Boolean;
 
+   overriding function Contents
+     (Node : Branch_Node)
+      return String;
+
    function Root
      return Entity_Reference;
 

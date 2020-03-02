@@ -1,3 +1,5 @@
+with WL.Guids;
+
 with Nazar.Interfaces.Properties;
 
 with Nazar.Models;
@@ -6,6 +8,7 @@ with Nazar.Signals;
 package Nazar.Views is
 
    type Nazar_View_Interface is interface
+     and Nazar_Object_Interface
      and Nazar.Signals.Signal_Source_Interface
      and Nazar.Signals.Signal_Dispatch_Interface
      and Nazar.Interfaces.Properties.Property_Container_Interface;
@@ -26,6 +29,10 @@ package Nazar.Views is
    subtype View_Class is Root_View_Type'Class;
 
    type View_Type is access all Root_View_Type'Class;
+
+   overriding function Guid
+     (View : Root_View_Type)
+      return WL.Guids.Guid;
 
    overriding function Model
      (View : Root_View_Type)
@@ -64,9 +71,15 @@ private
      abstract new Nazar.Interfaces.Properties.Root_Property_Container
      and Nazar_View_Interface with
       record
+         Id         : WL.Guids.Guid;
          Dispatch   : Nazar.Signals.Signal_Handler_Container;
          Base_Model : Nazar.Models.Model_Type;
       end record;
+
+   overriding function Guid
+     (View : Root_View_Type)
+      return WL.Guids.Guid
+   is (View.Id);
 
    overriding function Model
      (View : Root_View_Type)

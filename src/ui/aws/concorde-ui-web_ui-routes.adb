@@ -199,7 +199,7 @@ package body Concorde.UI.Web_UI.Routes is
                                (WL.Guids.New_Guid);
                            New_State : constant State_Interface'Class :=
                              Handler.Handle_Create (Parameters);
-                           Json      : Concorde.Json.Json_Object;
+                           Json      : Nazar.Json.Json_Object;
                            Status    : constant AWS.Messages.Status_Code :=
                              (if New_State.Valid
                               then AWS.Messages.S200
@@ -284,7 +284,7 @@ package body Concorde.UI.Web_UI.Routes is
      (Handler    : Request_Handler;
       State      : State_Interface'Class;
       Parameters : Parameter_Container'Class)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
       pragma Unreferenced (Handler, State, Parameters);
    begin
@@ -318,7 +318,7 @@ package body Concorde.UI.Web_UI.Routes is
      (Handler    : Request_Handler;
       State      : in out State_Interface'Class;
       Parameters : Parameter_Container'Class)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
       pragma Unreferenced (Handler, State, Parameters);
    begin
@@ -333,11 +333,11 @@ package body Concorde.UI.Web_UI.Routes is
      (Message : String)
       return String
    is
-      Json : constant Concorde.Json.Json_Value'Class :=
-        Concorde.Json.Deserialize (Message);
+      Json : constant Nazar.Json.Json_Value'Class :=
+        Nazar.Json.Deserialize (Message);
       State       : constant State_Access :=
         States.Element (Json.Get_Property ("id"));
-      Result_Json : constant Concorde.Json.Json_Value'Class :=
+      Result_Json : constant Nazar.Json.Json_Value'Class :=
         State.Handle_Message
           (Message    => Json);
    begin
@@ -434,10 +434,10 @@ package body Concorde.UI.Web_UI.Routes is
 
    function To_Json
      (Container : Parameter_Container)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Json : Concorde.Json.Json_Object do
+      return Json : Nazar.Json.Json_Object do
          for Position in Container.Iterate loop
             Json.Set_Property (String_Maps.Key (Position),
                                String_Maps.Element (Position));

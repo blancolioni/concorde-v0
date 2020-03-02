@@ -15,7 +15,7 @@ with Concorde.Db.User;
 
 package body Concorde.Sessions is
 
-   function Default_Dashboard return Concorde.Json.Json_Value'Class;
+   function Default_Dashboard return Nazar.Json.Json_Value'Class;
 
    protected body Session_Data is
 
@@ -95,7 +95,7 @@ package body Concorde.Sessions is
          if Environment.Contains (Name) then
             return Environment.Element (Name);
          else
-            return Concorde.Json.Null_Value;
+            return Nazar.Json.Null_Value;
          end if;
       end Get_Environment_Value;
 
@@ -158,9 +158,9 @@ package body Concorde.Sessions is
    -- Default_Dashboard --
    -----------------------
 
-   function Default_Dashboard return Concorde.Json.Json_Value'Class is
+   function Default_Dashboard return Nazar.Json.Json_Value'Class is
 
-      Boxes : Concorde.Json.Json_Array;
+      Boxes : Nazar.Json.Json_Array;
 
       procedure Add_Box
         (Id : Natural;
@@ -180,13 +180,13 @@ package body Concorde.Sessions is
          Child_1       : Natural := 0;
          Child_2       : Natural := 0)
       is
-         Box    : Concorde.Json.Json_Object;
+         Box    : Nazar.Json.Json_Object;
       begin
 
          Box.Set_Property ("id", Id);
 
          declare
-            Anchor : Concorde.Json.Json_Object;
+            Anchor : Nazar.Json.Json_Object;
          begin
             Anchor.Set_Property ("left", Left);
             Anchor.Set_Property ("top", Top);
@@ -197,7 +197,7 @@ package body Concorde.Sessions is
 
          if Child_1 > 0 then
             declare
-               Child_Boxes : Concorde.Json.Json_Array;
+               Child_Boxes : Nazar.Json.Json_Array;
             begin
                Child_Boxes.Append (Json.Integer_Value (Child_1));
                Child_Boxes.Append (Json.Integer_Value (Child_2));
@@ -237,7 +237,7 @@ package body Concorde.Sessions is
          Next_Id := Next_Id + 1;
       end loop;
 
-      return Dashboard : Concorde.Json.Json_Object do
+      return Dashboard : Nazar.Json.Json_Object do
          Dashboard.Set_Property ("nextId", Next_Id);
          Dashboard.Set_Property ("boxes", Boxes);
       end return;
@@ -262,7 +262,7 @@ package body Concorde.Sessions is
      (Session : in out Root_Concorde_Session;
       Client  : Concorde.UI.Client_Id;
       Command : String)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
       Writer : Concorde.Commands.Writers.Json_Writer;
 
@@ -281,8 +281,8 @@ package body Concorde.Sessions is
    overriding function Handle_Client_Request
      (Session : in out Root_Concorde_Session;
       Client  : Concorde.UI.Client_Id;
-      Request : Concorde.Json.Json_Value'Class)
-      return Concorde.Json.Json_Value'Class
+      Request : Nazar.Json.Json_Value'Class)
+      return Nazar.Json.Json_Value'Class
    is
       Model : Concorde.UI.Models.Root_Concorde_Model'Class :=
         Session.Data.Get_Model (Client);
@@ -296,8 +296,8 @@ package body Concorde.Sessions is
 
    overriding function Handle_Message
      (Session : in out Root_Concorde_Session;
-      Message : Concorde.Json.Json_Value'Class)
-      return Concorde.Json.Json_Value'Class
+      Message : Nazar.Json.Json_Value'Class)
+      return Nazar.Json.Json_Value'Class
    is
       pragma Unreferenced (Session);
    begin
@@ -384,7 +384,7 @@ package body Concorde.Sessions is
                      Default_Scope => Home);
                   Session.Data := new Session_Data;
                   Session.Data.Set_Environment_Value
-                    ("HOME", Concorde.Json.String_Value (Home));
+                    ("HOME", Nazar.Json.String_Value (Home));
                   Session.Data.Set_Environment_Value
                     ("DASHBOARD", Default_Dashboard);
                else

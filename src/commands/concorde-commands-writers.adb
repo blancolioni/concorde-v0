@@ -6,7 +6,7 @@ package body Concorde.Commands.Writers is
 
    overriding procedure Control
      (Writer : in out Json_Writer;
-      Packet : Concorde.Json.Json_Value'Class)
+      Packet : Nazar.Json.Json_Value'Class)
    is
    begin
       Writer.Control.Append (Packet);
@@ -31,7 +31,7 @@ package body Concorde.Commands.Writers is
       use Ada.Strings.Unbounded;
    begin
       Writer.Output_Lines.Append
-        (Concorde.Json.String_Value
+        (Nazar.Json.String_Value
            (Ada.Strings.Unbounded.To_String (Writer.Current_Output)));
       Writer.Current_Output :=
         Ada.Strings.Unbounded.Null_Unbounded_String;
@@ -85,7 +85,7 @@ package body Concorde.Commands.Writers is
    is
    begin
       Writer.Error_Lines.Append
-        (Concorde.Json.String_Value (Message));
+        (Nazar.Json.String_Value (Message));
    end Put_Error;
 
    ------------------
@@ -94,7 +94,7 @@ package body Concorde.Commands.Writers is
 
    overriding procedure Return_Value
      (Writer : in out Json_Writer;
-      Value  : Concorde.Json.Json_Value'Class)
+      Value  : Nazar.Json.Json_Value'Class)
    is
    begin
       Writer.Result.Set_Property ("result", Value);
@@ -106,10 +106,10 @@ package body Concorde.Commands.Writers is
 
    function To_Json
      (Writer : Json_Writer)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Object : Concorde.Json.Json_Object do
+      return Object : Nazar.Json.Json_Object do
          Object.Set_Property
            ("standardOutput", Writer.Output_Lines);
          Object.Set_Property

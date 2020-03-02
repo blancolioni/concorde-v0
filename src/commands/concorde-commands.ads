@@ -2,7 +2,7 @@ private with Ada.Containers.Indefinite_Vectors;
 private with WL.String_Maps;
 
 with Concorde.Contexts;
-with Concorde.Json;
+with Nazar.Json;
 with Concorde.Writers;
 
 package Concorde.Commands is
