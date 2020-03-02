@@ -28,10 +28,6 @@ package body Concorde.UI.Entities.Directories is
          Child_Map  : Child_Node_Maps.Map;
       end record;
 
-   overriding function Contents
-     (Node : Directory_Record)
-      return String;
-
    overriding function Has_Child
      (Node : Directory_Record;
       Name : String)
@@ -76,40 +72,6 @@ package body Concorde.UI.Entities.Directories is
       Node.Child_Map.Insert
         (Name, Child);
    end Bind_Child;
-
-   --------------
-   -- Contents --
-   --------------
-
-   overriding function Contents
-     (Node : Directory_Record)
-      return String
-   is
-      use Ada.Strings.Unbounded;
-      Result : Unbounded_String;
-
-      procedure Add_Child
-        (Name  : String;
-         Child : Entity_Reference);
-
-      ---------------
-      -- Add_Child --
-      ---------------
-
-      procedure Add_Child
-        (Name  : String;
-         Child : Entity_Reference)
-      is
-         pragma Unreferenced (Child);
-      begin
-         Append (Result, Name);
-         Append (Result, Character'Val (10));
-      end Add_Child;
-
-   begin
-      Directory_Record'Class (Node).Iterate_Children (Add_Child'Access);
-      return To_String (Result);
-   end Contents;
 
    ---------------------------
    -- Create_Directory_Node --
