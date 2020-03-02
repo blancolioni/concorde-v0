@@ -1,14 +1,16 @@
+with Ada.Text_IO;
+
 with AWS.Net.WebSocket.Registry.Control;
 with AWS.Server;
 with AWS.Status;
 
-with Nazar.Web_UI.Handlers;
+--  with Nazar.Web_UI.Handlers;
 with Nazar.Web_UI.Logging;
 with Nazar.Web_UI.Routes;
 
 with Nazar.Json;
 
-package body Nazar.Web_UI is
+package body Nazar.Web_UI.Main is
 
    type Socket_Type is
      new AWS.Net.WebSocket.Object
@@ -30,10 +32,6 @@ package body Nazar.Web_UI is
      (Socket  : in out Socket_Type;
       Message : String);
 
-   procedure Send_Message
-     (Socket     : in out Socket_Type'Class;
-      Message    : Nazar.Json.Json_Value'Class);
-
    function Create
      (Socket  : AWS.Net.Socket_Access;
       Request : AWS.Status.Data)
@@ -41,7 +39,7 @@ package body Nazar.Web_UI is
 
    Server : AWS.Server.HTTP;
 
-   procedure Create_Routes;
+--     procedure Create_Routes;
 
    procedure Create_Socket;
 
@@ -64,25 +62,25 @@ package body Nazar.Web_UI is
    -- Create_Routes --
    -------------------
 
-   procedure Create_Routes is
-   begin
-      Routes.Add_Route
-        (Method  => AWS.Status.POST,
-         Path    => "/login",
-         Handler => Handlers.Handle_Login);
-      Routes.Add_Route
-        (Method  => AWS.Status.POST,
-         Path    => "/new-client",
-         Handler => Handlers.Handle_New_Client);
-      Routes.Add_Route
-        (Method  => AWS.Status.GET,
-         Path    => "/environment/:name",
-         Handler => Handlers.Handle_Environment_Request);
-      Routes.Add_Route
-        (Method  => AWS.Status.POST,
-         Path    => "/client/:client",
-         Handler => Handlers.Handle_Client_Request);
-   end Create_Routes;
+--     procedure Create_Routes is
+--     begin
+--        Routes.Add_Route
+--          (Method  => AWS.Status.POST,
+--           Path    => "/login",
+--           Handler => Handlers.Handle_Login);
+--        Routes.Add_Route
+--          (Method  => AWS.Status.POST,
+--           Path    => "/new-client",
+--           Handler => Handlers.Handle_New_Client);
+--        Routes.Add_Route
+--          (Method  => AWS.Status.GET,
+--           Path    => "/environment/:name",
+--           Handler => Handlers.Handle_Environment_Request);
+--        Routes.Add_Route
+--          (Method  => AWS.Status.POST,
+--           Path    => "/client/:client",
+--           Handler => Handlers.Handle_Client_Request);
+--     end Create_Routes;
 
    -------------------
    -- Create_Socket --
@@ -150,39 +148,36 @@ package body Nazar.Web_UI is
       null;
    end On_Open;
 
-   ------------------
-   -- Send_Message --
-   ------------------
-
-   procedure Send_Message
-     (Socket     : in out Socket_Type'Class;
-      Message    : Nazar.Json.Json_Value'Class)
-   is
-   begin
-      Socket.Send
-        (Message => Message.Serialize);
-   end Send_Message;
-
    -----------
    -- Start --
    -----------
 
    procedure Start
      (Application_Name : String;
-      Port             : Natural)
+      Port             : Natural;
+      Top_View         : not null access
+        Nazar.Web_UI.Views.Root_AWS_View_Type'Class)
    is
    begin
 
       Logging.On_Starting;
 
-      Create_Routes;
       Create_Socket;
+
+      Top_View.Connect;
+
+      Ada.Text_IO.Put_Line
+        ("Nazar-AWS: starting " & Application_Name & " on port" & Port'Image);
 
       AWS.Server.Start
         (Web_Server => Server,
          Name       => Application_Name,
          Callback   => Routes.Handle_Http_Request'Access,
          Port       => Port);
+
+      AWS.Server.Wait (Mode => AWS.Server.Q_Key_Pressed);
+
+      Stop ("Explicit termination");
 
    end Start;
 
@@ -200,4 +195,4 @@ package body Nazar.Web_UI is
       Logging.On_Stop;
    end Stop;
 
-end Nazar.Web_UI;
+end Nazar.Web_UI.Main;

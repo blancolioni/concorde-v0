@@ -1,4 +1,4 @@
-with Concorde.Json;
+with Nazar.Json;
 with Concorde.UI.Models.Loader;
 with Concorde.Writers;
 
@@ -24,7 +24,7 @@ package body Concorde.Commands.System.Show is
       Arguments : Argument_List)
    is
       pragma Unreferenced (Command, Context);
-      Response : Concorde.Json.Json_Object;
+      Response : Nazar.Json.Json_Object;
       Model_Name : constant String :=
         Argument (Arguments, 1);
    begin

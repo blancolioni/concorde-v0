@@ -3,7 +3,8 @@ private with WL.String_Maps;
 with AWS.Response;
 with AWS.Status;
 
-with Concorde.Json;
+with Nazar.Json;
+with Nazar.Sessions;
 
 package Nazar.Web_UI.Routes is
 
@@ -18,36 +19,28 @@ package Nazar.Web_UI.Routes is
 
    function To_Json
      (Container : Parameter_Container)
-      return Concorde.Json.Json_Value'Class;
+      return Nazar.Json.Json_Value'Class;
 
-   type Request_Handler is abstract tagged private;
-
-   function Handle_Create
-     (Handler    : Request_Handler;
-      Parameters : Parameter_Container'Class)
-      return State_Interface'Class;
+   type Request_Handler_Interface is interface;
 
    function Handle_Get
-     (Handler    : Request_Handler;
-      State      : State_Interface'Class;
+     (Handler    : Request_Handler_Interface;
+      Session    : Nazar.Sessions.Nazar_Session;
       Parameters : Parameter_Container'Class)
-      return Concorde.Json.Json_Value'Class;
+      return Nazar.Json.Json_Value'Class
+      is abstract;
 
    function Handle_Post
-     (Handler    : Request_Handler;
-      State      : in out State_Interface'Class;
+     (Handler    : Request_Handler_Interface;
+      Session    : Nazar.Sessions.Nazar_Session;
       Parameters : Parameter_Container'Class)
-      return Concorde.Json.Json_Value'Class;
-
-   function Creates_State
-     (Handler : Request_Handler)
-      return Boolean
-   is (False);
+      return Nazar.Json.Json_Value'Class
+   is abstract;
 
    procedure Add_Route
      (Method  : AWS.Status.Request_Method;
       Path    : String;
-      Handler : Request_Handler'Class);
+      Handler : not null access Request_Handler_Interface'Class);
 
    function Handle_Http_Request
      (Request : AWS.Status.Data)
@@ -64,10 +57,5 @@ private
 
    type Parameter_Container is
      new String_Maps.Map with null record;
-
-   type Request_Handler is abstract tagged
-      record
-         null;
-      end record;
 
 end Nazar.Web_UI.Routes;

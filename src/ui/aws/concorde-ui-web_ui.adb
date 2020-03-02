@@ -1,5 +1,11 @@
 with Ada.Text_IO;
 
+with Nazar.Controllers.Console;
+with Nazar.Web_UI.Main;
+with Nazar.Web_UI.Views.Web_Console;
+
+with Concorde.UI.Models.Console;
+
 package body Concorde.UI.Web_UI is
 
    type Web_UI_Type is
@@ -32,10 +38,18 @@ package body Concorde.UI.Web_UI is
 
    overriding procedure Start (Web_UI  : in out Web_UI_Type) is
       pragma Unreferenced (Web_UI);
+
+      Model : constant Concorde.UI.Models.Console.Concorde_Console_Model :=
+        Concorde.UI.Models.Console.Console_Model;
+      View  : constant Nazar.Web_UI.Views.Web_Console.Nazar_Web_Console_View :=
+        Nazar.Web_UI.Views.Web_Console.Web_Console_View (Model);
+      Controller : Nazar.Controllers.Console.Root_Console_Controller;
    begin
-
-      null;
-
+      Controller.Start_Console (Model, View);
+      Nazar.Web_UI.Main.Start
+        (Application_Name => "Concorde",
+         Port             => 8080,
+         Top_View         => View);
    end Start;
 
    ----------

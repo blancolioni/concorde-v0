@@ -1,6 +1,6 @@
 private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
-with Concorde.Json;
+with Nazar.Json;
 
 package Concorde.Writers is
 
@@ -26,12 +26,12 @@ package Concorde.Writers is
 
    procedure Control
      (Writer : in out Writer_Interface;
-      Packet : Concorde.Json.Json_Value'Class)
+      Packet : Nazar.Json.Json_Value'Class)
    is null;
 
    procedure Return_Value
      (Writer : in out Writer_Interface;
-      Value  : Concorde.Json.Json_Value'Class)
+      Value  : Nazar.Json.Json_Value'Class)
    is null;
 
    type Identifier_List is private;

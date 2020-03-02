@@ -3,7 +3,7 @@ private with WL.String_Maps;
 with AWS.Response;
 with AWS.Status;
 
-with Concorde.Json;
+with Nazar.Json;
 
 package Concorde.UI.Web_UI.Routes is
 
@@ -18,7 +18,7 @@ package Concorde.UI.Web_UI.Routes is
 
    function To_Json
      (Container : Parameter_Container)
-      return Concorde.Json.Json_Value'Class;
+      return Nazar.Json.Json_Value'Class;
 
    type Request_Handler is abstract tagged private;
 
@@ -31,13 +31,13 @@ package Concorde.UI.Web_UI.Routes is
      (Handler    : Request_Handler;
       State      : State_Interface'Class;
       Parameters : Parameter_Container'Class)
-      return Concorde.Json.Json_Value'Class;
+      return Nazar.Json.Json_Value'Class;
 
    function Handle_Post
      (Handler    : Request_Handler;
       State      : in out State_Interface'Class;
       Parameters : Parameter_Container'Class)
-      return Concorde.Json.Json_Value'Class;
+      return Nazar.Json.Json_Value'Class;
 
    function Creates_State
      (Handler : Request_Handler)

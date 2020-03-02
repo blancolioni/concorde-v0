@@ -10,9 +10,9 @@ package body Concorde.UI.Models is
      (Model   : in out Root_Concorde_Model'class;
       State   : in out State_Interface'Class;
       Client  : Client_Id;
-      Request : Concorde.Json.Json_Value'Class;
+      Request : Nazar.Json.Json_Value'Class;
       Message : String)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
       pragma Unreferenced (State);
       use Ada.Text_IO;
@@ -22,7 +22,7 @@ package body Concorde.UI.Models is
       Put_Line ("request: " & Request.Image);
       Put_Line (Standard_Error,
                 "message: " & Message);
-      return Response : Concorde.Json.Json_Object do
+      return Response : Nazar.Json.Json_Object do
          Response.Set_Property ("error", Message);
       end return;
 

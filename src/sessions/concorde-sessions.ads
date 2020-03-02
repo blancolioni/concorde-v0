@@ -2,7 +2,7 @@ private with Ada.Containers.Indefinite_Holders;
 private with Ada.Containers.Ordered_Maps;
 private with WL.String_Maps;
 
-private with Concorde.Json;
+private with Nazar.Json;
 private with Concorde.Writers;
 
 with Concorde.Contexts;
@@ -56,7 +56,7 @@ private
        (Concorde.UI.Client_Id, Client_Type, Concorde.UI."<");
 
    package Environment_Maps is
-     new WL.String_Maps (Concorde.Json.Json_Value'Class, Concorde.Json."=");
+     new WL.String_Maps (Nazar.Json.Json_Value'Class, Nazar.Json."=");
 
    type Context_Updater is access
      procedure (Context : in out Concorde.Contexts.Context_Type);
@@ -88,11 +88,11 @@ private
 
       procedure Set_Environment_Value
         (Name : String;
-         Value : Json.Json_Value'Class);
+         Value : Nazar.Json.Json_Value'Class);
 
       function Get_Environment_Value
         (Name : String)
-         return Json.Json_Value'Class;
+         return Nazar.Json.Json_Value'Class;
 
    private
 
@@ -142,25 +142,25 @@ private
 
    overriding function Handle_Message
      (Session : in out Root_Concorde_Session;
-      Message : Concorde.Json.Json_Value'Class)
-      return Concorde.Json.Json_Value'Class;
+      Message : Nazar.Json.Json_Value'Class)
+      return Nazar.Json.Json_Value'Class;
 
    overriding function Execute_Command
      (Session : in out Root_Concorde_Session;
       Client  : Concorde.UI.Client_Id;
       Command : String)
-      return Concorde.Json.Json_Value'Class;
+      return Nazar.Json.Json_Value'Class;
 
    overriding function Handle_Client_Request
      (Session : in out Root_Concorde_Session;
       Client  : Concorde.UI.Client_Id;
-      Request : Concorde.Json.Json_Value'Class)
-      return Concorde.Json.Json_Value'Class;
+      Request : Nazar.Json.Json_Value'Class)
+      return Nazar.Json.Json_Value'Class;
 
    overriding function Environment_Value
      (Session : Root_Concorde_Session;
       Name  : String)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is (Session.Data.Get_Environment_Value (Name));
 
    function Default_Context

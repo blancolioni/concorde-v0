@@ -1,10 +1,7 @@
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Containers.Indefinite_Holders;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
-
-with WL.Guids;
 
 with AWS.Messages;
 with AWS.Parameters;
@@ -14,14 +11,12 @@ with Nazar.Web_UI.Logging;
 
 package body Nazar.Web_UI.Routes is
 
-   package Request_Handler_Holders is
-     new Ada.Containers.Indefinite_Holders
-       (Request_Handler'Class);
+   type Request_Handler_Access is access all Request_Handler_Interface'Class;
 
    type Route_Record is
       record
          Template : Ada.Strings.Unbounded.Unbounded_String;
-         Handler  : Request_Handler_Holders.Holder;
+         Handler  : Request_Handler_Access;
       end record;
 
    package Route_Lists is
@@ -32,10 +27,8 @@ package body Nazar.Web_UI.Routes is
 
    Routes : Method_Route_Array;
 
-   type State_Access is access all State_Interface'Class;
-
    package State_Maps is
-     new WL.String_Maps (State_Access);
+     new WL.String_Maps (Nazar.Sessions.Nazar_Session, Nazar.Sessions."=");
 
    States : State_Maps.Map;
 
@@ -65,13 +58,13 @@ package body Nazar.Web_UI.Routes is
    procedure Add_Route
      (Method  : AWS.Status.Request_Method;
       Path    : String;
-      Handler : Request_Handler'Class)
+      Handler : not null access Request_Handler_Interface'Class)
    is
    begin
       Routes (Method).Append
         (Route_Record'
            (Ada.Strings.Unbounded.To_Unbounded_String (Path),
-            Request_Handler_Holders.To_Holder (Handler)));
+            Request_Handler_Access (Handler)));
    end Add_Route;
 
    --------------------
@@ -149,8 +142,6 @@ package body Nazar.Web_UI.Routes is
             URI      => AWS.Status.URI (Request))
          then
             declare
-               Handler : constant Request_Handler'Class :=
-                 Route.Handler.Element;
                Parameters : constant Parameter_Container :=
                  Get_Parameters
                    (Request,
@@ -159,91 +150,57 @@ package body Nazar.Web_UI.Routes is
                  Parameters.Parameter ("id");
                Response   : AWS.Response.Data;
             begin
-               case Method is
-                  when AWS.Status.GET =>
-                     if State_Id = ""
-                       or else not States.Contains (State_Id)
-                     then
-                        Response := AWS.Response.Build
+               if State_Id /= ""
+                 and then not States.Contains (State_Id)
+               then
+                  Response := AWS.Response.Build
+                    (Content_Type  => "text/plain",
+                     Message_Body  => "invalid session id",
+                     Status_Code   => AWS.Messages.S404);
+               else
+                  declare
+                     Session : constant Nazar.Sessions.Nazar_Session :=
+                       (if State_Id = "" then null
+                        else States.Element (State_Id));
+
+                     function Handle_Message
+                       (Is_Get : Boolean)
+                        return AWS.Response.Data;
+
+                     --------------------
+                     -- Handle_Message --
+                     --------------------
+
+                     function Handle_Message
+                       (Is_Get : Boolean)
+                        return AWS.Response.Data
+                     is
+                        Result_Json : constant Json.Json_Value'Class :=
+                          (if Is_Get
+                           then Route.Handler.Handle_Get
+                             (Session, Parameters)
+                           else Route.Handler.Handle_Post
+                             (Session, Parameters));
+                     begin
+                        return AWS.Response.Build
                           (Content_Type  => "text/plain",
-                           Message_Body  => "invalid session id",
-                           Status_Code   => AWS.Messages.S404);
-                     else
-                        declare
-                           Result_Json : constant Json.Json_Value'Class :=
-                             Handle_Get
-                               (Handler    => Handler,
-                                State      => States.Element (State_Id).all,
-                                Parameters => Parameters);
-                        begin
-                           Response := AWS.Response.Build
-                             (Content_Type  => "text/plain",
-                              Message_Body  => Json.Serialize (Result_Json));
-                        end;
-                     end if;
-                  when AWS.Status.POST =>
-                     if (not Handler.Creates_State
-                         and then State_Id = "")
-                       or else
-                         (State_Id /= ""
-                          and then not States.Contains (State_Id))
-                     then
-                        Response := AWS.Response.Build
-                          (Content_Type  => "text/plain",
-                           Message_Body  => "invalid session id",
-                           Status_Code   => AWS.Messages.S404);
-                     elsif State_Id = "" then
-                        declare
-                           Id        : constant String :=
-                             WL.Guids.To_String
-                               (WL.Guids.New_Guid);
-                           New_State : constant State_Interface'Class :=
-                             Handler.Handle_Create (Parameters);
-                           Json      : Concorde.Json.Json_Object;
-                           Status    : constant AWS.Messages.Status_Code :=
-                             (if New_State.Valid
-                              then AWS.Messages.S200
-                              else AWS.Messages.S401);
-                        begin
-                           if New_State.Valid then
-                              declare
-                                 State     : constant State_Access :=
-                                   new State_Interface'Class'(New_State);
-                              begin
-                                 States.Insert (Id, State);
-                                 Json.Set_Property ("id", Id);
-                                 Json.Set_Property ("user", State.User_Name);
-                              end;
-                           else
-                              Json.Set_Property ("error", "login failed");
-                           end if;
-                           Response :=
+                           Message_Body  => Json.Serialize (Result_Json));
+                     end Handle_Message;
+
+                  begin
+                     Response :=
+                       (case Method is
+                           when AWS.Status.GET  =>
+                             Handle_Message (Is_Get => True),
+                           when AWS.Status.POST =>
+                             Handle_Message (Is_Get => False),
+                           when others          =>
                              AWS.Response.Build
-                               ("text/json", Json.Serialize, Status);
-                        end;
-                     else
-                        declare
-                           State : constant State_Access :=
-                             States.Element (State_Id);
-                           Result_Json : constant Json.Json_Value'Class :=
-                             Handle_Post
-                               (Handler    => Handler,
-                                State      => State.all,
-                                Parameters => Parameters);
-                        begin
-                           Response := AWS.Response.Build
-                             (Content_Type  => "text/plain",
-                              Message_Body  => Json.Serialize (Result_Json));
-                        end;
-                     end if;
-
-                  when others =>
-
-                     Response := AWS.Response.Build
-                       (Content_Type  => "text/plain",
-                        Message_Body  => "Method not allowed",
-                        Status_Code   => AWS.Messages.S405);
-               end case;
+                          (Content_Type  => "text/plain",
+                           Message_Body  => "Method not allowed",
+                           Status_Code   => AWS.Messages.S405));
+                  end;
+               end if;
 
                AWS.Response.Set.Add_Header
                  (Response,
@@ -251,7 +208,6 @@ package body Nazar.Web_UI.Routes is
                   "http://localhost:3000");
 
                return Response;
-
             end;
          end if;
       end loop;
@@ -261,35 +217,6 @@ package body Nazar.Web_UI.Routes is
          Message_Body  => "Not found",
          Status_Code   => AWS.Messages.S404);
    end Handle;
-
-   -------------------
-   -- Handle_Create --
-   -------------------
-
-   function Handle_Create
-     (Handler    : Request_Handler;
-      Parameters : Parameter_Container'Class)
-      return State_Interface'Class
-   is
-      pragma Unreferenced (Handler, Parameters);
-   begin
-      return (raise Route_Error with "bad GET request");
-   end Handle_Create;
-
-   ----------------
-   -- Handle_Get --
-   ----------------
-
-   function Handle_Get
-     (Handler    : Request_Handler;
-      State      : State_Interface'Class;
-      Parameters : Parameter_Container'Class)
-      return Concorde.Json.Json_Value'Class
-   is
-      pragma Unreferenced (Handler, State, Parameters);
-   begin
-      return (raise Route_Error with "bad GET request");
-   end Handle_Get;
 
    -------------------------
    -- Handle_Http_Request --
@@ -310,21 +237,6 @@ package body Nazar.Web_UI.Routes is
       end;
    end Handle_Http_Request;
 
-   -----------------
-   -- Handle_Post --
-   -----------------
-
-   function Handle_Post
-     (Handler    : Request_Handler;
-      State      : in out State_Interface'Class;
-      Parameters : Parameter_Container'Class)
-      return Concorde.Json.Json_Value'Class
-   is
-      pragma Unreferenced (Handler, State, Parameters);
-   begin
-      return (raise Route_Error with "bad POST request");
-   end Handle_Post;
-
    ---------------------------
    -- Handle_Socket_Message --
    ---------------------------
@@ -332,17 +244,18 @@ package body Nazar.Web_UI.Routes is
    function Handle_Socket_Message
      (Message : String)
       return String
-   is
-      Json : constant Concorde.Json.Json_Value'Class :=
-        Concorde.Json.Deserialize (Message);
-      State       : constant State_Access :=
-        States.Element (Json.Get_Property ("id"));
-      Result_Json : constant Concorde.Json.Json_Value'Class :=
-        State.Handle_Message
-          (Message    => Json);
-   begin
-      return Result_Json.Serialize;
-   end Handle_Socket_Message;
+   is (Message);
+
+--        Json : constant Nazar.Json.Json_Value'Class :=
+--          Nazar.Json.Deserialize (Message);
+--        State       : constant State_Access :=
+--          States.Element (Json.Get_Property ("id"));
+--        Result_Json : constant Nazar.Json.Json_Value'Class :=
+--          State.Handle_Message
+--            (Message    => Json);
+--     begin
+--        return Result_Json.Serialize;
+--     end Handle_Socket_Message;
 
    -----------
    -- Match --
@@ -434,10 +347,10 @@ package body Nazar.Web_UI.Routes is
 
    function To_Json
      (Container : Parameter_Container)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Json : Concorde.Json.Json_Object do
+      return Json : Nazar.Json.Json_Object do
          for Position in Container.Iterate loop
             Json.Set_Property (String_Maps.Key (Position),
                                String_Maps.Element (Position));

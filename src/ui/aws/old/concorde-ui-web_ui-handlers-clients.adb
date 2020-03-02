@@ -1,4 +1,4 @@
-package body Nazar.Web_UI.Handlers.Clients is
+package body Concorde.UI.Web_UI.Handlers.Clients is
 
    -----------------
    -- Handle_Post --
@@ -50,4 +50,4 @@ package body Nazar.Web_UI.Handlers.Clients is
          Request => Parameters.To_Json);
    end Handle_Post;
 
-end Nazar.Web_UI.Handlers.Clients;
+end Concorde.UI.Web_UI.Handlers.Clients;

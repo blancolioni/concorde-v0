@@ -1,6 +1,6 @@
 with Nazar.Json;
 
-package Nazar.Web_UI.Handlers.Clients is
+package Concorde.UI.Web_UI.Handlers.Clients is
 
    type New_Client_Handler is
      new Routes.Request_Handler with private;
@@ -28,4 +28,4 @@ private
       Parameters : Routes.Parameter_Container'Class)
       return Nazar.Json.Json_Value'Class;
 
-end Nazar.Web_UI.Handlers.Clients;
+end Concorde.UI.Web_UI.Handlers.Clients;

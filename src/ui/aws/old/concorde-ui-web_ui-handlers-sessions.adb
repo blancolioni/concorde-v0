@@ -1,4 +1,4 @@
-package body Nazar.Web_UI.Handlers.Sessions is
+package body Concorde.UI.Web_UI.Handlers.Sessions is
 
    ----------------
    -- Handle_Get --
@@ -15,4 +15,4 @@ package body Nazar.Web_UI.Handlers.Sessions is
       return State.Environment_Value (Parameters.Parameter ("name"));
    end Handle_Get;
 
-end Nazar.Web_UI.Handlers.Sessions;
+end Concorde.UI.Web_UI.Handlers.Sessions;

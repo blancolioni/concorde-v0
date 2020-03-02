@@ -7,17 +7,17 @@ package body Nazar.Web_UI.Requests is
    function Faction_State
      (Game    : Concorde.Game.Game_Type;
       Faction : Faction_Id)
-      return Concorde.Json.Json_Value'Class;
+      return Nazar.Json.Json_Value'Class;
 
    function Faction_Senators
      (Game    : Concorde.Game.Game_Type;
       Faction : Faction_Id)
-      return Concorde.Json.Json_Value'Class;
+      return Nazar.Json.Json_Value'Class;
 
    function Senator_State
      (Game    : Concorde.Game.Game_Type;
       Senator : Senator_Id)
-      return Concorde.Json.Json_Value'Class;
+      return Nazar.Json.Json_Value'Class;
 
    --------------
    -- Continue --
@@ -25,7 +25,7 @@ package body Nazar.Web_UI.Requests is
 
    function Continue
      (Game : in out Concorde.Game.Game_Type)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
       Game.Next_Step;
@@ -38,10 +38,10 @@ package body Nazar.Web_UI.Requests is
 
    function Current_Phase
      (Game : Concorde.Game.Game_Type)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Result : Concorde.Json.Json_Object do
+      return Result : Nazar.Json.Json_Object do
          Result.Set_Property
            ("tag",
               Concorde.Phases.Sequence.Phase (Game.Current_Phase).Name);
@@ -58,13 +58,13 @@ package body Nazar.Web_UI.Requests is
 
    function Faction_Names
      (Game : Concorde.Game.Game_Type)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Result : Concorde.Json.Json_Array do
+      return Result : Nazar.Json.Json_Array do
          for I in Faction_Id loop
             Result.Append
-              (Concorde.Json.String_Value
+              (Nazar.Json.String_Value
                  (Game.Faction_Name (I)));
          end loop;
       end return;
@@ -77,10 +77,10 @@ package body Nazar.Web_UI.Requests is
    function Faction_Senators
      (Game    : Concorde.Game.Game_Type;
       Faction : Faction_Id)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Result : Concorde.Json.Json_Array do
+      return Result : Nazar.Json.Json_Array do
          declare
             Ss : constant Senator_Id_Array :=
               Game.Faction_Senators (Faction);
@@ -98,10 +98,10 @@ package body Nazar.Web_UI.Requests is
 
    function Faction_State
      (Game : Concorde.Game.Game_Type)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Result : Concorde.Json.Json_Array do
+      return Result : Nazar.Json.Json_Array do
          for I in Faction_Id loop
             Result.Append (Faction_State (Game, I));
          end loop;
@@ -115,12 +115,12 @@ package body Nazar.Web_UI.Requests is
    function Faction_State
      (Game    : Concorde.Game.Game_Type;
       Faction : Faction_Id)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
       F : constant Concorde.Factions.Faction_Type'Class :=
         Game.Faction (Faction);
    begin
-      return Result : Concorde.Json.Json_Object do
+      return Result : Nazar.Json.Json_Object do
          Result.Set_Property ("name", Game.Faction_Name (Faction));
          Result.Set_Property
            ("votes", Natural (Game.Faction_Votes (Faction)));
@@ -145,10 +145,10 @@ package body Nazar.Web_UI.Requests is
 
    function Fleet_State
      (Game : Concorde.Game.Game_Type)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Result : Concorde.Json.Json_Object do
+      return Result : Nazar.Json.Json_Object do
          Result.Set_Property ("total", Natural (Game.Total_Fleet_Count));
       end return;
    end Fleet_State;
@@ -159,11 +159,11 @@ package body Nazar.Web_UI.Requests is
 
    function Game_State
      (Game : Concorde.Game.Game_Type)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
 
    begin
-      return Result : Concorde.Json.Json_Object do
+      return Result : Nazar.Json.Json_Object do
          Result.Set_Property ("factions", Faction_State (Game));
          Result.Set_Property ("republic", Republic_State (Game));
       end return;
@@ -175,10 +175,10 @@ package body Nazar.Web_UI.Requests is
 
    function Legion_State
      (Game : Concorde.Game.Game_Type)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Result : Concorde.Json.Json_Object do
+      return Result : Nazar.Json.Json_Object do
          Result.Set_Property ("total", Natural (Game.Total_Legion_Count));
       end return;
    end Legion_State;
@@ -189,10 +189,10 @@ package body Nazar.Web_UI.Requests is
 
    function Republic_State
      (Game : Concorde.Game.Game_Type)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Result : Concorde.Json.Json_Object do
+      return Result : Nazar.Json.Json_Object do
          Result.Set_Property ("currentPhase", Current_Phase (Game));
          Result.Set_Property
            ("treasury", Natural (Game.Current_Treasury));
@@ -215,10 +215,10 @@ package body Nazar.Web_UI.Requests is
    function Senator_State
      (Game    : Concorde.Game.Game_Type;
       Senator : Senator_Id)
-      return Concorde.Json.Json_Value'Class
+      return Nazar.Json.Json_Value'Class
    is
    begin
-      return Result : Concorde.Json.Json_Object do
+      return Result : Nazar.Json.Json_Object do
          Result.Set_Property ("id", Natural (Senator));
          Result.Set_Property ("family", Game.Senator_Name (Senator));
          Result.Set_Property
