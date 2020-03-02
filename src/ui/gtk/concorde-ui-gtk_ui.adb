@@ -1,4 +1,3 @@
-with Ada.Containers.Indefinite_Holders;
 with Ada.Text_IO;
 
 with Glib;
@@ -13,18 +12,7 @@ with Gtk.Window;
 
 with Cairo;
 
-with Concorde.Db.Faction;
-with Concorde.Handles.Faction;
-
-with Concorde.UI.Views.Top;
-with Concorde.UI.Cairo_Views;
-
 package body Concorde.UI.Gtk_UI is
-
-   package View_Object_Holders is
-     new Ada.Containers.Indefinite_Holders
-       (Concorde.UI.Views.View_Object_Interface'Class,
-        Concorde.UI.Views."=");
 
    type Root_Gtk_UI_Record is
      new UI_Interface with
@@ -32,8 +20,6 @@ package body Concorde.UI.Gtk_UI is
          Window     : Gtk.Window.Gtk_Window;
          Draw       : Gtk.Drawing_Area.Gtk_Drawing_Area;
          Surface    : Cairo.Cairo_Surface := Cairo.Null_Surface;
-         View       : Concorde.UI.Cairo_Views.Cairo_View;
-         Top_Object : View_Object_Holders.Holder;
          Width      : Natural := 0;
          Height     : Natural := 0;
       end record;
@@ -106,17 +92,6 @@ package body Concorde.UI.Gtk_UI is
             Self.Get_Allocated_Height);
       Clear (UI.Surface);
 
-      UI.View.Set_Size (UI.Width, UI.Height);
-      UI.View.Draw;
-
-      declare
-         Cr : constant Cairo.Cairo_Context :=
-           Cairo.Create (UI.Surface);
-      begin
-         UI.View.Paint (Cr, 0.0, 0.0);
-         Cairo.Destroy (Cr);
-      end;
-
       return True;
 
    end Configure_Handler;
@@ -176,17 +151,6 @@ package body Concorde.UI.Gtk_UI is
 
       UI.Draw.On_Configure_Event (Configure_Handler'Access);
       UI.Draw.On_Draw (Draw_Handler'Access);
-
-      UI.Top_Object :=
-        View_Object_Holders.To_Holder
-          (Concorde.UI.Views.Top.Top_View
-             (Concorde.Handles.Faction.Get
-                (Concorde.Db.Faction.First_Reference_By_Top_Record
-                     (Concorde.Db.R_Faction))));
-
-      UI.View :=
-        Concorde.UI.Cairo_Views.Create_View
-          (UI.Top_Object.Element);
 
       UI.Window.Maximize;
       UI.Window.Show_All;

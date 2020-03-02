@@ -15,7 +15,7 @@ with Concorde.Paths;
 with Concorde.Color;
 with Concorde.Random;
 
---  with Concorde.UI.Launch;
+with Concorde.UI.Launch;
 
 with Concorde.Calendar;
 with Concorde.Commands.Loader;
@@ -37,11 +37,7 @@ with Concorde.Db.Database;
 with Concorde.Db.Faction;
 with Concorde.Db.User;
 
-with Concorde.UI.Models.Console;
-
 with Nazar.Main;
-with Nazar.Controllers.Console;
-with Nazar.Views.Text_Console;
 
 procedure Concorde.Driver is
    Name_Generator : WL.Random.Names.Name_Generator;
@@ -319,85 +315,45 @@ begin
    Concorde.Updates.Control.Start_Updates;
    Updates_Running := True;
 
-   if Concorde.Options.Batch_Mode
-     or else Concorde.Options.Command_Line
-   then
-      Ada.Text_IO.Put_Line ("C O N C O R D E");
+   if Concorde.Options.Batch_Mode then
+      declare
+         Process     : WL.Processes.Process_Type;
+         Update_Days : constant Natural :=
+           Concorde.Options.Update_Count;
+      begin
+         Process.Start_Bar ("Updating", Update_Days * 24, True);
 
-      if Concorde.Options.Batch_Mode then
-         declare
-            Process     : WL.Processes.Process_Type;
-            Update_Days : constant Natural :=
-              Concorde.Options.Update_Count;
-         begin
-            Process.Start_Bar ("Updating", Update_Days * 24, True);
-
-            for Day_Index in 1 .. Update_Days loop
-               for Hour_Index in 1 .. 24 loop
-                  for Minute_Index in 1 .. 60 loop
-                     Concorde.Calendar.Advance (60.0);
-                     Concorde.Updates.Control.Execute_Pending_Updates;
-                  end loop;
-                  Process.Tick;
+         for Day_Index in 1 .. Update_Days loop
+            for Hour_Index in 1 .. 24 loop
+               for Minute_Index in 1 .. 60 loop
+                  Concorde.Calendar.Advance (60.0);
+                  Concorde.Updates.Control.Execute_Pending_Updates;
                end loop;
+               Process.Tick;
             end loop;
+         end loop;
 
-            Process.Finish;
+         Process.Finish;
 
-         end;
+      end;
 
-         Ada.Text_IO.New_Line;
-      else
+      Ada.Text_IO.New_Line;
 
-         Nazar.Main.Init;
+   else
 
-         declare
-            use Concorde.UI.Models.Console;
-            use Nazar.Controllers.Console;
-            use Nazar.Views.Text_Console;
-            Model : constant Concorde_Console_Model :=
-              Console_Model;
-            View  : constant Nazar_Text_Console_View :=
-              Text_Console_View (Model);
-            Controller : Root_Console_Controller;
-         begin
-            Controller.Start_Console
-              (Model => Model,
-               View  => View);
-         end;
+      Nazar.Main.Init;
 
-         Nazar.Main.Stop;
+      declare
+         UI : constant Concorde.UI.UI_Type :=
+           Concorde.UI.Launch.Get_UI (Concorde.Options.User_Interface);
+      begin
+         UI.Start;
 
-      end if;
+         Ada.Text_IO.Put_Line ("Stopping ...");
 
---        declare
---           User    : constant Concorde.Db.User_Reference :=
---                       Concorde.Db.User.Get_Reference_By_Login ("root");
---           Session : Concorde.Sessions.Concorde_Session :=
---                       Concorde.Sessions.New_Repl_Session (User);
---        begin
---           if Ada.Directories.Exists (".concorderc") then
---              Concorde.Repl.Read (Session, ".concorderc");
---           end if;
---           Concorde.Repl.Execute (Session);
---           Concorde.Sessions.End_Session (Session);
---        end;
---     else
---
---        declare
---           UI : constant Concorde.UI.UI_Type :=
---             Concorde.UI.Launch.Get_UI (Concorde.Options.User_Interface);
---        begin
---           UI.Start;
---
---           Ada.Text_IO.Put ("Press return to exit");
---           Ada.Text_IO.Flush;
---           Ada.Text_IO.Skip_Line;
---           Ada.Text_IO.Put_Line ("Stopping ...");
---
---           UI.Stop ("Server going down");
+      end;
 
---        end;
+      Nazar.Main.Stop;
 
    end if;
 
