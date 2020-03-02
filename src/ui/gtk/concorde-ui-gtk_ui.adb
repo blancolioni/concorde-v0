@@ -70,7 +70,8 @@ package body Concorde.UI.Gtk_UI is
       UI.Window.On_Destroy (Destroy_Handler'Access);
 
       UI.Top_Model :=
-        Concorde.UI.Models.Console.Console_Model;
+        Concorde.UI.Models.Console.Console_Model
+          (Default_Scope => "/home");
       UI.Top_View :=
         Nazar.Views.Gtk_Views.Console.Gtk_Console_View
           (UI.Top_Model);

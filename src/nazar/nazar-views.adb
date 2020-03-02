@@ -72,7 +72,7 @@ package body Nazar.Views is
       View.Base_Model := Nazar.Models.Model_Type (Model);
       View.Base_Model.Add_Observer
         (Model_Observer'(View => View_Type (View)));
-
+      Root_View_Type'Class (View.all).Model_Changed;
    end Set_Model;
 
 end Nazar.Views;

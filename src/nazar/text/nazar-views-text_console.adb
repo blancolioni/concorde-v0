@@ -92,8 +92,8 @@ package body Nazar.Views.Text_Console is
       return View : constant Nazar_Text_Console_View :=
         new Root_Text_Console_View
       do
-         View.Set_Model (Model);
          View.Last_Line := Model.First_Line;
+         View.Set_Model (Model);
          View.Set_Prompt_Text (">");
       end return;
    end Text_Console_View;

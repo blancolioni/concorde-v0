@@ -7,7 +7,9 @@ package Concorde.UI.Models.Console is
 
    type Concorde_Console_Model is access all Root_Console_Model'Class;
 
-   function Console_Model return Concorde_Console_Model;
+   function Console_Model
+     (Default_Scope : String)
+     return Concorde_Console_Model;
 
 private
 

@@ -15,9 +15,13 @@ package body Concorde.UI.Models.Console is
    -- Console_Model --
    -------------------
 
-   function Console_Model return Concorde_Console_Model is
-      Environment : constant Nazar.Models.Environment.Nazar_Environment_Model
-        := new Nazar.Models.Environment.Root_Environment_Model;
+   function Console_Model
+     (Default_Scope : String)
+      return Concorde_Console_Model
+   is
+      use Nazar.Models.Environment;
+      Environment : constant Nazar_Environment_Model :=
+                      new Root_Environment_Model;
 
       procedure Env (Name, Value : String);
 
@@ -36,12 +40,15 @@ package body Concorde.UI.Models.Console is
            Ada.Calendar.Formatting.Image
              (Concorde.Server.Start_Time));
       Env ("VERSION", Concorde.Version.Version_String);
+      Env ("HOME", Default_Scope);
 
       return Model : constant Concorde_Console_Model :=
         new Root_Console_Model
       do
          Model.Initialize
-           (Concorde.UI.Entities.Root, Environment, "/");
+           (Concorde.UI.Entities.Root, Environment, Default_Scope);
+         Model.Put_Line
+           ("Concorde " & Concorde.Version.Version_String);
       end return;
    end Console_Model;
 

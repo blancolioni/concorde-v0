@@ -29,7 +29,8 @@ package body Concorde.UI.Text_UI is
 
    function Get_Text_UI return UI_Type is
       Model : constant Concorde.UI.Models.Console.Concorde_Console_Model :=
-        Concorde.UI.Models.Console.Console_Model;
+                Concorde.UI.Models.Console.Console_Model
+                  (Default_Scope => "/");
       View : constant Root_Text_UI :=
         Root_Text_UI'
           (Nazar.Controllers.Console.Root_Console_Controller with

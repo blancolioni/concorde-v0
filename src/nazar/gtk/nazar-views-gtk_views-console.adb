@@ -1,12 +1,6 @@
-with Ada.Text_IO;
-
 with Nazar.Interfaces.Text_Writer;
 
 package body Nazar.Views.Gtk_Views.Console is
-
-   procedure Put_Class_Line
-     (Class : Nazar.Interfaces.Text_Writer.Text_Class;
-      Line  : String);
 
    ----------------------
    -- Gtk_Console_View --
@@ -34,30 +28,34 @@ package body Nazar.Views.Gtk_Views.Console is
    -------------------
 
    overriding procedure Model_Changed (View : in out Root_Gtk_Console_View) is
+
+      procedure Put_Class_Line
+        (Class : Nazar.Interfaces.Text_Writer.Text_Class;
+         Line  : String);
+
+      --------------------
+      -- Put_Class_Line --
+      --------------------
+
+      procedure Put_Class_Line
+        (Class : Nazar.Interfaces.Text_Writer.Text_Class;
+         Line  : String)
+      is
+         use all type Nazar.Interfaces.Text_Writer.Text_Class;
+      begin
+         case Class is
+            when Standard_Text =>
+               View.Text_Buffer.Insert_At_Cursor (Line & Character'Val (10));
+            when Error_Text =>
+               View.Text_Buffer.Insert_At_Cursor (Line & Character'Val (10));
+         end case;
+      end Put_Class_Line;
+
    begin
       View.Writer_Model.Iterate_Lines
         (Start   => View.Last_Line,
          Process => Put_Class_Line'Access);
    end Model_Changed;
-
-   --------------------
-   -- Put_Class_Line --
-   --------------------
-
-   procedure Put_Class_Line
-     (Class : Nazar.Interfaces.Text_Writer.Text_Class;
-      Line  : String)
-   is
-      use all type Nazar.Interfaces.Text_Writer.Text_Class;
-   begin
-      case Class is
-         when Standard_Text =>
-            Ada.Text_IO.Put_Line (Line);
-         when Error_Text =>
-            Ada.Text_IO.Put_Line
-              (Ada.Text_IO.Standard_Error, Line);
-      end case;
-   end Put_Class_Line;
 
    ---------------------
    -- Set_Prompt_Text --

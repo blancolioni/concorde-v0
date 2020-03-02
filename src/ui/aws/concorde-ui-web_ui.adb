@@ -40,7 +40,8 @@ package body Concorde.UI.Web_UI is
       pragma Unreferenced (Web_UI);
 
       Model : constant Concorde.UI.Models.Console.Concorde_Console_Model :=
-        Concorde.UI.Models.Console.Console_Model;
+                Concorde.UI.Models.Console.Console_Model
+                  ("/home");
       View  : constant Nazar.Web_UI.Views.Web_Console.Nazar_Web_Console_View :=
         Nazar.Web_UI.Views.Web_Console.Web_Console_View (Model);
       Controller : Nazar.Controllers.Console.Root_Console_Controller;
