@@ -14,6 +14,7 @@ package Concorde.Options is
    System_Count            : Natural;
    
    User_Interface          : String;
+   Display_Theme           : String;
    
    Add_Faction             : Boolean;
    Account_Name            : String;

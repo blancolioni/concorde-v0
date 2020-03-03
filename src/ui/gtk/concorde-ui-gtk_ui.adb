@@ -1,6 +1,13 @@
 with Ada.Text_IO;
 
+with Glib.Error;
+
+with Gdk.Display;
+with Gdk.Screen;
+
+with Gtk.Css_Provider;
 with Gtk.Main;
+with Gtk.Style_Context;
 with Gtk.Widget;
 with Gtk.Window;
 
@@ -10,6 +17,9 @@ with Nazar.Controllers.Console;
 with Nazar.Views.Gtk_Views.Console;
 
 with Concorde.UI.Models.Console;
+
+with Concorde.Options;
+with Concorde.Paths;
 
 package body Concorde.UI.Gtk_UI is
 
@@ -68,6 +78,53 @@ package body Concorde.UI.Gtk_UI is
       Gtk.Main.Init;
       Gtk.Window.Gtk_New (UI.Window);
       UI.Window.On_Destroy (Destroy_Handler'Access);
+
+      declare
+         --  use type Glib.Error.GError;
+         use Gtk.Css_Provider;
+         Error    : aliased Glib.Error.GError;
+         Theme_Name : constant String :=
+           Concorde.Options.Display_Theme;
+         Have_Theme : constant Boolean :=
+           Theme_Name /= "";
+         Theme : constant Gtk.Css_Provider.Gtk_Css_Provider :=
+           (if Have_Theme
+            then Gtk.Css_Provider.Get_Named (Theme_Name)
+            else null);
+         Override  : constant Gtk.Css_Provider.Gtk_Css_Provider :=
+           Gtk.Css_Provider.Gtk_Css_Provider_New;
+         Display    : constant Gdk.Display.Gdk_Display :=
+           Gdk.Display.Get_Default;
+         Screen   : constant Gdk.Screen.Gdk_Screen :=
+           Gdk.Screen.Get_Default_Screen (Display);
+      begin
+
+         if not Gtk.Css_Provider.Load_From_Path
+           (Override,
+            Concorde.Paths.Config_File
+              ("theme/gtk/concorde.css"),
+            Error'Access)
+         then
+            Ada.Text_IO.Put_Line
+              (Glib.Error.Get_Message (Error));
+         end if;
+
+--           Gtk.Style_Context.Get_Style_Context (UI.Window).Add_Provider
+--             (+Theme, 600);
+--           Gtk.Style_Context.Get_Style_Context (UI.Window).Add_Provider
+--             (+Override, 700);
+--
+         Gtk.Style_Context.Add_Provider_For_Screen
+           (Screen   => Screen,
+            Provider => +Theme,
+            Priority => 600);
+
+         Gtk.Style_Context.Add_Provider_For_Screen
+           (Screen   => Screen,
+            Provider => +Override,
+            Priority => 700);
+
+      end;
 
       UI.Top_Model :=
         Concorde.UI.Models.Console.Console_Model

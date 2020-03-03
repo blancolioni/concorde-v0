@@ -1,3 +1,5 @@
+with Gtk.Style_Context;
+
 with Nazar.Interfaces.Text_Writer;
 
 package body Nazar.Views.Gtk_Views.Console is
@@ -11,12 +13,16 @@ package body Nazar.Views.Gtk_Views.Console is
         Nazar.Models.Text_Writer.Root_Text_Writer_Model'Class)
       return Nazar_Gtk_Console_View
    is
+      Text_View : constant Gtk.Text_View.Gtk_Text_View :=
+        Gtk.Text_View.Gtk_Text_View_New;
    begin
+      Gtk.Style_Context.Get_Style_Context (Text_View).Add_Class
+        ("nazar-console");
+
       return Result : constant Nazar_Gtk_Console_View :=
         new Root_Gtk_Console_View
       do
-         Result.Text_View :=
-           Gtk.Text_View.Gtk_Text_View_New;
+         Result.Text_View := Text_View;
          Result.Text_Buffer := Result.Text_View.Get_Buffer;
          Result.Set_Model (Model);
          Result.Initialize (Result.Text_View);
