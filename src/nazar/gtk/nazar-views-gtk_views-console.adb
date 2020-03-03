@@ -9,8 +9,7 @@ package body Nazar.Views.Gtk_Views.Console is
    ----------------------
 
    function Gtk_Console_View
-     (Model : not null access
-        Nazar.Models.Text_Writer.Root_Text_Writer_Model'Class)
+     (Model : not null access Nazar.Models.Console.Root_Console_Model'Class)
       return Nazar_Gtk_Console_View
    is
       Text_View : constant Gtk.Text_View.Gtk_Text_View :=
@@ -58,20 +57,11 @@ package body Nazar.Views.Gtk_Views.Console is
       end Put_Class_Line;
 
    begin
-      View.Writer_Model.Iterate_Lines
+      View.Console_Model.Iterate_Lines
         (Start   => View.Last_Line,
          Process => Put_Class_Line'Access);
+      View.Text_Buffer.Insert_At_Cursor
+        (View.Console_Model.Get_Prompt_Text);
    end Model_Changed;
-
-   ---------------------
-   -- Set_Prompt_Text --
-   ---------------------
-
-   overriding procedure Set_Prompt_Text
-     (View : in out Root_Gtk_Console_View; Prompt_Text : String)
-   is
-   begin
-      View.Prompt := Ada.Strings.Unbounded.To_Unbounded_String (Prompt_Text);
-   end Set_Prompt_Text;
 
 end Nazar.Views.Gtk_Views.Console;

@@ -16,7 +16,7 @@ package body Nazar.Views.Text_Console is
      (View : in out Root_Text_Console_View)
    is
    begin
-      View.Writer_Model.Iterate_Lines
+      View.Console_Model.Iterate_Lines
         (Start   => View.Last_Line,
          Process => Put_Class_Line'Access);
    end Model_Changed;
@@ -40,18 +40,6 @@ package body Nazar.Views.Text_Console is
       end case;
    end Put_Class_Line;
 
-   ---------------------
-   -- Set_Prompt_Text --
-   ---------------------
-
-   overriding procedure Set_Prompt_Text
-     (View        : in out Root_Text_Console_View;
-      Prompt_Text : String)
-   is
-   begin
-      View.Prompt := Ada.Strings.Unbounded.To_Unbounded_String (Prompt_Text);
-   end Set_Prompt_Text;
-
    ----------
    -- Show --
    ----------
@@ -61,8 +49,7 @@ package body Nazar.Views.Text_Console is
    is
    begin
       loop
-         Ada.Text_IO.Put
-           (Ada.Strings.Unbounded.To_String (View.Prompt));
+         Ada.Text_IO.Put (View.Console_Model.Get_Prompt_Text);
          Ada.Text_IO.Flush;
          declare
             Line : constant String := Ada.Text_IO.Get_Line;
@@ -84,8 +71,7 @@ package body Nazar.Views.Text_Console is
    -----------------------
 
    function Text_Console_View
-     (Model : not null access Nazar.Models.Text_Writer
-      .Root_Text_Writer_Model'Class)
+     (Model : not null access Nazar.Models.Console.Root_Console_Model'Class)
       return Nazar_Text_Console_View
    is
    begin
@@ -94,7 +80,6 @@ package body Nazar.Views.Text_Console is
       do
          View.Last_Line := Model.First_Line;
          View.Set_Model (Model);
-         View.Set_Prompt_Text (">");
       end return;
    end Text_Console_View;
 

@@ -43,17 +43,6 @@ package body Nazar.Web_UI.Views.Web_Console is
       null;
    end Model_Changed;
 
-   ---------------------
-   -- Set_Prompt_Text --
-   ---------------------
-
-   overriding procedure Set_Prompt_Text
-     (View : in out Root_Web_Console_View; Prompt_Text : String)
-   is
-   begin
-      View.Prompt := Ada.Strings.Unbounded.To_Unbounded_String (Prompt_Text);
-   end Set_Prompt_Text;
-
    ----------
    -- Show --
    ----------
@@ -68,8 +57,7 @@ package body Nazar.Web_UI.Views.Web_Console is
    ----------------------
 
    function Web_Console_View
-     (Model : not null access
-        Nazar.Models.Text_Writer.Root_Text_Writer_Model'Class)
+     (Model : not null access Nazar.Models.Console.Root_Console_Model'Class)
       return Nazar_Web_Console_View
    is
    begin

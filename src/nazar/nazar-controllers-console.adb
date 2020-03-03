@@ -16,8 +16,6 @@ package body Nazar.Controllers.Console is
         Root_Console_Controller'Class (User_Data);
    begin
       Controller.Model.Execute_Command_Line (Command_Line);
-      Controller.View.Set_Prompt_Text
-        (Controller.Model.Get_Prompt_Text);
    end Handle_Command;
 
    -------------------
@@ -32,7 +30,6 @@ package body Nazar.Controllers.Console is
    begin
       Controller.Model := Model_Access (Model);
       Controller.View  := View_Access (View);
-      Controller.View.Set_Prompt_Text (Model.Get_Prompt_Text);
       View.On_Command (Handle_Command'Access, Controller);
       View.Show;
    end Start_Console;
