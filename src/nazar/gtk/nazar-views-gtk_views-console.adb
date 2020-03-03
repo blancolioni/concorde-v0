@@ -1,8 +1,20 @@
+with Gdk.Event;
+with Gdk.Types.Keysyms;
+
 with Gtk.Style_Context;
 
 with Nazar.Interfaces.Text_Writer;
 
 package body Nazar.Views.Gtk_Views.Console is
+
+   function From_Object is
+     new Nazar.Views.Gtk_Views.From_Gtk_Object
+       (Root_Gtk_Console_View, Nazar_Gtk_Console_View);
+
+   function On_Text_View_Key_Press
+     (Self  : access Glib.Object.GObject_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Key)
+      return Boolean;
 
    ----------------------
    -- Gtk_Console_View --
@@ -25,6 +37,10 @@ package body Nazar.Views.Gtk_Views.Console is
          Result.Text_Buffer := Result.Text_View.Get_Buffer;
          Result.Set_Model (Model);
          Result.Initialize (Result.Text_View);
+
+         Text_View.On_Key_Press_Event
+           (On_Text_View_Key_Press'Access, Result.Object);
+
       end return;
    end Gtk_Console_View;
 
@@ -63,5 +79,39 @@ package body Nazar.Views.Gtk_Views.Console is
       View.Text_Buffer.Insert_At_Cursor
         (View.Console_Model.Get_Prompt_Text);
    end Model_Changed;
+
+   function On_Text_View_Key_Press
+     (Self  : access Glib.Object.GObject_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Key)
+      return Boolean
+   is
+      View : constant Nazar_Gtk_Console_View := From_Object (Self);
+   begin
+
+      case Event.Keyval is
+         when Gdk.Types.Keysyms.GDK_Return =>
+            declare
+               Command : constant String :=
+                 Ada.Strings.Unbounded.To_String (View.Command_Buffer);
+            begin
+               View.Text_Buffer.Insert_At_Cursor ((1 => Character'Val (10)));
+               if Command = "" then
+                  View.Text_Buffer.Insert_At_Cursor
+                    (View.Console_Model.Get_Prompt_Text);
+               else
+                  View.Emit_Command_Signal (Command);
+               end if;
+               View.Command_Buffer :=
+                 Ada.Strings.Unbounded.Null_Unbounded_String;
+               return True;
+            end;
+         when 32 .. 126 =>
+            Ada.Strings.Unbounded.Append (View.Command_Buffer,
+                                          (1 => Character'Val (Event.Keyval)));
+            return False;
+         when others =>
+            return True;
+      end case;
+   end On_Text_View_Key_Press;
 
 end Nazar.Views.Gtk_Views.Console;

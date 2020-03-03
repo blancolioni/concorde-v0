@@ -5,11 +5,15 @@ package body Nazar.Views.Gtk_Views is
    ----------------
 
    procedure Initialize
-     (View : in out Root_Gtk_View_Type'Class;
-      Top  :        not null access Gtk.Widget.Gtk_Widget_Record'Class)
+     (View : not null access Root_Gtk_View_Type'Class;
+      Top  : not null access Gtk.Widget.Gtk_Widget_Record'Class)
    is
    begin
       View.Top_Widget := Gtk.Widget.Gtk_Widget (Top);
+      View.Self :=
+        new Gtk_View_Object_Record'(Glib.Object.GObject_Record with
+                                      View => Nazar_Gtk_View (View));
+      View.Self.Initialize;
    end Initialize;
 
    ----------

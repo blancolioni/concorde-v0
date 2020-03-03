@@ -1,3 +1,4 @@
+private with Ada.Strings.Unbounded;
 private with Gtk.Text_Buffer;
 private with Gtk.Text_View;
 
@@ -25,9 +26,10 @@ private
      new Root_Gtk_View_Type
      and Nazar.Views.Console.Console_View_Interface with
       record
-         Last_Line   : Nazar.Models.Text_Writer.Line_Cursor;
-         Text_View   : Gtk.Text_View.Gtk_Text_View;
-         Text_Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
+         Last_Line      : Nazar.Models.Text_Writer.Line_Cursor;
+         Text_View      : Gtk.Text_View.Gtk_Text_View;
+         Text_Buffer    : Gtk.Text_Buffer.Gtk_Text_Buffer;
+         Command_Buffer : Ada.Strings.Unbounded.Unbounded_String;
       end record;
 
    overriding procedure Model_Changed
