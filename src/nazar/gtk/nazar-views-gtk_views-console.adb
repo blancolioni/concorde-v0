@@ -80,6 +80,10 @@ package body Nazar.Views.Gtk_Views.Console is
         (View.Console_Model.Get_Prompt_Text);
    end Model_Changed;
 
+   ----------------------------
+   -- On_Text_View_Key_Press --
+   ----------------------------
+
    function On_Text_View_Key_Press
      (Self  : access Glib.Object.GObject_Record'Class;
       Event : Gdk.Event.Gdk_Event_Key)

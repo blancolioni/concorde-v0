@@ -13,14 +13,22 @@ with Gtk.Window;
 
 with Cairo;
 
+with Nazar.Controllers.Draw;
+with Nazar.Models.Draw;
+
 with Nazar.Models.Layout;
 
 with Nazar.Views.Gtk_Views.Console;
+with Nazar.Views.Gtk_Views.Draw;
 with Nazar.Views.Gtk_Views.Layout;
 
 with Nazar.Controllers.Console;
 
 with Concorde.UI.Models.Console;
+with Concorde.UI.Models.Galaxy;
+
+with Concorde.Handles.Faction;
+with Concorde.Db.Faction;
 
 with Concorde.Options;
 with Concorde.Paths;
@@ -113,11 +121,6 @@ package body Concorde.UI.Gtk_UI is
               (Glib.Error.Get_Message (Error));
          end if;
 
---           Gtk.Style_Context.Get_Style_Context (UI.Window).Add_Provider
---             (+Theme, 600);
---           Gtk.Style_Context.Get_Style_Context (UI.Window).Add_Provider
---             (+Override, 700);
---
          Gtk.Style_Context.Add_Provider_For_Screen
            (Screen   => Screen,
             Provider => +Theme,
@@ -134,25 +137,35 @@ package body Concorde.UI.Gtk_UI is
          use Nazar.Controllers.Console;
          use Nazar.Views.Gtk_Views.Console;
          use Nazar.Views.Gtk_Views.Layout;
-         Console          : constant Models.Console.Concorde_Console_Model :=
-           Models.Console.Console_Model
-             (Default_Scope => "/home");
-         Left             : constant Nazar_Gtk_Console_View :=
-           Gtk_Console_View (Console);
-         Right            : constant Nazar_Gtk_Console_View :=
-           Gtk_Console_View (Console);
-         Left_Controller  : Root_Console_Controller;
-         Right_Controller : Root_Console_Controller;
-         Layout_Model     : constant Nazar.Models.Layout.Nazar_Layout_Model :=
-           Nazar.Models.Layout.Layout_Model_New;
-         Layout_View      : constant Nazar_Gtk_Layout_View :=
-           Gtk_Layout_View (Layout_Model);
-      begin
-         Left_Controller.Start_Console (Console, Left);
-         Right_Controller.Start_Console (Console, Right);
+         Console            : constant Models.Console.Concorde_Console_Model :=
+                                Models.Console.Console_Model
+                                  (Default_Scope => "/home");
+         Galaxy_Model       : constant Nazar.Models.Draw.Nazar_Draw_Model :=
+                                Concorde.UI.Models.Galaxy.Galaxy_Model
+                                  (Concorde.Handles.Faction.Get
+                                     (Concorde.Db.Faction
+                                      .First_Reference_By_Top_Record
+                                        (Concorde.Db.R_Faction)));
 
-         Layout_Model.Attach (Left, 0, 1, 0, 1);
-         Layout_Model.Attach (Right, 1, 2, 0, 1);
+         Galaxy_Controller  : Nazar.Controllers.Draw.Root_Draw_Controller;
+         Galaxy_View        : constant Nazar.Views.Gtk_Views.Draw
+           .Nazar_Gtk_Draw_View :=
+             Nazar.Views.Gtk_Views.Draw.Gtk_Draw_View
+               (Galaxy_Model);
+         Console_View       : constant Nazar_Gtk_Console_View :=
+                                Gtk_Console_View (Console);
+         Console_Controller : Root_Console_Controller;
+         Layout_Model        : constant Nazar.Models.Layout
+           .Nazar_Layout_Model :=
+             Nazar.Models.Layout.Layout_Model_New;
+         Layout_View        : constant Nazar_Gtk_Layout_View :=
+                                Gtk_Layout_View (Layout_Model);
+      begin
+         Galaxy_Controller.Start_Draw (Galaxy_Model, Galaxy_View);
+         Console_Controller.Start_Console (Console, Console_View);
+
+         Layout_Model.Attach (Galaxy_View, 0, 1, 0, 1);
+         Layout_Model.Attach (Console_View, 1, 2, 0, 1);
 
          UI.Top_View := Nazar.Views.Gtk_Views.Nazar_Gtk_View (Layout_View);
          UI.Top_Model := Nazar.Models.Model_Type (Layout_Model);

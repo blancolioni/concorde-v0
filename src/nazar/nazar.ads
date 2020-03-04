@@ -7,6 +7,12 @@ package Nazar is
 
    type Nazar_Unit_Float is new Nazar_Float range 0.0 .. 1.0;
 
+   type Rectangle is
+      record
+         X, Y : Nazar_Float := 0.0;
+         W, H : Nazar_Float := 1.0;
+      end record;
+
    type Nazar_Object_Interface is interface;
 
    function Guid (Object : Nazar_Object_Interface)
