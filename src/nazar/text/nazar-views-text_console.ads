@@ -24,6 +24,11 @@ private
          Last_Line : Nazar.Models.Text_Writer.Line_Cursor;
       end record;
 
+   overriding function Class_Name
+     (View : Root_Text_Console_View)
+      return String
+   is ("nazar-console-view");
+
    overriding procedure Show
      (View : in out Root_Text_Console_View);
 

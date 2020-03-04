@@ -13,4 +13,10 @@ package Nazar is
                   return WL.Guids.Guid
                   is abstract;
 
+   function Name (Object : Nazar_Object_Interface) return String
+                  is abstract;
+
+   function Class_Name (Object : Nazar_Object_Interface) return String
+                        is abstract;
+
 end Nazar;

@@ -160,6 +160,11 @@ private
          Commands    : Command_Maps.Map;
       end record;
 
+   overriding function Class_Name
+     (Model : Root_Console_Model)
+      return String
+   is ("nazar-console-model");
+
    function Get_Prompt_Text
      (Model : Root_Console_Model'Class)
       return String

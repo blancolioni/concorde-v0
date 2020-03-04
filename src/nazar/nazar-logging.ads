@@ -19,4 +19,13 @@ package Nazar.Logging is
      (Priority : Message_Priority;
       Message  : String);
 
+   procedure Log
+     (Object  : Nazar_Object_Interface'Class;
+      Message : String);
+
+   procedure Log
+     (Object   : Nazar_Object_Interface'Class;
+      Priority : Message_Priority;
+      Message  : String);
+
 end Nazar.Logging;

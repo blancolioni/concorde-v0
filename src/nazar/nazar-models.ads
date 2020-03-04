@@ -1,4 +1,6 @@
 private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
+private with Ada.Strings.Unbounded;
+private with Nazar.Names;
 
 with Nazar.Interfaces.Properties;
 
@@ -18,6 +20,10 @@ package Nazar.Models is
    subtype Model_Class is Root_Model_Type'Class;
 
    type Model_Type is access all Root_Model_Type'Class;
+
+   overriding function Name
+     (Model : Root_Model_Type)
+      return String;
 
    procedure Initialize
      (Model : in out Root_Model_Type);
@@ -45,7 +51,9 @@ private
      abstract new Nazar.Interfaces.Properties.Root_Property_Container
        and Nazar_Object_Interface with
       record
-         Id         : WL.Guids.Guid;
+         Id         : WL.Guids.Guid := WL.Guids.New_Guid;
+         Model_Name : Ada.Strings.Unbounded.Unbounded_String :=
+                        Nazar.Names.Next_Name;
          Observers  : Observer_Lists.List;
       end record;
 
@@ -53,5 +61,10 @@ private
      (Model : Root_Model_Type)
       return WL.Guids.Guid
    is (Model.Id);
+
+   overriding function Name
+     (Model : Root_Model_Type)
+      return String
+   is (Ada.Strings.Unbounded.To_String (Model.Model_Name));
 
 end Nazar.Models;

@@ -32,6 +32,11 @@ private
          Command_Buffer : Ada.Strings.Unbounded.Unbounded_String;
       end record;
 
+   overriding function Class_Name
+     (View : Root_Gtk_Console_View)
+      return String
+   is ("nazar-gtk-console-view");
+
    overriding procedure Model_Changed
      (View : in out Root_Gtk_Console_View);
 

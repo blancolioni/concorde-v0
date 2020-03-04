@@ -56,6 +56,11 @@ private
          Active_Path   : String_Vectors.Vector;
       end record;
 
+   overriding function Class_Name
+     (Model : Root_Scope_Model)
+      return String
+   is ("nazar-scope-model");
+
    overriding function Get_String
      (Model  : Root_Scope_Model)
       return String

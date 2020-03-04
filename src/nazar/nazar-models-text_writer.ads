@@ -67,4 +67,9 @@ private
          Lines         : Line_Lists.List;
       end record;
 
+   overriding function Class_Name
+     (Model : Root_Text_Writer_Model)
+      return String
+   is ("nazar-text-writer-model");
+
 end Nazar.Models.Text_Writer;

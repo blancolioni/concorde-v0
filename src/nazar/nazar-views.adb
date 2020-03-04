@@ -1,3 +1,5 @@
+with Nazar.Logging;
+
 package body Nazar.Views is
 
    type Model_Observer is
@@ -69,6 +71,8 @@ package body Nazar.Views is
       Model : not null access Nazar.Models.Root_Model_Type'Class)
    is
    begin
+      Nazar.Logging.Log
+        (View.all, "set model to " & Model.Class_Name & " " & Model.Name);
       View.Base_Model := Nazar.Models.Model_Type (Model);
       View.Base_Model.Add_Observer
         (Model_Observer'(View => View_Type (View)));

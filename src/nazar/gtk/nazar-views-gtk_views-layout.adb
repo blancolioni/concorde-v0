@@ -1,5 +1,7 @@
 with Ada.Containers.Doubly_Linked_Lists;
 
+with Nazar.Logging;
+
 package body Nazar.Views.Gtk_Views.Layout is
 
    ---------------------
@@ -16,9 +18,14 @@ package body Nazar.Views.Gtk_Views.Layout is
         Gtk.Grid.Gtk_Grid_New;
    begin
       View.Initialize (Grid);
+      View.Grid := Grid;
       View.Set_Model (Model);
       return View;
    end Gtk_Layout_View;
+
+   -------------------
+   -- Model_Changed --
+   -------------------
 
    overriding procedure Model_Changed
      (View : in out Root_Gtk_Layout_View)
@@ -36,6 +43,10 @@ package body Nazar.Views.Gtk_Views.Layout is
          Left, Right : Natural;
          Top, Bottom : Natural);
 
+      -----------------
+      -- Check_Model --
+      -----------------
+
       procedure Check_Model
         (Item        : not null access Nazar_Object_Interface'Class;
          Left, Right : Natural;
@@ -45,6 +56,8 @@ package body Nazar.Views.Gtk_Views.Layout is
            Nazar_Gtk_View (Item);
       begin
          if not View.Contains (Child) then
+            Child.Widget.Set_Hexpand (True);
+            Child.Widget.Set_Vexpand (True);
             View.Grid.Attach
               (Child  => Child.Widget,
                Left   => Glib.Gint (Left),
@@ -52,6 +65,7 @@ package body Nazar.Views.Gtk_Views.Layout is
                Width  => Glib.Gint (Right - Left),
                Height => Glib.Gint (Bottom - Top));
             View.Insert (Child);
+            Child.Widget.Show_All;
          end if;
       end Check_Model;
 
@@ -69,6 +83,7 @@ package body Nazar.Views.Gtk_Views.Layout is
       end Check_View;
 
    begin
+      Nazar.Logging.Log (View, "model changed");
       View.Iterate (Check_View'Access);
 
       for Child of Removed_Views loop

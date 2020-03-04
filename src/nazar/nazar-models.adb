@@ -3,6 +3,11 @@ package body Nazar.Models is
    type Null_Model_Record is
      new Root_Model_Type with null record;
 
+   overriding function Class_Name
+     (Model : Null_Model_Record)
+      return String
+   is ("null-model");
+
    ------------------
    -- Add_Observer --
    ------------------
@@ -23,7 +28,6 @@ package body Nazar.Models is
      (Model : in out Root_Model_Type)
    is
    begin
-      Model.Id := WL.Guids.New_Guid;
       Model.Declare_Property ("identifier", "");
    end Initialize;
 
@@ -48,7 +52,8 @@ package body Nazar.Models is
    begin
       return Null_Model_Record'
         (Nazar.Interfaces.Properties.Root_Property_Container with
-           Id        => WL.Guids.Null_Guid,
+         Id        => WL.Guids.Null_Guid,
+         Model_Name => <>,
          Observers => <>);
    end Null_Model;
 

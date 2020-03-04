@@ -36,6 +36,15 @@ package body Nazar.Views.Layout is
 
       procedure Delete (Container : in out Layout_Container);
 
+      ------------
+      -- Delete --
+      ------------
+
+      procedure Delete (Container : in out Layout_Container) is
+      begin
+         Container.Contents.Delete (Position);
+      end Delete;
+
    begin
       for It in Layout.Container.Contents.Iterate loop
          if Cell_Content_Lists.Element (It).View.Guid
@@ -58,9 +67,23 @@ package body Nazar.Views.Layout is
      (Layout : in out Layout_View_Interface'Class;
       Item   :        not null access Root_View_Type'Class)
    is
+      procedure Insert
+        (Container : in out Layout_Container);
+
+      ------------
+      -- Insert --
+      ------------
+
+      procedure Insert
+        (Container : in out Layout_Container)
+      is
+      begin
+         Container.Contents.Append ((View => View_Type (Item)));
+      end Insert;
+
    begin
-      pragma Compile_Time_Warning (Standard.True, "Insert unimplemented");
-      raise Program_Error with "Unimplemented procedure Insert";
+      Layout.Update_Container (Insert'Access);
+
    end Insert;
 
    -------------
@@ -72,8 +95,9 @@ package body Nazar.Views.Layout is
       Process : not null access procedure (Item : View_Type))
    is
    begin
-      pragma Compile_Time_Warning (Standard.True, "Iterate unimplemented");
-      raise Program_Error with "Unimplemented procedure Iterate";
+      for Item of Layout.Container.Contents loop
+         Process (Item.View);
+      end loop;
    end Iterate;
 
    ----------------------
@@ -87,6 +111,19 @@ package body Nazar.Views.Layout is
    is
       procedure Set (Container : in out Layout_Container);
 
+      ---------
+      -- Set --
+      ---------
+
+      procedure Set (Container : in out Layout_Container) is
+      begin
+         while Column_Index > Container.Column_Sizes.Last_Index loop
+            Container.Column_Sizes.Append
+              ((Nazar.Measurements.Proportional, 1.0));
+         end loop;
+         Container.Column_Sizes (Column_Index) := Width;
+      end Set;
+
    begin
       Layout.Update_Container (Set'Access);
    end Set_Column_Width;
@@ -96,10 +133,24 @@ package body Nazar.Views.Layout is
    --------------------
 
    procedure Set_Row_Height
-     (Layout : in out Layout_View_Interface'Class; Row_Index : Positive;
-      Height :        Nazar.Measurements.Nazar_Measurement)
+     (Layout    : in out Layout_View_Interface'Class;
+      Row_Index : Positive;
+      Height    : Nazar.Measurements.Nazar_Measurement)
    is
       procedure Set (Container : in out Layout_Container);
+
+      ---------
+      -- Set --
+      ---------
+
+      procedure Set (Container : in out Layout_Container) is
+      begin
+         while Row_Index > Container.Row_Sizes.Last_Index loop
+            Container.Row_Sizes.Append
+              ((Nazar.Measurements.Proportional, 1.0));
+         end loop;
+         Container.Row_Sizes (Row_Index) := Height;
+      end Set;
 
    begin
       Layout.Update_Container (Set'Access);

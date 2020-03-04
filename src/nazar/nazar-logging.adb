@@ -29,6 +29,38 @@ package body Nazar.Logging is
       end if;
    end Log;
 
+   ---------
+   -- Log --
+   ---------
+
+   procedure Log
+     (Object   : Nazar_Object_Interface'Class;
+      Priority : Message_Priority;
+      Message  : String)
+   is
+      HT : constant Character := Character'Val (9);
+   begin
+      if Log_Started
+        and then Priority >= Log_Priority
+      then
+         Log (WL.Guids.To_String (Object.Guid)
+              & HT & Object.Name & HT & Object.Class_Name & HT
+              & Message);
+      end if;
+   end Log;
+
+   ---------
+   -- Log --
+   ---------
+
+   procedure Log
+     (Object   : Nazar_Object_Interface'Class;
+      Message  : String)
+   is
+   begin
+      Log (Object, Default_Minimum_Priority, Message);
+   end Log;
+
    ----------------------
    -- Set_Log_Priority --
    ----------------------

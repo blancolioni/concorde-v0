@@ -1,3 +1,6 @@
+private with Ada.Strings.Unbounded;
+private with Nazar.Names;
+
 with WL.Guids;
 
 with Nazar.Interfaces.Properties;
@@ -33,6 +36,10 @@ package Nazar.Views is
    overriding function Guid
      (View : Root_View_Type)
       return WL.Guids.Guid;
+
+   overriding function Name
+     (View : Root_View_Type)
+      return String;
 
    overriding function Model
      (View : Root_View_Type)
@@ -71,10 +78,17 @@ private
      abstract new Nazar.Interfaces.Properties.Root_Property_Container
      and Nazar_View_Interface with
       record
-         Id         : WL.Guids.Guid;
+         Id         : WL.Guids.Guid := WL.Guids.New_Guid;
+         View_Name  : Ada.Strings.Unbounded.Unbounded_String :=
+                        Nazar.Names.Next_Name;
          Dispatch   : Nazar.Signals.Signal_Handler_Container;
          Base_Model : Nazar.Models.Model_Type;
       end record;
+
+   overriding function Name
+     (View : Root_View_Type)
+      return String
+   is (Ada.Strings.Unbounded.To_String (View.View_Name));
 
    overriding function Guid
      (View : Root_View_Type)

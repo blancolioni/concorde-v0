@@ -159,6 +159,7 @@ package body Nazar.Models.Scope is
         new Root_Scope_Model'
           (Nazar.Interfaces.Properties.Root_Property_Container with
            Id           => <>,
+           Model_Name   => <>,
            Observers    => <>,
            Is_Valid     => True,
            Root         => Node_Reference_Holders.To_Holder (Root_Node),

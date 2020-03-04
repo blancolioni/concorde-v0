@@ -26,6 +26,11 @@ private
          Grid   : Gtk.Grid.Gtk_Grid;
       end record;
 
+   overriding function Class_Name
+     (View : Root_Gtk_Layout_View)
+      return String
+   is ("nazar-gtk-layout-view");
+
    overriding function Container
      (View : Root_Gtk_Layout_View)
       return Nazar.Views.Layout.Layout_Container

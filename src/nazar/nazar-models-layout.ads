@@ -45,4 +45,15 @@ private
          Cells : Cell_Content_Lists.List;
       end record;
 
+   overriding function Class_Name
+     (Model : Root_Layout_Model)
+      return String
+   is ("nazar-layout-model");
+
+   function Contains
+     (Layout : Root_Layout_Model;
+      Child  : not null access Nazar_Object_Interface'Class)
+      return Boolean
+   is (for some Cell of Layout.Cells => Cell.Item = Cell_Item (Child));
+
 end Nazar.Models.Layout;
