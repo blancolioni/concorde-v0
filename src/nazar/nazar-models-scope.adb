@@ -158,13 +158,14 @@ package body Nazar.Models.Scope is
       return Model : constant Nazar_Scope_Model :=
         new Root_Scope_Model'
           (Nazar.Interfaces.Properties.Root_Property_Container with
+           Id           => <>,
            Observers    => <>,
            Is_Valid     => True,
            Root         => Node_Reference_Holders.To_Holder (Root_Node),
            Default_Path => Split_Path (Default_Scope),
            Active_Path  => Split_Path (Default_Scope))
       do
-         null;
+         Model.Initialize;
       end return;
    end Scope_Model;
 

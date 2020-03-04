@@ -12,6 +12,7 @@ package Nazar.Models is
 
    type Root_Model_Type is
      abstract new Nazar.Interfaces.Properties.Property_Container_Interface
+     and Nazar_Object_Interface
    with private;
 
    subtype Model_Class is Root_Model_Type'Class;
@@ -32,6 +33,8 @@ package Nazar.Models is
    procedure Notify_Observers
      (Model : Root_Model_Type'Class);
 
+   function Null_Model return Root_Model_Type'Class;
+
 private
 
    package Observer_Lists is
@@ -39,9 +42,16 @@ private
        (Model_Observer_Interface'Class);
 
    type Root_Model_Type is
-     abstract new Nazar.Interfaces.Properties.Root_Property_Container with
+     abstract new Nazar.Interfaces.Properties.Root_Property_Container
+       and Nazar_Object_Interface with
       record
-         Observers : Observer_Lists.List;
+         Id         : WL.Guids.Guid;
+         Observers  : Observer_Lists.List;
       end record;
+
+   overriding function Guid
+     (Model : Root_Model_Type)
+      return WL.Guids.Guid
+   is (Model.Id);
 
 end Nazar.Models;

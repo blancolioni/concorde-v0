@@ -58,7 +58,7 @@ package Nazar.Views is
 
    type Configure_Callback is access
      function (View : not null access Root_View_Type'Class;
-               Width, Height : Measure)
+               Width, Height : Nazar_Float)
                return Boolean;
 
    procedure On_Configure

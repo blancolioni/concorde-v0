@@ -13,8 +13,12 @@ with Gtk.Window;
 
 with Cairo;
 
-with Nazar.Controllers.Console;
+with Nazar.Models.Layout;
+
 with Nazar.Views.Gtk_Views.Console;
+with Nazar.Views.Gtk_Views.Layout;
+
+with Nazar.Controllers.Console;
 
 with Concorde.UI.Models.Console;
 
@@ -27,9 +31,9 @@ package body Concorde.UI.Gtk_UI is
      new UI_Interface with
       record
          Window         : Gtk.Window.Gtk_Window;
-         Top_View       : Nazar.Views.Gtk_Views.Console.Nazar_Gtk_Console_View;
-         Top_Model      : Concorde.UI.Models.Console.Concorde_Console_Model;
-         Top_Controller : Nazar.Controllers.Console.Root_Console_Controller;
+         Top_View       : Nazar.Views.Gtk_Views.Nazar_Gtk_View;
+         Top_Model      : Nazar.Models.Model_Type;
+         Top_Controller : Nazar.Controllers.Controller_Type;
          Surface        : Cairo.Cairo_Surface := Cairo.Null_Surface;
          Width          : Natural := 0;
          Height         : Natural := 0;
@@ -126,14 +130,33 @@ package body Concorde.UI.Gtk_UI is
 
       end;
 
-      UI.Top_Model :=
-        Concorde.UI.Models.Console.Console_Model
-          (Default_Scope => "/home");
-      UI.Top_View :=
-        Nazar.Views.Gtk_Views.Console.Gtk_Console_View
-          (UI.Top_Model);
-      UI.Top_Controller.Start_Console
-        (UI.Top_Model, UI.Top_View);
+      declare
+         use Nazar.Controllers.Console;
+         use Nazar.Views.Gtk_Views.Console;
+         use Nazar.Views.Gtk_Views.Layout;
+         Console          : constant Models.Console.Concorde_Console_Model :=
+           Models.Console.Console_Model
+             (Default_Scope => "/home");
+         Left             : constant Nazar_Gtk_Console_View :=
+           Gtk_Console_View (Console);
+         Right            : constant Nazar_Gtk_Console_View :=
+           Gtk_Console_View (Console);
+         Left_Controller  : Root_Console_Controller;
+         Right_Controller : Root_Console_Controller;
+         Layout_Model     : constant Nazar.Models.Layout.Nazar_Layout_Model :=
+           Nazar.Models.Layout.Layout_Model_New;
+         Layout_View      : constant Nazar_Gtk_Layout_View :=
+           Gtk_Layout_View (Layout_Model);
+      begin
+         Left_Controller.Start_Console (Console, Left);
+         Right_Controller.Start_Console (Console, Right);
+
+         Layout_Model.Attach (Left, 0, 1, 0, 1);
+         Layout_Model.Attach (Right, 1, 2, 0, 1);
+
+         UI.Top_View := Nazar.Views.Gtk_Views.Nazar_Gtk_View (Layout_View);
+         UI.Top_Model := Nazar.Models.Model_Type (Layout_Model);
+      end;
 
       UI.Window.Add (UI.Top_View.Widget);
 

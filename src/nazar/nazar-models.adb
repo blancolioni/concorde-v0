@@ -1,5 +1,8 @@
 package body Nazar.Models is
 
+   type Null_Model_Record is
+     new Root_Model_Type with null record;
+
    ------------------
    -- Add_Observer --
    ------------------
@@ -20,6 +23,7 @@ package body Nazar.Models is
      (Model : in out Root_Model_Type)
    is
    begin
+      Model.Id := WL.Guids.New_Guid;
       Model.Declare_Property ("identifier", "");
    end Initialize;
 
@@ -35,6 +39,18 @@ package body Nazar.Models is
          Observer.Notify;
       end loop;
    end Notify_Observers;
+
+   ----------------
+   -- Null_Model --
+   ----------------
+
+   function Null_Model return Root_Model_Type'Class is
+   begin
+      return Null_Model_Record'
+        (Nazar.Interfaces.Properties.Root_Property_Container with
+           Id        => WL.Guids.Null_Guid,
+         Observers => <>);
+   end Null_Model;
 
    ---------------------
    -- Remove_Observer --
