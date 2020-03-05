@@ -156,12 +156,13 @@ package body Nazar.Draw_Operations is
       World   : Draw_Position;
       X, Y    : out Nazar_Float)
    is
+      Scale : constant Nazar_Float :=
+        Nazar_Float'Min (Context.Target.W / Context.Viewport.W,
+                         Context.Target.H / Context.Viewport.H);
    begin
       if World.World then
-         X := (World.X - Context.Viewport.X)
-           * Context.Target.W / Context.Viewport.W;
-         Y := (World.Y - Context.Viewport.Y)
-           * Context.Target.H / Context.Viewport.H;
+         X := (World.X - Context.Viewport.X) * Scale;
+         Y := (World.Y - Context.Viewport.Y) * Scale;
       else
          X := World.X;
          Y := World.Y;
