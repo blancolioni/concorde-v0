@@ -161,8 +161,12 @@ package body Nazar.Draw_Operations is
                          Context.Target.H / Context.Viewport.H);
    begin
       if World.World then
-         X := (World.X - Context.Viewport.X) * Scale;
-         Y := (World.Y - Context.Viewport.Y) * Scale;
+         X :=
+           (World.X - Context.Viewport.X - Context.Viewport.W / 2.0) * Scale
+           + Context.Target.W / 2.0;
+         Y :=
+           (World.Y - Context.Viewport.Y - Context.Viewport.H / 2.0) * Scale
+           + Context.Target.H / 2.0;
       else
          X := World.X;
          Y := World.Y;
