@@ -77,6 +77,8 @@ package body Concorde.UI.Models.Galaxy is
          end loop;
       end loop;
 
+      Model.Render;
+
       Model.Save_State;
       Model.Set_Fill (True);
 
@@ -84,6 +86,7 @@ package body Concorde.UI.Models.Galaxy is
          Model.Move_To (Rec.X, Rec.Y);
          Model.Set_Color (Rec.Color);
          Model.Circle (2.0);
+         Model.Render;
       end loop;
 
       Model.Restore_State;
@@ -196,7 +199,16 @@ package body Concorde.UI.Models.Galaxy is
          end loop;
       end loop;
 
+      Model.Set_Bounding_Box
+        (Box => Nazar.Rectangle'
+           (X => Nazar.Nazar_Float (Left),
+            Y => Nazar.Nazar_Float (Top),
+            W => Nazar.Nazar_Float (Right - Left),
+            H => Nazar.Nazar_Float (Bottom - Top)));
+
       Model.Draw_Galaxy;
+
+      Ada.Text_IO.Put_Line ("done");
 
       return Nazar.Models.Draw.Nazar_Draw_Model (Model);
 

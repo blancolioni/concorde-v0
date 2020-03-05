@@ -20,6 +20,7 @@ package Nazar.Draw_Operations is
 
    procedure Get_Screen_Position
      (Context : Draw_Context;
+      World   : Draw_Position;
       X, Y    : out Nazar_Float);
 
    procedure Set_Target
@@ -30,8 +31,6 @@ package Nazar.Draw_Operations is
    procedure Set_Viewport
      (Context  : in out Draw_Context;
       Viewport : Rectangle);
-
-   function Get_Fill (Context : Draw_Context) return Boolean;
 
    type Draw_Property is private;
 
@@ -54,6 +53,10 @@ package Nazar.Draw_Operations is
      (Radius      : Nazar_Float;
       Start_Angle : Nazar.Trigonometry.Angle;
       End_Angle   : Nazar.Trigonometry.Angle)
+      return Draw_Operation;
+
+   function Render
+     (Preserve : Boolean)
       return Draw_Operation;
 
    function Set_Property
@@ -87,13 +90,9 @@ package Nazar.Draw_Operations is
       Color  : Nazar.Colors.Nazar_Color)
    is abstract;
 
-   procedure Fill_Current
+   procedure Render_Current
      (Render   : in out Root_Render_Type;
-      Preserve : Boolean)
-   is abstract;
-
-   procedure Draw_Current
-     (Render : in out Root_Render_Type;
+      Fill     : Boolean;
       Preserve : Boolean)
    is abstract;
 
@@ -103,10 +102,16 @@ package Nazar.Draw_Operations is
    procedure Restore_State
      (Render : in out Root_Render_Type);
 
+   procedure Start_Draw
+     (Render  : in out Root_Render_Type'Class;
+      Context : Draw_Context);
+
    procedure Draw
      (Render    : in out Root_Render_Type'Class;
-      Context   : Draw_Context;
       Operation : Draw_Operation);
+
+   procedure End_Draw
+     (Render  : in out Root_Render_Type'Class);
 
 private
 
@@ -117,21 +122,24 @@ private
       end record;
 
    type Draw_Primitive is
-     (Move, Arc, Text, Property, State);
+     (Move, Arc, Text, Flush, Property, State);
 
    type Draw_Property_Primitive is
-     (No_Property, Color, Line_Width, Fill);
+     (No_Property,
+      Color_Property,
+      Line_Width_Property,
+      Fill_Property);
 
    type Draw_Property (Primitive : Draw_Property_Primitive := No_Property) is
       record
          case Primitive is
             when No_Property =>
                null;
-            when Color =>
+            when Color_Property =>
                Color_Value      : Nazar.Colors.Nazar_Color;
-            when Line_Width =>
+            when Line_Width_Property =>
                Line_Width_Value : Nazar_Float;
-            when Fill =>
+            when Fill_Property =>
                Fill_Value       : Boolean;
          end case;
       end record;
@@ -160,6 +168,8 @@ private
                End_Angle   : Nazar.Trigonometry.Angle;
             when Text =>
                Draw_Text   : Ada.Strings.Unbounded.Unbounded_String;
+            when Flush =>
+               Preserve    : Boolean;
             when Property =>
                Setting     : Draw_Property;
             when State =>
@@ -175,5 +185,8 @@ private
          Current : Draw_Context;
          Saved   : Draw_Context_Lists.List;
       end record;
+
+   procedure Check_State
+     (Render : in out Root_Render_Type'Class);
 
 end Nazar.Draw_Operations;

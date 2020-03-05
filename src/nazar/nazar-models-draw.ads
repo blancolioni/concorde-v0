@@ -18,6 +18,14 @@ package Nazar.Models.Draw is
      (Model : Root_Draw_Model)
       return Nazar.Colors.Nazar_Color;
 
+   function Bounding_Box
+     (Model : Root_Draw_Model'Class)
+      return Rectangle;
+
+   procedure Set_Bounding_Box
+     (Model : in out Root_Draw_Model'Class;
+      Box   : Rectangle);
+
    procedure Iterate_Operations
      (Model : Root_Draw_Model;
       Process : not null access
@@ -41,6 +49,10 @@ package Nazar.Models.Draw is
      (Model   : in out Root_Draw_Model;
       Fill    : Boolean);
 
+   procedure Render
+     (Model    : in out Root_Draw_Model;
+      Preserve : Boolean := False);
+
    procedure Set_Color
      (Model : in out Root_Draw_Model;
       Color : Nazar.Colors.Nazar_Color);
@@ -55,7 +67,7 @@ package Nazar.Models.Draw is
 
    procedure Render
      (Model    : Root_Draw_Model;
-      Context  : Nazar.Draw_Operations.Draw_Context;
+      Context  : in out Nazar.Draw_Operations.Draw_Context;
       Renderer : in out Nazar.Draw_Operations.Root_Render_Type'Class);
 
 private
@@ -68,12 +80,18 @@ private
    type Root_Draw_Model is
      new Root_Model_Type with
       record
-         Ops : Draw_Operation_Lists.List;
+         Bounding_Box : Rectangle;
+         Ops          : Draw_Operation_Lists.List;
       end record;
 
    overriding function Class_Name
      (Model : Root_Draw_Model)
       return String
    is ("nazar-draw-model");
+
+   function Bounding_Box
+     (Model : Root_Draw_Model'Class)
+      return Rectangle
+   is (Model.Bounding_Box);
 
 end Nazar.Models.Draw;

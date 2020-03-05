@@ -1,3 +1,4 @@
+with Ada.Calendar.Formatting;
 with Ada.Text_IO;
 
 package body Nazar.Logging is
@@ -25,7 +26,11 @@ package body Nazar.Logging is
         and then Priority >= Log_Priority
       then
          Ada.Text_IO.Put_Line
-           (Log_File, Message);
+           (Log_File,
+            Ada.Calendar.Formatting.Image
+              (Ada.Calendar.Clock, Include_Time_Fraction => True)
+            & Character'Val (9)
+            & Message);
       end if;
    end Log;
 
@@ -43,8 +48,7 @@ package body Nazar.Logging is
       if Log_Started
         and then Priority >= Log_Priority
       then
-         Log (WL.Guids.To_String (Object.Guid)
-              & HT & Object.Name & HT & Object.Class_Name & HT
+         Log (Object.Name & HT & Object.Class_Name & HT
               & Message);
       end if;
    end Log;

@@ -1,5 +1,7 @@
 with Nazar.Trigonometry;
 
+with Nazar.Logging;
+
 package body Nazar.Models.Draw is
 
    ----------------------
@@ -94,13 +96,34 @@ package body Nazar.Models.Draw is
 
    procedure Render
      (Model    : Root_Draw_Model;
-      Context  : Nazar.Draw_Operations.Draw_Context;
+      Context  : in out Nazar.Draw_Operations.Draw_Context;
       Renderer : in out Nazar.Draw_Operations.Root_Render_Type'Class)
    is
    begin
+      Nazar.Logging.Log (Model,
+                         "rendering" & Model.Ops.Length'Image
+                         & " draw primitives");
+
+      Renderer.Start_Draw (Context);
       for Op of Model.Ops loop
-         Renderer.Draw (Context, Op);
+         Renderer.Draw (Op);
       end loop;
+      Renderer.End_Draw;
+
+      Nazar.Logging.Log (Model, "done");
+   end Render;
+
+   ------------
+   -- Render --
+   ------------
+
+   procedure Render
+     (Model    : in out Root_Draw_Model;
+      Preserve : Boolean := False)
+   is
+   begin
+      Model.Ops.Append
+        (Nazar.Draw_Operations.Render (Preserve));
    end Render;
 
    -------------------
@@ -120,6 +143,18 @@ package body Nazar.Models.Draw is
    begin
       Model.Ops.Append (Nazar.Draw_Operations.Save_State);
    end Save_State;
+
+   ----------------------
+   -- Set_Bounding_Box --
+   ----------------------
+
+   procedure Set_Bounding_Box
+     (Model : in out Root_Draw_Model'Class;
+      Box   : Rectangle)
+   is
+   begin
+      Model.Bounding_Box := Box;
+   end Set_Bounding_Box;
 
    ---------------
    -- Set_Color --

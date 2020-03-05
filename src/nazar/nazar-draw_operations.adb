@@ -1,77 +1,34 @@
+with Ada.Numerics;
+
 package body Nazar.Draw_Operations is
 
-   --------------------
-   -- World_Position --
-   --------------------
+   ---------
+   -- Arc --
+   ---------
 
-   function World_Position
-     (World_X, World_Y : Nazar_Float) return Draw_Position
+   function Arc
+     (Radius      : Nazar_Float;
+      Start_Angle : Nazar.Trigonometry.Angle;
+      End_Angle   : Nazar.Trigonometry.Angle)
+      return Draw_Operation
    is
    begin
-      pragma Compile_Time_Warning (Standard.True,
-         "World_Position unimplemented");
-      return raise Program_Error with "Unimplemented function World_Position";
-   end World_Position;
+      return (Arc, Radius, Start_Angle, End_Angle);
+   end Arc;
 
-   ---------------------
-   -- Screen_Position --
-   ---------------------
+   -----------------
+   -- Check_State --
+   -----------------
 
-   function Screen_Position
-     (Screen_X, Screen_Y : Nazar_Float) return Draw_Position
+   procedure Check_State
+     (Render : in out Root_Render_Type'Class)
    is
    begin
-      pragma Compile_Time_Warning (Standard.True,
-         "Screen_Position unimplemented");
-      return raise Program_Error with "Unimplemented function Screen_Position";
-   end Screen_Position;
-
-   -------------------------
-   -- Get_Screen_Position --
-   -------------------------
-
-   procedure Get_Screen_Position
-     (Context : Draw_Context; X, Y : out Nazar_Float)
-   is
-   begin
-      pragma Compile_Time_Warning (Standard.True,
-         "Get_Screen_Position unimplemented");
-      raise Program_Error with "Unimplemented procedure Get_Screen_Position";
-   end Get_Screen_Position;
-
-   ----------------
-   -- Set_Target --
-   ----------------
-
-   procedure Set_Target
-     (Context : in out Draw_Context; Width : Nazar_Float; Height : Nazar_Float)
-   is
-   begin
-      pragma Compile_Time_Warning (Standard.True, "Set_Target unimplemented");
-      raise Program_Error with "Unimplemented procedure Set_Target";
-   end Set_Target;
-
-   ------------------
-   -- Set_Viewport --
-   ------------------
-
-   procedure Set_Viewport (Context : in out Draw_Context; Viewport : Rectangle)
-   is
-   begin
-      pragma Compile_Time_Warning (Standard.True,
-         "Set_Viewport unimplemented");
-      raise Program_Error with "Unimplemented procedure Set_Viewport";
-   end Set_Viewport;
-
-   --------------
-   -- Get_Fill --
-   --------------
-
-   function Get_Fill (Context : Draw_Context) return Boolean is
-   begin
-      pragma Compile_Time_Warning (Standard.True, "Get_Fill unimplemented");
-      return raise Program_Error with "Unimplemented function Get_Fill";
-   end Get_Fill;
+      if Render.Current.Changed (Color_Property) then
+         Render.Set_Color (Render.Current.Current_Color);
+         Render.Current.Changed (Color_Property) := False;
+      end if;
+   end Check_State;
 
    --------------------
    -- Color_Property --
@@ -81,10 +38,105 @@ package body Nazar.Draw_Operations is
      (Color : Nazar.Colors.Nazar_Color) return Draw_Property
    is
    begin
-      pragma Compile_Time_Warning (Standard.True,
-         "Color_Property unimplemented");
-      return raise Program_Error with "Unimplemented function Color_Property";
+      return Draw_Property'
+        (Primitive        => Color_Property,
+         Color_Value      => Color);
    end Color_Property;
+
+   ----------
+   -- Draw --
+   ----------
+
+   procedure Draw
+     (Render    : in out Root_Render_Type'Class;
+      Operation : Draw_Operation)
+   is
+      Context : Draw_Context renames Render.Current;
+   begin
+      case Operation.Primitive is
+         when Move =>
+            declare
+               X, Y : Nazar_Float;
+            begin
+               Get_Screen_Position
+                 (Context, Operation.Destination, X, Y);
+               if Operation.Paint then
+                  Render.Check_State;
+                  Render.Line_To (X, Y);
+               else
+                  Render.Move_To (X, Y);
+               end if;
+            end;
+
+         when Arc =>
+            Render.Check_State;
+            declare
+               Pi : constant := Ada.Numerics.Pi;
+               Start : constant Nazar_Float :=
+                 Trigonometry.To_Radians (Operation.Start_Angle);
+               Finish : constant Nazar_Float :=
+                 Trigonometry.To_Radians (Operation.End_Angle);
+            begin
+               Render.Arc
+                 (Radius        => Operation.Radius,
+                  Start_Radians => Start,
+                  End_Radians   => (if Start = Finish
+                                    then Finish + 2.0 * Pi
+                                    else Finish));
+            end;
+
+         when Text =>
+            null;
+
+         when Flush =>
+            Render.Render_Current
+              (Fill     => Context.Current_Fill,
+               Preserve => Operation.Preserve);
+
+         when State =>
+            if Operation.Save then
+               Render.Save_State;
+            else
+               Render.Restore_State;
+            end if;
+
+         when Property =>
+            case Operation.Setting.Primitive is
+               when No_Property =>
+                  null;
+               when Color_Property =>
+                  declare
+                     use type Nazar.Colors.Nazar_Color;
+                  begin
+                     if Context.Current_Color
+                       /= Operation.Setting.Color_Value
+                     then
+                        Context.Current_Color := Operation.Setting.Color_Value;
+                        Context.Changed (Color_Property) := True;
+                     end if;
+                  end;
+               when Line_Width_Property =>
+                  null;
+               when Fill_Property =>
+                  if Context.Current_Fill /= Operation.Setting.Fill_Value then
+                     Context.Current_Fill := Operation.Setting.Fill_Value;
+                     Context.Changed (Fill_Property) := True;
+                  end if;
+            end case;
+      end case;
+   end Draw;
+
+   --------------
+   -- End_Draw --
+   --------------
+
+   procedure End_Draw
+     (Render  : in out Root_Render_Type'Class)
+   is
+   begin
+      Render.Current := Render.Saved.Last_Element;
+      Render.Saved.Delete_Last;
+   end End_Draw;
 
    -------------------
    -- Fill_Property --
@@ -92,54 +144,54 @@ package body Nazar.Draw_Operations is
 
    function Fill_Property (Fill : Boolean) return Draw_Property is
    begin
-      pragma Compile_Time_Warning (Standard.True,
-         "Fill_Property unimplemented");
-      return raise Program_Error with "Unimplemented function Fill_Property";
+      return (Fill_Property, Fill);
    end Fill_Property;
+
+   -------------------------
+   -- Get_Screen_Position --
+   -------------------------
+
+   procedure Get_Screen_Position
+     (Context : Draw_Context;
+      World   : Draw_Position;
+      X, Y    : out Nazar_Float)
+   is
+   begin
+      if World.World then
+         X := (World.X - Context.Viewport.X)
+           * Context.Target.W / Context.Viewport.W;
+         Y := (World.Y - Context.Viewport.Y)
+           * Context.Target.H / Context.Viewport.H;
+      else
+         X := World.X;
+         Y := World.Y;
+      end if;
+   end Get_Screen_Position;
 
    ----------
    -- Move --
    ----------
 
-   function Move (To : Draw_Position; Paint : Boolean) return Draw_Operation is
-   begin
-      pragma Compile_Time_Warning (Standard.True, "Move unimplemented");
-      return raise Program_Error with "Unimplemented function Move";
-   end Move;
-
-   ---------
-   -- Arc --
-   ---------
-
-   function Arc
-     (Radius    : Nazar_Float; Start_Angle : Nazar.Trigonometry.Angle;
-      End_Angle : Nazar.Trigonometry.Angle) return Draw_Operation
+   function Move
+     (To    : Draw_Position;
+      Paint : Boolean)
+      return Draw_Operation
    is
    begin
-      pragma Compile_Time_Warning (Standard.True, "Arc unimplemented");
-      return raise Program_Error with "Unimplemented function Arc";
-   end Arc;
+      return (Move, To, Paint);
+   end Move;
 
-   ------------------
-   -- Set_Property --
-   ------------------
+   ------------
+   -- Render --
+   ------------
 
-   function Set_Property (Property : Draw_Property) return Draw_Operation is
+   function Render
+     (Preserve : Boolean)
+      return Draw_Operation
+   is
    begin
-      pragma Compile_Time_Warning (Standard.True,
-         "Set_Property unimplemented");
-      return raise Program_Error with "Unimplemented function Set_Property";
-   end Set_Property;
-
-   ----------------
-   -- Save_State --
-   ----------------
-
-   function Save_State return Draw_Operation is
-   begin
-      pragma Compile_Time_Warning (Standard.True, "Save_State unimplemented");
-      return raise Program_Error with "Unimplemented function Save_State";
-   end Save_State;
+      return (Flush, Preserve);
+   end Render;
 
    -------------------
    -- Restore_State --
@@ -147,20 +199,8 @@ package body Nazar.Draw_Operations is
 
    function Restore_State return Draw_Operation is
    begin
-      pragma Compile_Time_Warning (Standard.True,
-         "Restore_State unimplemented");
-      return raise Program_Error with "Unimplemented function Restore_State";
+      return (State, False);
    end Restore_State;
-
-   ----------------
-   -- Save_State --
-   ----------------
-
-   procedure Save_State (Render : in out Root_Render_Type) is
-   begin
-      pragma Compile_Time_Warning (Standard.True, "Save_State unimplemented");
-      raise Program_Error with "Unimplemented procedure Save_State";
-   end Save_State;
 
    -------------------
    -- Restore_State --
@@ -168,22 +208,97 @@ package body Nazar.Draw_Operations is
 
    procedure Restore_State (Render : in out Root_Render_Type) is
    begin
-      pragma Compile_Time_Warning (Standard.True,
-         "Restore_State unimplemented");
-      raise Program_Error with "Unimplemented procedure Restore_State";
+      Render.Current := Render.Saved.Last_Element;
+      Render.Saved.Delete_Last;
    end Restore_State;
 
-   ----------
-   -- Draw --
-   ----------
+   ----------------
+   -- Save_State --
+   ----------------
 
-   procedure Draw
-     (Render    : in out Root_Render_Type'Class; Context : Draw_Context;
-      Operation :        Draw_Operation)
+   function Save_State return Draw_Operation is
+   begin
+      return (State, True);
+   end Save_State;
+
+   ----------------
+   -- Save_State --
+   ----------------
+
+   procedure Save_State (Render : in out Root_Render_Type) is
+   begin
+      Render.Saved.Append (Render.Current);
+   end Save_State;
+
+   ---------------------
+   -- Screen_Position --
+   ---------------------
+
+   function Screen_Position
+     (Screen_X, Screen_Y : Nazar_Float) return Draw_Position
    is
    begin
-      pragma Compile_Time_Warning (Standard.True, "Draw unimplemented");
-      raise Program_Error with "Unimplemented procedure Draw";
-   end Draw;
+      return (False, Screen_X, Screen_Y);
+   end Screen_Position;
+
+   ------------------
+   -- Set_Property --
+   ------------------
+
+   function Set_Property
+     (Property : Draw_Property)
+      return Draw_Operation is
+   begin
+      return (Draw_Operations.Property, Property);
+   end Set_Property;
+
+   ----------------
+   -- Set_Target --
+   ----------------
+
+   procedure Set_Target
+     (Context : in out Draw_Context;
+      Width   : Nazar_Float;
+      Height  : Nazar_Float)
+   is
+   begin
+      Context.Target := (0.0, 0.0, Width, Height);
+   end Set_Target;
+
+   ------------------
+   -- Set_Viewport --
+   ------------------
+
+   procedure Set_Viewport
+     (Context  : in out Draw_Context;
+      Viewport : Rectangle)
+   is
+   begin
+      Context.Viewport := Viewport;
+   end Set_Viewport;
+
+   ----------------
+   -- Start_Draw --
+   ----------------
+
+   procedure Start_Draw
+     (Render  : in out Root_Render_Type'Class;
+      Context : Draw_Context)
+   is
+   begin
+      Render.Saved.Append (Render.Current);
+      Render.Current := Context;
+   end Start_Draw;
+
+   --------------------
+   -- World_Position --
+   --------------------
+
+   function World_Position
+     (World_X, World_Y : Nazar_Float) return Draw_Position
+   is
+   begin
+      return (True, World_X, World_Y);
+   end World_Position;
 
 end Nazar.Draw_Operations;

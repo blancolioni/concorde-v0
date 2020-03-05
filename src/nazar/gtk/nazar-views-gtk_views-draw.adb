@@ -21,7 +21,8 @@ package body Nazar.Views.Gtk_Views.Draw is
       return Boolean;
 
    procedure Clear
-     (Surface : Cairo.Cairo_Surface);
+     (Surface : Cairo.Cairo_Surface;
+      Color   : Nazar.Colors.Nazar_Color);
 
    type Cairo_Render_Type is
      new Nazar.Draw_Operations.Root_Render_Type with
@@ -44,12 +45,9 @@ package body Nazar.Views.Gtk_Views.Draw is
       Start_Radians : Nazar_Float;
       End_Radians   : Nazar_Float);
 
-   overriding procedure Fill_Current
+   overriding procedure Render_Current
      (Render   : in out Cairo_Render_Type;
-      Preserve : Boolean);
-
-   overriding procedure Draw_Current
-     (Render   : in out Cairo_Render_Type;
+      Fill     : Boolean;
       Preserve : Boolean);
 
    overriding procedure Set_Color
@@ -84,11 +82,16 @@ package body Nazar.Views.Gtk_Views.Draw is
    -----------
 
    procedure Clear
-     (Surface : Cairo.Cairo_Surface)
+     (Surface : Cairo.Cairo_Surface;
+      Color   : Nazar.Colors.Nazar_Color)
    is
       Cr : constant Cairo.Cairo_Context := Cairo.Create (Surface);
    begin
-      Cairo.Set_Source_Rgb (Cr, 0.37, 0.56, 0.60);
+      Cairo.Set_Source_Rgb
+        (Cr,
+         Glib.Gdouble (Color.Red),
+         Glib.Gdouble (Color.Green),
+         Glib.Gdouble (Color.Blue));
       Cairo.Paint (Cr);
       Cairo.Destroy (Cr);
    end Clear;
@@ -119,7 +122,7 @@ package body Nazar.Views.Gtk_Views.Draw is
             Cairo.Cairo_Content_Color,
             View.Draw_Area.Get_Allocated_Width,
             View.Draw_Area.Get_Allocated_Height);
-      Clear (View.Surface);
+      Clear (View.Surface, View.Draw_Model.Background_Color);
 
       declare
          Context : Nazar.Draw_Operations.Draw_Context;
@@ -166,6 +169,7 @@ package body Nazar.Views.Gtk_Views.Draw is
    begin
       View.Draw_Area := Gtk.Drawing_Area.Gtk_Drawing_Area_New;
       View.Initialize (View.Draw_Area);
+      View.Viewport := Model.Bounding_Box;
       View.Set_Model (Model);
       View.Draw_Area.On_Configure_Event
         (Configure_Handler'Access, View.Object);
@@ -210,5 +214,71 @@ package body Nazar.Views.Gtk_Views.Draw is
       Render.Y := Glib.Gdouble (Y);
       Cairo.Move_To (Render.Cr, Render.X, Render.Y);
    end Move_To;
+
+   --------------------
+   -- Render_Current --
+   --------------------
+
+   overriding procedure Render_Current
+     (Render   : in out Cairo_Render_Type;
+      Fill     : Boolean;
+      Preserve : Boolean)
+   is
+   begin
+      if Fill then
+         if Preserve then
+            Cairo.Fill_Preserve (Render.Cr);
+         else
+            Cairo.Fill (Render.Cr);
+         end if;
+      else
+         if Preserve then
+            Cairo.Stroke_Preserve (Render.Cr);
+         else
+            Cairo.Stroke (Render.Cr);
+         end if;
+      end if;
+   end Render_Current;
+
+   -------------------
+   -- Restore_State --
+   -------------------
+
+   overriding procedure Restore_State
+     (Render : in out Cairo_Render_Type)
+   is
+   begin
+      Nazar.Draw_Operations.Root_Render_Type (Render).Restore_State;
+      Cairo.Restore (Render.Cr);
+   end Restore_State;
+
+   ----------------
+   -- Save_State --
+   ----------------
+
+   overriding procedure Save_State
+     (Render : in out Cairo_Render_Type)
+   is
+   begin
+      Nazar.Draw_Operations.Root_Render_Type (Render).Save_State;
+      Cairo.Save (Render.Cr);
+   end Save_State;
+
+   ---------------
+   -- Set_Color --
+   ---------------
+
+   overriding procedure Set_Color
+     (Render : in out Cairo_Render_Type;
+      Color  : Nazar.Colors.Nazar_Color)
+   is
+   begin
+      Cairo.Set_Source_Rgba
+        (Render.Cr,
+         Glib.Gdouble (Color.Red),
+         Glib.Gdouble (Color.Green),
+         Glib.Gdouble (Color.Blue),
+         Glib.Gdouble (Color.Alpha));
+   end Set_Color;
 
 end Nazar.Views.Gtk_Views.Draw;
