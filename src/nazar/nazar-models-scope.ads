@@ -7,7 +7,7 @@ with Nazar.Interfaces.Strings;
 package Nazar.Models.Scope is
 
    type Root_Scope_Model is
-     new Root_Model_Type
+     new Nazar_Model_Record
      and Nazar.Interfaces.Strings.String_Interface
    with private;
 
@@ -47,7 +47,7 @@ private
         Nazar.Interfaces.Hierarchy."=");
 
    type Root_Scope_Model is
-     new Root_Model_Type
+     new Nazar_Model_Record
      and Nazar.Interfaces.Strings.String_Interface with
       record
          Is_Valid      : Boolean := False;

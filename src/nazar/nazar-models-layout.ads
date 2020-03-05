@@ -2,7 +2,7 @@ private with Ada.Containers.Doubly_Linked_Lists;
 
 package Nazar.Models.Layout is
 
-   type Root_Layout_Model is new Root_Model_Type with private;
+   type Root_Layout_Model is new Nazar_Model_Record with private;
 
    type Nazar_Layout_Model is access all Root_Layout_Model'Class;
 
@@ -40,7 +40,7 @@ private
    package Cell_Content_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Cell_Contents);
 
-   type Root_Layout_Model is new Root_Model_Type with
+   type Root_Layout_Model is new Nazar_Model_Record with
       record
          Cells : Cell_Content_Lists.List;
       end record;

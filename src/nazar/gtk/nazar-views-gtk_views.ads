@@ -3,7 +3,7 @@ with Gtk.Widget;
 
 package Nazar.Views.Gtk_Views is
 
-   type Root_Gtk_View_Type is abstract new Root_View_Type with private;
+   type Root_Gtk_View_Type is abstract new Nazar_View_Record with private;
 
    overriding procedure Show (View : in out Root_Gtk_View_Type);
 
@@ -38,7 +38,7 @@ private
 
    type Gtk_View_Object is access all Gtk_View_Object_Record'Class;
 
-   type Root_Gtk_View_Type is abstract new Root_View_Type with
+   type Root_Gtk_View_Type is abstract new Nazar_View_Record with
       record
          Self       : Gtk_View_Object;
          Top_Widget : Gtk.Widget.Gtk_Widget;

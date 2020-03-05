@@ -22,31 +22,31 @@ package Nazar.Views is
 
    function Model
      (View : Nazar_View_Interface)
-      return Nazar.Models.Model_Type
+      return Nazar.Models.Nazar_Model
    is abstract;
 
-   type Root_View_Type is
+   type Nazar_View_Record is
      abstract new Nazar_View_Interface
    with private;
 
-   subtype View_Class is Root_View_Type'Class;
+   subtype Nazar_View_Class is Nazar_View_Record'Class;
 
-   type View_Type is access all Root_View_Type'Class;
+   type Nazar_View is access all Nazar_View_Record'Class;
 
    overriding function Guid
-     (View : Root_View_Type)
+     (View : Nazar_View_Record)
       return WL.Guids.Guid;
 
    overriding function Name
-     (View : Root_View_Type)
+     (View : Nazar_View_Record)
       return String;
 
    overriding function Model
-     (View : Root_View_Type)
-      return Nazar.Models.Model_Type;
+     (View : Nazar_View_Record)
+      return Nazar.Models.Nazar_Model;
 
    overriding function Add_Handler
-     (View        : in out Root_View_Type;
+     (View        : in out Nazar_View_Record;
       Signal      : Nazar.Signals.Signal_Type;
       Source      : Nazar.Signals.Signal_Source_Interface'Class;
       User_Data   : Nazar.Signals.User_Data_Interface'Class;
@@ -54,27 +54,27 @@ package Nazar.Views is
       return Nazar.Signals.Handler_Id;
 
    overriding procedure Emit
-     (View        : Root_View_Type;
+     (View        : Nazar_View_Record;
       Source      : Nazar.Signals.Signal_Source_Interface'Class;
       Signal      : Nazar.Signals.Signal_Type;
       Signal_Data : Nazar.Signals.Signal_Data_Interface'Class);
 
    procedure Set_Model
-     (View  : not null access Root_View_Type;
-      Model : not null access Nazar.Models.Root_Model_Type'Class);
+     (View  : not null access Nazar_View_Record;
+      Model : not null access Nazar.Models.Nazar_Model_Record'Class);
 
    type Configure_Callback is access
-     function (View : not null access Root_View_Type'Class;
+     function (View : not null access Nazar_View_Record'Class;
                Width, Height : Nazar_Float)
                return Boolean;
 
    procedure On_Configure
-     (View : not null access Root_View_Type;
+     (View : not null access Nazar_View_Record;
       Handler : Configure_Callback);
 
 private
 
-   type Root_View_Type is
+   type Nazar_View_Record is
      abstract new Nazar.Interfaces.Properties.Root_Property_Container
      and Nazar_View_Interface with
       record
@@ -82,22 +82,22 @@ private
          View_Name  : Ada.Strings.Unbounded.Unbounded_String :=
                         Nazar.Names.Next_Name;
          Dispatch   : Nazar.Signals.Signal_Handler_Container;
-         Base_Model : Nazar.Models.Model_Type;
+         Base_Model : Nazar.Models.Nazar_Model;
       end record;
 
    overriding function Name
-     (View : Root_View_Type)
+     (View : Nazar_View_Record)
       return String
    is (Ada.Strings.Unbounded.To_String (View.View_Name));
 
    overriding function Guid
-     (View : Root_View_Type)
+     (View : Nazar_View_Record)
       return WL.Guids.Guid
    is (View.Id);
 
    overriding function Model
-     (View : Root_View_Type)
-      return Nazar.Models.Model_Type
+     (View : Nazar_View_Record)
+      return Nazar.Models.Nazar_Model
    is (View.Base_Model);
 
 end Nazar.Views;

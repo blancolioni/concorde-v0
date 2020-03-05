@@ -1,22 +1,24 @@
+with Nazar.Interfaces.Observable;
+
 with Nazar.Logging;
 
 package body Nazar.Views is
 
-   type Model_Observer is
-     new Nazar.Models.Model_Observer_Interface with
+   type View_Observer is
+     new Nazar.Interfaces.Observable.Observer_Interface with
       record
-         View : View_Type;
+         View : Nazar_View;
       end record;
 
    overriding procedure Notify
-     (Observer : Model_Observer);
+     (Observer : View_Observer);
 
    -----------------
    -- Add_Handler --
    -----------------
 
    overriding function Add_Handler
-     (View        : in out Root_View_Type;
+     (View        : in out Nazar_View_Record;
       Signal      : Nazar.Signals.Signal_Type;
       Source      : Nazar.Signals.Signal_Source_Interface'Class;
       User_Data   : Nazar.Signals.User_Data_Interface'Class;
@@ -33,7 +35,7 @@ package body Nazar.Views is
    ----------
 
    overriding procedure Emit
-     (View        : Root_View_Type;
+     (View        : Nazar_View_Record;
       Source      : Nazar.Signals.Signal_Source_Interface'Class;
       Signal      : Nazar.Signals.Signal_Type;
       Signal_Data : Nazar.Signals.Signal_Data_Interface'Class)
@@ -47,7 +49,7 @@ package body Nazar.Views is
    ------------
 
    overriding procedure Notify
-     (Observer : Model_Observer)
+     (Observer : View_Observer)
    is
    begin
       Observer.View.Model_Changed;
@@ -58,7 +60,7 @@ package body Nazar.Views is
    ------------------
 
    procedure On_Configure
-     (View    : not null access Root_View_Type;
+     (View    : not null access Nazar_View_Record;
       Handler : Configure_Callback)
    is null;
 
@@ -67,16 +69,25 @@ package body Nazar.Views is
    ---------------
 
    procedure Set_Model
-     (View  : not null access Root_View_Type;
-      Model : not null access Nazar.Models.Root_Model_Type'Class)
+     (View  : not null access Nazar_View_Record;
+      Model : not null access Nazar.Models.Nazar_Model_Record'Class)
    is
+      use type Nazar.Models.Nazar_Model;
+      Observer : constant View_Observer :=
+        View_Observer'(View => Nazar_View (View));
    begin
       Nazar.Logging.Log
         (View.all, "set model to " & Model.Class_Name & " " & Model.Name);
-      View.Base_Model := Nazar.Models.Model_Type (Model);
-      View.Base_Model.Add_Observer
-        (Model_Observer'(View => View_Type (View)));
-      Root_View_Type'Class (View.all).Model_Changed;
+
+      if View.Base_Model /= null then
+         View.Base_Model.Remove_Observer (Observer);
+         View.Base_Model := null;
+      end if;
+
+      View.Base_Model := Nazar.Models.Nazar_Model (Model);
+      View.Base_Model.Add_Observer (Observer);
+
+      Nazar_View_Record'Class (View.all).Model_Changed;
    end Set_Model;
 
 end Nazar.Views;

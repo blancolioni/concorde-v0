@@ -4,7 +4,7 @@ with Nazar.Web_UI.Routes;
 package Nazar.Web_UI.Views is
 
    type Root_AWS_View_Type is
-     abstract new Nazar.Views.Root_View_Type
+     abstract new Nazar.Views.Nazar_View_Record
      and Nazar.Web_UI.Routes.Request_Handler_Interface
    with private;
 
@@ -17,7 +17,7 @@ package Nazar.Web_UI.Views is
 private
 
    type Root_AWS_View_Type is
-     abstract new Nazar.Views.Root_View_Type
+     abstract new Nazar.Views.Nazar_View_Record
      and Nazar.Web_UI.Routes.Request_Handler_Interface with
       record
          null;

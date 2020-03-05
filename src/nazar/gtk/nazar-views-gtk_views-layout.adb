@@ -35,12 +35,12 @@ package body Nazar.Views.Gtk_Views.Layout is
      (View : in out Root_Gtk_Layout_View)
    is
       package List_Of_Views is
-        new Ada.Containers.Doubly_Linked_Lists (View_Type);
+        new Ada.Containers.Doubly_Linked_Lists (Nazar_View);
 
       Removed_Views : List_Of_Views.List;
 
       procedure Check_View
-        (Item : View_Type);
+        (Item : Nazar_View);
 
       procedure Check_Model
         (Item : not null access Nazar_Object_Interface'Class;
@@ -78,7 +78,7 @@ package body Nazar.Views.Gtk_Views.Layout is
       ----------------
 
       procedure Check_View
-        (Item : View_Type)
+        (Item : Nazar_View)
       is
       begin
          if not View.Layout_Model.Contains (Item) then

@@ -1,69 +1,61 @@
-private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 private with Ada.Strings.Unbounded;
 private with Nazar.Names;
 
+with Nazar.Interfaces.Observable;
 with Nazar.Interfaces.Properties;
 
 package Nazar.Models is
 
-   type Model_Observer_Interface is interface;
-
-   procedure Notify
-     (Observer : Model_Observer_Interface)
-   is abstract;
-
-   type Root_Model_Type is
+   type Nazar_Model_Record is
      abstract new Nazar.Interfaces.Properties.Property_Container_Interface
+     and Nazar.Interfaces.Observable.Observable_Interface
      and Nazar_Object_Interface
    with private;
 
-   subtype Model_Class is Root_Model_Type'Class;
+   subtype Nazar_Model_Class is Nazar_Model_Record'Class;
 
-   type Model_Type is access all Root_Model_Type'Class;
+   type Nazar_Model is access all Nazar_Model_Record'Class;
 
    overriding function Name
-     (Model : Root_Model_Type)
+     (Model : Nazar_Model_Record)
       return String;
 
    procedure Initialize
-     (Model : in out Root_Model_Type);
+     (Model : in out Nazar_Model_Record);
 
-   procedure Add_Observer
-     (Model : in out Root_Model_Type'Class;
-      Observer : Model_Observer_Interface'Class);
+   overriding procedure Add_Observer
+     (Model    : in out Nazar_Model_Record;
+      Observer : Nazar.Interfaces.Observable.Observer_Interface'Class);
 
-   procedure Remove_Observer
-     (Model    : in out Root_Model_Type'Class;
-      Observer : Model_Observer_Interface'Class);
+   overriding procedure Remove_Observer
+     (Model    : in out Nazar_Model_Record;
+      Observer : Nazar.Interfaces.Observable.Observer_Interface'Class);
 
-   procedure Notify_Observers
-     (Model : Root_Model_Type'Class);
+   overriding procedure Notify_Observers
+     (Model    : Nazar_Model_Record);
 
-   function Null_Model return Root_Model_Type'Class;
+   function Null_Model return Nazar_Model_Record'Class;
 
 private
 
-   package Observer_Lists is
-     new Ada.Containers.Indefinite_Doubly_Linked_Lists
-       (Model_Observer_Interface'Class);
-
-   type Root_Model_Type is
+   type Nazar_Model_Record is
      abstract new Nazar.Interfaces.Properties.Root_Property_Container
-       and Nazar_Object_Interface with
+     and Nazar.Interfaces.Observable.Observable_Interface
+     and Nazar_Object_Interface with
       record
          Id         : WL.Guids.Guid := WL.Guids.New_Guid;
          Model_Name : Ada.Strings.Unbounded.Unbounded_String :=
-                        Nazar.Names.Next_Name;
-         Observers  : Observer_Lists.List;
+           Nazar.Names.Next_Name;
+         Observable : Nazar.Interfaces.Observable.Nazar_Observable_Record;
       end record;
 
    overriding function Guid
-     (Model : Root_Model_Type)
+     (Model : Nazar_Model_Record)
       return WL.Guids.Guid
    is (Model.Id);
 
    overriding function Name
-     (Model : Root_Model_Type)
+     (Model : Nazar_Model_Record)
       return String
    is (Ada.Strings.Unbounded.To_String (Model.Model_Name));
 

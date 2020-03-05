@@ -5,7 +5,7 @@ with Nazar.Views.Console;
 package Nazar.Views.Text_Console is
 
    type Root_Text_Console_View is
-     new Root_View_Type
+     new Nazar_View_Record
      and Nazar.Views.Console.Console_View_Interface
    with private;
 
@@ -18,7 +18,7 @@ package Nazar.Views.Text_Console is
 private
 
    type Root_Text_Console_View is
-     new Root_View_Type
+     new Nazar_View_Record
      and Nazar.Views.Console.Console_View_Interface with
       record
          Last_Line : Nazar.Models.Text_Writer.Line_Cursor;

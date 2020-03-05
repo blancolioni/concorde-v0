@@ -42,23 +42,23 @@ package Nazar.Views.Layout is
 
    function Contains
      (Layout : Layout_View_Interface'Class;
-      Item   : not null access constant Root_View_Type'Class)
+      Item   : not null access constant Nazar_View_Record'Class)
       return Boolean;
 
    procedure Delete
      (Layout : in out Layout_View_Interface'Class;
-      Item   : not null access Root_View_Type'Class)
+      Item   : not null access Nazar_View_Record'Class)
      with Pre => Layout.Contains (Item);
 
    procedure Insert
      (Layout : in out Layout_View_Interface'Class;
-      Item   : not null access Root_View_Type'Class)
+      Item   : not null access Nazar_View_Record'Class)
      with Pre => not Layout.Contains (Item);
 
    procedure Iterate
      (Layout : Layout_View_Interface'Class;
       Process : not null access
-        procedure (Item : View_Type));
+        procedure (Item : Nazar_View));
 
 private
 
@@ -70,7 +70,7 @@ private
 
    type Cell_Contents is
       record
-         View        : View_Type;
+         View        : Nazar_View;
       end record;
 
    package Cell_Content_Lists is

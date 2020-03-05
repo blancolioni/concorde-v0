@@ -6,7 +6,7 @@ with Nazar.Draw_Operations;
 package Nazar.Models.Draw is
 
    type Root_Draw_Model is
-     new Root_Model_Type
+     new Nazar_Model_Record
    with private;
 
    type Nazar_Draw_Model is access all Root_Draw_Model'Class;
@@ -78,7 +78,7 @@ private
         Nazar.Draw_Operations."=");
 
    type Root_Draw_Model is
-     new Root_Model_Type with
+     new Nazar_Model_Record with
       record
          Bounding_Box : Rectangle;
          Ops          : Draw_Operation_Lists.List;

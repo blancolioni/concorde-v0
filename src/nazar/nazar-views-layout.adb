@@ -6,7 +6,7 @@ package body Nazar.Views.Layout is
 
    function Contains
      (Layout : Layout_View_Interface'Class;
-      Item   : not null access constant Root_View_Type'Class)
+      Item   : not null access constant Nazar_View_Record'Class)
       return Boolean
    is
       use type WL.Guids.Guid;
@@ -27,7 +27,7 @@ package body Nazar.Views.Layout is
 
    procedure Delete
      (Layout : in out Layout_View_Interface'Class;
-      Item   : not null access Root_View_Type'Class)
+      Item   : not null access Nazar_View_Record'Class)
    is
       use type WL.Guids.Guid;
 
@@ -65,7 +65,7 @@ package body Nazar.Views.Layout is
 
    procedure Insert
      (Layout : in out Layout_View_Interface'Class;
-      Item   :        not null access Root_View_Type'Class)
+      Item   :        not null access Nazar_View_Record'Class)
    is
       procedure Insert
         (Container : in out Layout_Container);
@@ -78,7 +78,7 @@ package body Nazar.Views.Layout is
         (Container : in out Layout_Container)
       is
       begin
-         Container.Contents.Append ((View => View_Type (Item)));
+         Container.Contents.Append ((View => Nazar_View (Item)));
       end Insert;
 
    begin
@@ -92,7 +92,7 @@ package body Nazar.Views.Layout is
 
    procedure Iterate
      (Layout  : Layout_View_Interface'Class;
-      Process : not null access procedure (Item : View_Type))
+      Process : not null access procedure (Item : Nazar_View))
    is
    begin
       for Item of Layout.Container.Contents loop

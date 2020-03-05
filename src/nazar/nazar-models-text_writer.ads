@@ -6,7 +6,7 @@ with Nazar.Interfaces.Text_Writer;
 package Nazar.Models.Text_Writer is
 
    type Root_Text_Writer_Model is
-     new Root_Model_Type
+     new Nazar_Model_Record
      and Nazar.Interfaces.Text_Writer.Text_Writer_Interface
    with private;
 
@@ -58,7 +58,7 @@ private
       end record;
 
    type Root_Text_Writer_Model is
-     new Root_Model_Type
+     new Nazar_Model_Record
      and Nazar.Interfaces.Text_Writer.Text_Writer_Interface with
       record
          Current_Class : Nazar.Interfaces.Text_Writer.Text_Class :=
