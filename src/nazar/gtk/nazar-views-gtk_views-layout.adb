@@ -17,6 +17,10 @@ package body Nazar.Views.Gtk_Views.Layout is
       Grid : constant Gtk.Grid.Gtk_Grid :=
         Gtk.Grid.Gtk_Grid_New;
    begin
+      Grid.Set_Column_Homogeneous (True);
+      Grid.Set_Column_Spacing (4);
+      Grid.Set_Row_Homogeneous (True);
+      Grid.Set_Row_Spacing (4);
       View.Initialize (Grid);
       View.Grid := Grid;
       View.Set_Model (Model);
