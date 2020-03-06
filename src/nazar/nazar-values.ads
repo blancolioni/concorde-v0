@@ -21,6 +21,10 @@ package Nazar.Values is
    function Default_Value (Of_Type : Nazar_Value_Type) return Nazar_Value;
 
    function To_Value
+     (X : Boolean)
+      return Nazar_Value;
+
+   function To_Value
      (X : Integer)
       return Nazar_Value;
 
@@ -31,6 +35,10 @@ package Nazar.Values is
    function To_Value
      (S : String)
       return Nazar_Value;
+
+   function To_Boolean
+     (Value : Nazar_Value)
+      return Boolean;
 
    function To_Integer
      (Value : Nazar_Value)
@@ -102,6 +110,11 @@ private
          (T_String, Ada.Strings.Unbounded.Null_Unbounded_String));
 
    function To_Value
+     (X : Boolean)
+      return Nazar_Value
+   is (T_Boolean, X);
+
+   function To_Value
      (X : Integer)
       return Nazar_Value
    is (T_Integer, X);
@@ -116,6 +129,15 @@ private
       return Nazar_Value
    is (T_String,
        Ada.Strings.Unbounded.To_Unbounded_String (S));
+
+   function To_Boolean
+     (Value : Nazar_Value)
+      return Boolean
+   is (case Value.V_Type is
+          when T_Boolean => Value.V_Boolean,
+          when T_Integer => Value.V_Integer /= 0,
+          when T_Float   => Value.V_Float /= 0.0,
+          when T_String  => To_String (Value) /= "");
 
    function To_Integer
      (Value : Nazar_Value)

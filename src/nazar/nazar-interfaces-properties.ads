@@ -33,6 +33,11 @@ package Nazar.Interfaces.Properties is
       Property_Name : String;
       Initial_Value : Integer);
 
+   procedure Declare_Property
+     (Container     : in out Property_Container_Interface'Class;
+      Property_Name : String;
+      Initial_Value : Boolean);
+
    procedure Declare_Properties
      (Container : in out Property_Container_Interface)
    is null;
@@ -67,9 +72,7 @@ package Nazar.Interfaces.Properties is
       Property_Name  : String;
       Property_Value : Nazar.Values.Nazar_Value)
    is abstract
-     with Pre'Class => Container.Has_Property (Property_Name),
-     Post'Class => Nazar.Values."="
-       (Container.Get_Property (Property_Name), Property_Value);
+     with Pre'Class => Container.Has_Property (Property_Name);
 
    procedure Set_Property
      (Container      : in out Property_Container_Interface'Class;

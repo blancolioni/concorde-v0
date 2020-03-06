@@ -1,3 +1,7 @@
+with Ada.Strings.Fixed;
+
+with Nazar.Logging;
+
 package body Nazar.Interfaces.Properties is
 
    ----------------------
@@ -54,6 +58,20 @@ package body Nazar.Interfaces.Properties is
      (Container     : in out Property_Container_Interface'Class;
       Property_Name : String;
       Initial_Value : Integer)
+   is
+   begin
+      Container.Declare_Property
+        (Property_Name, Nazar.Values.To_Value (Initial_Value));
+   end Declare_Property;
+
+   ----------------------
+   -- Declare_Property --
+   ----------------------
+
+   procedure Declare_Property
+     (Container     : in out Property_Container_Interface'Class;
+      Property_Name : String;
+      Initial_Value : Boolean)
    is
    begin
       Container.Declare_Property
@@ -138,8 +156,20 @@ package body Nazar.Interfaces.Properties is
       Property_Name : String)
       return Boolean
    is
+      use type Nazar.Values.Nazar_Value_Type;
+
+      Asserted_Name : constant String :=
+        (if Property_Name'Length < 4
+         or else Ada.Strings.Fixed.Head (Property_Name, 3) /= "no-"
+         then ""
+         else Ada.Strings.Fixed.Tail
+           (Property_Name, Property_Name'Length - 3));
    begin
-      return Container.Map.Contains (Property_Name);
+      return Container.Map.Contains (Property_Name)
+        or else (Asserted_Name /= ""
+                 and then Container.Map.Contains (Asserted_Name)
+                 and then Container.Map.Element (Asserted_Name).Property_Type
+                 = Nazar.Values.Boolean_Value_Type);
    end Has_Property;
 
    ------------------
@@ -152,8 +182,21 @@ package body Nazar.Interfaces.Properties is
       Property_Value : Nazar.Values.Nazar_Value)
    is
    begin
-      Container.Map (Property_Name).Property_Value :=
-        Property_Value;
+      if Container.Map.Contains (Property_Name) then
+         Container.Map (Property_Name).Property_Value :=
+           Property_Value;
+      else
+         declare
+            Asserted_Name : constant String :=
+              Ada.Strings.Fixed.Tail
+                (Property_Name, Property_Name'Length - 3);
+         begin
+            Nazar.Logging.Log
+              (Asserted_Name & " <- false");
+            Container.Map (Asserted_Name).Property_Value :=
+              Nazar.Values.To_Value (False);
+         end;
+      end if;
    end Set_Property;
 
    ------------------
