@@ -12,6 +12,7 @@ package body Nazar.Controllers.Draw is
    begin
       Controller.Model := Model_Access (Model);
       Controller.View  := View_Access (View);
+      View.Set_Model (Model);
       View.Show;
    end Start_Draw;
 

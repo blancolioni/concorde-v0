@@ -30,6 +30,7 @@ package body Nazar.Controllers.Console is
    begin
       Controller.Model := Model_Access (Model);
       Controller.View  := View_Access (View);
+      View.Set_Model (Model);
       View.On_Command (Handle_Command'Access, Controller);
       View.Show;
    end Start_Console;

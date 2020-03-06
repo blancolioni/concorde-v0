@@ -80,6 +80,28 @@ package body Nazar.Views.Gtk_Views.Console is
         (View.Console_Model.Get_Prompt_Text);
    end Model_Changed;
 
+   function Nazar_Gtk_Console_View_Create
+     return Nazar_View
+   is
+      Text_View : constant Gtk.Text_View.Gtk_Text_View :=
+        Gtk.Text_View.Gtk_Text_View_New;
+      Result    : constant Nazar_Gtk_Console_View :=
+        new Root_Gtk_Console_View;
+   begin
+      Gtk.Style_Context.Get_Style_Context (Text_View).Add_Class
+        ("nazar-console");
+
+      Result.Text_View := Text_View;
+      Result.Text_Buffer := Result.Text_View.Get_Buffer;
+      Result.Initialize (Result.Text_View);
+
+      Text_View.On_Key_Press_Event
+        (On_Text_View_Key_Press'Access, Result.Object);
+
+      return Nazar_View (Result);
+
+   end Nazar_Gtk_Console_View_Create;
+
    ----------------------------
    -- On_Text_View_Key_Press --
    ----------------------------

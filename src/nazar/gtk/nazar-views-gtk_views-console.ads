@@ -20,6 +20,9 @@ package Nazar.Views.Gtk_Views.Console is
      (Model : not null access Nazar.Models.Console.Root_Console_Model'Class)
       return Nazar_Gtk_Console_View;
 
+   function Nazar_Gtk_Console_View_Create
+      return Nazar_View;
+
 private
 
    type Root_Gtk_Console_View is

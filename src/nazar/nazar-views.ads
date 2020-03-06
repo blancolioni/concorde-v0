@@ -25,6 +25,11 @@ package Nazar.Views is
       return Nazar.Models.Nazar_Model
    is abstract;
 
+   procedure Set_Model
+     (View  : not null access Nazar_View_Interface;
+      Model : not null access Nazar.Models.Nazar_Model_Record'Class)
+   is abstract;
+
    type Nazar_View_Record is
      abstract new Nazar_View_Interface
    with private;
@@ -66,7 +71,7 @@ package Nazar.Views is
       Signal      : Nazar.Signals.Signal_Type;
       Signal_Data : Nazar.Signals.Signal_Data_Interface'Class);
 
-   procedure Set_Model
+   overriding procedure Set_Model
      (View  : not null access Nazar_View_Record;
       Model : not null access Nazar.Models.Nazar_Model_Record'Class);
 

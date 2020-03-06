@@ -2,6 +2,7 @@ with WL.String_Maps;
 
 with Nazar.Views.Gtk_Views.Application;
 with Nazar.Views.Gtk_Views.Box;
+with Nazar.Views.Gtk_Views.Console;
 with Nazar.Views.Gtk_Views.Draw;
 with Nazar.Views.Gtk_Views.Layout;
 with Nazar.Views.Orientable;
@@ -26,6 +27,12 @@ package body Nazar.Builder.Gtk_Creator is
       Name    : String)
       return Nazar.Views.Nazar_View;
 
+   function Create_Console return Nazar.Views.Nazar_View
+   is (Nazar.Views.Gtk_Views.Console.Nazar_Gtk_Console_View_Create);
+
+   function Create_Draw return Nazar.Views.Nazar_View
+   is (Nazar.Views.Gtk_Views.Draw.Nazar_Gtk_Draw_View_Create);
+
    function Create_Horizontal_Box return Nazar.Views.Nazar_View
    is (Nazar.Views.Gtk_Views.Box.Nazar_Gtk_Box_View_Create
        (Nazar.Views.Orientable.Horizontal));
@@ -36,9 +43,6 @@ package body Nazar.Builder.Gtk_Creator is
 
    function Create_Grid return Nazar.Views.Nazar_View
    is (Nazar.Views.Gtk_Views.Layout.Nazar_Gtk_Layout_View_Create);
-
-   function Create_Draw return Nazar.Views.Nazar_View
-   is (Nazar.Views.Gtk_Views.Draw.Nazar_Gtk_Draw_View_Create);
 
    -----------------
    -- Create_View --
@@ -83,6 +87,8 @@ package body Nazar.Builder.Gtk_Creator is
         ("application",
          Nazar.Views.Gtk_Views.Application
          .Nazar_Gtk_Application_View_Create'Access);
+      Creator_Map.Insert
+        ("console", Create_Console'Access);
       Creator_Map.Insert
         ("draw", Create_Draw'Access);
       Creator_Map.Insert

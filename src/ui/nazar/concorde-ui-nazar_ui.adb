@@ -1,15 +1,27 @@
 with Ada.Text_IO;
 
-with Nazar.Views;
+with Nazar.Views.Console;
+with Nazar.Views.Draw;
+
+with Nazar.Controllers.Console;
+with Nazar.Controllers.Draw;
+
+with Concorde.UI.Models.Console;
+with Concorde.UI.Models.Galaxy;
 
 with Concorde.Paths;
+
+with Concorde.Db.Faction;
+with Concorde.Handles.Faction;
 
 package body Concorde.UI.Nazar_UI is
 
    type Root_Nazar_UI is
      new UI_Interface with
       record
-         Top : Nazar.Views.Nazar_View;
+         Top     : Nazar.Views.Nazar_View;
+         Galaxy  : Nazar.Controllers.Draw.Nazar_Draw_Controller_Record;
+         Console : Nazar.Controllers.Console.Nazar_Console_Controller_Record;
       end record;
 
    overriding procedure Start (UI : in out Root_Nazar_UI);
@@ -33,6 +45,22 @@ package body Concorde.UI.Nazar_UI is
            Config_Path => Concorde.Paths.Config_File ("ui/concorde.config"));
    begin
       Result.Top := Builder.Get_View ("Concorde");
+      Result.Console.Start_Console
+        (Model =>
+           Models.Console.Console_Model
+             (Default_Scope => "/home"),
+         View  =>
+           Nazar.Views.Console.Nazar_Console_View
+             (Builder.Get_View ("console")));
+      Result.Galaxy.Start_Draw
+        (Model =>
+           Models.Galaxy.Galaxy_Model
+             (Concorde.Handles.Faction.Get
+                  (Concorde.Db.Faction.First_Reference_By_Top_Record
+                         (Concorde.Db.R_Faction))),
+         View  =>
+           Nazar.Views.Draw.Nazar_Draw_View
+             (Builder.Get_View ("galaxy")));
       return UI_Type (Result);
    end Get_Nazar_UI;
 

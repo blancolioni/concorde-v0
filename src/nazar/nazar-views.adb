@@ -83,7 +83,7 @@ package body Nazar.Views is
    -- Set_Model --
    ---------------
 
-   procedure Set_Model
+   overriding procedure Set_Model
      (View  : not null access Nazar_View_Record;
       Model : not null access Nazar.Models.Nazar_Model_Record'Class)
    is
