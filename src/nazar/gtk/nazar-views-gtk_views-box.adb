@@ -1,5 +1,7 @@
 with Gtk.Enums;
 
+with Nazar.Values;
+
 package body Nazar.Views.Gtk_Views.Box is
 
    ------------
@@ -12,7 +14,10 @@ package body Nazar.Views.Gtk_Views.Box is
    is
    begin
       View.Box.Pack_Start
-        (Nazar_Gtk_View (Child).Widget);
+        (Nazar_Gtk_View (Child).Widget,
+         Expand =>
+           Nazar.Values.To_Boolean
+             (Child.Get_Property ("expand")));
    end Append;
 
    -------------------
