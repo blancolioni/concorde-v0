@@ -44,6 +44,10 @@ private
          Top_Widget : Gtk.Widget.Gtk_Widget;
       end record;
 
+   overriding procedure Set_Name
+     (View  : in out Root_Gtk_View_Type;
+      Name  : String);
+
    function From_Gtk_Object
      (Object : not null access Glib.Object.GObject_Record'Class)
       return Concrete_View_Access

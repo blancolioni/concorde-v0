@@ -14,8 +14,22 @@ package body Nazar.Views.Gtk_Views is
       View.Self :=
         new Gtk_View_Object_Record'(Glib.Object.GObject_Record with
                                       View => Nazar_Gtk_View (View));
+      Top.Set_Name (View.Name);
       View.Self.Initialize;
    end Initialize;
+
+   --------------
+   -- Set_Name --
+   --------------
+
+   overriding procedure Set_Name
+     (View  : in out Root_Gtk_View_Type;
+      Name  : String)
+   is
+   begin
+      Nazar_View_Record (View).Set_Name (Name);
+      View.Widget.Set_Name (Name);
+   end Set_Name;
 
    ----------
    -- Show --

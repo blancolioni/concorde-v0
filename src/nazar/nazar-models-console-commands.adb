@@ -27,7 +27,7 @@ package body Nazar.Models.Console.Commands is
      (Command   : Cat_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
       Environment : not null access
-        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class);
 
@@ -50,7 +50,7 @@ package body Nazar.Models.Console.Commands is
      (Command   : Change_Scope_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
       Environment : not null access
-        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class);
 
@@ -73,7 +73,7 @@ package body Nazar.Models.Console.Commands is
      (Command   : Echo_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
       Environment : not null access
-        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class);
 
@@ -96,7 +96,7 @@ package body Nazar.Models.Console.Commands is
      (Command   : List_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
       Environment : not null access
-        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class);
 
@@ -248,7 +248,7 @@ package body Nazar.Models.Console.Commands is
      (Command   : Echo_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
       Environment : not null access
-        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class)
    is
@@ -274,7 +274,7 @@ package body Nazar.Models.Console.Commands is
      (Command   : Cat_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
       Environment : not null access
-        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class)
    is
@@ -325,14 +325,14 @@ package body Nazar.Models.Console.Commands is
      (Command   : Change_Scope_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
       Environment : not null access
-        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class)
    is
       Path : constant String := Arguments.Argument (1);
    begin
       if Command.Scope.Change_Scope (Arguments.Argument (1)) then
-         Environment.Set_String_Value
+         Environment.Set_Value
            ("CURRENT_SCOPE", Command.Scope.Current_Scope);
       else
          Writer.Put_Line
@@ -348,7 +348,7 @@ package body Nazar.Models.Console.Commands is
      (Command   : List_Command_Record;
       Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class;
       Environment : not null access
-        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class)
    is

@@ -1,5 +1,5 @@
 with Nazar.Interfaces.Text_Writer;
-with Nazar.Interfaces.Strings;
+with Nazar.Interfaces.Text;
 
 package Nazar.Interfaces.Commands is
 
@@ -28,7 +28,7 @@ package Nazar.Interfaces.Commands is
      (Command   : Command_Interface;
       Arguments : Arguments_Interface'Class;
       Environment : not null access
-        Nazar.Interfaces.Strings.String_Environment_Interface'Class;
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
       Writer    : in out Nazar.Interfaces.Text_Writer
       .Text_Writer_Interface'Class)
    is abstract;

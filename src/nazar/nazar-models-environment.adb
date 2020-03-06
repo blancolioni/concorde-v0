@@ -11,14 +11,14 @@ package body Nazar.Models.Environment is
       return String
    is
    begin
-      return Root_Environment_Model'Class (Model).Get_String_Value (Name);
+      return Root_Environment_Model'Class (Model).Get_Value (Name);
    end Get_Environment_Value;
 
    ----------------------
    -- Get_String_Value --
    ----------------------
 
-   overriding function Get_String_Value
+   overriding function Get_Value
      (From : Root_Environment_Model;
       Name : String)
       return String
@@ -29,7 +29,7 @@ package body Nazar.Models.Environment is
       else
          return "";
       end if;
-   end Get_String_Value;
+   end Get_Value;
 
    -------------
    -- Iterate --
@@ -55,14 +55,14 @@ package body Nazar.Models.Environment is
       Value : String)
    is
    begin
-      Root_Environment_Model'Class (Model).Set_String_Value (Name, Value);
+      Root_Environment_Model'Class (Model).Set_Value (Name, Value);
    end Set_Environment_Value;
 
-   ----------------------
-   -- Set_String_Value --
-   ----------------------
+   ---------------
+   -- Set_Value --
+   ---------------
 
-   overriding procedure Set_String_Value
+   overriding procedure Set_Value
      (To   : in out Root_Environment_Model;
       Name  : String;
       Value : String)
@@ -73,6 +73,6 @@ package body Nazar.Models.Environment is
       else
          To.Map.Insert (Name, Value);
       end if;
-   end Set_String_Value;
+   end Set_Value;
 
 end Nazar.Models.Environment;

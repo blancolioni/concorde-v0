@@ -2,13 +2,13 @@ private with Ada.Containers.Indefinite_Holders;
 private with Ada.Containers.Indefinite_Vectors;
 
 with Nazar.Interfaces.Hierarchy;
-with Nazar.Interfaces.Strings;
+with Nazar.Interfaces.Text;
 
 package Nazar.Models.Scope is
 
    type Root_Scope_Model is
      new Nazar_Model_Record
-     and Nazar.Interfaces.Strings.String_Interface
+     and Nazar.Interfaces.Text.Text_Interface
    with private;
 
    type Nazar_Scope_Model is access all Root_Scope_Model'Class;
@@ -48,7 +48,7 @@ private
 
    type Root_Scope_Model is
      new Nazar_Model_Record
-     and Nazar.Interfaces.Strings.String_Interface with
+     and Nazar.Interfaces.Text.Text_Interface with
       record
          Is_Valid      : Boolean := False;
          Root          : Node_Reference_Holders.Holder;
@@ -61,7 +61,7 @@ private
       return String
    is ("nazar-scope-model");
 
-   overriding function Get_String
+   overriding function Get_Text
      (Model  : Root_Scope_Model)
       return String
    is (Root_Scope_Model'Class (Model).Current_Scope);

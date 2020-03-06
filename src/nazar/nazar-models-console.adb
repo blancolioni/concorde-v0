@@ -207,8 +207,8 @@ package body Nazar.Models.Console is
    procedure Initialize
      (Model         : in out Root_Console_Model;
       Root          : Nazar.Interfaces.Hierarchy.Node_Reference_Class;
-      Environment   : not null access Nazar.Interfaces.Strings
-      .String_Environment_Interface'Class;
+      Environment   : not null access Nazar.Interfaces.Text
+      .Text_Environment_Interface'Class;
       Default_Scope : String)
    is
    begin
@@ -222,7 +222,7 @@ package body Nazar.Models.Console is
         Environment_Access (Environment);
       Model.Scope :=
         Nazar.Models.Scope.Scope_Model (Root, Default_Scope);
-      Model.Environment.Set_String_Value
+      Model.Environment.Set_Value
         ("CURRENT_SCOPE", Default_Scope);
 
       Model.Set_Command

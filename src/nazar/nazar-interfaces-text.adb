@@ -1,6 +1,6 @@
 with Ada.Characters.Handling;
 
-package body Nazar.Interfaces.Strings is
+package body Nazar.Interfaces.Text is
 
    function Valid_Variable_Name
      (Ch : Character)
@@ -11,7 +11,7 @@ package body Nazar.Interfaces.Strings is
    ------------------------
 
    function Expand_Environment
-     (Environment : String_Environment_Interface'Class;
+     (Environment : Text_Environment_Interface'Class;
       Source_Text : String)
       return String
    is
@@ -36,7 +36,7 @@ package body Nazar.Interfaces.Strings is
                begin
                   if Variable_End >= Variable_Start then
                      return Source_Text (Source_Text'First .. Text_End)
-                       & Environment.Get_String_Value (Variable_Name)
+                       & Environment.Get_Value (Variable_Name)
                        & Environment.Expand_Environment
                        (Source_Text (Variable_End + 1 .. Source_Text'Last));
                   else
@@ -71,4 +71,4 @@ package body Nazar.Interfaces.Strings is
       return Is_Alphanumeric (Ch) or else Ch = '_' or else Ch = '-';
    end Valid_Variable_Name;
 
-end Nazar.Interfaces.Strings;
+end Nazar.Interfaces.Text;

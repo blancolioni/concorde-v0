@@ -7,7 +7,7 @@ private with Nazar.Models.Scope;
 
 with Nazar.Interfaces.Commands;
 with Nazar.Interfaces.Hierarchy;
-with Nazar.Interfaces.Strings;
+with Nazar.Interfaces.Text;
 with Nazar.Models.Text_Writer;
 
 package Nazar.Models.Console is
@@ -21,8 +21,8 @@ package Nazar.Models.Console is
    procedure Initialize
      (Model         : in out Root_Console_Model;
       Root          : Nazar.Interfaces.Hierarchy.Node_Reference_Class;
-      Environment   : not null access Nazar.Interfaces.Strings
-      .String_Environment_Interface'Class;
+      Environment   : not null access Nazar.Interfaces.Text
+      .Text_Environment_Interface'Class;
       Default_Scope : String);
 
    procedure Set_Command
@@ -113,7 +113,7 @@ private
                       String_Maps.Element (Position)));
 
    type Environment_Access is
-     access all Nazar.Interfaces.Strings.String_Environment_Interface'Class;
+     access all Nazar.Interfaces.Text.Text_Environment_Interface'Class;
 
    package Command_Maps is
      new WL.String_Maps
