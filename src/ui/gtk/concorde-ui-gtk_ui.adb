@@ -40,8 +40,8 @@ package body Concorde.UI.Gtk_UI is
       record
          Window         : Gtk.Window.Gtk_Window;
          Top_View       : Nazar.Views.Gtk_Views.Nazar_Gtk_View;
-         Top_Model      : Nazar.Models.Model_Type;
-         Top_Controller : Nazar.Controllers.Controller_Type;
+         Top_Model      : Nazar.Models.Nazar_Model;
+         Top_Controller : Nazar.Controllers.Nazar_Controller;
          Surface        : Cairo.Cairo_Surface := Cairo.Null_Surface;
          Width          : Natural := 0;
          Height         : Natural := 0;
@@ -147,14 +147,15 @@ package body Concorde.UI.Gtk_UI is
                                       .First_Reference_By_Top_Record
                                         (Concorde.Db.R_Faction)));
 
-         Galaxy_Controller  : Nazar.Controllers.Draw.Root_Draw_Controller;
+         Galaxy_Controller  : Nazar.Controllers.Draw
+           .Nazar_Draw_Controller_Record;
          Galaxy_View        : constant Nazar.Views.Gtk_Views.Draw
            .Nazar_Gtk_Draw_View :=
              Nazar.Views.Gtk_Views.Draw.Gtk_Draw_View
                (Galaxy_Model);
          Console_View       : constant Nazar_Gtk_Console_View :=
                                 Gtk_Console_View (Console);
-         Console_Controller : Root_Console_Controller;
+         Console_Controller : Nazar_Console_Controller_Record;
          Layout_Model        : constant Nazar.Models.Layout
            .Nazar_Layout_Model :=
              Nazar.Models.Layout.Layout_Model_New;
@@ -164,11 +165,11 @@ package body Concorde.UI.Gtk_UI is
          Galaxy_Controller.Start_Draw (Galaxy_Model, Galaxy_View);
          Console_Controller.Start_Console (Console, Console_View);
 
-         Layout_Model.Attach (Galaxy_View, 0, 1, 0, 1);
-         Layout_Model.Attach (Console_View, 1, 2, 0, 1);
+         Layout_Model.Attach (Galaxy_View, 0, 12, 0, 8);
+         Layout_Model.Attach (Console_View, 0, 6, 8, 12);
 
          UI.Top_View := Nazar.Views.Gtk_Views.Nazar_Gtk_View (Layout_View);
-         UI.Top_Model := Nazar.Models.Model_Type (Layout_Model);
+         UI.Top_Model := Nazar.Models.Nazar_Model (Layout_Model);
       end;
 
       UI.Window.Add (UI.Top_View.Widget);

@@ -23,6 +23,8 @@ package body Concorde.UI.Launch is
       elsif Name = "gtk" then
          return Concorde.UI.Nazar_UI.Get_Nazar_UI
            (Nazar.Builder.Gtk_Creator.Get_Gtk_Creator);
+      elsif Name = "text" then
+         return Concorde.UI.Text_UI.Get_Text_UI;
       else
          raise Constraint_Error with
            "undedefined user interface: " & Name;
