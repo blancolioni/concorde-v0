@@ -30,6 +30,21 @@ package body Nazar.Views is
         (Signal, Source, User_Data, Handler);
    end Add_Handler;
 
+   ------------------------
+   -- Declare_Properties --
+   ------------------------
+
+   overriding procedure Declare_Properties
+     (View : in out Nazar_View_Record)
+   is
+   begin
+      View.Declare_Property ("name", "");
+      View.Declare_Property ("attach-left", 0);
+      View.Declare_Property ("attach-top", 0);
+      View.Declare_Property ("attach-right", 1);
+      View.Declare_Property ("attach-bottom", 1);
+   end Declare_Properties;
+
    ----------
    -- Emit --
    ----------
@@ -52,11 +67,7 @@ package body Nazar.Views is
      (View : in out Nazar_View_Record)
    is
    begin
-      View.Declare_Property ("name", "");
-      View.Declare_Property ("attach-left", 0);
-      View.Declare_Property ("attach-top", 0);
-      View.Declare_Property ("attach-right", 1);
-      View.Declare_Property ("attach-bottom", 1);
+      Nazar_View_Record'Class (View).Declare_Properties;
    end Initialize;
 
    ------------

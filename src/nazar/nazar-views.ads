@@ -53,6 +53,9 @@ package Nazar.Views is
      (View  : in out Nazar_View_Record;
       Name  : String);
 
+   overriding procedure Declare_Properties
+     (View : in out Nazar_View_Record);
+
    overriding function Model
      (View : Nazar_View_Record)
       return Nazar.Models.Nazar_Model;

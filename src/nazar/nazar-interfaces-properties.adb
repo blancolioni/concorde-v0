@@ -101,6 +101,25 @@ package body Nazar.Interfaces.Properties is
    -- Get_Property --
    ------------------
 
+   function Get_Property
+     (Container     : Property_Container_Interface'Class;
+      Property_Name : String;
+      Default_Value : String)
+      return String
+   is
+   begin
+      if Container.Has_Property (Property_Name) then
+         return Nazar.Values.To_String
+           (Container.Get_Property (Property_Name));
+      else
+         return Default_Value;
+      end if;
+   end Get_Property;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
    overriding function Get_Property
      (Container     : Root_Property_Container;
       Property_Name : String)

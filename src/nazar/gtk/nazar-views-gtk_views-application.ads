@@ -45,6 +45,9 @@ private
    overriding procedure Show
      (View  : in out Nazar_Gtk_Application_View_Record);
 
+   overriding procedure Declare_Properties
+     (View  : in out Nazar_Gtk_Application_View_Record);
+
    type Model_Access is
      access all Nazar.Models.Application.Nazar_Application_Model_Record'Class;
 

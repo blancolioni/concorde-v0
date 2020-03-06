@@ -33,6 +33,10 @@ package Nazar.Interfaces.Properties is
       Property_Name : String;
       Initial_Value : Integer);
 
+   procedure Declare_Properties
+     (Container : in out Property_Container_Interface)
+   is null;
+
    function Has_Property
      (Container     : Property_Container_Interface;
       Property_Name : String)
@@ -51,6 +55,12 @@ package Nazar.Interfaces.Properties is
       Property_Name : String;
       Default_Value : Integer)
       return Integer;
+
+   function Get_Property
+     (Container     : Property_Container_Interface'Class;
+      Property_Name : String;
+      Default_Value : String)
+      return String;
 
    procedure Set_Property
      (Container      : in out Property_Container_Interface;
