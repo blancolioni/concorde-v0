@@ -1,5 +1,3 @@
-with Concorde.UI.Gtk_UI;
-with Concorde.UI.Text_UI;
 with Nazar.Builder.Gtk_Creator;
 
 with Concorde.UI.Nazar_UI;
