@@ -25,12 +25,24 @@ package Nazar.Values is
       return Nazar_Value;
 
    function To_Value
-     (X : Long_Float)
+     (X : Nazar_Float)
       return Nazar_Value;
 
    function To_Value
      (S : String)
       return Nazar_Value;
+
+   function To_Integer
+     (Value : Nazar_Value)
+      return Integer;
+
+   function To_Float
+     (Value : Nazar_Value)
+      return Nazar_Float;
+
+   function To_String
+     (Value : Nazar_Value)
+      return String;
 
 private
 
@@ -56,7 +68,7 @@ private
             when T_Integer =>
                V_Integer : Integer := 0;
             when T_Float =>
-               V_Float : Long_Float := 0.0;
+               V_Float : Nazar_Float := 0.0;
             when T_String =>
                V_String  : Ada.Strings.Unbounded.Unbounded_String :=
                  Ada.Strings.Unbounded.Null_Unbounded_String;
@@ -95,7 +107,7 @@ private
    is (T_Integer, X);
 
    function To_Value
-     (X : Long_Float)
+     (X : Nazar_Float)
       return Nazar_Value
    is (T_Float, X);
 
@@ -104,5 +116,30 @@ private
       return Nazar_Value
    is (T_String,
        Ada.Strings.Unbounded.To_Unbounded_String (S));
+
+   function To_Integer
+     (Value : Nazar_Value)
+      return Integer
+   is (case Value.V_Type is
+          when T_Boolean => Boolean'Pos (Value.V_Boolean),
+          when T_Integer => Value.V_Integer,
+          when T_Float   => Integer (Value.V_Float),
+          when T_String  =>
+             Integer'Value (To_String (Value)));
+
+   function To_Float
+     (Value : Nazar_Value)
+      return Nazar_Float
+   is (case Value.V_Type is
+          when T_Boolean => Nazar_Float (Boolean'Pos (Value.V_Boolean)),
+          when T_Integer => Nazar_Float (Value.V_Integer),
+          when T_Float   => Value.V_Float,
+          when T_String  =>
+             Nazar_Float'Value (To_String (Value)));
+
+   function To_String
+     (Value : Nazar_Value)
+      return String
+   is (Image (Value));
 
 end Nazar.Values;

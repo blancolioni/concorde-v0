@@ -25,4 +25,13 @@ package Nazar is
    function Class_Name (Object : Nazar_Object_Interface) return String
                         is abstract;
 
+   procedure Set_Name
+     (Object : in out Nazar_Object_Interface;
+      Name   : String)
+   is abstract;
+
+   procedure Destroy
+     (Object : in out Nazar_Object_Interface)
+   is null;
+
 end Nazar;

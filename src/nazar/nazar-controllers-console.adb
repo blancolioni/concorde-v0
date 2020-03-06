@@ -12,8 +12,8 @@ package body Nazar.Controllers.Console is
      (Command_Line : String;
       User_Data    : Nazar.Signals.User_Data_Interface'Class)
    is
-      Controller : Root_Console_Controller'Class renames
-        Root_Console_Controller'Class (User_Data);
+      Controller : Nazar_Console_Controller_Record'Class renames
+        Nazar_Console_Controller_Record'Class (User_Data);
    begin
       Controller.Model.Execute_Command_Line (Command_Line);
    end Handle_Command;
@@ -23,7 +23,7 @@ package body Nazar.Controllers.Console is
    -------------------
 
    procedure Start_Console
-     (Controller : in out Root_Console_Controller;
+     (Controller : in out Nazar_Console_Controller_Record;
       Model      : not null access Controller_Model;
       View       : not null access Controller_View)
    is

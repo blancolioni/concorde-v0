@@ -44,6 +44,21 @@ package body Nazar.Views is
       View.Dispatch.Emit (Source, Signal, Signal_Data);
    end Emit;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (View : in out Nazar_View_Record)
+   is
+   begin
+      View.Declare_Property ("name", "");
+      View.Declare_Property ("attach-left", 0);
+      View.Declare_Property ("attach-top", 0);
+      View.Declare_Property ("attach-right", 1);
+      View.Declare_Property ("attach-bottom", 1);
+   end Initialize;
+
    ------------
    -- Notify --
    ------------
@@ -89,5 +104,18 @@ package body Nazar.Views is
 
       Nazar_View_Record'Class (View.all).Model_Changed;
    end Set_Model;
+
+   --------------
+   -- Set_Name --
+   --------------
+
+   overriding procedure Set_Name
+     (View  : in out Nazar_View_Record;
+      Name  : String)
+   is
+   begin
+      View.View_Name :=
+        Ada.Strings.Unbounded.To_Unbounded_String (Name);
+   end Set_Name;
 
 end Nazar.Views;

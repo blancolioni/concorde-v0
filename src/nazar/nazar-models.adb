@@ -67,4 +67,16 @@ package body Nazar.Models is
       Model.Observable.Remove_Observer (Observer);
    end Remove_Observer;
 
+   --------------
+   -- Set_Name --
+   --------------
+
+   overriding procedure Set_Name
+     (Model : in out Nazar_Model_Record;
+      Name  : String)
+   is
+   begin
+      Model.Model_Name := Ada.Strings.Unbounded.To_Unbounded_String (Name);
+   end Set_Name;
+
 end Nazar.Models;

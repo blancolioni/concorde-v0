@@ -33,6 +33,9 @@ package Nazar.Views is
 
    type Nazar_View is access all Nazar_View_Record'Class;
 
+   procedure Initialize
+     (View : in out Nazar_View_Record);
+
    overriding function Guid
      (View : Nazar_View_Record)
       return WL.Guids.Guid;
@@ -40,6 +43,10 @@ package Nazar.Views is
    overriding function Name
      (View : Nazar_View_Record)
       return String;
+
+   overriding procedure Set_Name
+     (View  : in out Nazar_View_Record;
+      Name  : String);
 
    overriding function Model
      (View : Nazar_View_Record)

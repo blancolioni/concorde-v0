@@ -10,7 +10,7 @@ with Nazar.Views.Console;
 package body Concorde.UI.Text_UI is
 
    type Root_Text_UI is
-     new Nazar.Controllers.Console.Root_Console_Controller
+     new Nazar.Controllers.Console.Nazar_Console_Controller_Record
      and UI_Interface with
       record
          Model : access Nazar.Models.Console.Root_Console_Model'Class;
@@ -33,7 +33,7 @@ package body Concorde.UI.Text_UI is
                   (Default_Scope => "/");
       View : constant Root_Text_UI :=
         Root_Text_UI'
-          (Nazar.Controllers.Console.Root_Console_Controller with
+          (Nazar.Controllers.Console.Nazar_Console_Controller_Record with
            Model => Model,
            View  => Nazar.Views.Text_Console.Text_Console_View (Model));
    begin

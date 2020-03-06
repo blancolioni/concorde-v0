@@ -28,6 +28,11 @@ package Nazar.Interfaces.Properties is
       Property_Name : String;
       Initial_Value : String);
 
+   procedure Declare_Property
+     (Container     : in out Property_Container_Interface'Class;
+      Property_Name : String;
+      Initial_Value : Integer);
+
    function Has_Property
      (Container     : Property_Container_Interface;
       Property_Name : String)
@@ -41,6 +46,12 @@ package Nazar.Interfaces.Properties is
       is abstract
      with Pre'Class => Container.Has_Property (Property_Name);
 
+   function Get_Property
+     (Container     : Property_Container_Interface'Class;
+      Property_Name : String;
+      Default_Value : Integer)
+      return Integer;
+
    procedure Set_Property
      (Container      : in out Property_Container_Interface;
       Property_Name  : String;
@@ -49,6 +60,11 @@ package Nazar.Interfaces.Properties is
      with Pre'Class => Container.Has_Property (Property_Name),
      Post'Class => Nazar.Values."="
        (Container.Get_Property (Property_Name), Property_Value);
+
+   procedure Set_Property
+     (Container      : in out Property_Container_Interface'Class;
+      Property_Name  : String;
+      Property_Value : String);
 
    type Root_Property_Container is
      new Property_Container_Interface with private;

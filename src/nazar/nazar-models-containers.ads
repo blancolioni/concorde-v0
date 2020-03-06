@@ -12,7 +12,7 @@ package Nazar.Models.Containers is
       Model     : not null access Root_Model_Type'Class)
       return Boolean;
 
-   procedure Insert
+   procedure Append
      (Container : in out Root_Container_Model;
       Model     : not null access Root_Model_Type'Class)
      with Pre => not Container.Contains (Model),

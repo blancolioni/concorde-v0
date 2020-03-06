@@ -2,10 +2,12 @@ private with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Containers.Vectors;
 
 with Nazar.Measurements;
+with Nazar.Views.Container;
 
 package Nazar.Views.Layout is
 
-   type Layout_View_Interface is interface and Nazar_View_Interface;
+   type Layout_View_Interface is interface
+     and Nazar.Views.Container.Nazar_Container_View_Interface;
 
    type Nazar_Layout_View is access all Layout_View_Interface'Class;
 

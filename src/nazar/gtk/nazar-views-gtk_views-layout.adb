@@ -4,35 +4,29 @@ with Nazar.Logging;
 
 package body Nazar.Views.Gtk_Views.Layout is
 
-   ---------------------
-   -- Gtk_Layout_View --
-   ---------------------
+   ------------
+   -- Append --
+   ------------
 
-   function Gtk_Layout_View
-     (Model : not null access Nazar.Models.Layout.Root_Layout_Model'Class)
-      return Nazar_Gtk_Layout_View
+   overriding procedure Append
+     (View  : in out Nazar_Gtk_Layout_View_Record;
+      Child : not null access Nazar_View_Record'Class)
    is
-      View : constant Nazar_Gtk_Layout_View :=
-        new Root_Gtk_Layout_View;
-      Grid : constant Gtk.Grid.Gtk_Grid :=
-        Gtk.Grid.Gtk_Grid_New;
    begin
-      Grid.Set_Column_Homogeneous (True);
-      Grid.Set_Column_Spacing (4);
-      Grid.Set_Row_Homogeneous (True);
-      Grid.Set_Row_Spacing (4);
-      View.Initialize (Grid);
-      View.Grid := Grid;
-      View.Set_Model (Model);
-      return View;
-   end Gtk_Layout_View;
+      View.Layout_Model.Attach
+        (Child  => Child,
+         Left   => Child.Get_Property ("attach-left", 0),
+         Right  => Child.Get_Property ("attach-right", 1),
+         Top    => Child.Get_Property ("attach-top", 0),
+         Bottom => Child.Get_Property ("attach-bottom", 1));
+   end Append;
 
    -------------------
    -- Model_Changed --
    -------------------
 
    overriding procedure Model_Changed
-     (View : in out Root_Gtk_Layout_View)
+     (View : in out Nazar_Gtk_Layout_View_Record)
    is
       package List_Of_Views is
         new Ada.Containers.Doubly_Linked_Lists (Nazar_View);
@@ -98,12 +92,48 @@ package body Nazar.Views.Gtk_Views.Layout is
 
    end Model_Changed;
 
+   ----------------------------------
+   -- Nazar_Gtk_Layout_View_Create --
+   ----------------------------------
+
+   function Nazar_Gtk_Layout_View_Create
+     return Nazar_View
+   is
+   begin
+      return Nazar_View
+        (Nazar_Gtk_Layout_View_New
+           (Nazar.Models.Layout.Layout_Model_New));
+   end Nazar_Gtk_Layout_View_Create;
+
+   -------------------------------
+   -- Nazar_Gtk_Layout_View_New --
+   -------------------------------
+
+   function Nazar_Gtk_Layout_View_New
+     (Model : not null access Nazar.Models.Layout.Root_Layout_Model'Class)
+      return Nazar_Gtk_Layout_View
+   is
+      View : constant Nazar_Gtk_Layout_View :=
+        new Nazar_Gtk_Layout_View_Record;
+      Grid : constant Gtk.Grid.Gtk_Grid :=
+        Gtk.Grid.Gtk_Grid_New;
+   begin
+      Grid.Set_Column_Homogeneous (True);
+      Grid.Set_Column_Spacing (4);
+      Grid.Set_Row_Homogeneous (True);
+      Grid.Set_Row_Spacing (4);
+      View.Initialize (Grid);
+      View.Grid := Grid;
+      View.Set_Model (Model);
+      return View;
+   end Nazar_Gtk_Layout_View_New;
+
    ----------------------
    -- Update_Container --
    ----------------------
 
    overriding procedure Update_Container
-     (View   : in out Root_Gtk_Layout_View;
+     (View   : in out Nazar_Gtk_Layout_View_Record;
       Update : not null access
         procedure (Container : in out Nazar.Views.Layout.Layout_Container))
    is

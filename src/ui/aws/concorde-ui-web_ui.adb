@@ -44,6 +44,25 @@ package body Concorde.UI.Web_UI is
                   ("/home");
       View  : constant Nazar.Web_UI.Views.Web_Console.Nazar_Web_Console_View :=
         Nazar.Web_UI.Views.Web_Console.Web_Console_View (Model);
+      Controller : Nazar.Controllers.Console.Nazar_Console_Controller_Record;
+   begin
+
+      Logging.On_Starting;
+
+      Create_Routes;
+      Create_Socket;
+
+      AWS.Server.Start
+        (Web_Server => Server,
+         Name       => "Concorde",
+         Callback   => Routes.Handle_Http_Request'Access,
+         Port       => 8080);
+
+      Model : constant Concorde.UI.Models.Console.Concorde_Console_Model :=
+                Concorde.UI.Models.Console.Console_Model
+                  ("/home");
+      View  : constant Nazar.Web_UI.Views.Web_Console.Nazar_Web_Console_View :=
+        Nazar.Web_UI.Views.Web_Console.Web_Console_View (Model);
       Controller : Nazar.Controllers.Console.Root_Console_Controller;
    begin
       Controller.Start_Console (Model, View);

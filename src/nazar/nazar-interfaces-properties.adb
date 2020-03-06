@@ -50,6 +50,20 @@ package body Nazar.Interfaces.Properties is
    -- Declare_Property --
    ----------------------
 
+   procedure Declare_Property
+     (Container     : in out Property_Container_Interface'Class;
+      Property_Name : String;
+      Initial_Value : Integer)
+   is
+   begin
+      Container.Declare_Property
+        (Property_Name, Nazar.Values.To_Value (Initial_Value));
+   end Declare_Property;
+
+   ----------------------
+   -- Declare_Property --
+   ----------------------
+
    overriding procedure Declare_Property
      (Container     : in out Root_Property_Container;
       Property_Name : String;
@@ -63,6 +77,25 @@ package body Nazar.Interfaces.Properties is
            (Property_Type  => Property_Type,
             Property_Value => Initial_Value));
    end Declare_Property;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   function Get_Property
+     (Container     : Property_Container_Interface'Class;
+      Property_Name : String;
+      Default_Value : Integer)
+      return Integer
+   is
+   begin
+      if Container.Has_Property (Property_Name) then
+         return Nazar.Values.To_Integer
+           (Container.Get_Property (Property_Name));
+      else
+         return Default_Value;
+      end if;
+   end Get_Property;
 
    ------------------
    -- Get_Property --
@@ -102,6 +135,20 @@ package body Nazar.Interfaces.Properties is
    begin
       Container.Map (Property_Name).Property_Value :=
         Property_Value;
+   end Set_Property;
+
+   ------------------
+   -- Set_Property --
+   ------------------
+
+   procedure Set_Property
+     (Container      : in out Property_Container_Interface'Class;
+      Property_Name  : String;
+      Property_Value : String)
+   is
+   begin
+      Container.Set_Property
+        (Property_Name, Nazar.Values.To_Value (Property_Value));
    end Set_Property;
 
 end Nazar.Interfaces.Properties;

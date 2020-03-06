@@ -12,37 +12,6 @@ with Nazar.Models.Text_Writer;
 
 package Nazar.Models.Console is
 
-   type Console_Command is
-     new Nazar.Interfaces.Commands.Arguments_Interface
-   with private;
-
-   function Name (Command : Console_Command) return String;
-
-   overriding function Argument_Count
-     (Command : Console_Command)
-      return Natural;
-
-   overriding function Argument
-     (Command : Console_Command;
-      Index   : Positive)
-      return String;
-
-   overriding function Has_Binding
-     (Command : Console_Command;
-      Name    : String)
-      return Boolean;
-
-   overriding function Binding
-     (Command : Console_Command;
-      Name    : String)
-      return String;
-
-   overriding function Check_Bindings
-     (Command    : Console_Command;
-      Binding_OK : not null access
-        function (Name, Value : String) return Boolean)
-      return Boolean;
-
    type Root_Console_Model is
      new Nazar.Models.Text_Writer.Root_Text_Writer_Model
    with private;

@@ -1,5 +1,9 @@
 with Concorde.UI.Gtk_UI;
 with Concorde.UI.Text_UI;
+with Nazar.Builder.Gtk_Creator;
+
+with Concorde.UI.Nazar_UI;
+with Concorde.UI.Text_UI;
 with Concorde.UI.Web_UI;
 
 package body Concorde.UI.Launch is
@@ -11,13 +15,14 @@ package body Concorde.UI.Launch is
    function Get_UI (Name : String) return UI_Type is
    begin
       if Name = "" then
-         return Concorde.UI.Gtk_UI.Get_Gtk_UI;
+         return Concorde.UI.Text_UI.Get_Text_UI;
       elsif Name = "aws" then
          return Concorde.UI.Web_UI.Get_Web_UI;
-      elsif Name = "gtk" then
-         return Concorde.UI.Gtk_UI.Get_Gtk_UI;
       elsif Name = "text" then
          return Concorde.UI.Text_UI.Get_Text_UI;
+      elsif Name = "gtk" then
+         return Concorde.UI.Nazar_UI.Get_Nazar_UI
+           (Nazar.Builder.Gtk_Creator.Get_Gtk_Creator);
       else
          raise Constraint_Error with
            "undedefined user interface: " & Name;

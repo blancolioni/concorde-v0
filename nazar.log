@@ -1,0 +1,4 @@
+2020-03-06 09:54:24.79	AA-A0-0A0E	nazar-gtk-layout-view	set model to nazar-layout-model AA-A0-0A0D
+2020-03-06 09:54:24.79	AA-A0-0A0E	nazar-gtk-layout-view	model changed
+2020-03-06 09:54:24.79	AA-A0-0A0D	nazar-layout-model	attach nazar-gtk-draw-view AA-A0-0A0F at 0 12 0 8
+2020-03-06 09:54:24.80	AA-A0-0A0E	nazar-gtk-layout-view	model changed

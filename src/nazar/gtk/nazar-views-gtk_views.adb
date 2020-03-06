@@ -9,6 +9,7 @@ package body Nazar.Views.Gtk_Views is
       Top  : not null access Gtk.Widget.Gtk_Widget_Record'Class)
    is
    begin
+      View.Initialize;
       View.Top_Widget := Gtk.Widget.Gtk_Widget (Top);
       View.Self :=
         new Gtk_View_Object_Record'(Glib.Object.GObject_Record with

@@ -5,7 +5,7 @@ package body Nazar.Controllers.Draw is
    -------------------
 
    procedure Start_Draw
-     (Controller : in out Root_Draw_Controller;
+     (Controller : in out Nazar_Draw_Controller_Record;
       Model      : not null access Controller_Model;
       View       : not null access Controller_View)
    is

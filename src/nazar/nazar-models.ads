@@ -20,6 +20,10 @@ package Nazar.Models is
      (Model : Nazar_Model_Record)
       return String;
 
+   overriding procedure Set_Name
+     (Model : in out Nazar_Model_Record;
+      Name  : String);
+
    procedure Initialize
      (Model : in out Nazar_Model_Record);
 

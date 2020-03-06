@@ -1,9 +1,9 @@
 package Nazar.Controllers is
 
-   type Controller_Interface is interface;
+   type Nazar_Controller_Interface is interface;
 
-   subtype Controller_Class is Controller_Interface'Class;
+   subtype Nazar_Controller_Class is Nazar_Controller_Interface'Class;
 
-   type Controller_Type is access all Controller_Interface'Class;
+   type Nazar_Controller is access all Nazar_Controller_Interface'Class;
 
 end Nazar.Controllers;

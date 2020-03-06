@@ -8,7 +8,7 @@ package body Nazar.Views.Gtk_Views.Draw is
 
    function From_Object is
      new Nazar.Views.Gtk_Views.From_Gtk_Object
-       (Root_Gtk_Draw_View, Nazar_Gtk_Draw_View);
+       (Nazar_Gtk_Draw_View_Record, Nazar_Gtk_Draw_View);
 
    function Configure_Handler
      (Self  : access Glib.Object.GObject_Record'Class;
@@ -107,6 +107,7 @@ package body Nazar.Views.Gtk_Views.Draw is
    is
       use Glib;
       use type Cairo.Cairo_Surface;
+      use type Nazar.Models.Nazar_Model;
       View   : constant Nazar_Gtk_Draw_View := From_Object (Self);
       Width  : constant Gint := Event.Width;
       Height : constant Gint := Event.Height;
@@ -122,19 +123,24 @@ package body Nazar.Views.Gtk_Views.Draw is
             Cairo.Cairo_Content_Color,
             View.Draw_Area.Get_Allocated_Width,
             View.Draw_Area.Get_Allocated_Height);
-      Clear (View.Surface, View.Draw_Model.Background_Color);
 
-      declare
-         Context : Nazar.Draw_Operations.Draw_Context;
-         Render  : Cairo_Render_Type;
-      begin
-         Render.Cr := Cairo.Create (View.Surface);
-         Nazar.Draw_Operations.Set_Target
-           (Context, Nazar_Float (Width), Nazar_Float (Height));
-         Nazar.Draw_Operations.Set_Viewport (Context, View.Viewport);
-         View.Draw_Model.Render (Context, Render);
-         Cairo.Destroy (Render.Cr);
-      end;
+      if View.Model = null then
+         Clear (View.Surface,
+                (0.6, 0.45, 0.82, 1.0));
+      else
+         declare
+            Context : Nazar.Draw_Operations.Draw_Context;
+            Render  : Cairo_Render_Type;
+         begin
+            Clear (View.Surface, View.Draw_Model.Background_Color);
+            Render.Cr := Cairo.Create (View.Surface);
+            Nazar.Draw_Operations.Set_Target
+              (Context, Nazar_Float (Width), Nazar_Float (Height));
+            Nazar.Draw_Operations.Set_Viewport (Context, View.Viewport);
+            View.Draw_Model.Render (Context, Render);
+            Cairo.Destroy (Render.Cr);
+         end;
+      end if;
 
       return True;
 
@@ -156,28 +162,6 @@ package body Nazar.Views.Gtk_Views.Draw is
       return True;
    end Draw_Handler;
 
-   -------------------
-   -- Gtk_Draw_View --
-   -------------------
-
-   function Gtk_Draw_View
-     (Model : not null access Nazar.Models.Draw.Root_Draw_Model'Class)
-      return Nazar_Gtk_Draw_View
-   is
-      View : constant Nazar_Gtk_Draw_View :=
-        new Root_Gtk_Draw_View;
-   begin
-      View.Draw_Area := Gtk.Drawing_Area.Gtk_Drawing_Area_New;
-      View.Initialize (View.Draw_Area);
-      View.Viewport := Model.Bounding_Box;
-      View.Set_Model (Model);
-      View.Draw_Area.On_Configure_Event
-        (Configure_Handler'Access, View.Object);
-      View.Draw_Area.On_Draw
-        (Draw_Handler'Access, View.Object);
-      return View;
-   end Gtk_Draw_View;
-
    -------------
    -- Line_To --
    -------------
@@ -196,7 +180,9 @@ package body Nazar.Views.Gtk_Views.Draw is
    -- Model_Changed --
    -------------------
 
-   overriding procedure Model_Changed (View : in out Root_Gtk_Draw_View) is
+   overriding procedure Model_Changed
+     (View : in out Nazar_Gtk_Draw_View_Record)
+   is
    begin
       null;
    end Model_Changed;
@@ -214,6 +200,41 @@ package body Nazar.Views.Gtk_Views.Draw is
       Render.Y := Glib.Gdouble (Y);
       Cairo.Move_To (Render.Cr, Render.X, Render.Y);
    end Move_To;
+
+   --------------------------------
+   -- Nazar_Gtk_Draw_View_Create --
+   --------------------------------
+
+   function Nazar_Gtk_Draw_View_Create
+     return Nazar_View
+   is
+      View : constant Nazar_Gtk_Draw_View :=
+        new Nazar_Gtk_Draw_View_Record;
+   begin
+      View.Draw_Area := Gtk.Drawing_Area.Gtk_Drawing_Area_New;
+      View.Initialize (View.Draw_Area);
+      View.Draw_Area.On_Configure_Event
+        (Configure_Handler'Access, View.Object);
+      View.Draw_Area.On_Draw
+        (Draw_Handler'Access, View.Object);
+      return Nazar_View (View);
+   end Nazar_Gtk_Draw_View_Create;
+
+   -----------------------------
+   -- Nazar_Gtk_Draw_View_New --
+   -----------------------------
+
+   function Nazar_Gtk_Draw_View_New
+     (Model : not null access Nazar.Models.Draw.Root_Draw_Model'Class)
+      return Nazar_Gtk_Draw_View
+   is
+      View : constant Nazar_Gtk_Draw_View :=
+        Nazar_Gtk_Draw_View (Nazar_Gtk_Draw_View_Create);
+   begin
+      View.Viewport := Model.Bounding_Box;
+      View.Set_Model (Model);
+      return View;
+   end Nazar_Gtk_Draw_View_New;
 
    --------------------
    -- Render_Current --
@@ -280,5 +301,21 @@ package body Nazar.Views.Gtk_Views.Draw is
          Glib.Gdouble (Color.Blue),
          Glib.Gdouble (Color.Alpha));
    end Set_Color;
+
+   ---------------
+   -- Set_Model --
+   ---------------
+
+   overriding procedure Set_Model
+     (View  : not null access Nazar_Gtk_Draw_View_Record;
+      Model : not null access Nazar.Models.Nazar_Model_Record'Class)
+   is
+      Bounding_Box : constant Rectangle :=
+        Nazar.Models.Draw.Nazar_Draw_Model (Model).Bounding_Box;
+   begin
+      View.Viewport := Bounding_Box;
+      Nazar.Views.Gtk_Views.Root_Gtk_View_Type (View.all)
+        .Set_Model (Model);
+   end Set_Model;
 
 end Nazar.Views.Gtk_Views.Draw;
