@@ -1,10 +1,10 @@
-with Nazar.Models.Tables;
-with Nazar.Views.Tables;
+with Nazar.Interfaces.Table;
+with Nazar.Views.Table;
 
-package Nazar.Views.Gtk_Views.Tables is
+package Nazar.Views.Gtk_Views.Table is
 
-   type Root_Gtk_Table_View is
-     new Root_Gtk_View_Type
+   type Nazar_Gtk_Table_View_Recrd is
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Tables.Table_View_Interface
    with private;
 

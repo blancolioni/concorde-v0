@@ -1,7 +1,5 @@
 with Ada.Strings.Fixed;
 
-with Nazar.Logging;
-
 package body Nazar.Interfaces.Properties is
 
    ----------------------
@@ -9,15 +7,17 @@ package body Nazar.Interfaces.Properties is
    ----------------------
 
    procedure Declare_Property
-     (Container     : in out Property_Container_Interface'Class;
-      Property_Name : String;
-      Property_Type : Nazar.Values.Nazar_Value_Type)
+     (Container      : in out Property_Container_Interface'Class;
+      Property_Name  : String;
+      Property_Type  : Nazar.Values.Nazar_Value_Type;
+      Update_Handler : Property_Update_Handler := null)
    is
    begin
       Container.Declare_Property
-        (Property_Name => Property_Name,
-         Property_Type => Property_Type,
-         Initial_Value => Nazar.Values.Default_Value (Property_Type));
+        (Property_Name  => Property_Name,
+         Property_Type  => Property_Type,
+         Initial_Value  => Nazar.Values.Default_Value (Property_Type),
+         Update_Handler => Update_Handler);
    end Declare_Property;
 
    ----------------------
@@ -25,15 +25,17 @@ package body Nazar.Interfaces.Properties is
    ----------------------
 
    procedure Declare_Property
-     (Container     : in out Property_Container_Interface'Class;
-      Property_Name : String;
-      Initial_Value : Nazar.Values.Nazar_Value)
+     (Container      : in out Property_Container_Interface'Class;
+      Property_Name  : String;
+      Initial_Value  : Nazar.Values.Nazar_Value;
+      Update_Handler : Property_Update_Handler := null)
    is
    begin
       Container.Declare_Property
-        (Property_Name => Property_Name,
-         Property_Type => Nazar.Values.Get_Type (Initial_Value),
-         Initial_Value => Initial_Value);
+        (Property_Name  => Property_Name,
+         Property_Type  => Nazar.Values.Get_Type (Initial_Value),
+         Initial_Value  => Initial_Value,
+         Update_Handler => Update_Handler);
    end Declare_Property;
 
    ----------------------
@@ -41,13 +43,14 @@ package body Nazar.Interfaces.Properties is
    ----------------------
 
    procedure Declare_Property
-     (Container     : in out Property_Container_Interface'Class;
-      Property_Name : String;
-      Initial_Value : String)
+     (Container      : in out Property_Container_Interface'Class;
+      Property_Name  : String;
+      Initial_Value  : String;
+      Update_Handler : Property_Update_Handler := null)
    is
    begin
       Container.Declare_Property
-        (Property_Name, Nazar.Values.To_Value (Initial_Value));
+        (Property_Name, Nazar.Values.To_Value (Initial_Value), Update_Handler);
    end Declare_Property;
 
    ----------------------
@@ -55,13 +58,14 @@ package body Nazar.Interfaces.Properties is
    ----------------------
 
    procedure Declare_Property
-     (Container     : in out Property_Container_Interface'Class;
-      Property_Name : String;
-      Initial_Value : Integer)
+     (Container      : in out Property_Container_Interface'Class;
+      Property_Name  : String;
+      Initial_Value  : Integer;
+      Update_Handler : Property_Update_Handler := null)
    is
    begin
       Container.Declare_Property
-        (Property_Name, Nazar.Values.To_Value (Initial_Value));
+        (Property_Name, Nazar.Values.To_Value (Initial_Value), Update_Handler);
    end Declare_Property;
 
    ----------------------
@@ -69,13 +73,14 @@ package body Nazar.Interfaces.Properties is
    ----------------------
 
    procedure Declare_Property
-     (Container     : in out Property_Container_Interface'Class;
-      Property_Name : String;
-      Initial_Value : Boolean)
+     (Container      : in out Property_Container_Interface'Class;
+      Property_Name  : String;
+      Initial_Value  : Boolean;
+      Update_Handler : Property_Update_Handler := null)
    is
    begin
       Container.Declare_Property
-        (Property_Name, Nazar.Values.To_Value (Initial_Value));
+        (Property_Name, Nazar.Values.To_Value (Initial_Value), Update_Handler);
    end Declare_Property;
 
    ----------------------
@@ -83,17 +88,19 @@ package body Nazar.Interfaces.Properties is
    ----------------------
 
    overriding procedure Declare_Property
-     (Container     : in out Root_Property_Container;
-      Property_Name : String;
-      Property_Type : Nazar.Values.Nazar_Value_Type;
-      Initial_Value : Nazar.Values.Nazar_Value)
+     (Container      : in out Root_Property_Container;
+      Property_Name  : String;
+      Property_Type  : Nazar.Values.Nazar_Value_Type;
+      Initial_Value  : Nazar.Values.Nazar_Value;
+      Update_Handler : Property_Update_Handler)
    is
    begin
       Container.Map.Insert
         (Property_Name,
          Property_Element_Type'
            (Property_Type  => Property_Type,
-            Property_Value => Initial_Value));
+            Property_Value => Initial_Value,
+            Update_Handler => Update_Handler));
    end Declare_Property;
 
    ------------------
@@ -159,11 +166,12 @@ package body Nazar.Interfaces.Properties is
       use type Nazar.Values.Nazar_Value_Type;
 
       Asserted_Name : constant String :=
-        (if Property_Name'Length < 4
-         or else Ada.Strings.Fixed.Head (Property_Name, 3) /= "no-"
-         then ""
-         else Ada.Strings.Fixed.Tail
-           (Property_Name, Property_Name'Length - 3));
+                        (if Property_Name'Length < 4
+                         or else Ada.Strings.Fixed.Head (Property_Name, 3)
+                         /= "no-"
+                         then ""
+                         else Ada.Strings.Fixed.Tail
+                           (Property_Name, Property_Name'Length - 3));
    begin
       return Container.Map.Contains (Property_Name)
         or else (Asserted_Name /= ""
@@ -181,20 +189,41 @@ package body Nazar.Interfaces.Properties is
       Property_Name  : String;
       Property_Value : Nazar.Values.Nazar_Value)
    is
+
+      procedure Update
+        (Element : in out Property_Element_Type;
+         Value   : Nazar.Values.Nazar_Value);
+
+      ------------
+      -- Update --
+      ------------
+
+      procedure Update
+        (Element : in out Property_Element_Type;
+         Value   : Nazar.Values.Nazar_Value)
+      is
+      begin
+         Element.Property_Value := Value;
+         if Element.Update_Handler /= null then
+            Element.Update_Handler (Container, Value);
+         end if;
+      end Update;
+
    begin
       if Container.Map.Contains (Property_Name) then
-         Container.Map (Property_Name).Property_Value :=
-           Property_Value;
+         Update (Container.Map (Property_Name), Property_Value);
+--           Container.Map (Property_Name).Property_Value :=
+--             Property_Value;
       else
          declare
             Asserted_Name : constant String :=
-              Ada.Strings.Fixed.Tail
-                (Property_Name, Property_Name'Length - 3);
+                              Ada.Strings.Fixed.Tail
+                                (Property_Name, Property_Name'Length - 3);
          begin
-            Nazar.Logging.Log
-              (Asserted_Name & " <- false");
-            Container.Map (Asserted_Name).Property_Value :=
-              Nazar.Values.To_Value (False);
+            Update (Container.Map (Asserted_Name),
+                    Nazar.Values.To_Value (False));
+--              Container.Map (Asserted_Name).Property_Value :=
+--                Nazar.Values.To_Value (False);
          end;
       end if;
    end Set_Property;

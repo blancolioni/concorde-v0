@@ -1,4 +1,11 @@
+with Nazar.Values;
+
 package body Nazar.Views.Gtk_Views.Label is
+
+   procedure On_Text_Property_Update
+     (Properties : in out Nazar.Interfaces.Properties
+      .Property_Container_Interface'Class;
+      New_Value  : Nazar.Values.Nazar_Value);
 
    ------------------------
    -- Declare_Properties --
@@ -8,8 +15,9 @@ package body Nazar.Views.Gtk_Views.Label is
      (View : in out Nazar_Gtk_Label_View_Record)
    is
    begin
-      Root_Gtk_View_Type (View).Declare_Properties;
-      View.Declare_Property ("text", "");
+      Nazar_Gtk_View_Record (View).Declare_Properties;
+      View.Declare_Property
+        ("text", "", On_Text_Property_Update'Access);
    end Declare_Properties;
 
    -------------------
@@ -67,25 +75,21 @@ package body Nazar.Views.Gtk_Views.Label is
            (Text));
    end Nazar_Gtk_Label_View_New;
 
-   ------------------
-   -- Set_Property --
-   ------------------
+   -----------------------------
+   -- On_Text_Property_Update --
+   -----------------------------
 
-   overriding procedure Set_Property
-     (View           : in out Nazar_Gtk_Label_View_Record;
-      Property_Name  : String;
-      Property_Value : Nazar.Values.Nazar_Value)
+   procedure On_Text_Property_Update
+     (Properties : in out Nazar.Interfaces.Properties
+      .Property_Container_Interface'Class;
+      New_Value  : Nazar.Values.Nazar_Value)
    is
+      View : Nazar_Gtk_Label_View_Record renames
+               Nazar_Gtk_Label_View_Record (Properties);
+      New_Label : constant String :=
+                    Nazar.Values.To_String (New_Value);
    begin
-      Root_Gtk_View_Type (View).Set_Property (Property_Name, Property_Value);
-      if Property_Name = "text" then
-         declare
-            New_Label : constant String :=
-              Nazar.Values.To_String (Property_Value);
-         begin
-            View.Text_Model.Set_Text (New_Label);
-         end;
-      end if;
-   end Set_Property;
+      View.Text_Model.Set_Text (New_Label);
+   end On_Text_Property_Update;
 
 end Nazar.Views.Gtk_Views.Label;

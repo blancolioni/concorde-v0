@@ -6,7 +6,7 @@ with Nazar.Views.Layout;
 package Nazar.Views.Gtk_Views.Layout is
 
    type Nazar_Gtk_Layout_View_Record is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Layout.Layout_View_Interface
    with private;
 
@@ -22,7 +22,7 @@ package Nazar.Views.Gtk_Views.Layout is
 private
 
    type Nazar_Gtk_Layout_View_Record is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Layout.Layout_View_Interface with
       record
          Layout : Nazar.Views.Layout.Layout_Container;

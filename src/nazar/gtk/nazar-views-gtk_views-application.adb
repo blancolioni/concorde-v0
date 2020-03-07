@@ -38,7 +38,7 @@ package body Nazar.Views.Gtk_Views.Application is
      (View  : in out Nazar_Gtk_Application_View_Record)
    is
    begin
-      Root_Gtk_View_Type (View).Declare_Properties;
+      Nazar_Gtk_View_Record (View).Declare_Properties;
       View.Declare_Property ("theme", "");
    end Declare_Properties;
 
@@ -106,7 +106,7 @@ package body Nazar.Views.Gtk_Views.Application is
      (View  : in out Nazar_Gtk_Application_View_Record)
    is
    begin
-      Root_Gtk_View_Type (View).Show;
+      Nazar_Gtk_View_Record (View).Show;
 
       declare
          use Gtk.Css_Provider;

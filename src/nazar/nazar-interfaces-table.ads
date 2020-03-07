@@ -1,23 +1,23 @@
-with Nazar.Models.Values;
+with Nazar.Values;
 
-package Nazar.Models.Tables is
+package Nazar.Interfaces.Table is
 
-   type Table_Model_Interface is interface;
+   type Nazar_Table_Interface is interface;
 
    function Column_Count
-     (Table : Table_Model_Interface)
+     (Table : Nazar_Table_Interface)
       return Natural
       is abstract;
 
    function Column_Name
-     (Table : Table_Model_Interface;
+     (Table : Nazar_Table_Interface;
       Column_Index : Positive)
       return String
       is abstract
      with Pre'Class => Column_Index <= Table.Column_Count;
 
    function Column_Heading
-     (Table        : Table_Model_Interface;
+     (Table        : Nazar_Table_Interface;
       Column_Index : Positive)
       return String
       is abstract
@@ -34,7 +34,7 @@ package Nazar.Models.Tables is
 
    type Row_Cursor_Interface is interface and Table_Cursor_Interface;
 
-   function First_Row (Table : Table_Model_Interface)
+   function First_Row (Table : Nazar_Table_Interface)
                        return Row_Cursor_Interface'Class
                        is abstract;
 
@@ -46,7 +46,7 @@ package Nazar.Models.Tables is
       is abstract;
 
    function Value (Position : Cell_Cursor_Interface)
-                   return Nazar.Models.Values.Model_Value_Interface'Class
+                   return Nazar.Values.Nazar_Value
                    is abstract;
 
-end Nazar.Models.Tables;
+end Nazar.Interfaces.Table;

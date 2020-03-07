@@ -1,5 +1,3 @@
-private with Nazar.Values;
-
 with Gtk.Label;
 
 with Nazar.Models.Text;
@@ -8,7 +6,7 @@ with Nazar.Views.Label;
 package Nazar.Views.Gtk_Views.Label is
 
    type Nazar_Gtk_Label_View_Record is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Label.Label_View_Interface
    with private;
 
@@ -28,7 +26,7 @@ package Nazar.Views.Gtk_Views.Label is
 private
 
    type Nazar_Gtk_Label_View_Record is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Label.Label_View_Interface with
       record
          Label : Gtk.Label.Gtk_Label;
@@ -44,11 +42,6 @@ private
 
    overriding procedure Model_Changed
      (View : in out Nazar_Gtk_Label_View_Record);
-
-   overriding procedure Set_Property
-     (View           : in out Nazar_Gtk_Label_View_Record;
-      Property_Name  : String;
-      Property_Value : Nazar.Values.Nazar_Value);
 
    type Model_Access is
      access all Nazar.Models.Text.Nazar_Text_Model_Record'Class;
