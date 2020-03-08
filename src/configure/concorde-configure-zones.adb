@@ -2,14 +2,14 @@ with Tropos.Reader;
 
 with Concorde.Configure.Commodities;
 
-with Concorde.Db.Commodity_Class;
+with Concorde.Db.Commodity_Group;
 with Concorde.Db.Sector_Use;
 with Concorde.Db.Zone;
 
 package body Concorde.Configure.Zones is
 
-   Zone_Class : Concorde.Db.Commodity_Class_Reference :=
-     Concorde.Db.Null_Commodity_Class_Reference;
+   Zone_Class : Concorde.Db.Commodity_Group_Reference :=
+     Concorde.Db.Null_Commodity_Group_Reference;
 
    ---------------------
    -- Configure_Zones --
@@ -53,7 +53,7 @@ package body Concorde.Configure.Zones is
                     (Tag             => Zone_Config.Config_Name,
                      Index           =>
                        Concorde.Configure.Commodities.Next_Commodity_Index,
-                     Commodity_Class => Zone_Class,
+                     Commodity_Group => Zone_Class,
                      Sector_Use      => Sector_Use,
                      Initial_Price   =>
                        Concorde.Money.To_Price
@@ -69,7 +69,7 @@ package body Concorde.Configure.Zones is
 
    begin
       Zone_Class :=
-        Concorde.Db.Commodity_Class.Create ("zone");
+        Concorde.Db.Commodity_Group.Create ("zone");
 
       while not Finished loop
          Finished := True;

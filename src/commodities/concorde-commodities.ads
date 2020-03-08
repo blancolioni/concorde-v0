@@ -92,10 +92,10 @@ package Concorde.Commodities is
    type Commodity_Class_Reference is private;
 
    function Lease_Category
-     return Concorde.Db.Commodity_Class_Reference;
+     return Concorde.Db.Commodity_Group_Reference;
 
    function Title_Category
-     return Concorde.Db.Commodity_Class_Reference;
+     return Concorde.Db.Commodity_Group_Reference;
 
    function Title_Tag
      (Sector     : Concorde.Db.World_Sector_Reference;
