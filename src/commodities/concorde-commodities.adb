@@ -3,7 +3,7 @@ with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 
 with Concorde.Db.Commodity;
-with Concorde.Db.Commodity_Class;
+with Concorde.Db.Commodity_Group;
 with Concorde.Db.Lease;
 with Concorde.Db.Sector_Title;
 with Concorde.Db.Stock_Item;
@@ -18,10 +18,10 @@ package body Concorde.Commodities is
    Skills_Vector          : Commodity_Subset_Vectors.Vector;
    Leases_Vector          : Commodity_Subset_Vectors.Vector;
 
-   Title_Reference      : Concorde.Db.Commodity_Class_Reference :=
-     Concorde.Db.Null_Commodity_Class_Reference;
-   Lease_Reference      : Concorde.Db.Commodity_Class_Reference :=
-     Concorde.Db.Null_Commodity_Class_Reference;
+   Title_Reference      : Concorde.Db.Commodity_Group_Reference :=
+     Concorde.Db.Null_Commodity_Group_Reference;
+   Lease_Reference      : Concorde.Db.Commodity_Group_Reference :=
+     Concorde.Db.Null_Commodity_Group_Reference;
 
    function Get_Rec
      (Stock     : Stock_Type;
@@ -268,8 +268,8 @@ package body Concorde.Commodities is
          declare
             Lease : constant Concorde.Db.Lease_Reference :=
               Concorde.Db.Lease.Create
-                (Commodity_Class  =>
-                   Concorde.Db.Commodity_Class.Get_Reference_By_Tag ("lease"),
+                (Commodity_Group  =>
+                   Concorde.Db.Commodity_Group.Get_Reference_By_Tag ("lease"),
                  Index            =>
                    Natural (Vector.Last_Index) + 1,
                  Initial_Price    =>
@@ -307,8 +307,8 @@ package body Concorde.Commodities is
          declare
             Title : constant Concorde.Db.Sector_Title_Reference :=
               Concorde.Db.Sector_Title.Create
-                (Commodity_Class =>
-                   Concorde.Db.Commodity_Class.Get_Reference_By_Tag ("title"),
+                (Commodity_Group =>
+                   Concorde.Db.Commodity_Group.Get_Reference_By_Tag ("title"),
                  Index           => Natural (Vector.Last_Index) + 1,
                  Initial_Price   => Price,
                  Mass            => 0.1,
@@ -586,13 +586,13 @@ package body Concorde.Commodities is
    --------------------
 
    function Lease_Category
-     return Concorde.Db.Commodity_Class_Reference
+     return Concorde.Db.Commodity_Group_Reference
    is
       use Concorde.Db;
    begin
-      if Lease_Reference = Null_Commodity_Class_Reference then
+      if Lease_Reference = Null_Commodity_Group_Reference then
          Lease_Reference :=
-           Concorde.Db.Commodity_Class.Get_Reference_By_Tag ("lease");
+           Concorde.Db.Commodity_Group.Get_Reference_By_Tag ("lease");
       end if;
       return Lease_Reference;
    end Lease_Category;
@@ -764,13 +764,13 @@ package body Concorde.Commodities is
    --------------------
 
    function Title_Category
-     return Concorde.Db.Commodity_Class_Reference
+     return Concorde.Db.Commodity_Group_Reference
    is
       use Concorde.Db;
    begin
-      if Title_Reference = Null_Commodity_Class_Reference then
+      if Title_Reference = Null_Commodity_Group_Reference then
          Title_Reference :=
-           Concorde.Db.Commodity_Class.Get_Reference_By_Tag ("title");
+           Concorde.Db.Commodity_Group.Get_Reference_By_Tag ("title");
       end if;
       return Title_Reference;
    end Title_Category;

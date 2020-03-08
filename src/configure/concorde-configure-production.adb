@@ -2,7 +2,7 @@ with Tropos.Reader;
 
 with Concorde.Commodities;
 
-with Concorde.Db.Commodity_Class;
+with Concorde.Db.Commodity_Group;
 with Concorde.Db.Production;
 with Concorde.Db.Input_Item;
 with Concorde.Db.Output_Item;
@@ -21,7 +21,7 @@ package body Concorde.Configure.Production is
       Create : not null access
         procedure (Production : Concorde.Db.Production_Reference;
                    Commodity  : Concorde.Db.Commodity_Reference;
-                   Category   : Concorde.Db.Commodity_Class_Reference;
+                   Category   : Concorde.Db.Commodity_Group_Reference;
                    Quantity   : Concorde.Quantities.Quantity_Type));
 
    --------------------------
@@ -96,7 +96,7 @@ package body Concorde.Configure.Production is
       Create     : not null access
         procedure (Production : Concorde.Db.Production_Reference;
                    Commodity  : Concorde.Db.Commodity_Reference;
-                   Category   : Concorde.Db.Commodity_Class_Reference;
+                   Category   : Concorde.Db.Commodity_Group_Reference;
                    Quantity   : Concorde.Quantities.Quantity_Type))
    is
    begin
@@ -105,17 +105,17 @@ package body Concorde.Configure.Production is
             Create (Production,
                     Concorde.Commodities.To_Database_Reference
                       (Concorde.Commodities.Get (Item.Config_Name)),
-                    Concorde.Db.Null_Commodity_Class_Reference,
+                    Concorde.Db.Null_Commodity_Group_Reference,
                     Concorde.Quantities.To_Quantity
                       (Real (Float'(Item.Value))));
          else
             declare
-               use type Concorde.Db.Commodity_Class_Reference;
-               Class : constant Concorde.Db.Commodity_Class_Reference :=
-                 Concorde.Db.Commodity_Class.Get_Reference_By_Tag
+               use type Concorde.Db.Commodity_Group_Reference;
+               Class : constant Concorde.Db.Commodity_Group_Reference :=
+                 Concorde.Db.Commodity_Group.Get_Reference_By_Tag
                    (Item.Config_Name);
             begin
-               if Class /= Concorde.Db.Null_Commodity_Class_Reference then
+               if Class /= Concorde.Db.Null_Commodity_Group_Reference then
                   Create (Production, Concorde.Db.Null_Commodity_Reference,
                           Class,
                           Concorde.Quantities.To_Quantity

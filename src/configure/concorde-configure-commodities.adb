@@ -6,7 +6,7 @@ with Concorde.Commodities;
 with Concorde.Properties;
 with Concorde.Money;
 
-with Concorde.Db.Commodity_Class;
+with Concorde.Db.Commodity_Group;
 with Concorde.Db.Commodity;
 with Concorde.Db.Construction_Input;
 with Concorde.Db.Property_Entry;
@@ -19,16 +19,16 @@ package body Concorde.Configure.Commodities is
 
    Next_Index : Natural := 0;
 
-   Resource_Category : Concorde.Db.Commodity_Class_Reference :=
-     Concorde.Db.Null_Commodity_Class_Reference;
-   Skill_Category    : Concorde.Db.Commodity_Class_Reference :=
-     Concorde.Db.Null_Commodity_Class_Reference;
+   Resource_Category : Concorde.Db.Commodity_Group_Reference :=
+     Concorde.Db.Null_Commodity_Group_Reference;
+   Skill_Category    : Concorde.Db.Commodity_Group_Reference :=
+     Concorde.Db.Null_Commodity_Group_Reference;
 
    procedure Configure_Category
      (Category_Config : Tropos.Configuration);
 
    procedure Configure_Commodity
-     (Category : Concorde.Db.Commodity_Class_Reference;
+     (Category : Concorde.Db.Commodity_Group_Reference;
       Config   : Tropos.Configuration);
 
    ------------------------
@@ -39,8 +39,8 @@ package body Concorde.Configure.Commodities is
      (Category_Config : Tropos.Configuration)
    is
       Name : constant String := Category_Config.Config_Name;
-      Category : constant Concorde.Db.Commodity_Class_Reference :=
-        Concorde.Db.Commodity_Class.Create (Name);
+      Category : constant Concorde.Db.Commodity_Group_Reference :=
+        Concorde.Db.Commodity_Group.Create (Name);
    begin
       if Name = "skill" then
          Skill_Category := Category;
@@ -75,10 +75,10 @@ package body Concorde.Configure.Commodities is
    -------------------------
 
    procedure Configure_Commodity
-     (Category : Concorde.Db.Commodity_Class_Reference;
+     (Category : Concorde.Db.Commodity_Group_Reference;
       Config   : Tropos.Configuration)
    is
-      use type Concorde.Db.Commodity_Class_Reference;
+      use type Concorde.Db.Commodity_Group_Reference;
 
       function Create_Commodity
         (Tag           : String;

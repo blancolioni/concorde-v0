@@ -7,10 +7,10 @@ with Quantities;
 
 package Commodities is
 
-   record Commodity_Class : Localised;
+   record Commodity_Group : Localised;
 	
    record Commodity : Localised, Has_Properties with Vector, Map is
-      key Commodity_Class;
+      key Commodity_Group;
 	  key Index     : Positive;
       Initial_Price : Price_Type;
       Mass          : Long_Float;
