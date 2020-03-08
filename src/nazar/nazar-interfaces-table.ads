@@ -23,6 +23,13 @@ package Nazar.Interfaces.Table is
       is abstract
      with Pre'Class => Column_Index <= Table.Column_Count;
 
+   function Column_Type
+     (Table        : Nazar_Table_Interface;
+      Column_Index : Positive)
+      return Nazar.Values.Nazar_Value_Type
+      is abstract
+     with Pre'Class => Column_Index <= Table.Column_Count;
+
    type Table_Cursor_Interface is interface;
 
    function Has_Element (Position : Table_Cursor_Interface) return Boolean

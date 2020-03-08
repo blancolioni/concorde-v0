@@ -1,37 +1,52 @@
-with Nazar.Interfaces.Table;
+private with Gtk.List_Store;
+private with Gtk.Scrolled_Window;
+private with Gtk.Tree_View;
+
+with Nazar.Models.Table;
 with Nazar.Views.Table;
 
 package Nazar.Views.Gtk_Views.Table is
 
-   type Nazar_Gtk_Table_View_Recrd is
+   type Nazar_Gtk_Table_View_Record is
      new Nazar_Gtk_View_Record
-     and Nazar.Views.Tables.Table_View_Interface
+     and Nazar.Views.Table.Nazar_Table_View_Interface
    with private;
 
-   type Nazar_Gtk_Table_View is access all Root_Gtk_Table_View'Class;
+   type Nazar_Gtk_Table_View is access all Nazar_Gtk_Table_View_Record'Class;
 
-   function Gtk_Table_View
-     (Model : not null access Nazar.Models.Tables.Table_Model_Interface'Class)
+   function Nazar_Gtk_Table_View_New
+     (Model : not null access Nazar.Models.Table
+      .Nazar_Table_Model_Record'Class)
       return Nazar_Gtk_Table_View;
+
+   function Nazar_Gtk_Table_View_Create
+      return Nazar_View;
 
 private
 
-   type Root_Gtk_Table_View is
-     new Root_Gtk_View_Type
-     and Nazar.Views.Tables.Table_View_Interface with
+   type Nazar_Gtk_Table_View_Record is
+     new Nazar_Gtk_View_Record
+     and Nazar.Views.Table.Nazar_Table_View_Interface with
       record
-         null;
+         List_Model : Gtk.List_Store.Gtk_List_Store;
+         Tree_View  : Gtk.Tree_View.Gtk_Tree_View;
+         Scrolled   : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       end record;
 
+   overriding function Class_Name
+     (Table : Nazar_Gtk_Table_View_Record)
+      return String
+   is ("nazar-gtk-table-view");
+
    overriding procedure Model_Changed
-     (View : in out Root_Gtk_Table_View);
+     (View : in out Nazar_Gtk_Table_View_Record);
 
    type Model_Access is
-     access all Nazar.Models.Tables.Table_Model_Interface'Class;
+     access all Nazar.Models.Table.Nazar_Table_Model_Record'Class;
 
    function Table_Model
-     (View : Root_Gtk_Table_View'Class)
+     (View : Nazar_Gtk_Table_View_Record'Class)
       return Model_Access
    is (Model_Access (View.Base_Model));
 
-end Nazar.Views.Gtk_Views.Tables;
+end Nazar.Views.Gtk_Views.Table;

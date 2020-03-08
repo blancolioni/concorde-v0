@@ -8,11 +8,15 @@ with Nazar.Controllers.Draw;
 
 with Concorde.UI.Models.Console;
 with Concorde.UI.Models.Galaxy;
+with Concorde.UI.Models.Market;
 
 with Concorde.Paths;
 
 with Concorde.Db.Faction;
 with Concorde.Handles.Faction;
+
+with Concorde.Db.Market;
+with Concorde.Handles.Market;
 
 package body Concorde.UI.Nazar_UI is
 
@@ -43,6 +47,10 @@ package body Concorde.UI.Nazar_UI is
         Nazar.Builder.Nazar_Builder_New
           (Creator     => Creator,
            Config_Path => Concorde.Paths.Config_File ("ui/concorde.config"));
+      Faction : constant Concorde.Handles.Faction.Faction_Handle :=
+                  Concorde.Handles.Faction.Get
+                    (Concorde.Db.Faction.First_Reference_By_Top_Record
+                       (Concorde.Db.R_Faction));
    begin
       Result.Top := Builder.Get_View ("Concorde");
       Result.Console.Start_Console
@@ -54,13 +62,18 @@ package body Concorde.UI.Nazar_UI is
              (Builder.Get_View ("console")));
       Result.Galaxy.Start_Draw
         (Model =>
-           Models.Galaxy.Galaxy_Model
-             (Concorde.Handles.Faction.Get
-                  (Concorde.Db.Faction.First_Reference_By_Top_Record
-                         (Concorde.Db.R_Faction))),
+           Models.Galaxy.Galaxy_Model (Faction),
          View  =>
            Nazar.Views.Draw.Nazar_Draw_View
              (Builder.Get_View ("galaxy")));
+
+      Builder.Get_View ("faction-label").Set_Property ("text", Faction.Name);
+      Builder.Get_View ("market").Set_Model
+        (Concorde.UI.Models.Market.Market_Model
+           (Concorde.Handles.Market.Get
+                (Concorde.Db.Market.First_Reference_By_Top_Record
+                     (Concorde.Db.R_Market))));
+
       return UI_Type (Result);
    end Get_Nazar_UI;
 

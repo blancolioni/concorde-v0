@@ -6,6 +6,7 @@ with Nazar.Views.Gtk_Views.Console;
 with Nazar.Views.Gtk_Views.Draw;
 with Nazar.Views.Gtk_Views.Label;
 with Nazar.Views.Gtk_Views.Layout;
+with Nazar.Views.Gtk_Views.Table;
 with Nazar.Views.Orientable;
 
 package body Nazar.Builder.Gtk_Creator is
@@ -47,6 +48,9 @@ package body Nazar.Builder.Gtk_Creator is
 
    function Create_Label return Nazar.Views.Nazar_View
    is (Nazar.Views.Gtk_Views.Label.Nazar_Gtk_Label_View_Create);
+
+   function Create_Table return Nazar.Views.Nazar_View
+   is (Nazar.Views.Gtk_Views.Table.Nazar_Gtk_Table_View_Create);
 
    -----------------
    -- Create_View --
@@ -101,6 +105,8 @@ package body Nazar.Builder.Gtk_Creator is
         ("horizontal-box", Create_Horizontal_Box'Access);
       Creator_Map.Insert
         ("label", Create_Label'Access);
+      Creator_Map.Insert
+        ("table", Create_Table'Access);
       Creator_Map.Insert
         ("vertical-box", Create_Vertical_Box'Access);
    end Initialize_Creator_Map;
