@@ -1,6 +1,10 @@
+private with Ada.Containers.Vectors;
+
 private with Gtk.List_Store;
 private with Gtk.Scrolled_Window;
 private with Gtk.Tree_View;
+
+private with Nazar.Values;
 
 with Nazar.Models.Table;
 with Nazar.Views.Table;
@@ -24,13 +28,35 @@ package Nazar.Views.Gtk_Views.Table is
 
 private
 
+   type View_Column is
+      record
+         Data_Type  : Nazar.Values.Nazar_Value_Type;
+      end record;
+
+   package View_Column_Vectors is
+     new Ada.Containers.Vectors (Positive, View_Column);
+
+   type Cell_Record is
+      record
+         Data : Nazar.Values.Nazar_Value;
+      end record;
+
+   package View_Cell_Vectors is
+     new Ada.Containers.Vectors (Positive, Cell_Record);
+
+   package View_Row_Vectors is
+     new Ada.Containers.Vectors (Positive, View_Cell_Vectors.Vector,
+                                 View_Cell_Vectors."=");
+
    type Nazar_Gtk_Table_View_Record is
      new Nazar_Gtk_View_Record
      and Nazar.Views.Table.Nazar_Table_View_Interface with
       record
-         List_Model : Gtk.List_Store.Gtk_List_Store;
-         Tree_View  : Gtk.Tree_View.Gtk_Tree_View;
-         Scrolled   : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+         List_Model   : Gtk.List_Store.Gtk_List_Store;
+         Tree_View    : Gtk.Tree_View.Gtk_Tree_View;
+         Scrolled     : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+         Column_Cache : View_Column_Vectors.Vector;
+         Value_Cache  : View_Row_Vectors.Vector;
       end record;
 
    overriding function Class_Name
