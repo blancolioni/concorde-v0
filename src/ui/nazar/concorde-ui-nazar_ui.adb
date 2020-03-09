@@ -18,6 +18,8 @@ with Concorde.Handles.Faction;
 with Concorde.Db.Market;
 with Concorde.Handles.Market;
 
+with Concorde.UI.Models.Current_Date;
+
 package body Concorde.UI.Nazar_UI is
 
    type Root_Nazar_UI is
@@ -68,6 +70,9 @@ package body Concorde.UI.Nazar_UI is
              (Builder.Get_View ("galaxy")));
 
       Builder.Get_View ("faction-label").Set_Property ("text", Faction.Name);
+      Builder.Get_View ("date-label").Set_Model
+        (Concorde.UI.Models.Current_Date.Current_Date_Model_New);
+
       Builder.Get_View ("market").Set_Model
         (Concorde.UI.Models.Market.Market_Model
            (Concorde.Handles.Market.Get
