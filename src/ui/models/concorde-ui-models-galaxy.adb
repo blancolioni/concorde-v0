@@ -87,25 +87,23 @@ package body Concorde.UI.Models.Galaxy is
          Model.Set_Color (Rec.Color);
          Model.Circle (2.0);
          Model.Render;
+
+         if Rec.Capital.Has_Element then
+            Model.Save_State;
+            Model.Set_Fill (False);
+            Model.Set_Color
+              (Nazar.Nazar_Unit_Float (Rec.Capital.Red),
+               Nazar.Nazar_Unit_Float (Rec.Capital.Green),
+               Nazar.Nazar_Unit_Float (Rec.Capital.Blue));
+            Model.Circle (5.0);
+            Model.Render;
+            Model.Restore_State;
+         end if;
+
       end loop;
 
       Model.Restore_State;
 
---           if Rec.Capital.Has_Element then
---              Commands.Add (Factory.Save);
---              Commands.Add
---                (Factory.Color
---                   (Rec.Capital.Red,
---                    Rec.Capital.Green,
---                    Rec.Capital.Blue));
---              Commands.Add
---                (Factory.Line_Width (3.0));
---              Commands.Add
---                (Factory.Arc (Screen (5.0)));
---              Commands.Add
---                (Factory.Render);
---              Commands.Add (Factory.Restore);
---           end if;
    end Draw_Galaxy;
 
    ------------------
