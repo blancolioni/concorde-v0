@@ -8,8 +8,6 @@ with Gtk.Tree_View_Column;
 
 with Nazar.Interfaces.Table;
 
-with Nazar.Logging;
-
 package body Nazar.Views.Gtk_Views.Table is
 
    function To_Gtk_Column_Type
@@ -96,7 +94,6 @@ package body Nazar.Views.Gtk_Views.Table is
                      Text  : constant String :=
                                Nazar.Values.To_String (Cell.Value);
                   begin
-                     Nazar.Logging.Log (Model.all, Text);
                      View.List_Model.Set (Iter, Index, Text);
                      Cell.Next;
                      Index := Index + 1;
