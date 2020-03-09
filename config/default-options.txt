@@ -6,6 +6,7 @@ display-theme = Adwaita-dark
 randomise = no
 create = no
 system-count = 1000
+update-count = 20
 add-faction = no
 galaxy-shape = spiral
 system-x-deviation = 2
