@@ -10,6 +10,8 @@ with Concorde.Calendar;
 with Concorde.Money;
 with Concorde.Quantities;
 
+with Concorde.Updates.Events;
+
 with Concorde.Db.Commodity;
 with Concorde.Handles.Commodity;
 
@@ -91,6 +93,27 @@ package body Concorde.UI.Models.Market is
    procedure Load
      (Model : in out Market_Model_Record'Class);
 
+   type Market_Model_Update is
+     new Concorde.Updates.Update_Interface with
+      record
+         Model : Market_Model_Access;
+      end record;
+
+   overriding procedure Activate
+     (Update : Market_Model_Update);
+
+   --------------
+   -- Activate --
+   --------------
+
+   overriding procedure Activate (Update : Market_Model_Update) is
+   begin
+      Update.Model.Load;
+      Update.Model.Notify_Observers;
+      Concorde.Updates.Events.Update_With_Delay
+        (Concorde.Calendar.Days (1), Update);
+   end Activate;
+
    -------------
    -- Element --
    -------------
@@ -124,6 +147,7 @@ package body Concorde.UI.Models.Market is
      (Model : in out Market_Model_Record'Class)
    is
    begin
+      Model.State.Clear;
       for Commodity of
         Concorde.Db.Commodity.Scan_By_Tag
       loop
@@ -172,6 +196,9 @@ package body Concorde.UI.Models.Market is
          State  => <>);
    begin
       Model.Load;
+      Concorde.Updates.Events.Update_With_Delay
+        (Concorde.Calendar.Days (1),
+         Market_Model_Update'(Model => Model));
       return Nazar.Models.Table.Nazar_Table_Model (Model);
    end Market_Model;
 
