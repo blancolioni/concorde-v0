@@ -313,17 +313,13 @@ begin
    Concorde.Updates.Control.Start_Updates;
    Updates_Running := True;
 
-   if Concorde.Options.Batch_Mode
-     or else Concorde.Options.Command_Line
-   then
-      Ada.Text_IO.Put_Line ("C O N C O R D E");
-
-      if Concorde.Options.Batch_Mode then
-         declare
-            Process     : WL.Processes.Process_Type;
-            Update_Days : constant Natural :=
-              Concorde.Options.Update_Count;
-         begin
+   if Concorde.Options.Batch_Mode then
+      declare
+         Process     : WL.Processes.Process_Type;
+         Update_Days : constant Natural :=
+           Concorde.Options.Update_Count;
+      begin
+         if Update_Days > 0 then
             Process.Start_Bar ("Updating", Update_Days * 24, True);
 
             for Day_Index in 1 .. Update_Days loop
@@ -337,13 +333,9 @@ begin
             end loop;
 
             Process.Finish;
+         end if;
 
-         end;
-
-         Ada.Text_IO.New_Line;
-      else
-         null;
-      end if;
+      end;
 
 --        declare
 --           User    : constant Concorde.Db.User_Reference :=
