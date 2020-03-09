@@ -7,7 +7,6 @@ with Concorde.Options;
 with Concorde.UI.Launch;
 
 with Concorde.Calendar;
-with Concorde.Commands.Loader;
 
 with Concorde.Logging;
 with Concorde.Logs;
@@ -44,7 +43,6 @@ begin
    end if;
 
    Concorde.Managers.Loader.Register_Managers;
-   Concorde.Commands.Loader.Load_Commands;
 
    Concorde.Logging.Start_Logging;
 
