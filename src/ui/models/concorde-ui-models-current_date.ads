@@ -1,10 +1,9 @@
-with Nazar.Models.Text;
+private with Concorde.Calendar;
 
 package Concorde.UI.Models.Current_Date is
 
    type Current_Date_Model_Record is
-     new Nazar.Models.Text.Nazar_Text_Model_Record
-   with private;
+     new Dynamic_Text_Model with private;
 
    type Current_Date_Model is access all Current_Date_Model_Record'Class;
 
@@ -13,9 +12,14 @@ package Concorde.UI.Models.Current_Date is
 private
 
    type Current_Date_Model_Record is
-     new Nazar.Models.Text.Nazar_Text_Model_Record with
+     new Dynamic_Text_Model with
       record
          null;
       end record;
+
+   overriding function Current_Text
+     (Model : Current_Date_Model_Record)
+      return String
+   is (Concorde.Calendar.Image (Concorde.Calendar.Clock));
 
 end Concorde.UI.Models.Current_Date;
