@@ -27,7 +27,6 @@ package Nazar.Models.Console is
 
    procedure Set_Command
      (Model   : in out Root_Console_Model;
-      Name    : String;
       Command : Nazar.Interfaces.Commands.Command_Interface'Class);
 
    procedure Execute_Command_Line

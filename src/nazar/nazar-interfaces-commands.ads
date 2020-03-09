@@ -5,6 +5,7 @@ package Nazar.Interfaces.Commands is
 
    type Command_Interface is interface;
 
+   function Name (Command : Command_Interface) return String is abstract;
    function Version (Command : Command_Interface) return String is abstract;
    function Usage (Command : Command_Interface) return String is abstract;
    function Help (Command : Command_Interface) return String is abstract;

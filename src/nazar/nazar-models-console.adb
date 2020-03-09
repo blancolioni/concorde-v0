@@ -226,13 +226,13 @@ package body Nazar.Models.Console is
         ("CURRENT_SCOPE", Default_Scope);
 
       Model.Set_Command
-        ("cat", Commands.Cat_Command (Model.Scope));
+        (Commands.Cat_Command (Model.Scope));
       Model.Set_Command
-        ("cd", Commands.Change_Scope_Command (Model.Scope));
+        (Commands.Change_Scope_Command (Model.Scope));
       Model.Set_Command
-        ("echo", Commands.Echo_Command);
+        (Commands.Echo_Command);
       Model.Set_Command
-        ("ls", Commands.List_Command (Model.Scope));
+        (Commands.List_Command (Model.Scope));
 
    end Initialize;
 
@@ -485,9 +485,9 @@ package body Nazar.Models.Console is
 
    procedure Set_Command
      (Model   : in out Root_Console_Model;
-      Name    : String;
       Command : Nazar.Interfaces.Commands.Command_Interface'Class)
    is
+      Name : constant String := Command.Name;
    begin
       if Model.Commands.Contains (Name) then
          Model.Commands.Replace (Name, Command);
