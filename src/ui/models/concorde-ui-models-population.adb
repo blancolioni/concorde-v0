@@ -14,20 +14,24 @@ with Concorde.Db.Pop;
 with Concorde.Handles.Pop;
 
 with Concorde.Db.Account;
+with Concorde.Db.Production;
 with Concorde.Db.Utility_Class;
 
 package body Concorde.UI.Models.Population is
 
    type Population_Table_Column is
-     (Utility, Size, Cash, Salary, Hours, Health, Happiness, Education);
+     (Utility, Size, Earn, Spend, Cash,
+      Production, Hours, Health, Happiness, Education);
 
    type Population_Record is
       record
          Population : Concorde.Handles.Pop.Pop_Handle;
          Utility    : Concorde.Db.Utility_Class_Reference;
          Size       : Concorde.Quantities.Quantity_Type;
+         Earn       : Concorde.Money.Money_Type;
+         Spend      : Concorde.Money.Money_Type;
          Cash       : Concorde.Money.Money_Type;
-         Salary     : Concorde.Money.Price_Type;
+         Production : Concorde.Db.Production_Reference;
          Hours      : Real;
          Health     : Real;
          Happiness  : Real;
@@ -118,6 +122,7 @@ package body Concorde.UI.Models.Population is
       Row, Column : Positive)
       return Nazar.Values.Nazar_Value
    is
+      use type Concorde.Db.Production_Reference;
       Info  : Population_Record renames Model.State (Row);
       Value : constant String :=
         (case Population_Table_Column'Val (Column - 1) is
@@ -125,10 +130,16 @@ package body Concorde.UI.Models.Population is
               Concorde.Db.Utility_Class.Get (Info.Utility).Name,
             when Size    =>
               Concorde.Quantities.Show (Info.Size),
+            when Earn    =>
+              Concorde.Money.Show (Info.Earn),
+            when Spend   =>
+              Concorde.Money.Show (Info.Spend),
             when Cash    =>
               Concorde.Money.Show (Info.Cash),
-            when Salary    =>
-              Concorde.Money.Show (Info.Salary),
+            when Production =>
+           (if Info.Production = Concorde.Db.Null_Production_Reference
+            then "-"
+            else Concorde.Db.Production.Get (Info.Production).Tag),
             when Hours    =>
               Concorde.Real_Images.Approximate_Image (Info.Hours),
             when Health   =>
@@ -155,15 +166,19 @@ package body Concorde.UI.Models.Population is
       loop
          declare
             Ref  : constant Concorde.Db.Pop_Reference :=
-              Pop.Get_Pop_Reference;
+                     Pop.Get_Pop_Reference;
+            Account : constant Concorde.Db.Account.Account_Type :=
+                        Concorde.Db.Account.Get (Pop.Account);
             Info : constant Population_Record :=
               Population_Record'
                 (Population =>
                    Concorde.Handles.Pop.Get (Ref),
                  Utility    => Pop.Utility_Class,
                  Size       => Pop.Size,
-                 Cash       => Concorde.Db.Account.Get (Pop.Account).Cash,
-                 Salary     => Pop.Salary,
+                 Earn       => Pop.Last_Earn,
+                 Spend      => Pop.Last_Spend,
+                 Cash       => Account.Cash,
+                 Production => Pop.Production,
                  Hours      => Pop.Hours,
                  Health     => Pop.Health,
                  Happiness  => Pop.Happy,
