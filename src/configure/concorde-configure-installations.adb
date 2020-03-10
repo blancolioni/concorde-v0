@@ -34,6 +34,8 @@ package body Concorde.Configure.Installations is
                  Next_Event       => Concorde.Calendar.Clock,
                  Manager          =>
                    Config.Get ("manager", "default-installation"),
+                 Last_Earn        => Concorde.Money.Zero,
+                 Last_Spend       => Concorde.Money.Zero,
                  Account          => Account,
                  Production       => Concorde.Db.Null_Production_Reference,
                  Capacity         => Concorde.Quantities.To_Quantity (1.0e6),

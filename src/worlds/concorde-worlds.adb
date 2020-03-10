@@ -42,6 +42,8 @@ package body Concorde.Worlds is
          Next_Event       => Concorde.Calendar.Clock,
          Manager          => "default-pop",
          Account          => Account,
+         Last_Earn        => Concorde.Money.Zero,
+         Last_Spend       => Concorde.Money.Zero,
          Production       => Concorde.Db.Null_Production_Reference,
          Capacity         => Size,
          Transported_Size => Concorde.Quantities.To_Real (Size),

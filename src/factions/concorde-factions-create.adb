@@ -112,6 +112,8 @@ package body Concorde.Factions.Create is
                         Next_Event    => Concorde.Calendar.Clock,
                         Manager       => "default-faction",
                         Account       => Account,
+                        Last_Earn     => Concorde.Money.Zero,
+                        Last_Spend    => Concorde.Money.Zero,
                         Capacity      => Concorde.Quantities.Zero,
                         Red           => Color.Red,
                         Green         => Color.Green,
@@ -124,6 +126,8 @@ package body Concorde.Factions.Create is
            Concorde.Db.Company.Create
              (Account      =>
                 Concorde.Agents.New_Account (Concorde.Money.Zero),
+              Last_Earn     => Concorde.Money.Zero,
+              Last_Spend    => Concorde.Money.Zero,
               Name         => Name,
               Active       => True,
               Scheduled    => False,
@@ -146,6 +150,8 @@ package body Concorde.Factions.Create is
               Name         => "1st Colonial Army",
               Capacity     => Concorde.Quantities.To_Quantity (1.0e6),
               Faction      => Faction,
+              Last_Earn     => Concorde.Money.Zero,
+              Last_Spend    => Concorde.Money.Zero,
               World        => Capital,
               World_Sector => Sector);
          Remaining_Shares : Natural := Faction_Company_Shares;
@@ -209,6 +215,8 @@ package body Concorde.Factions.Create is
                     Next_Event       => Concorde.Calendar.Clock,
                     Manager          => "default-pop",
                     Account          => Account,
+                    Last_Earn        => Concorde.Money.Zero,
+                    Last_Spend       => Concorde.Money.Zero,
                     Production       => Concorde.Db.Null_Production_Reference,
                     Capacity         => Concorde.Quantities.Scale (Size, 10.0),
                     Faction          => Faction,
