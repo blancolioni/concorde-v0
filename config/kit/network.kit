@@ -1,0 +1,35 @@
+package Network is
+
+type Node_Value_Type is (Rating, Money, Quantity);
+
+record Node : Localised is
+   Content        : Node_Value_Type;
+end Node;
+
+record Effect is
+   key To         : Node;
+   key From       : Node;
+   Add            : Long_Float;
+   Multiply       : Long_Float;
+   Exponent       : Long_Float;
+   Implementation : Long_Float;
+end Effect;
+
+record Metric : Node is
+end Metric;
+
+record Policy : Node is
+end Policy;
+
+record Network;
+
+record Network_Value is
+   key Network;
+   key Node;
+   Active   : Boolean;
+   Real_Value     : Long_Float;
+   Money_Value    : Money_Type;
+   Quantity_Value : Quantity_Type;
+end Network_Value;
+
+end Network;

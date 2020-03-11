@@ -6,6 +6,8 @@ with Concorde.Configure.Climates;
 with Concorde.Configure.Commodities;
 with Concorde.Configure.Facilities;
 with Concorde.Configure.Galaxies;
+with Concorde.Configure.Metrics;
+with Concorde.Configure.Policies;
 with Concorde.Configure.Production;
 with Concorde.Configure.Terrain;
 with Concorde.Configure.Units;
@@ -33,6 +35,9 @@ package body Concorde.Configure.Scenarios is
    begin
       Concorde.Db.Scenario.Create
         (Scenario_Name, True, Concorde.Db.Null_Star_System_Reference);
+
+      Concorde.Configure.Metrics.Configure_Metrics (Scenario_Name);
+      Concorde.Configure.Policies.Configure_Policies (Scenario_Name);
 
       Concorde.Configure.Commodities.Configure_Commodities
         (Scenario_Name);
