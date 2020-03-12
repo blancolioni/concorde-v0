@@ -25,6 +25,10 @@ package body Concorde.Configure.Policies is
       end loop;
    end Configure_Policies;
 
+   ----------------------
+   -- Configure_Policy --
+   ----------------------
+
    procedure Configure_Policy (Policy_Config : Tropos.Configuration) is
       Ref : constant Concorde.Db.Policy_Reference :=
               Concorde.Db.Policy.Create
@@ -41,7 +45,7 @@ package body Concorde.Configure.Policies is
                                  (Effect_Config.Config_Name);
             Add            : Real := 0.0;
             Multiply       : Real := 0.0;
-            Exponent       : Real := 0.0;
+            Exponent       : Real := 1.0;
             Implementation : Real := 0.0;
 
             function Get (Name : String) return Real

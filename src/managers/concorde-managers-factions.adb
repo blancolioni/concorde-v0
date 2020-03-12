@@ -196,6 +196,10 @@ package body Concorde.Managers.Factions is
       return new Faction_Company_Manager'(Manager);
    end Create_Faction_Company_Manager;
 
+   -------------------------
+   -- On_Activation_Begin --
+   -------------------------
+
    overriding procedure On_Activation_Begin
      (Manager : in out Faction_Company_Manager)
    is

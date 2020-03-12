@@ -18,6 +18,18 @@ end Effect;
 record Metric : Node is
 end Metric;
 
+record Pop_Group : Localised is
+   key Is_Wealth_Group : Boolean;
+   Proportion          : Long_Float;
+end Pop_Group;
+
+record Group_Influence is
+   key From  : Pop_Group;
+   key To    : Pop_Group;
+   Influence : Long_Float;
+   unique key Group_Influence with From, To;
+end Group_Influence;
+
 record Policy : Node is
 end Policy;
 
@@ -26,10 +38,13 @@ record Network;
 record Network_Value is
    key Network;
    key Node;
-   Active   : Boolean;
+   Active         : Boolean;
+   Changed        : Boolean;
    Real_Value     : Long_Float;
-   Money_Value    : Money_Type;
-   Quantity_Value : Quantity_Type;
+   New_Value      : Long_Float;
+   Old_Value      : Long_Float;
+   Changed_At     : Time;
+   unique key Network_Value with Network, Node;
 end Network_Value;
 
 end Network;

@@ -1,0 +1,48 @@
+with Managed;
+with Companies;
+with Names;
+with Quantities;
+with Worlds;
+
+package Ships is
+
+record Ship_Design : Localised is
+   Hold_Size        : Quantity_Type;
+   Tank_Size        : Quantity_Type;
+   Weapon_Mounts    : Natural;
+   Shield_Mounts    : Natural;
+   Gadget_Mounts    : Natural;
+   Crew_Quarters    : Natural;
+   Minimum_Tec      : Natural;
+   Fuel_Price       : Price_Type;
+   Ship_Price       : Price_Type;
+   Bounty           : Price_Type;
+   Occurrence       : Long_Float;
+   Hull_Strength    : Natural;
+   Police_Strength  : Integer;
+   Pirate_Strength  : Integer;
+   Trader_Strength  : Integer;
+   Hull_Repair_Cost : Price_Type;
+   Size             : Positive;
+end Ship_Design;
+
+record Ship : Has_Name, Managed is
+   key Ship_Design;
+   key Company;
+   key World;
+   key Alive         : Boolean;
+   key Destination   : World;
+   Fuel              : Long_Float;
+   Departure         : Time;
+   Arrival           : Time;
+end Ship;
+
+record Cargo is
+   key Ship;
+   Commodity;
+   Quantity : Quantity_Type;
+   Value    : Money_Type;
+   unique key Cargo with Ship, Commodity;
+end Cargo;
+
+end Ships;

@@ -1,26 +1,32 @@
 with Agents;
 with Commodities;
-with Houses;
+with Factions;
 with Money;
-with Pop_Groups;
+with Network;
 with Production;
 with Worlds;
 
 package Colonies is
 
-record Colony : Agent, Has_Stock is
-   unique key World;
-   key House;
-   Capital        : Boolean;
-   Plurality      : Float;
+record Colony : Agent, Has_Stock, Managed, Network is
+   key World;
+   key Faction;
+   Capital   : World_Sector;
+   Plurality : Long_Float;
 end Colony;
 
-record Colony_Region is
+record Colony_Sector is
    key Colony;
-   key World_Region;
-   unique key Colony_Region with Colony, World_Region;
-   Infrastructure : Float;
-end Colony_Region;
+   unique key World_Sector;
+end Colony_Sector;
+
+record Colony_Pop_Group is
+   key Colony;
+   Pop_Group;
+   Size   : Natural;
+   Income : Money_Type;
+   unique key Colony_Pop_Group with Colony, Pop_Group;
+end Colony_Pop_Group;
 
 record Colony_Price is
    key Colony;

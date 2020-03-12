@@ -8,6 +8,7 @@ with Concorde.Configure.Facilities;
 with Concorde.Configure.Galaxies;
 with Concorde.Configure.Metrics;
 with Concorde.Configure.Policies;
+with Concorde.Configure.Pop_Groups;
 with Concorde.Configure.Production;
 with Concorde.Configure.Terrain;
 with Concorde.Configure.Units;
@@ -36,9 +37,6 @@ package body Concorde.Configure.Scenarios is
       Concorde.Db.Scenario.Create
         (Scenario_Name, True, Concorde.Db.Null_Star_System_Reference);
 
-      Concorde.Configure.Metrics.Configure_Metrics (Scenario_Name);
-      Concorde.Configure.Policies.Configure_Policies (Scenario_Name);
-
       Concorde.Configure.Commodities.Configure_Commodities
         (Scenario_Name);
 
@@ -47,6 +45,10 @@ package body Concorde.Configure.Scenarios is
       Concorde.Configure.Terrain.Configure_Terrain (Scenario_Name);
       Concorde.Configure.Zones.Configure_Zones (Scenario_Name);
       Concorde.Configure.Climates.Configure_Climates (Scenario_Name);
+
+      Concorde.Configure.Metrics.Configure_Metrics (Scenario_Name);
+      Concorde.Configure.Pop_Groups.Configure_Pop_Groups (Scenario_Name);
+      Concorde.Configure.Policies.Configure_Policies (Scenario_Name);
 
       Concorde.Configure.Production.Configure_Production (Scenario_Name);
       Concorde.Configure.Facilities.Configure_Facilities (Scenario_Name);

@@ -1,8 +1,5 @@
 private with Ada.Containers.Doubly_Linked_Lists;
 
-with Concorde.Money;
-with Concorde.Quantities;
-
 with Concorde.Db;
 with Concorde.Db.World_Sector;
 
@@ -97,12 +94,6 @@ package Concorde.Worlds is
    procedure Set_Owner
      (Sector  : Concorde.Db.World_Sector_Reference;
       Faction : Concorde.Db.Faction_Reference);
-
-   procedure Add_Population
-     (Sector  : Concorde.Db.World_Sector_Reference;
-      Faction : Concorde.Db.Faction_Reference;
-      Size    : Concorde.Quantities.Quantity_Type;
-      Cash    : Concorde.Money.Money_Type);
 
    procedure Scan_Resources
      (Sector  : Concorde.Db.World_Sector_Reference;

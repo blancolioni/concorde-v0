@@ -1,84 +1,34 @@
 cash = 10K
 
-pops = {
-   pop = {
-      size = 100K
-      cash = 1000K
-	  faction-share = 5%
-      }
-   pop = {
-      size = 100
-      cash = 100K
-	  faction-share = 30%
-      }
-   pop = {
-      size = 1K
-	  cash = 1K
-	  skills = { infantry-training = 1 }
-	  faction-share = 1%
-	  regiment = yes
-	  }
-   pop = {
-      size = 100
-	  cash = 1K
-	  skills = { chemistry = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 100
-	  cash = 1K
-	  skills = { gunsmith = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 1K
-	  cash = 10K
-	  skills = { farming = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 1K
-	  cash = 10K
-	  skills = { farming = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 1K
-	  cash = 10K
-	  skills = { farming = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 1K
-	  cash = 10K
-	  skills = { farming = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 1K
-	  cash = 10K
-	  skills = { farming = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 100
-	  cash = 2K
-	  skills = { cooking = 1 }
-	  faction-share = 0.1%
-	  }
-   pop = {
-      size = 100
-	  cash = 2K
-	  skills = { cooking = 1 }
-	  faction-share = 0.1%
-	  }
-   pop = {
-      size = 100
-	  cash = 2K
-	  skills = { cooking = 1 }
-	  faction-share = 0.1%
-	  }
-}
+gdp = ~1G
+total-population = ~1M
+tax-evasion = 0.1
+income-tax = 0.33
+luxury-tax = 0.1
+sales-tax = 0.2
+technology = 1
+worker-productivity = 1
+import-tariffs = 0.1
+state-healthcare = 0.5
+state-pensions = 0.5
+military-spending = 0.5
+research-spending = 0.2
+pollution-controls = 0.0
+voting-rights = 0.75
+foreign-relations = 1
+poor-income = 1
+middle-class-income = 5
+rich-income = 20
+megarich-income = 100
+megarich-income-tax-rate = 25%
+rich-income-tax-rate = 20%
+middle-class-income-tax-rate = 15%
+poor-income-tax-rate = 5%
+equality = 50%
+birth-rate = 2%
+pop-size = 100K
+gini = 0.6
+apathy = 0.1
 
 ships = {
    scout = 2

@@ -1,17 +1,12 @@
-with Concorde.Calendar;
-
-with Concorde.Agents;
 with Concorde.Configure.Worlds;
 
 with Concorde.Db.Deposit;
 with Concorde.Db.Faction;
 with Concorde.Db.Generation;
 with Concorde.Db.Market;
-with Concorde.Db.Pop;
 with Concorde.Db.Sector_Neighbour;
 with Concorde.Db.Sector_Vertex;
 with Concorde.Db.World;
-with Concorde.Db.Utility_Class;
 
 package body Concorde.Worlds is
 
@@ -22,47 +17,6 @@ package body Concorde.Worlds is
 
    procedure Check_Surface
      (World : Concorde.Db.World_Reference);
-
-   --------------------
-   -- Add_Population --
-   --------------------
-
-   procedure Add_Population
-     (Sector  : Concorde.Db.World_Sector_Reference;
-      Faction : Concorde.Db.Faction_Reference;
-      Size    : Concorde.Quantities.Quantity_Type;
-      Cash    : Concorde.Money.Money_Type)
-   is
-      Account : constant Concorde.Db.Account_Reference :=
-        Concorde.Agents.New_Account (Cash);
-   begin
-      Concorde.Db.Pop.Create
-        (Active           => True,
-         Scheduled        => False,
-         Next_Event       => Concorde.Calendar.Clock,
-         Manager          => "default-pop",
-         Account          => Account,
-         Last_Earn        => Concorde.Money.Zero,
-         Last_Spend       => Concorde.Money.Zero,
-         Production       => Concorde.Db.Null_Production_Reference,
-         Capacity         => Size,
-         Transported_Size => Concorde.Quantities.To_Real (Size),
-         Faction          => Faction,
-         World            =>
-           Concorde.Db.World_Sector.Get (Sector).World,
-         World_Sector     => Sector,
-         Employer         => Concorde.Db.Null_Employer_Reference,
-         Utility_Class    =>
-           Concorde.Db.Utility_Class.Get_Reference_By_Name
-             ("default-pop"),
-         Salary           => Concorde.Money.Zero,
-         Size             => Size,
-         Hours            => 1.0,
-         Health           => 1.0,
-         Happy            => 1.0,
-         Education        => 1.0);
-
-   end Add_Population;
 
    -----------------
    -- Best_Sector --

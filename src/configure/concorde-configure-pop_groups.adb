@@ -1,13 +1,39 @@
-with Concorde.Money;
-
-with Concorde.Db.Consumer_Good;
+with Concorde.Db.Group_Influence;
+with Concorde.Db.Metric;
 with Concorde.Db.Pop_Group;
-with Concorde.Db.Pop_Group_Needs;
 
 package body Concorde.Configure.Pop_Groups is
 
    procedure Configure_Pop_Group
      (Config : Tropos.Configuration);
+
+   procedure Configure_Influence
+     (Config : Tropos.Configuration);
+
+   -------------------------
+   -- Configure_Influence --
+   -------------------------
+
+   procedure Configure_Influence
+     (Config : Tropos.Configuration)
+   is
+      From : constant Concorde.Db.Pop_Group_Reference :=
+               Concorde.Db.Pop_Group.Get_Reference_By_Tag
+                 (Config.Config_Name);
+   begin
+      for Infl_Config of Config.Child ("influences") loop
+         declare
+            use Concorde.Db;
+            To : constant Pop_Group_Reference :=
+                   Pop_Group.Get_Reference_By_Tag (Infl_Config.Config_Name);
+            Value : constant Real :=
+                      Real (Float'(Infl_Config.Value));
+         begin
+            Concorde.Db.Group_Influence.Create
+              (From, To, Value);
+         end;
+      end loop;
+   end Configure_Influence;
 
    -------------------------
    -- Configure_Pop_Group --
@@ -16,33 +42,42 @@ package body Concorde.Configure.Pop_Groups is
    procedure Configure_Pop_Group
      (Config : Tropos.Configuration)
    is
-      Price : constant Concorde.Money.Price_Type :=
-                Configure_Price (Config, "salary");
-      Consumer_Quality : constant Positive :=
-                           Config.Child ("quality").Get ("consumer");
-      Service_Quality  : constant Positive :=
-                           Config.Child ("quality").Get ("service");
-      Pop_Group : constant Concorde.Db.Pop_Group_Reference :=
-                           Concorde.Db.Pop_Group.Create
-                             (Available        => True,
-                              Initial_Price    => Price,
-                              Mass             => 1.0,
-                              Density          => 0.0,
-                              Tag              => Config.Config_Name,
-                              Consumer_Quality => Consumer_Quality,
-                              Service_Quality  => Service_Quality,
-                              Salary           => Price);
+      procedure Metric
+        (Suffix : String;
+         Value  : Concorde.Db.Node_Value_Type := Concorde.Db.Rating);
 
+      ------------
+      -- Metric --
+      ------------
+
+      procedure Metric
+        (Suffix : String;
+         Value  : Concorde.Db.Node_Value_Type := Concorde.Db.Rating)
+      is
+      begin
+         Concorde.Db.Metric.Create
+           (Content => Value,
+            Tag     =>
+              Config.Config_Name
+            & (if Suffix = "" then "" else "-" & Suffix));
+      end Metric;
+
+      Is_Wealth_Group : constant Boolean :=
+                          Config.Get ("wealth-group");
    begin
+      Concorde.Db.Pop_Group.Create
+        (Tag             => Config.Config_Name,
+         Is_Wealth_Group => Is_Wealth_Group,
+         Proportion      =>
+           Real (Long_Float'(Config.Get ("proportion", 0.0))));
 
-      for Consumer of
-        Concorde.Db.Consumer_Good.Select_By_Quality
-          (Consumer_Quality)
-      loop
-         Concorde.Db.Pop_Group_Needs.Create
-           (Pop_Group => Pop_Group,
-            Commodity => Consumer.Get_Commodity_Reference);
-      end loop;
+      Metric ("population", Concorde.Db.Quantity);
+      Metric ("proportion");
+      Metric ("");
+
+      if Is_Wealth_Group then
+         Metric ("income");
+      end if;
 
    end Configure_Pop_Group;
 
@@ -56,9 +91,14 @@ package body Concorde.Configure.Pop_Groups is
    begin
       Load_Scenario_Files
         (Scenario_Name   => Scenario_Name,
-         Directory_Name  => "poptypes",
-         File_Class_Name => "poptype",
+         Directory_Name  => "pop-groups",
+         File_Class_Name => "group",
          Process         => Configure_Pop_Group'Access);
+      Load_Scenario_Files
+        (Scenario_Name   => Scenario_Name,
+         Directory_Name  => "pop-groups",
+         File_Class_Name => "group",
+         Process         => Configure_Influence'Access);
    end Configure_Pop_Groups;
 
 end Concorde.Configure.Pop_Groups;

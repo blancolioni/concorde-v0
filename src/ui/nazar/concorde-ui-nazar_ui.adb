@@ -9,7 +9,7 @@ with Nazar.Controllers.Draw;
 with Concorde.UI.Models.Console;
 with Concorde.UI.Models.Galaxy;
 with Concorde.UI.Models.Market;
-with Concorde.UI.Models.Population;
+--  with Concorde.UI.Models.Population;
 
 with Concorde.Paths;
 
@@ -83,9 +83,9 @@ package body Concorde.UI.Nazar_UI is
            (Concorde.Handles.Market.Get
                 (Concorde.Db.Market.Get_Reference_By_World
                      (Faction.Capital_World.Reference_World))));
-      Builder.Get_View ("population").Set_Model
-        (Concorde.UI.Models.Population.Population_Model
-           (Faction.Capital_World));
+--        Builder.Get_View ("population").Set_Model
+--          (Concorde.UI.Models.Population.Population_Model
+--             (Faction.Capital_World));
 
       return UI_Type (Result);
    end Get_Nazar_UI;
