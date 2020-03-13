@@ -15,6 +15,7 @@ military-spending = 0.5
 research-spending = 0.2
 pollution-controls = 0.0
 voting-rights = 0.75
+poverty-rate = 0.1
 foreign-relations = 1
 poor-income = 1
 middle-class-income = 5
