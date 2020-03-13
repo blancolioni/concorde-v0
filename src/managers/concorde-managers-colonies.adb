@@ -11,6 +11,7 @@ with Concorde.Network;
 with Concorde.Db.Colony;
 with Concorde.Db.Network_Value;
 with Concorde.Db.Node;
+with Concorde.Db.Policy;
 with Concorde.Db.Pop_Group;
 
 package body Concorde.Managers.Colonies is
@@ -68,12 +69,23 @@ package body Concorde.Managers.Colonies is
       for Group_Values of
         Manager.Group_Nodes
       loop
-         Concorde.Colonies.Daily_Tax
+         Concorde.Colonies.Daily_Tax_Revenue
            (Colony  => Manager.Colony,
             Group   => Group_Values.Group,
             Rate    => Get (Group_Values.Tax_Rate),
             Income  => Get (Group_Values.Income),
             Evasion => Get (Group_Values.Tax_Evasion));
+      end loop;
+
+      for Policy of
+        Concorde.Db.Policy.Scan_By_Tag
+      loop
+         Concorde.Colonies.Daily_Policy_Expense
+           (Colony => Manager.Colony,
+            Policy => Policy.Get_Policy_Reference,
+            Value  =>
+              Concorde.Network.Current_Value
+                (Colony.Get_Network_Reference, Policy.Tag));
       end loop;
 
       Manager.Set_Next_Update_Delay (Concorde.Calendar.Days (1));

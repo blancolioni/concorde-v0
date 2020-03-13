@@ -1,21 +1,88 @@
-with Ada.Text_IO;
-
+with Concorde.Elementary_Functions;
 with Concorde.Money;
 with Concorde.Real_Images;
 
 with Concorde.Agents;
+with Concorde.Factions;
+with Concorde.Worlds;
+
+with Concorde.Network;
 
 with Concorde.Db.Colony;
 with Concorde.Db.Colony_Pop_Group;
+with Concorde.Db.Cost_Multiplier;
+with Concorde.Db.Node;
+with Concorde.Db.Policy;
 with Concorde.Db.Pop_Group;
+
+with Concorde.Logging;
 
 package body Concorde.Colonies is
 
-   ---------------
-   -- Daily_Tax --
-   ---------------
+   --------------------------
+   -- Daily_Policy_Expense --
+   --------------------------
 
-   procedure Daily_Tax
+   procedure Daily_Policy_Expense
+     (Colony  : Concorde.Db.Colony_Reference;
+      Policy  : Concorde.Db.Policy_Reference;
+      Value   : Unit_Real)
+   is
+      Policy_Rec : constant Concorde.Db.Policy.Policy_Type :=
+                     Concorde.Db.Policy.Get (Policy);
+      Colony_Rec : constant Concorde.Db.Colony.Colony_Type :=
+                     Concorde.Db.Colony.Get (Colony);
+      Network : constant Concorde.Db.Network_Reference :=
+                     Colony_Rec.Get_Network_Reference;
+      Expense : Real :=
+                  (Policy_Rec.Max_Cost - Policy_Rec.Min_Cost)
+                  * Value
+                  + Policy_Rec.Min_Cost;
+   begin
+      for Multiplier of
+        Concorde.Db.Cost_Multiplier.Select_By_Policy (Policy)
+      loop
+         declare
+            use Concorde.Elementary_Functions;
+            X : constant Real :=
+                  Concorde.Network.Inertial_Value
+                    (Network,
+                     Concorde.Db.Node.Get (Multiplier.Node).Tag,
+                     Multiplier.Inertia);
+            M : constant Real :=
+                  (X ** Multiplier.Exponent) * Multiplier.Multiply
+                  + Multiplier.Add;
+         begin
+            Expense := Expense * M;
+         end;
+      end loop;
+
+      if Expense > 0.0 then
+         declare
+            Amount : constant Concorde.Money.Money_Type :=
+                       Concorde.Money.To_Money (Expense);
+
+         begin
+            Concorde.Logging.Log
+              (Actor    =>
+                 Concorde.Factions.Name (Colony_Rec.Faction),
+               Location =>
+                 Concorde.Worlds.Name (Colony_Rec.World),
+               Category => "expense",
+               Message  => Policy_Rec.Tag & " costs "
+               & Concorde.Money.Show (Amount));
+
+            Concorde.Agents.Remove_Cash
+              (Colony_Rec, Amount, Policy_Rec.Tag);
+         end;
+      end if;
+   end Daily_Policy_Expense;
+
+   -----------------------
+   -- Daily_Tax_Revenue --
+   -----------------------
+
+   procedure Daily_Tax_Revenue
      (Colony : Concorde.Db.Colony_Reference;
       Group  : Concorde.Db.Pop_Group_Reference;
       Rate   : Unit_Real;
@@ -35,18 +102,26 @@ package body Concorde.Colonies is
                       (Col_Group.Income,
                        Real (Col_Group.Size)
                        * Rate * (Income + 1.0) * (1.0 - Evasion));
+      Rec       : constant Concorde.Db.Colony.Colony_Type :=
+                    Concorde.Db.Colony.Get (Colony);
    begin
-      Ada.Text_IO.Put_Line
-        ("tax: group=" & Concorde.Db.Pop_Group.Get (Group).Tag
+      Concorde.Logging.Log
+        (Actor    =>
+           Concorde.Factions.Name (Rec.Faction),
+         Location =>
+           Concorde.Worlds.Name (Rec.World),
+         Category => "tax",
+         Message  => "group=" & Concorde.Db.Pop_Group.Get (Group).Tag
          & "; size=" & Col_Group.Size'Image
          & "; rate=" & Image (Rate * 100.0) & "%"
          & "; income=" & Concorde.Money.Show (Col_Group.Income)
          & " " & Image ((Income + 1.0) * 100.0) & "%"
          & "; evasion=" & Image (Evasion * 100.0) & "%"
          & "; revenue=" & Concorde.Money.Show (Revenue));
+
       Concorde.Agents.Add_Cash
         (Concorde.Db.Colony.Get (Colony),
          Revenue, "income-tax");
-   end Daily_Tax;
+   end Daily_Tax_Revenue;
 
 end Concorde.Colonies;

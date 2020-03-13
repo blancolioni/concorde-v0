@@ -23,6 +23,11 @@ package Concorde.Agents is
       Tag     : String);
 
    procedure Remove_Cash
+     (Agent : Concorde.Db.Agent.Agent_Type;
+      Cash  : Concorde.Money.Money_Type;
+      Tag   : String);
+
+   procedure Remove_Cash
      (Account : Concorde.Db.Account_Reference;
       Cash    : Concorde.Money.Money_Type;
       Tag     : String);

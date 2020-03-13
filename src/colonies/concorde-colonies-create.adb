@@ -15,6 +15,7 @@ with Concorde.Money;
 with Concorde.Quantities;
 
 with Concorde.Network;
+with Concorde.Worlds;
 
 with Concorde.Db.Account;
 with Concorde.Db.Colony;
@@ -526,6 +527,10 @@ package body Concorde.Colonies.Create is
             end;
          end loop;
       end;
+
+      Pop_Settings.Insert
+        ("environment",
+         Concorde.Worlds.Habitability (World) * 2.0 - 1.0);
 
       Concorde.Network.Create_Initial_Network
         (Network       => Network,

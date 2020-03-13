@@ -73,11 +73,8 @@ package body Concorde.Configure.Pop_Groups is
 
       Metric ("population", Concorde.Db.Quantity);
       Metric ("proportion");
+      Metric ("income");
       Metric ("");
-
-      if Is_Wealth_Group then
-         Metric ("income");
-      end if;
 
    end Configure_Pop_Group;
 

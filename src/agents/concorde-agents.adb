@@ -213,6 +213,19 @@ package body Concorde.Agents is
    -----------------
 
    procedure Remove_Cash
+     (Agent : Concorde.Db.Agent.Agent_Type;
+      Cash  : Concorde.Money.Money_Type;
+      Tag   : String)
+   is
+   begin
+      Remove_Cash (Agent.Account, Cash, Tag);
+   end Remove_Cash;
+
+   -----------------
+   -- Remove_Cash --
+   -----------------
+
+   procedure Remove_Cash
      (Account : Concorde.Db.Account_Reference;
       Cash    : Concorde.Money.Money_Type;
       Tag     : String)

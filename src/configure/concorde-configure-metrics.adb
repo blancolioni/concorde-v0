@@ -21,6 +21,11 @@ package body Concorde.Configure.Metrics is
            (Tag     => Rating_Config.Config_Name,
             Content => Concorde.Db.Rating);
       end loop;
+      for Quantity_Config of Metrics_Config.Child ("quantity") loop
+         Concorde.Db.Metric.Create
+           (Tag     => Quantity_Config.Config_Name,
+            Content => Concorde.Db.Quantity);
+      end loop;
       for Group_Config of Metrics_Config.Child ("group") loop
          Concorde.Db.Metric.Create
            (Tag     => Group_Config.Config_Name,

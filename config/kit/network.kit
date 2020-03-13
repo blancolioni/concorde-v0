@@ -6,13 +6,16 @@ record Node : Localised is
    Content        : Node_Value_Type;
 end Node;
 
-record Effect is
-   key To         : Node;
-   key From       : Node;
-   Add            : Long_Float;
-   Multiply       : Long_Float;
-   Exponent       : Long_Float;
-   Implementation : Long_Float;
+record Calculation is
+   key Node;
+   Add       : Long_Float;
+   Multiply  : Long_Float;
+   Exponent  : Long_Float;
+   Inertia   : Long_Float;
+end Calculation;
+
+record Effect : Calculation is
+   key To    : Node;
 end Effect;
 
 record Metric : Node is
@@ -31,7 +34,13 @@ record Group_Influence is
 end Group_Influence;
 
 record Policy : Node is
+   Min_Cost : Long_Float;
+   Max_Cost : Long_Float;
 end Policy;
+
+record Cost_Multiplier : Calculation is
+   key Policy;
+end Cost_Multiplier;
 
 record Network;
 

@@ -14,6 +14,12 @@ package Concorde.Network is
       Tag     : String)
       return Real;
 
+   function Inertial_Value
+     (Network : Concorde.Db.Network_Reference;
+      Tag     : String;
+      Inertia : Non_Negative_Real)
+      return Real;
+
    function Last_Change
      (Network : Concorde.Db.Network_Reference;
       Tag     : String)
