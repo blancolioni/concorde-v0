@@ -54,17 +54,27 @@ package body Concorde.Configure.Policies is
       for Multiplier_Config of Cost_Config.Child ("multipliers") loop
          declare
             use Concorde.Db;
+            Value_Node : constant Node_Reference :=
+                           Concorde.Db.Node.Get_Reference_By_Tag
+                             (Multiplier_Config.Config_Name);
+
             Multiplier : constant Cost_Multiplier_Reference :=
                            Cost_Multiplier.Create
                              (Add      => 0.0,
-                              Multiply => 0.0,
-                              Exponent => 0.0,
+                              Multiply => 1.0,
+                              Exponent => 1.0,
                               Inertia  => 0.0,
-                              Node     =>
-                                Concorde.Db.Node.Get_Reference_By_Tag
-                                  (Multiplier_Config.Config_Name),
+                              Node     => Value_Node,
                               Policy   => Ref);
          begin
+            if Value_Node = Null_Node_Reference then
+               raise Constraint_Error with
+                 "in configuration for policy "
+                 & Policy_Config.Config_Name
+                 & " cost multipliers: no such node: "
+                 & Multiplier_Config.Config_Name;
+            end if;
+
             New_Calculation
               (Cost_Multiplier.Get (Multiplier).Get_Calculation_Reference,
                Multiplier_Config);
@@ -74,80 +84,29 @@ package body Concorde.Configure.Policies is
       for Effect_Config of Policy_Config.Child ("effect") loop
 
          declare
-            use type Concorde.Db.Node_Reference;
+            use Concorde.Db;
             To             : constant Concorde.Db.Node_Reference :=
                                Concorde.Db.Node.Get_Reference_By_Tag
                                  (Effect_Config.Config_Name);
-            Add      : Real := 0.0;
-            Multiply : Real := 0.0;
-            Exponent : Real := 1.0;
-            Inertia  : Real := 0.0;
-
-            function Get (Name : String) return Real
-            is (Real (Float'(Effect_Config.Get (Name, 0.0))));
-
-            procedure Get (X, Y, Z, W : in out Real);
-
-            ---------
-            -- Get --
-            ---------
-
-            procedure Get (X, Y, Z, W : in out Real) is
-
-               procedure Get
-                 (Index : Positive;
-                  Value : in out Real);
-
-               ---------
-               -- Get --
-               ---------
-
-               procedure Get
-                 (Index : Positive;
-                  Value : in out Real)
-               is
-               begin
-                  if Index <= Effect_Config.Child_Count then
-                     Value := Real (Long_Float'(Effect_Config.Get (Index)));
-                  end if;
-               end Get;
-
-            begin
-               Get (1, X);
-               Get (2, Y);
-               Get (3, Z);
-               Get (4, W);
-            end Get;
-
+            Effect         : constant Effect_Reference :=
+                               Concorde.Db.Effect.Create
+                                 (Add      => 0.0,
+                                  Multiply => 1.0,
+                                  Exponent => 1.0,
+                                  Inertia  => 0.0,
+                                  Node     => Node_Ref,
+                                  To       => To);
          begin
-            if To = Concorde.Db.Null_Node_Reference then
+            if To = Null_Node_Reference then
                raise Constraint_Error with
-                 "in policy " & Policy_Config.Config_Name
-                 & ": no such node: " & Effect_Config.Config_Name;
+                 "in configuration for policy "
+                 & Policy_Config.Config_Name
+                 & " effects: no such node: "
+                 & Effect_Config.Config_Name;
             end if;
-
-            if Effect_Config.Child_Count = 1 then
-               Multiply := Real (Float'(Effect_Config.Value));
-            elsif Effect_Config.Contains ("add")
-              or else Effect_Config.Contains ("multiply")
-              or else Effect_Config.Contains ("exponent")
-              or else Effect_Config.Contains ("inertia")
-            then
-               Add      := Get ("add");
-               Multiply := Get ("multiply");
-               Exponent := Get ("exponent");
-               Inertia  := Get ("inertia");
-            else
-               Get (Add, Multiply, Exponent, Inertia);
-            end if;
-
-            Concorde.Db.Effect.Create
-              (To             => To,
-               Node           => Node_Ref,
-               Add            => Add,
-               Multiply       => Multiply,
-               Exponent       => Exponent,
-               Inertia        => Inertia);
+            New_Calculation
+              (Concorde.Db.Effect.Get (Effect).Get_Calculation_Reference,
+               Effect_Config);
          end;
       end loop;
 
@@ -214,6 +173,11 @@ package body Concorde.Configure.Policies is
          Multiply := Get ("multiply", 1.0);
          Exponent := Get ("exponent", 1.0);
          Inertia  := Get ("inertia", 0.0);
+      elsif Config.Child_Count = 1 then
+         Multiply := Real (Long_Float'(Config.Value));
+      elsif Config.Child_Count = 2 then
+         Add := Real (Long_Float'(Config.Get (1)));
+         Multiply := Real (Long_Float'(Config.Get (2)));
       else
          Get (Add, Multiply, Exponent, Inertia);
       end if;
