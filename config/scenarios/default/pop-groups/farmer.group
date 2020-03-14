@@ -4,6 +4,8 @@ politics = {
 #  religion = { position = 0.2 strength = 0.7 }
 }
 
+proportion = 0.4
+
 influences = {
   retired = -1
 }

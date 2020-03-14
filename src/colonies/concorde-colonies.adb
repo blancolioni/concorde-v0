@@ -9,11 +9,12 @@ with Concorde.Worlds;
 with Concorde.Network;
 
 with Concorde.Db.Colony;
-with Concorde.Db.Colony_Pop_Group;
 with Concorde.Db.Cost_Multiplier;
 with Concorde.Db.Node;
 with Concorde.Db.Policy;
+with Concorde.Db.Pop;
 with Concorde.Db.Pop_Group;
+with Concorde.Db.Pop_Group_Member;
 
 with Concorde.Logging;
 
@@ -110,27 +111,62 @@ package body Concorde.Colonies is
    -----------------------
 
    procedure Daily_Tax_Revenue
-     (Colony : Concorde.Db.Colony_Reference;
-      Group  : Concorde.Db.Pop_Group_Reference;
-      Rate   : Unit_Real;
-      Income  : Signed_Unit_Real;
-      Evasion : Unit_Real)
+     (Colony  : Concorde.Db.Colony_Reference;
+      Pop     : Concorde.Db.Pop_Reference)
    is
-      use Concorde.Db;
 
       function Image (X : Real) return String
                       renames Concorde.Real_Images.Approximate_Image;
 
-      Col_Group : constant Colony_Pop_Group.Colony_Pop_Group_Type :=
-                    Colony_Pop_Group.Get_By_Colony_Pop_Group
-                      (Colony, Group);
-      Revenue   : constant Concorde.Money.Money_Type :=
-                    Concorde.Money.Adjust
-                      (Col_Group.Income,
-                       Real (Col_Group.Size)
-                       * Rate * (Income + 1.0) * (1.0 - Evasion));
+      Pop_Rec   : constant Concorde.Db.Pop.Pop_Type :=
+                    Concorde.Db.Pop.Get (Pop);
       Rec       : constant Concorde.Db.Colony.Colony_Type :=
                     Concorde.Db.Colony.Get (Colony);
+      Network   : constant Concorde.Db.Network_Reference :=
+                    Rec.Get_Network_Reference;
+
+      Wealth_Group : constant Concorde.Db.Pop_Group.Pop_Group_Type :=
+                       Concorde.Db.Pop_Group.Get (Pop_Rec.Wealth_Group);
+
+      function Current (Suffix : String) return Real
+      is (Concorde.Network.Current_Value
+          (Network,
+           Wealth_Group.Tag
+           & (if Suffix = "" then "" else "-" & Suffix)));
+
+      function Income_Adjustments return Real;
+
+      function Income_Adjustments return Real is
+      begin
+         return Adj : Real := 0.0 do
+            for Membership of
+              Concorde.Db.Pop_Group_Member.Select_By_Pop (Pop)
+            loop
+               Adj := Adj
+                 + Concorde.Network.Current_Value
+                 (Network,
+                  Concorde.Db.Pop_Group.Get (Membership.Pop_Group).Tag
+                  & "-income");
+            end loop;
+         end return;
+      end Income_Adjustments;
+
+      Base_Income : constant Real := Current ("base-income");
+      Wages     : constant Signed_Unit_Real :=
+                    Concorde.Network.Current_Value (Network, "wages");
+      Final_Income : constant Real :=
+                       Base_Income * (1.0 + Wages + Income_Adjustments);
+      Total_Taxable : constant Concorde.Money.Money_Type :=
+                        Concorde.Money.To_Money
+                          (Final_Income * Pop_Rec.Size);
+      Rate      : constant Unit_Real :=
+                    Current ("income-tax-rate");
+      Evasion : constant Unit_Real := Current ("tax-evasion");
+      Revenue   : constant Concorde.Money.Money_Type :=
+                    Concorde.Money.Adjust
+                      (Total_Taxable,
+                       Rate * (1.0 - Evasion));
+
    begin
       Concorde.Logging.Log
         (Actor    =>
@@ -138,11 +174,13 @@ package body Concorde.Colonies is
          Location =>
            Concorde.Worlds.Name (Rec.World),
          Category => "tax",
-         Message  => "group=" & Concorde.Db.Pop_Group.Get (Group).Tag
-         & "; size=" & Col_Group.Size'Image
+         Message  => "group="
+         & Wealth_Group.Tag
+         & "; size=" & Image (Pop_Rec.Size)
          & "; rate=" & Image (Rate * 100.0) & "%"
-         & "; income=" & Concorde.Money.Show (Col_Group.Income)
-         & " " & Image ((Income + 1.0) * 100.0) & "%"
+         & "; income="
+         & Concorde.Money.Show
+           (Concorde.Money.To_Money (Final_Income))
          & "; evasion=" & Image (Evasion * 100.0) & "%"
          & "; revenue=" & Concorde.Money.Show (Revenue));
 

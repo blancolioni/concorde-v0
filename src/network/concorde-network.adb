@@ -82,6 +82,11 @@ package body Concorde.Network is
                         Concorde.Db.Network_Value.Get_By_Network_Value
                           (Network, Definition.Get_Node_Reference);
    begin
+      if not Definition.Has_Element then
+         raise Constraint_Error with
+           "no such node: " & Tag;
+      end if;
+
       return Node_Value.Real_Value;
    end Current_Value;
 

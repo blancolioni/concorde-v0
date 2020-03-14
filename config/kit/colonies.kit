@@ -23,7 +23,7 @@ end Colony_Sector;
 record Colony_Pop_Group is
    key Colony;
    Pop_Group;
-   Size   : Natural;
+   Size   : Long_Float;
    Income : Money_Type;
    unique key Colony_Pop_Group with Colony, Pop_Group;
 end Colony_Pop_Group;

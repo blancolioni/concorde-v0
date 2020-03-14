@@ -12,6 +12,7 @@ with Concorde.Db.Colony;
 with Concorde.Db.Network_Value;
 with Concorde.Db.Node;
 with Concorde.Db.Policy;
+with Concorde.Db.Pop;
 with Concorde.Db.Pop_Group;
 
 package body Concorde.Managers.Colonies is
@@ -53,9 +54,9 @@ package body Concorde.Managers.Colonies is
       Colony : constant Concorde.Db.Colony.Colony_Type :=
                  Concorde.Db.Colony.Get (Manager.Colony);
 
-      function Get (Value : Concorde.Db.Network_Value_Reference)
-                    return Real
-      is (Concorde.Db.Network_Value.Get (Value).Real_Value);
+--        function Get (Value : Concorde.Db.Network_Value_Reference)
+--                      return Real
+--        is (Concorde.Db.Network_Value.Get (Value).Real_Value);
 
    begin
       Concorde.Logging.Log
@@ -66,16 +67,22 @@ package body Concorde.Managers.Colonies is
 
       Concorde.Network.Update (Colony.Get_Network_Reference);
 
-      for Group_Values of
-        Manager.Group_Nodes
-      loop
+      for Pop of Concorde.Db.Pop.Select_By_Colony (Manager.Colony) loop
          Concorde.Colonies.Daily_Tax_Revenue
-           (Colony  => Manager.Colony,
-            Group   => Group_Values.Group,
-            Rate    => Get (Group_Values.Tax_Rate),
-            Income  => Get (Group_Values.Income),
-            Evasion => Get (Group_Values.Tax_Evasion));
+           (Manager.Colony, Pop.Get_Pop_Reference);
       end loop;
+
+--
+--        for Group_Values of
+--          Manager.Group_Nodes
+--        loop
+--           Concorde.Colonies.Daily_Tax_Revenue
+--             (Colony  => Manager.Colony,
+--              Group   => Group_Values.Group);
+--              Rate    => Get (Group_Values.Tax_Rate),
+--              Income  => Get (Group_Values.Income),
+--              Evasion => Get (Group_Values.Tax_Evasion));
+--        end loop;
 
       for Policy of
         Concorde.Db.Policy.Scan_By_Tag

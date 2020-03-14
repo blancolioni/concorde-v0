@@ -15,8 +15,9 @@ record Pop is
    key Colony;
    key World;
    key World_Sector;
-   Size   : Natural;
+   Size   : Long_Float;
    Apathy : Long_Float;
+   Wealth_Group : Pop_Group;
    key Faction_World with Faction, World;
 end Pop;
 

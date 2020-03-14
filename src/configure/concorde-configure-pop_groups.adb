@@ -77,6 +77,10 @@ package body Concorde.Configure.Pop_Groups is
       Metric ("income");
       Metric ("");
 
+      if Is_Wealth_Group then
+         Metric ("base-income");
+      end if;
+
    end Configure_Pop_Group;
 
    --------------------------

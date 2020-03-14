@@ -124,12 +124,10 @@ package body Concorde.Colonies.Create is
       procedure Add_Pop_Group
         (IG : Income_Group)
       is
-         Group_Size : constant Natural :=
-                        Natural
-                          (Real'Ceiling
-                             (IG.Proportion * Total_Pop));
-         Pop_Count  : constant Positive := Pops_Per_Wealth_Group;
-         Size       : constant Natural := Group_Size / Pop_Count;
+         Group_Size : constant Real :=
+                        IG.Proportion * Total_Pop;
+         Pop_Count  : constant Real := Real (Pops_Per_Wealth_Group);
+         Size       : constant Real := Group_Size / Pop_Count;
       begin
 
          Concorde.Db.Colony_Pop_Group.Create
@@ -138,7 +136,7 @@ package body Concorde.Colonies.Create is
             Size      => Group_Size,
             Income    => Concorde.Money.To_Money (IG.Income));
 
-         for I in 1 .. Pop_Count loop
+         for I in 1 .. Pops_Per_Wealth_Group loop
             declare
                Groups            : Pop_Group_Vectors.Vector;
                Left_Bias         : constant Non_Negative_Real :=
@@ -210,6 +208,7 @@ package body Concorde.Colonies.Create is
                              World            => World,
                              World_Sector     => World_Sector,
                              Size             => Size,
+                             Wealth_Group     => IG.Group,
                              Apathy           => Apathy);
                begin
                   for Group of Groups loop
@@ -331,7 +330,7 @@ package body Concorde.Colonies.Create is
                declare
                   Income      : constant Non_Negative_Real :=
                                   Initial_Setting
-                                    (Group.Tag & "-income");
+                                    (Group.Tag & "-base-income");
                begin
                   if Income < Min_Income then
                      Min_Income := Income;
@@ -523,7 +522,7 @@ package body Concorde.Colonies.Create is
                Pop_Settings.Insert
                  (Key & "-proportion",
                   Size / Total_Pop);
-               Pop_Settings.Insert (Key, 0.75);
+               Pop_Settings.Insert (Key, 0.0);
             end;
          end loop;
       end;

@@ -6,18 +6,22 @@ with Nazar.Views.Draw;
 with Nazar.Controllers.Console;
 with Nazar.Controllers.Draw;
 
+with Concorde.UI.Models.Colonies;
 with Concorde.UI.Models.Console;
 with Concorde.UI.Models.Galaxy;
-with Concorde.UI.Models.Market;
+--  with Concorde.UI.Models.Market;
 --  with Concorde.UI.Models.Population;
 
 with Concorde.Paths;
 
+with Concorde.Db.Colony;
+with Concorde.Handles.Colony;
+
 with Concorde.Db.Faction;
 with Concorde.Handles.Faction;
 
-with Concorde.Db.Market;
-with Concorde.Handles.Market;
+--  with Concorde.Db.Market;
+--  with Concorde.Handles.Market;
 
 with Concorde.UI.Models.Current_Cash;
 with Concorde.UI.Models.Current_Date;
@@ -78,11 +82,18 @@ package body Concorde.UI.Nazar_UI is
       Builder.Get_View ("cash-label").Set_Model
         (Concorde.UI.Models.Current_Cash.Current_Cash_Model_New (Faction));
 
-      Builder.Get_View ("market").Set_Model
-        (Concorde.UI.Models.Market.Market_Model
-           (Concorde.Handles.Market.Get
-                (Concorde.Db.Market.Get_Reference_By_World
+--        Builder.Get_View ("market").Set_Model
+--          (Concorde.UI.Models.Market.Market_Model
+--             (Concorde.Handles.Market.Get
+--                  (Concorde.Db.Market.Get_Reference_By_World
+--                       (Faction.Capital_World.Reference_World))));
+
+      Builder.Get_View ("colony-pop-groups").Set_Model
+        (Concorde.UI.Models.Colonies.Colony_Pop_Group_Model
+           (Concorde.Handles.Colony.Get
+                (Concorde.Db.Colony.First_Reference_By_World
                      (Faction.Capital_World.Reference_World))));
+
 --        Builder.Get_View ("population").Set_Model
 --          (Concorde.UI.Models.Population.Population_Model
 --             (Faction.Capital_World));
