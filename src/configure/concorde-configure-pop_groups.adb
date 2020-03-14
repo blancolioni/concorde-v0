@@ -54,12 +54,13 @@ package body Concorde.Configure.Pop_Groups is
         (Suffix : String;
          Value  : Concorde.Db.Node_Value_Type := Concorde.Db.Rating)
       is
+         Tag : constant String :=
+                 Config.Config_Name
+                 & (if Suffix = "" then "" else "-" & Suffix);
       begin
          Concorde.Db.Metric.Create
            (Content => Value,
-            Tag     =>
-              Config.Config_Name
-            & (if Suffix = "" then "" else "-" & Suffix));
+            Tag     => Tag);
       end Metric;
 
       Is_Wealth_Group : constant Boolean :=

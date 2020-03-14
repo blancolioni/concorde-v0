@@ -19,6 +19,11 @@ with Concorde.Logging;
 
 package body Concorde.Colonies is
 
+   Detailed_Costs : constant Boolean := False;
+
+   function Image (X : Real) return String
+                   renames Concorde.Real_Images.Approximate_Image;
+
    --------------------------
    -- Daily_Policy_Expense --
    --------------------------
@@ -32,6 +37,7 @@ package body Concorde.Colonies is
                      Concorde.Db.Policy.Get (Policy);
       Colony_Rec : constant Concorde.Db.Colony.Colony_Type :=
                      Concorde.Db.Colony.Get (Colony);
+      Policy_Tag : constant String := Policy_Rec.Tag;
       Network : constant Concorde.Db.Network_Reference :=
                      Colony_Rec.Get_Network_Reference;
       Expense : Real :=
@@ -44,16 +50,37 @@ package body Concorde.Colonies is
       loop
          declare
             use Concorde.Elementary_Functions;
-            X : constant Real :=
-                  Concorde.Network.Inertial_Value
-                    (Network,
-                     Concorde.Db.Node.Get (Multiplier.Node).Tag,
-                     Multiplier.Inertia);
-            M : constant Real :=
-                  (X ** Multiplier.Exponent) * Multiplier.Multiply
-                  + Multiplier.Add;
+            M_Tag : constant String :=
+                      Concorde.Db.Node.Get (Multiplier.Node).Tag;
+            X     : constant Real :=
+                      Concorde.Network.Inertial_Value
+                        (Network, M_Tag, Multiplier.Inertia);
+            M     : constant Real :=
+                      (X ** Multiplier.Exponent) * Multiplier.Multiply
+                      + Multiplier.Add;
          begin
-            Expense := Expense * M;
+
+            if Detailed_Costs then
+               Concorde.Logging.Log
+                 (Actor    =>
+                    Concorde.Factions.Name (Colony_Rec.Faction),
+                  Location =>
+                    Concorde.Worlds.Name (Colony_Rec.World),
+                  Category => "expense",
+                  Message  =>
+                    Policy_Tag
+                  & ": multiplier node: "
+                  & M_Tag
+                  & ": add=" & Image (Multiplier.Add)
+                  & "; mul=" & Image (Multiplier.Multiply)
+                  & "; exp=" & Image (Multiplier.Exponent)
+                  & "; value=" & Image (X)
+                  & "; multiplier=" & Image (M)
+                  & "; old expense=" & Image (Expense)
+                  & "; new expense=" & Image (Expense * (1.0 + M)));
+            end if;
+
+            Expense := Expense * (1.0 + M);
          end;
       end loop;
 
@@ -69,11 +96,11 @@ package body Concorde.Colonies is
                Location =>
                  Concorde.Worlds.Name (Colony_Rec.World),
                Category => "expense",
-               Message  => Policy_Rec.Tag & " costs "
+               Message  => Policy_Tag & " costs "
                & Concorde.Money.Show (Amount));
 
             Concorde.Agents.Remove_Cash
-              (Colony_Rec, Amount, Policy_Rec.Tag);
+              (Colony_Rec, Amount, Policy_Tag);
          end;
       end if;
    end Daily_Policy_Expense;
