@@ -88,11 +88,21 @@ package body Concorde.UI.Nazar_UI is
 --                  (Concorde.Db.Market.Get_Reference_By_World
 --                       (Faction.Capital_World.Reference_World))));
 
-      Builder.Get_View ("colony-pop-groups").Set_Model
-        (Concorde.UI.Models.Colonies.Colony_Pop_Group_Model
-           (Concorde.Handles.Colony.Get
-                (Concorde.Db.Colony.First_Reference_By_World
-                     (Faction.Capital_World.Reference_World))));
+      if Builder.Has_View ("colony-pop-groups") then
+         Builder.Get_View ("colony-pop-groups").Set_Model
+           (Concorde.UI.Models.Colonies.Colony_Pop_Group_Model
+              (Concorde.Handles.Colony.Get
+                   (Concorde.Db.Colony.First_Reference_By_World
+                        (Faction.Capital_World.Reference_World))));
+      end if;
+
+      if Builder.Has_View ("colony-policies") then
+         Builder.Get_View ("colony-policies").Set_Model
+           (Concorde.UI.Models.Colonies.Colony_Policy_Model
+              (Concorde.Handles.Colony.Get
+                   (Concorde.Db.Colony.First_Reference_By_World
+                        (Faction.Capital_World.Reference_World))));
+      end if;
 
 --        Builder.Get_View ("population").Set_Model
 --          (Concorde.UI.Models.Population.Population_Model

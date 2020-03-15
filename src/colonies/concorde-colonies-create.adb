@@ -19,9 +19,12 @@ with Concorde.Worlds;
 
 with Concorde.Db.Account;
 with Concorde.Db.Colony;
+with Concorde.Db.Colony_Policy;
 with Concorde.Db.Colony_Pop_Group;
 with Concorde.Db.Faction;
 with Concorde.Db.Group_Influence;
+with Concorde.Db.Network_Value;
+with Concorde.Db.Policy;
 with Concorde.Db.Pop;
 with Concorde.Db.Pop_Group;
 with Concorde.Db.Pop_Group_Member;
@@ -534,6 +537,17 @@ package body Concorde.Colonies.Create is
       Concorde.Network.Create_Initial_Network
         (Network       => Network,
          Initial_Value => Initial_Value'Access);
+
+      for Policy of Concorde.Db.Policy.Scan_By_Tag loop
+         Concorde.Db.Colony_Policy.Create
+           (Colony  => Colony,
+            Policy  => Policy.Get_Policy_Reference,
+            Setting =>
+              Concorde.Db.Network_Value.Get_Reference_By_Network_Value
+                (Network, Policy.Get_Node_Reference),
+            Revenue => Concorde.Money.Zero,
+            Expense => Concorde.Money.Zero);
+      end loop;
 
    end New_Colony;
 

@@ -106,6 +106,19 @@ package body Nazar.Builder is
       end if;
    end Get_View;
 
+   --------------
+   -- Has_View --
+   --------------
+
+   function Has_View
+     (Builder : Nazar_Builder_Record'Class;
+      Name    : String)
+      return Boolean
+   is
+   begin
+      return Builder.Map.Contains (Name);
+   end Has_View;
+
    ----------------
    -- Initialize --
    ----------------

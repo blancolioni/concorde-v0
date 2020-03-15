@@ -28,6 +28,15 @@ record Colony_Pop_Group is
    unique key Colony_Pop_Group with Colony, Pop_Group;
 end Colony_Pop_Group;
 
+record Colony_Policy is
+   key Colony;
+   Policy;
+   Setting : Network_Value;
+   Revenue : Money_Type;
+   Expense : Money_Type;
+   unique key Colony_Policy with Colony, Policy;
+end Colony_Policy;
+
 record Colony_Price is
    key Colony;
    key Commodity;

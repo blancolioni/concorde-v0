@@ -9,6 +9,7 @@ with Concorde.Worlds;
 with Concorde.Network;
 
 with Concorde.Db.Colony;
+with Concorde.Db.Colony_Policy;
 with Concorde.Db.Cost_Multiplier;
 with Concorde.Db.Node;
 with Concorde.Db.Policy;
@@ -100,6 +101,11 @@ package body Concorde.Colonies is
                Message  => Policy_Tag & " costs "
                & Concorde.Money.Show (Amount));
 
+            Concorde.Db.Colony_Policy.Update_Colony_Policy
+              (Concorde.Db.Colony_Policy.Get_Reference_By_Colony_Policy
+                 (Colony, Policy))
+                .Set_Expense (Amount)
+              .Done;
             Concorde.Agents.Remove_Cash
               (Colony_Rec, Amount, Policy_Tag);
          end;
@@ -136,6 +142,10 @@ package body Concorde.Colonies is
 
       function Income_Adjustments return Real;
 
+      ------------------------
+      -- Income_Adjustments --
+      ------------------------
+
       function Income_Adjustments return Real is
       begin
          return Adj : Real := 0.0 do
@@ -166,7 +176,6 @@ package body Concorde.Colonies is
                     Concorde.Money.Adjust
                       (Total_Taxable,
                        Rate * (1.0 - Evasion));
-
    begin
       Concorde.Logging.Log
         (Actor    =>
@@ -187,6 +196,21 @@ package body Concorde.Colonies is
       Concorde.Agents.Add_Cash
         (Concorde.Db.Colony.Get (Colony),
          Revenue, "income-tax");
+
+      declare
+         use Concorde.Money;
+         use Concorde.Db.Colony_Policy;
+         Policy : constant Colony_Policy_Type :=
+                    Get_By_Colony_Policy
+                      (Colony,
+                       Concorde.Db.Policy.Get_Reference_By_Tag
+                         (Wealth_Group.Tag & "-income-tax-rate"));
+      begin
+         Update_Colony_Policy (Policy.Get_Colony_Policy_Reference)
+           .Set_Revenue (Policy.Revenue + Revenue)
+           .Done;
+      end;
+
    end Daily_Tax_Revenue;
 
 end Concorde.Colonies;

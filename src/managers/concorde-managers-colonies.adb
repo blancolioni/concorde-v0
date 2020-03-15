@@ -4,11 +4,13 @@ with Concorde.Colonies;
 with Concorde.Worlds;
 
 with Concorde.Logging;
+with Concorde.Money;
 with Concorde.Random;
 
 with Concorde.Network;
 
 with Concorde.Db.Colony;
+with Concorde.Db.Colony_Policy;
 with Concorde.Db.Network_Value;
 with Concorde.Db.Node;
 with Concorde.Db.Policy;
@@ -53,11 +55,6 @@ package body Concorde.Managers.Colonies is
    is
       Colony : constant Concorde.Db.Colony.Colony_Type :=
                  Concorde.Db.Colony.Get (Manager.Colony);
-
---        function Get (Value : Concorde.Db.Network_Value_Reference)
---                      return Real
---        is (Concorde.Db.Network_Value.Get (Value).Real_Value);
-
    begin
       Concorde.Logging.Log
         (Actor    => Concorde.Worlds.Name (Colony.World),
@@ -66,6 +63,17 @@ package body Concorde.Managers.Colonies is
          Message  => "activating");
 
       Concorde.Network.Update (Colony.Get_Network_Reference);
+
+      for Policy of
+        Concorde.Db.Policy.Scan_By_Tag
+      loop
+         Concorde.Db.Colony_Policy.Update_Colony_Policy
+           (Concorde.Db.Colony_Policy.Get_Reference_By_Colony_Policy
+              (Manager.Colony, Policy.Get_Policy_Reference))
+           .Set_Revenue (Concorde.Money.Zero)
+           .Set_Expense (Concorde.Money.Zero)
+           .Done;
+      end loop;
 
       for Pop of Concorde.Db.Pop.Select_By_Colony (Manager.Colony) loop
          Concorde.Colonies.Daily_Tax_Revenue

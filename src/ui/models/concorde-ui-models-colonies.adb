@@ -16,6 +16,8 @@ with Concorde.Db.Network_Value;
 
 with Concorde.Db.Node;
 
+with Concorde.UI.Models.Colonies.Policies;
+
 package body Concorde.UI.Models.Colonies is
 
    type Pop_Group_Table_Column is
@@ -103,6 +105,18 @@ package body Concorde.UI.Models.Colonies is
       Concorde.Updates.Events.Update_With_Delay
         (Concorde.Calendar.Days (1), Update);
    end Activate;
+
+   -------------------------
+   -- Colony_Policy_Model --
+   -------------------------
+
+   function Colony_Policy_Model
+     (Colony : Concorde.Handles.Colony.Colony_Handle)
+      return Nazar.Models.Table.Nazar_Table_Model
+   is
+   begin
+      return Policies.Model (Colony);
+   end Colony_Policy_Model;
 
    ----------------------------
    -- Colony_Pop_Group_Model --
