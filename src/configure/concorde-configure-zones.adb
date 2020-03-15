@@ -51,6 +51,7 @@ package body Concorde.Configure.Zones is
                for Zone_Config of Config.Child ("zones") loop
                   Concorde.Db.Zone.Create
                     (Tag             => Zone_Config.Config_Name,
+                     Content         => Concorde.Db.Quantity,
                      Index           =>
                        Concorde.Configure.Commodities.Next_Commodity_Index,
                      Commodity_Group => Zone_Class,

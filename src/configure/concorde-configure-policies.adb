@@ -5,6 +5,7 @@ with Concorde.Db.Cost_Multiplier;
 with Concorde.Db.Effect;
 with Concorde.Db.Node;
 with Concorde.Db.Policy;
+with Concorde.Db.Value_Multiplier;
 
 package body Concorde.Configure.Policies is
 
@@ -41,8 +42,9 @@ package body Concorde.Configure.Policies is
 
       Ref : constant Concorde.Db.Policy_Reference :=
               Concorde.Db.Policy.Create
-                (Tag     => Policy_Config.Config_Name,
-                 Content => Concorde.Db.Rating,
+                (Tag      => Policy_Config.Config_Name,
+                 Content  => Concorde.Db.Rating,
+                 Internal => Policy_Config.Get ("internal"),
                  Min_Cost =>
                    Real (Long_Float'(Cost_Config.Get ("low", 0.0))),
                  Max_Cost =>
@@ -107,6 +109,36 @@ package body Concorde.Configure.Policies is
             New_Calculation
               (Concorde.Db.Effect.Get (Effect).Get_Calculation_Reference,
                Effect_Config);
+         end;
+      end loop;
+
+      for Value_Config of Policy_Config.Child ("value") loop
+         declare
+            use Concorde.Db;
+            Value_Node : constant Node_Reference :=
+                           Concorde.Db.Node.Get_Reference_By_Tag
+                             (Value_Config.Config_Name);
+
+            Value : constant Value_Multiplier_Reference :=
+                           Value_Multiplier.Create
+                             (Add      => 0.0,
+                              Multiply => 1.0,
+                              Exponent => 1.0,
+                              Inertia  => 0.0,
+                              Node     => Value_Node,
+                              Policy   => Ref);
+         begin
+            if Value_Node = Null_Node_Reference then
+               raise Constraint_Error with
+                 "in configuration for policy "
+                 & Policy_Config.Config_Name
+                 & " value: no such node: "
+                 & Value_Config.Config_Name;
+            end if;
+
+            New_Calculation
+              (Value_Multiplier.Get (Value).Get_Calculation_Reference,
+               Value_Config);
          end;
       end loop;
 

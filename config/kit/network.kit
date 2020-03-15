@@ -34,6 +34,7 @@ record Group_Influence is
 end Group_Influence;
 
 record Policy : Node is
+   key Internal : Boolean;
    Min_Cost : Long_Float;
    Max_Cost : Long_Float;
 end Policy;
@@ -41,6 +42,22 @@ end Policy;
 record Cost_Multiplier : Calculation is
    key Policy;
 end Cost_Multiplier;
+
+record Value_Multiplier : Calculation is
+   key Policy;
+end Value_Multiplier;
+
+record Sector_Use : Localised is
+   Parent : Sector_Use;
+end Sector_Use;
+   
+record Zone : Commodity, Node is
+   key Sector_Use;
+end Zone;
+
+record Economic_Sector : Node is
+   key Zone;
+end Economic_Sector;
 
 record Network;
 

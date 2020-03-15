@@ -10,6 +10,8 @@ with Concorde.Real_Images;
 with Concorde.Db.Effect;
 with Concorde.Db.Node;
 with Concorde.Db.Network_Value;
+with Concorde.Db.Policy;
+with Concorde.Db.Value_Multiplier;
 
 package body Concorde.Network is
 
@@ -87,7 +89,12 @@ package body Concorde.Network is
            "no such node: " & Tag;
       end if;
 
-      return Node_Value.Real_Value;
+      case Definition.Content is
+         when Concorde.Db.Rating =>
+            return Unit_Clamp (Node_Value.Real_Value);
+         when Concorde.Db.Quantity | Concorde.Db.Money =>
+            return Node_Value.Real_Value;
+      end case;
    end Current_Value;
 
    --------------------
@@ -230,6 +237,38 @@ package body Concorde.Network is
       end Update_Value;
 
    begin
+
+      for Policy of
+        Concorde.Db.Policy.Select_By_Internal (True)
+      loop
+         declare
+            Tag   : constant String := Policy.Tag;
+            Value : Real := 1.0;
+         begin
+            for Multiplier of
+              Concorde.Db.Value_Multiplier.Select_By_Policy
+                (Policy.Get_Policy_Reference)
+            loop
+               declare
+                  use Concorde.Elementary_Functions;
+                  Node : constant Concorde.Db.Node.Node_Type :=
+                           Concorde.Db.Node.Get (Multiplier.Node);
+                  Node_Value : constant Real :=
+                                 Inertial_Value
+                                   (Network, Node.Tag, Multiplier.Inertia);
+               begin
+                  Value := Value *
+                    (Multiplier.Add
+                     + Multiplier.Multiply
+                     * (Node_Value ** Multiplier.Exponent));
+               end;
+            end loop;
+
+            Set_New_Value (Network, Tag, Value);
+            Commit_New_Value (Network, Tag);
+
+         end;
+      end loop;
 
       for Node of Concorde.Db.Node.Scan_By_Tag loop
          if Concorde.Db.Effect.First_Reference_By_To (Node.Get_Node_Reference)

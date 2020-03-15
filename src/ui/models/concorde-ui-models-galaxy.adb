@@ -68,7 +68,10 @@ package body Concorde.UI.Models.Galaxy is
          for Link of Rec.Nearby loop
             declare
                X : constant Nazar_Unit_Float :=
-                     Nazar_Unit_Float (0.75 / Link.Distance + 0.125);
+                     Nazar_Unit_Float
+                       (Nazar_Float'Min
+                          (Nazar_Float (0.55 / Link.Distance + 0.125),
+                           1.0));
             begin
                Model.Move_To (Rec.X, Rec.Y);
                Model.Set_Color (X, X, X);
@@ -172,7 +175,7 @@ package body Concorde.UI.Models.Galaxy is
            Concorde.Db.Star_System_Distance
              .Select_Star_System_Range_Bounded_By_Distance
                (Model.Systems.Element (Star_System_Index).Handle.Reference,
-                0.0, 8.0)
+                0.0, 4.0)
          loop
             declare
                subtype Nazar_Float is Nazar.Nazar_Float;

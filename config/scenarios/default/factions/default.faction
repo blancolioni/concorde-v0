@@ -15,7 +15,7 @@ state-schools = 0.5
 military-spending = 0.5
 research-spending = 0.2
 pollution-controls = 0.0
-voting-rights = 0.75
+voting-rights = 0.0
 poverty-rate = 0.1
 foreign-relations = 1
 poor-base-income = 1
@@ -28,11 +28,19 @@ middle-class-income-tax-rate = 15%
 poor-income-tax-rate = 5%
 equality = 50%
 birth-rate = 2%
+death-rate = 1%
 pop-size = 100K
-wages = 0.5
+wages = 0.0
 education = 0.5
 gini = 0.6
 apathy = 0.1
+farming = 1
+mining = 1
+refining = 0.8
+manufacturing = 0.2
+service = 0.4
+knowledge = 0.2
+administration = 0.4
 
 ships = {
    scout = 2
@@ -44,17 +52,17 @@ capital-sector = {
    administration = 10 
    commercial = 10 
    industrial = 10
-   residential = 100
+   residential = 1000
 }
 
 military = {
-   salary = 1
-   supply = {
-      basic-takeout = 20
-	  grain = 60
-	  vegetables = 40
-	  fruit = 10
-	  }
+   salary = 3
+   army = {
+      name = "1st Colonial Army"
+      regiment = {
+         basic-infantry-unit
+      }
+   }
 }
 
 sector-use = {

@@ -21,6 +21,7 @@ with Concorde.Db.Account;
 with Concorde.Db.Colony;
 with Concorde.Db.Colony_Policy;
 with Concorde.Db.Colony_Pop_Group;
+with Concorde.Db.Economic_Sector;
 with Concorde.Db.Faction;
 with Concorde.Db.Group_Influence;
 with Concorde.Db.Network_Value;
@@ -28,6 +29,9 @@ with Concorde.Db.Policy;
 with Concorde.Db.Pop;
 with Concorde.Db.Pop_Group;
 with Concorde.Db.Pop_Group_Member;
+with Concorde.Db.Sector_Use;
+with Concorde.Db.World_Sector;
+with Concorde.Db.Zone;
 
 package body Concorde.Colonies.Create is
 
@@ -40,6 +44,15 @@ package body Concorde.Colonies.Create is
       Apathy                : Unit_Real;
       Gini                  : Unit_Real;
       Pops_Per_Wealth_Group : Positive);
+
+   package Sector_Size_Maps is
+     new WL.String_Maps (Non_Negative_Real);
+
+   procedure Initialize_Zone
+     (Colony      : Concorde.Db.Colony_Reference;
+      Sector      : Concorde.Db.World_Sector_Reference;
+      Zone_Config : Tropos.Configuration;
+      Sizes       : in out Sector_Size_Maps.Map);
 
    -------------------------
    -- Create_Initial_Pops --
@@ -419,6 +432,36 @@ package body Concorde.Colonies.Create is
 
    end Create_Initial_Pops;
 
+   ---------------------
+   -- Initialize_Zone --
+   ---------------------
+
+   procedure Initialize_Zone
+     (Colony      : Concorde.Db.Colony_Reference;
+      Sector      : Concorde.Db.World_Sector_Reference;
+      Zone_Config : Tropos.Configuration;
+      Sizes       : in out Sector_Size_Maps.Map)
+   is
+      pragma Unreferenced (Colony, Sector);
+   begin
+      for Config of Zone_Config loop
+         declare
+            Tag : constant String := Config.Config_Name;
+--              Zone : constant Concorde.Db.Zone.Zone_Type :=
+--                       Concorde.Db.Zone.Get_By_Tag (Tag);
+            Size : constant Non_Negative_Real :=
+                     Non_Negative_Real
+                       (Float'(Config.Value));
+         begin
+            if Sizes.Contains (Tag) then
+               Sizes (Tag) := Sizes (Tag) + Size;
+            else
+               Sizes.Insert (Tag, Size);
+            end if;
+         end;
+      end loop;
+   end Initialize_Zone;
+
    ----------------
    -- New_Colony --
    ----------------
@@ -465,15 +508,37 @@ package body Concorde.Colonies.Create is
       Network   : constant Concorde.Db.Network_Reference :=
                     Concorde.Db.Colony.Get (Colony).Get_Network_Reference;
 
+      Sector_Size : Sector_Size_Maps.Map;
+
       package Setting_Maps is new WL.String_Maps (Real);
-      Pop_Settings : Setting_Maps.Map;
+      Overrides : Setting_Maps.Map;
+
+      procedure Set_Override
+        (Name  : String;
+         Value : Real);
 
       function Initial_Value
         (Tag : String)
          return Real
-      is (if Pop_Settings.Contains (Tag)
-          then Pop_Settings.Element (Tag)
+      is (if Overrides.Contains (Tag)
+          then Overrides.Element (Tag)
           else Real (Long_Float'(Config.Get (Tag, 0.0))));
+
+      ------------------
+      -- Set_Override --
+      ------------------
+
+      procedure Set_Override
+        (Name  : String;
+         Value : Real)
+      is
+      begin
+         if Overrides.Contains (Name) then
+            raise Constraint_Error with
+              "redefined: " & Name;
+         end if;
+         Overrides.Insert (Name, Value);
+      end Set_Override;
 
    begin
       Create_Initial_Pops
@@ -520,19 +585,53 @@ package body Concorde.Colonies.Create is
                Key  : constant String := Setting_Maps.Key (Position);
                Size : constant Real := Setting_Maps.Element (Position);
             begin
-               Pop_Settings.Insert
+               Set_Override
                  (Key & "-population", Size);
-               Pop_Settings.Insert
+               Set_Override
                  (Key & "-proportion",
                   Size / Total_Pop);
-               Pop_Settings.Insert (Key, 0.0);
+               Set_Override (Key, 0.0);
             end;
          end loop;
       end;
 
-      Pop_Settings.Insert
+      Set_Override
         ("environment",
          Concorde.Worlds.Habitability (World) * 2.0 - 1.0);
+
+      Concorde.Db.World_Sector.Update_World_Sector (Sector)
+        .Set_Sector_Use (Concorde.Db.Sector_Use.Get_Reference_By_Tag ("urban"))
+          .Done;
+
+      Initialize_Zone
+        (Colony      => Colony,
+         Sector      => Sector,
+         Zone_Config => Config.Child ("capital-sector"),
+         Sizes       => Sector_Size);
+
+      for Zone of Concorde.Db.Zone.Scan_By_Tag loop
+         if Sector_Size.Contains (Zone.Tag) then
+            Set_Override (Zone.Tag, Sector_Size.Element (Zone.Tag));
+         end if;
+      end loop;
+
+      for Economic_Sector of
+        Concorde.Db.Economic_Sector.Scan_By_Tag
+      loop
+         declare
+            Zone          : constant Concorde.Db.Zone.Zone_Type :=
+                              Concorde.Db.Zone.Get (Economic_Sector.Zone);
+            Zone_Size     : constant Non_Negative_Real :=
+                              (if Sector_Size.Contains (Zone.Tag)
+                               then Sector_Size.Element (Zone.Tag)
+                               else 0.0);
+            Relative_Size : constant Non_Negative_Real :=
+                              Initial_Value (Economic_Sector.Tag);
+         begin
+            Set_Override
+              (Economic_Sector.Tag, Relative_Size * Zone_Size);
+         end;
+      end loop;
 
       Concorde.Network.Create_Initial_Network
         (Network       => Network,

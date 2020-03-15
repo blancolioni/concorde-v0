@@ -3,8 +3,8 @@ zones = {
 	   base-price = 1000
 	}
 
-	administration = {
-	   base-price = 100
+	business = {
+	   base-price = 1000
 	}
 
 	residential = {

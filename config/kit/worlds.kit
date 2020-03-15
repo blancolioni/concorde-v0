@@ -3,6 +3,7 @@ with Commodities;
 with Generated;
 with Names;
 with Knowledge;
+with Network;
 with Orders;
 with Owners;
 with Surfaces;
@@ -80,14 +81,6 @@ end Terrain_Resource;
 record Feature : Has_Name, Has_Color is
    Habitability : Long_Float;
 end Feature;
-
-record Sector_Use : Localised is
-   Parent : Sector_Use;
-end Sector_Use;
-   
-record Zone : Commodity is
-   key Sector_Use;
-end Zone;
 
 record World_Sector : Sector, Has_Owner, Has_Stock is
    key World;

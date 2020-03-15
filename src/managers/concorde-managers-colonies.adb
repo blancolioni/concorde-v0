@@ -6,6 +6,7 @@ with Concorde.Worlds;
 with Concorde.Logging;
 with Concorde.Money;
 with Concorde.Random;
+with Concorde.Real_Images;
 
 with Concorde.Network;
 
@@ -16,6 +17,7 @@ with Concorde.Db.Node;
 with Concorde.Db.Policy;
 with Concorde.Db.Pop;
 with Concorde.Db.Pop_Group;
+with Concorde.Db.Pop_Group_Member;
 
 package body Concorde.Managers.Colonies is
 
@@ -46,6 +48,9 @@ package body Concorde.Managers.Colonies is
    overriding procedure Activate
      (Manager : not null access Root_Colony_Manager_Type);
 
+   function Image (X : Real) return String
+                   renames Concorde.Real_Images.Approximate_Image;
+
    --------------
    -- Activate --
    --------------
@@ -55,12 +60,76 @@ package body Concorde.Managers.Colonies is
    is
       Colony : constant Concorde.Db.Colony.Colony_Type :=
                  Concorde.Db.Colony.Get (Manager.Colony);
+
+      procedure Update_Population_Sizes;
+
+      procedure Update_Population_Sizes is
+
+         package Pop_Group_Maps is
+           new WL.String_Maps (Real);
+
+         Group_Size : Pop_Group_Maps.Map;
+
+         procedure Add_Pop
+           (Group : Concorde.Db.Pop_Group_Reference;
+            Size  : Non_Negative_Real);
+
+         -------------
+         -- Add_Pop --
+         -------------
+
+         procedure Add_Pop
+           (Group : Concorde.Db.Pop_Group_Reference;
+            Size  : Non_Negative_Real)
+         is
+            Tag : constant String :=
+                    Concorde.Db.Pop_Group.Get (Group).Tag;
+         begin
+            if not Group_Size.Contains (Tag) then
+               Group_Size.Insert (Tag, 0.0);
+            end if;
+            Group_Size (Tag) := Group_Size (Tag) + Size;
+         end Add_Pop;
+
+      begin
+         for Pop_Group of Concorde.Db.Pop_Group.Scan_By_Tag loop
+            Group_Size.Insert (Pop_Group.Tag, 0.0);
+         end loop;
+
+         for Pop of Concorde.Db.Pop.Select_By_Colony (Manager.Colony) loop
+            for Group of
+              Concorde.Db.Pop_Group_Member.Select_By_Pop
+                (Pop.Get_Pop_Reference)
+            loop
+               Add_Pop (Group.Pop_Group, Pop.Size);
+            end loop;
+         end loop;
+
+         for Pop_Group of Concorde.Db.Pop_Group.Scan_By_Tag loop
+            Concorde.Network.Set_New_Value
+              (Colony.Get_Network_Reference, Pop_Group.Tag & "-population",
+               Group_Size (Pop_Group.Tag));
+            Concorde.Network.Commit_New_Value
+              (Colony.Get_Network_Reference, Pop_Group.Tag & "-population");
+            Concorde.Logging.Log
+              (Actor    => Pop_Group.Tag,
+               Location => Concorde.Worlds.Name (Colony.World),
+               Category => "size",
+               Message  =>
+                 Natural'Image
+                   (Natural (Group_Size.Element (Pop_Group.Tag))));
+         end loop;
+
+      end Update_Population_Sizes;
+
    begin
       Concorde.Logging.Log
         (Actor    => Concorde.Worlds.Name (Colony.World),
          Location => "colony",
          Category => "managed",
          Message  => "activating");
+
+      Update_Population_Sizes;
 
       Concorde.Network.Update (Colony.Get_Network_Reference);
 
@@ -102,6 +171,41 @@ package body Concorde.Managers.Colonies is
               Concorde.Network.Current_Value
                 (Colony.Get_Network_Reference, Policy.Tag));
       end loop;
+
+      declare
+         Birth_Rate : constant Unit_Real :=
+                        Concorde.Network.Current_Value
+                          (Colony.Get_Network_Reference, "birth-rate");
+         Death_Rate : constant Unit_Real :=
+                        Concorde.Network.Current_Value
+                          (Colony.Get_Network_Reference, "death-rate");
+      begin
+         for Pop of
+           Concorde.Db.Pop.Select_By_Colony (Manager.Colony)
+         loop
+            declare
+               Births : constant Non_Negative_Real :=
+                          Pop.Size * (Birth_Rate / 360.0);
+               Deaths : constant Non_Negative_Real :=
+                          Pop.Size * (Death_Rate / 360.0);
+               New_Size : constant Non_Negative_Real :=
+                            Real'Max (Pop.Size + Births - Deaths, 0.0);
+            begin
+               Concorde.Logging.Log
+                 (Actor    => "colony",
+                  Location => Concorde.Worlds.Name (Colony.World),
+                  Category => "pop changes",
+                  Message  =>
+                    "old=" & Image (Pop.Size)
+                  & "; births=" & Image (Births)
+                  & "; deaths=" & Image (Deaths)
+                  & "; new size=" & Image (New_Size));
+               Concorde.Db.Pop.Update_Pop (Pop.Get_Pop_Reference)
+                 .Set_Size (New_Size)
+                 .Done;
+            end;
+         end loop;
+      end;
 
       Manager.Set_Next_Update_Delay (Concorde.Calendar.Days (1));
 

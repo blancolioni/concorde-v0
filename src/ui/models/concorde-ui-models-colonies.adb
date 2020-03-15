@@ -5,7 +5,7 @@ with Nazar.Values;
 
 with Concorde.Calendar;
 --  with Concorde.Money;
-with Concorde.Quantities;
+--  with Concorde.Quantities;
 with Concorde.Real_Images;
 
 with Concorde.Updates.Events;
@@ -152,10 +152,15 @@ package body Concorde.UI.Models.Colonies is
                     when Name =>
                       Concorde.Db.Pop_Group.Get (Info.Pop_Group).Tag,
                     when Size =>
-                      Concorde.Quantities.Show
-                        (Concorde.Quantities.To_Quantity
-                        (Concorde.Db.Network_Value.Get
-                             (Info.Size_Node).Real_Value)),
+                      Natural'Image
+                   (Natural
+                      (Concorde.Db.Network_Value.Get
+                         (Info.Size_Node).Real_Value)),
+
+--                        Concorde.Quantities.Show
+--                          (Concorde.Quantities.To_Quantity
+--                          (Concorde.Db.Network_Value.Get
+--                               (Info.Size_Node).Real_Value)),
                     when Income =>
                       Concorde.Real_Images.Approximate_Image
                         (Concorde.Db.Network_Value.Get

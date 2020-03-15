@@ -4,6 +4,7 @@ with Concorde.Options;
 
 with Concorde.Configure.Climates;
 with Concorde.Configure.Commodities;
+with Concorde.Configure.Economy;
 with Concorde.Configure.Facilities;
 with Concorde.Configure.Galaxies;
 with Concorde.Configure.Metrics;
@@ -47,6 +48,7 @@ package body Concorde.Configure.Scenarios is
       Concorde.Configure.Climates.Configure_Climates (Scenario_Name);
 
       Concorde.Configure.Metrics.Configure_Metrics (Scenario_Name);
+      Concorde.Configure.Economy.Configure_Economic_Sectors (Scenario_Name);
       Concorde.Configure.Pop_Groups.Configure_Pop_Groups (Scenario_Name);
       Concorde.Configure.Policies.Configure_Policies (Scenario_Name);
 

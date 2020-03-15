@@ -1,7 +1,7 @@
 scenario = default
 generate-root-password = yes
 language = en
-user-interface = text
+user-interface = gtk
 display-theme = Adwaita-dark
 randomise = no
 create = no
