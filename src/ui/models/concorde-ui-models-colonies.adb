@@ -11,10 +11,8 @@ with Concorde.Real_Images;
 with Concorde.Updates.Events;
 
 with Concorde.Db.Pop_Group;
-with Concorde.Handles.Pop_Group;
 
 with Concorde.Db.Network_Value;
-with Concorde.Handles.Network_Value;
 
 with Concorde.Db.Node;
 
@@ -25,10 +23,10 @@ package body Concorde.UI.Models.Colonies is
 
    type Pop_Group_Record is
       record
-         Pop_Group       : Concorde.Handles.Pop_Group.Pop_Group_Handle;
-         Size_Node       : Concorde.Handles.Network_Value.Network_Value_Handle;
-         Income_Node     : Concorde.Handles.Network_Value.Network_Value_Handle;
-         Happiness_Node  : Concorde.Handles.Network_Value.Network_Value_Handle;
+         Pop_Group       : Concorde.Db.Pop_Group_Reference;
+         Size_Node       : Concorde.Db.Network_Value_Reference;
+         Income_Node     : Concorde.Db.Network_Value_Reference;
+         Happiness_Node  : Concorde.Db.Network_Value_Reference;
       end record;
 
    Column_Type_Array : constant array (Pop_Group_Table_Column)
@@ -138,17 +136,20 @@ package body Concorde.UI.Models.Colonies is
       Value : constant String :=
                 (case Pop_Group_Table_Column'Val (Column - 1) is
                     when Name =>
-                      Info.Pop_Group.Tag,
+                      Concorde.Db.Pop_Group.Get (Info.Pop_Group).Tag,
                     when Size =>
                       Concorde.Quantities.Show
                         (Concorde.Quantities.To_Quantity
-                           (Info.Size_Node.Real_Value)),
+                        (Concorde.Db.Network_Value.Get
+                             (Info.Size_Node).Real_Value)),
                     when Income =>
                       Concorde.Real_Images.Approximate_Image
-                       (Info.Income_Node.Real_Value * 100.0),
+                        (Concorde.Db.Network_Value.Get
+                        (Info.Income_Node).Real_Value * 100.0),
                     when Happiness =>
                        Concorde.Real_Images.Approximate_Image
-                         (Info.Happiness_Node.Real_Value * 100.0));
+                   (Concorde.Db.Network_Value.Get
+                        (Info.Happiness_Node).Real_Value * 100.0));
    begin
       return Nazar.Values.To_Value (Value);
    end Element;
@@ -170,25 +171,23 @@ package body Concorde.UI.Models.Colonies is
          declare
             Tag : constant String := Pop_Group.Tag;
 
-            function Node_Handle
+            function Node_Reference
               (Name : String)
-               return Concorde.Handles.Network_Value.Network_Value_Handle
-            is (Concorde.Handles.Network_Value.Get
-                (Concorde.Db.Network_Value.Get_Reference_By_Network_Value
+               return Concorde.Db.Network_Value_Reference
+            is (Concorde.Db.Network_Value.Get_Reference_By_Network_Value
                  (Network,
-                  Concorde.Db.Node.Get_Reference_By_Tag (Name))));
+                  Concorde.Db.Node.Get_Reference_By_Tag (Name)));
 
             Info : constant Pop_Group_Record :=
                      Pop_Group_Record'
                        (Pop_Group      =>
-                          Concorde.Handles.Pop_Group.Get
-                            (Pop_Group.Get_Pop_Group_Reference),
+                          Pop_Group.Get_Pop_Group_Reference,
                         Size_Node      =>
-                          Node_Handle (Tag & "-population"),
+                          Node_Reference (Tag & "-population"),
                         Income_Node    =>
-                          Node_Handle (Tag & "-income"),
+                          Node_Reference (Tag & "-income"),
                         Happiness_Node =>
-                          Node_Handle (Tag));
+                          Node_Reference (Tag));
          begin
             Model.State.Append (Info);
          end;
