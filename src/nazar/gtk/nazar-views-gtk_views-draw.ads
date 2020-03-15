@@ -36,7 +36,7 @@ private
       return String
    is ("nazar-gtk-draw-view");
 
-   overriding procedure Model_Changed
+   overriding procedure Update_From_Model
      (View : in out Nazar_Gtk_Draw_View_Record);
 
    overriding procedure Set_Model

@@ -64,7 +64,7 @@ private
       return String
    is ("nazar-gtk-table-view");
 
-   overriding procedure Model_Changed
+   overriding procedure Update_From_Model
      (View : in out Nazar_Gtk_Table_View_Record);
 
    type Model_Access is

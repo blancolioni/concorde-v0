@@ -7,6 +7,13 @@ package Nazar.Views.Gtk_Views is
 
    overriding procedure Show (View : in out Nazar_Gtk_View_Record);
 
+   overriding procedure Model_Changed
+     (View : in out Nazar_Gtk_View_Record);
+
+   procedure Update_From_Model
+     (View : in out Nazar_Gtk_View_Record)
+   is abstract;
+
    function Widget
      (View : Nazar_Gtk_View_Record)
       return Gtk.Widget.Gtk_Widget;

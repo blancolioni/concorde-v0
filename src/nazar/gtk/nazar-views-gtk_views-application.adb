@@ -1,6 +1,7 @@
 with Ada.Text_IO;
 
 with Glib.Error;
+with Glib.Main;
 
 with Gdk.Display;
 with Gdk.Screen;
@@ -10,12 +11,16 @@ with Gtk.Main;
 with Gtk.Style_Context;
 with Gtk.Widget;
 
+with Nazar.Gtk_Main;
+
 with Concorde.Paths;
 
 package body Nazar.Views.Gtk_Views.Application is
 
    procedure Destroy_Handler
      (W : access Gtk.Widget.Gtk_Widget_Record'Class);
+
+   function Update_Views return Boolean;
 
    ------------
    -- Append --
@@ -53,17 +58,6 @@ package body Nazar.Views.Gtk_Views.Application is
    begin
       Gtk.Main.Main_Quit;
    end Destroy_Handler;
-
-   -------------------
-   -- Model_Changed --
-   -------------------
-
-   overriding procedure Model_Changed
-     (View : in out Nazar_Gtk_Application_View_Record)
-   is
-   begin
-      null;
-   end Model_Changed;
 
    ---------------------------------------
    -- Nazar_Gtk_Application_View_Create --
@@ -148,7 +142,35 @@ package body Nazar.Views.Gtk_Views.Application is
 
       end;
 
+      declare
+         Timeout_Id : constant Glib.Main.G_Source_Id :=
+           Glib.Main.Timeout_Add (100, Update_Views'Access);
+      begin
+         pragma Unreferenced (Timeout_Id);
+      end;
+
       Gtk.Main.Main;
    end Show;
+
+   -----------------------
+   -- Update_From_Model --
+   -----------------------
+
+   overriding procedure Update_From_Model
+     (View : in out Nazar_Gtk_Application_View_Record)
+   is
+   begin
+      null;
+   end Update_From_Model;
+
+   ------------------
+   -- Update_Views --
+   ------------------
+
+   function Update_Views return Boolean is
+   begin
+      Nazar.Gtk_Main.Execute_Updates;
+      return True;
+   end Update_Views;
 
 end Nazar.Views.Gtk_Views.Application;

@@ -44,7 +44,7 @@ private
       Update : not null access
         procedure (Container : in out Nazar.Views.Layout.Layout_Container));
 
-   overriding procedure Model_Changed
+   overriding procedure Update_From_Model
      (View : in out Nazar_Gtk_Layout_View_Record);
 
    overriding procedure Append

@@ -14,19 +14,81 @@ package body Nazar.Views.Gtk_Views.Table is
      (Item : Nazar.Values.Nazar_Value_Type)
       return Glib.GType;
 
-   -------------------
-   -- Model_Changed --
-   -------------------
+   ---------------------------------
+   -- Nazar_Gtk_Table_View_Create --
+   ---------------------------------
 
-   overriding procedure Model_Changed
+   function Nazar_Gtk_Table_View_Create return Nazar_View is
+      View : constant Nazar_Gtk_Table_View :=
+               new Nazar_Gtk_Table_View_Record;
+   begin
+      View.List_Model := null;
+      View.Tree_View :=
+        Gtk.Tree_View.Gtk_Tree_View_New_With_Model
+          (Gtk.List_Store.Implements_Gtk_Tree_Model.To_Interface
+             (View.List_Model));
+      View.Scrolled := Gtk.Scrolled_Window.Gtk_Scrolled_Window_New;
+      View.Scrolled.Set_Policy
+        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+      View.Scrolled.Add (View.Tree_View);
+      View.Initialize (View.Scrolled);
+      return Nazar_View (View);
+   end Nazar_Gtk_Table_View_Create;
+
+   ------------------------------
+   -- Nazar_Gtk_Table_View_New --
+   ------------------------------
+
+   function Nazar_Gtk_Table_View_New
+     (Model : not null access Nazar.Models.Table
+      .Nazar_Table_Model_Record'Class)
+      return Nazar_Gtk_Table_View
+   is
+      View : constant Nazar_Gtk_Table_View :=
+               Nazar_Gtk_Table_View (Nazar_Gtk_Table_View_Create);
+   begin
+      View.Set_Model (Model);
+      return View;
+   end Nazar_Gtk_Table_View_New;
+
+   ------------------------
+   -- To_Gtk_Column_Type --
+   ------------------------
+
+   function To_Gtk_Column_Type
+     (Item : Nazar.Values.Nazar_Value_Type)
+      return Glib.GType
+   is
+      use Glib;
+      use Nazar.Values;
+   begin
+      if Item = Boolean_Value_Type then
+         return GType_Boolean;
+      elsif Item = Integer_Value_Type then
+         return GType_Int;
+      elsif Item = Real_Value_Type then
+         return GType_Double;
+      elsif Item = Text_Value_Type then
+         return GType_String;
+      else
+         return GType_String;
+      end if;
+   end To_Gtk_Column_Type;
+
+   -----------------------
+   -- Update_From_Model --
+   -----------------------
+
+   overriding procedure Update_From_Model
      (View : in out Nazar_Gtk_Table_View_Record)
    is
       use Glib;
       use Gtk.List_Store;
-      Model : constant Model_Access := View.Table_Model;
-      Store_Types : GType_Array (1 .. Guint (View.Table_Model.Column_Count));
-      Text_Render : constant Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text :=
-        Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text_New;
+      Model          : constant Model_Access := View.Table_Model;
+      Store_Types    : GType_Array
+        (1 .. Guint (View.Table_Model.Column_Count));
+      Text_Render    : constant Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text
+        := Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text_New;
       Layout_Changed : Boolean := View.List_Model = null;
    begin
 
@@ -92,7 +154,7 @@ package body Nazar.Views.Gtk_Views.Table is
                while Cell.Has_Element loop
                   declare
                      Text  : constant String :=
-                               Nazar.Values.To_String (Cell.Value);
+                       Nazar.Values.To_String (Cell.Value);
                   begin
                      View.List_Model.Set (Iter, Index, Text);
                      Cell.Next;
@@ -137,67 +199,6 @@ package body Nazar.Views.Gtk_Views.Table is
             end loop;
          end;
       end if;
-   end Model_Changed;
-
-   ---------------------------------
-   -- Nazar_Gtk_Table_View_Create --
-   ---------------------------------
-
-   function Nazar_Gtk_Table_View_Create return Nazar_View is
-      View : constant Nazar_Gtk_Table_View :=
-               new Nazar_Gtk_Table_View_Record;
-   begin
-      View.List_Model := null;
-      View.Tree_View :=
-        Gtk.Tree_View.Gtk_Tree_View_New_With_Model
-          (Gtk.List_Store.Implements_Gtk_Tree_Model.To_Interface
-             (View.List_Model));
-      View.Scrolled := Gtk.Scrolled_Window.Gtk_Scrolled_Window_New;
-      View.Scrolled.Set_Policy
-        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      View.Scrolled.Add (View.Tree_View);
-      View.Initialize (View.Scrolled);
-      return Nazar_View (View);
-   end Nazar_Gtk_Table_View_Create;
-
-   ------------------------------
-   -- Nazar_Gtk_Table_View_New --
-   ------------------------------
-
-   function Nazar_Gtk_Table_View_New
-     (Model : not null access Nazar.Models.Table
-      .Nazar_Table_Model_Record'Class)
-      return Nazar_Gtk_Table_View
-   is
-      View : constant Nazar_Gtk_Table_View :=
-               Nazar_Gtk_Table_View (Nazar_Gtk_Table_View_Create);
-   begin
-      View.Set_Model (Model);
-      return View;
-   end Nazar_Gtk_Table_View_New;
-
-   ------------------------
-   -- To_Gtk_Column_Type --
-   ------------------------
-
-   function To_Gtk_Column_Type
-     (Item : Nazar.Values.Nazar_Value_Type)
-      return Glib.GType
-   is
-      use Glib;
-      use Nazar.Values;
-   begin
-      if Item = Boolean_Value_Type then
-         return GType_Boolean;
-      elsif Item = Integer_Value_Type then
-         return GType_Int;
-      elsif Item = Real_Value_Type then
-         return GType_Double;
-      elsif Item = Text_Value_Type then
-         return GType_String;
-      else
-         return GType_String;
-      end if;
-   end To_Gtk_Column_Type;
+   end Update_From_Model;
 
 end Nazar.Views.Gtk_Views.Table;

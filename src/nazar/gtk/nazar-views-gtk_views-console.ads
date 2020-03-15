@@ -40,7 +40,7 @@ private
       return String
    is ("nazar-gtk-console-view");
 
-   overriding procedure Model_Changed
+   overriding procedure Update_From_Model
      (View : in out Root_Gtk_Console_View);
 
    type Model_Access is

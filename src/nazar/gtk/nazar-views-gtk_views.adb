@@ -1,3 +1,5 @@
+with Nazar.Gtk_Main;
+
 package body Nazar.Views.Gtk_Views is
 
    ----------------
@@ -17,6 +19,15 @@ package body Nazar.Views.Gtk_Views is
       Top.Set_Name (View.Name);
       View.Self.Initialize;
    end Initialize;
+
+   -------------------
+   -- Model_Changed --
+   -------------------
+
+   overriding procedure Model_Changed (View : in out Nazar_Gtk_View_Record) is
+   begin
+      Nazar.Gtk_Main.Schedule_Update (View.Self.View);
+   end Model_Changed;
 
    --------------
    -- Set_Name --

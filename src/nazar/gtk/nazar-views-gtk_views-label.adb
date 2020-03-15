@@ -20,17 +20,6 @@ package body Nazar.Views.Gtk_Views.Label is
         ("text", "", On_Text_Property_Update'Access);
    end Declare_Properties;
 
-   -------------------
-   -- Model_Changed --
-   -------------------
-
-   overriding procedure Model_Changed
-     (View : in out Nazar_Gtk_Label_View_Record)
-   is
-   begin
-      View.Label.Set_Label (View.Text_Model.Get_Text);
-   end Model_Changed;
-
    ---------------------------------
    -- Nazar_Gtk_Label_View_Create --
    ---------------------------------
@@ -91,5 +80,16 @@ package body Nazar.Views.Gtk_Views.Label is
    begin
       View.Text_Model.Set_Text (New_Label);
    end On_Text_Property_Update;
+
+   -----------------------
+   -- Update_From_Model --
+   -----------------------
+
+   overriding procedure Update_From_Model
+     (View : in out Nazar_Gtk_Label_View_Record)
+   is
+   begin
+      View.Label.Set_Label (View.Text_Model.Get_Text);
+   end Update_From_Model;
 
 end Nazar.Views.Gtk_Views.Label;

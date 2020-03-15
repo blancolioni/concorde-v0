@@ -40,7 +40,7 @@ private
    overriding procedure Declare_Properties
      (View : in out Nazar_Gtk_Label_View_Record);
 
-   overriding procedure Model_Changed
+   overriding procedure Update_From_Model
      (View : in out Nazar_Gtk_Label_View_Record);
 
    type Model_Access is
