@@ -7,6 +7,8 @@ with Concorde.Elementary_Functions;
 with Concorde.Logging;
 with Concorde.Real_Images;
 
+with Concorde.Db.Calculation;
+with Concorde.Db.Child_Calculation;
 with Concorde.Db.Effect;
 with Concorde.Db.Node;
 with Concorde.Db.Network_Value;
@@ -22,6 +24,11 @@ package body Concorde.Network is
 
    function Image (X : Real) return String
                    renames Concorde.Real_Images.Approximate_Image;
+
+   function Evaluate
+     (Network     : Concorde.Db.Network_Reference;
+      Calculation : Concorde.Db.Calculation_Reference)
+      return Real;
 
    ----------------------
    -- Commit_New_Value --
@@ -96,6 +103,72 @@ package body Concorde.Network is
             return Node_Value.Real_Value;
       end case;
    end Current_Value;
+
+   --------------
+   -- Evaluate --
+   --------------
+
+   function Evaluate
+     (Network     : Concorde.Db.Network_Reference;
+      Calculation : Concorde.Db.Calculation_Reference)
+      return Real
+   is
+      use Concorde.Db;
+      Rec : constant Concorde.Db.Calculation.Calculation_Type :=
+              Concorde.Db.Calculation.Get (Calculation);
+   begin
+      if Rec.Node = Null_Node_Reference then
+
+         declare
+            Acc : Real := (if Rec.Is_Sum then 0.0 else 1.0);
+         begin
+            for Child_Calc of
+              Concorde.Db.Child_Calculation.Select_By_Calculation
+                (Calculation)
+            loop
+               declare
+                  Old_Acc : constant Real := Acc;
+                  X : constant Real := Evaluate (Network, Child_Calc.Child);
+               begin
+                  if Rec.Is_Sum then
+                     Acc := Acc + X;
+                  else
+                     Acc := Acc * (1.0 + X);
+                  end if;
+
+                  Concorde.Logging.Log
+                    ("update", "internal",
+                     (if Rec.Is_Sum then "sum" else "product"),
+                     "current value " & Image (Old_Acc)
+                     & "; update value " & Image (X)
+                     & "; new value " & Image (Acc));
+               end;
+            end loop;
+            return Acc;
+         end;
+      else
+         declare
+            use Concorde.Elementary_Functions;
+            Node       : constant Concorde.Db.Node.Node_Type :=
+                           Concorde.Db.Node.Get (Rec.Node);
+            Node_Value : constant Real :=
+                           Inertial_Value
+                             (Network, Node.Tag, Rec.Inertia);
+         begin
+            return Result : constant Real :=
+              Rec.Add + Rec.Multiply * (Node_Value ** Rec.Exponent)
+            do
+               Concorde.Logging.Log
+                 ("update", "internal",
+                  Node.Tag,
+                  Image (Rec.Add) & " + " & Image (Rec.Multiply)
+                  & " * " & Image (Node_Value)
+                  & " ** " & Image (Rec.Exponent)
+                  & " = " & Image (Result));
+            end return;
+         end;
+      end if;
+   end Evaluate;
 
    --------------------
    -- Inertial_Value --
@@ -250,23 +323,24 @@ package body Concorde.Network is
                 (Policy.Get_Policy_Reference)
             loop
                declare
-                  use Concorde.Elementary_Functions;
-                  Node : constant Concorde.Db.Node.Node_Type :=
-                           Concorde.Db.Node.Get (Multiplier.Node);
-                  Node_Value : constant Real :=
-                                 Inertial_Value
-                                   (Network, Node.Tag, Multiplier.Inertia);
+                  M : constant Real :=
+                        Evaluate (Network,
+                                  Multiplier.Get_Calculation_Reference);
                begin
-                  Value := Value *
-                    (Multiplier.Add
-                     + Multiplier.Multiply
-                     * (Node_Value ** Multiplier.Exponent));
+                  Concorde.Logging.Log
+                    ("update", "internal", Tag,
+                     "current value " & Image (Value)
+                     & "; multiplier " & Image (M)
+                     & "; new value " & Image (M * Value));
+                  Value := Value * M;
                end;
             end loop;
 
             Set_New_Value (Network, Tag, Value);
             Commit_New_Value (Network, Tag);
 
+            Concorde.Logging.Log
+              ("update", "internal", Tag, Image (Value));
          end;
       end loop;
 

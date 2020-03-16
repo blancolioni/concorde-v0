@@ -8,11 +8,17 @@ end Node;
 
 record Calculation is
    key Node;
+   Is_Sum    : Boolean;
    Add       : Long_Float;
    Multiply  : Long_Float;
    Exponent  : Long_Float;
    Inertia   : Long_Float;
 end Calculation;
+
+record Child_Calculation is
+   key Calculation;
+   Child : Calculation;
+end Child_Calculation;
 
 record Effect : Calculation is
    key To    : Node;
@@ -51,7 +57,7 @@ record Sector_Use : Localised is
    Parent : Sector_Use;
 end Sector_Use;
    
-record Zone : Commodity, Node is
+record Zone : Node is
    key Sector_Use;
 end Zone;
 
