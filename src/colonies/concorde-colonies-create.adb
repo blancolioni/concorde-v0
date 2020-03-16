@@ -482,6 +482,10 @@ package body Concorde.Colonies.Create is
                Concorde.Money.To_Money (Get ("cash"));
       Total_Pop : constant Real := Get ("total-population");
 
+      Owner_Faction : constant Concorde.Db.Owner_Reference :=
+                        Concorde.Db.Faction.Get (Faction)
+                        .Get_Owner_Reference;
+
       Account : constant Concorde.Db.Account_Reference :=
                   Concorde.Db.Account.Create
                     (Guarantor  => Concorde.Db.Faction.Get (Faction).Account,
@@ -504,6 +508,9 @@ package body Concorde.Colonies.Create is
                      Faction           => Faction,
                      Capital           => Sector,
                      Plurality         => Get ("plurality"));
+
+      Neighbours : constant Concorde.Worlds.World_Sector_Array :=
+                     Concorde.Worlds.Get_Neighbours (Sector);
 
       Network   : constant Concorde.Db.Network_Reference :=
                     Concorde.Db.Colony.Get (Colony).Get_Network_Reference;
@@ -601,6 +608,7 @@ package body Concorde.Colonies.Create is
 
       Concorde.Db.World_Sector.Update_World_Sector (Sector)
         .Set_Sector_Use (Concorde.Db.Sector_Use.Get_Reference_By_Tag ("urban"))
+          .Set_Owner (Owner_Faction)
           .Done;
 
       Initialize_Zone
@@ -608,6 +616,33 @@ package body Concorde.Colonies.Create is
          Sector      => Sector,
          Zone_Config => Config.Child ("capital-sector"),
          Sizes       => Sector_Size);
+
+      declare
+         Next : Natural := 0;
+      begin
+         for Sector_Use_Config of Config.Child ("sector-use") loop
+            declare
+               Sector_Use : constant Concorde.Db.Sector_Use_Reference :=
+                              Concorde.Db.Sector_Use.Get_Reference_By_Tag
+                                (Sector_Use_Config.Config_Name);
+            begin
+               for I in 1 .. Sector_Use_Config.Get ("count") loop
+                  Next := Next + 1;
+                  exit when Next > Neighbours'Last;
+
+                  Concorde.Db.World_Sector.Update_World_Sector
+                    (Neighbours (Next))
+                      .Set_Sector_Use (Sector_Use)
+                      .Set_Owner (Owner_Faction)
+                      .Done;
+                  Initialize_Zone (Colony, Neighbours (Next),
+                                   Sector_Use_Config.Child ("zones"),
+                                   Sector_Size);
+               end loop;
+            end;
+            exit when Next > Neighbours'Last;
+         end loop;
+      end;
 
       for Zone of Concorde.Db.Zone.Scan_By_Tag loop
          if Sector_Size.Contains (Zone.Tag) then
