@@ -10,7 +10,6 @@ with Concorde.Configure.Galaxies;
 with Concorde.Configure.Metrics;
 with Concorde.Configure.Policies;
 with Concorde.Configure.Pop_Groups;
-with Concorde.Configure.Production;
 with Concorde.Configure.Terrain;
 with Concorde.Configure.Units;
 with Concorde.Configure.Utility;
@@ -52,7 +51,6 @@ package body Concorde.Configure.Scenarios is
       Concorde.Configure.Pop_Groups.Configure_Pop_Groups (Scenario_Name);
       Concorde.Configure.Policies.Configure_Policies (Scenario_Name);
 
-      Concorde.Configure.Production.Configure_Production (Scenario_Name);
       Concorde.Configure.Facilities.Configure_Facilities (Scenario_Name);
       Concorde.Configure.Units.Configure_Units (Scenario_Name);
 

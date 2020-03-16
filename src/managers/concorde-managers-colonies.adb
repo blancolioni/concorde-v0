@@ -163,7 +163,7 @@ package body Concorde.Managers.Colonies is
 --        end loop;
 
       for Policy of
-        Concorde.Db.Policy.Scan_By_Tag
+        Concorde.Db.Policy.Select_By_Internal (False)
       loop
          Concorde.Colonies.Daily_Policy_Expense
            (Colony => Manager.Colony,

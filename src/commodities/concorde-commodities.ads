@@ -60,12 +60,6 @@ package Concorde.Commodities is
 
    function Is_Skill (Commodity : Commodity_Reference) return Boolean;
 
-   function Create_Title
-     (Sector : Concorde.Db.World_Sector_Reference;
-      Zone   : Commodity_Reference;
-      Price  : Concorde.Money.Price_Type)
-      return Commodity_Reference;
-
    function Lease_Commodities
      (For_Commodity : Commodity_Reference)
       return Commodity_Array;

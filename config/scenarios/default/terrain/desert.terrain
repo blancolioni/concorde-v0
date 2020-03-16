@@ -2,7 +2,6 @@ name = Desert
 color = "#edc9af"
 hazard = 0.08
 resource = {
-   salt = 20 
    fissile = 15 
    hydrocarbon = 20 
    oil = 20 

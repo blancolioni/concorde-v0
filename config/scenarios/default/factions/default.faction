@@ -76,30 +76,6 @@ sector-use = {
       }
 }
 
-installations = {
-   agora = {
-      manager = default-agora
-      cash = 10M
-      stock = {
-         grain = 10K
-         fruit = 50K
-         vegetables = 50K
-         basic-takeout = 5K
-		 regular-takeout = 1K
-		 basic-meal = 100
-		 regular-meal = 50
-		 luxury-meal = 10
-		 small-arms = 10
-		 fuel = 10
-		 steel = 100
-		 ammunition = 100
-		 sulphur = 1000
-		 coal = 1000
-		 iron = 1000
-      }
-    }
-}
-
 init-script = {
    "load-galaxy-view"
    "load-star-system-view --name=$CAPITAL_SYSTEM"

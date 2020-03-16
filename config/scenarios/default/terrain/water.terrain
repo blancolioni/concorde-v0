@@ -3,7 +3,6 @@ color = "#0077be"
 is_water = yes
 hazard = 0.05
 resource = {
-	salt = 100
 	hydrocarbon = 10
 	oil = 10
 }

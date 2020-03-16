@@ -14,10 +14,6 @@ coal = {
    base-price = 0.1
 }
 
-salt = {
-   base-price = 0.01
-}
-
 fissile = {
    base-price = 1
 }

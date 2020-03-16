@@ -165,7 +165,7 @@ package body Concorde.UI.Models.Colonies.Policies is
    begin
       Model.State.Clear;
       for Policy of
-        Concorde.Db.Policy.Scan_By_Tag
+        Concorde.Db.Policy.Select_By_Internal (False)
       loop
          declare
             use Concorde.Db.Colony_Policy;

@@ -7,7 +7,6 @@ with Concorde.Db.Commodity_Group;
 with Concorde.Db.Lease;
 with Concorde.Db.Sector_Title;
 with Concorde.Db.Stock_Item;
-with Concorde.Db.Zone;
 
 package body Concorde.Commodities is
 
@@ -180,12 +179,6 @@ package body Concorde.Commodities is
          end;
       end if;
 
-      if Rec.Is_Zone then
-         Rec.Zone_Reference :=
-           Concorde.Db.Zone.Get_Zone (Ref)
-           .Get_Zone_Reference;
-      end if;
-
       Vector.Append (Rec);
 
       if Rec.Is_Lease then
@@ -289,44 +282,6 @@ package body Concorde.Commodities is
 
       return Get (Tag);
    end Create_Lease;
-
-   ------------------
-   -- Create_Title --
-   ------------------
-
-   function Create_Title
-     (Sector : Concorde.Db.World_Sector_Reference;
-      Zone   : Commodity_Reference;
-      Price  : Concorde.Money.Price_Type)
-      return Commodity_Reference
-   is
-      Tag : constant String :=
-        Title_Tag (Sector, Zone);
-   begin
-      if not Exists (Tag) then
-         declare
-            Title : constant Concorde.Db.Sector_Title_Reference :=
-              Concorde.Db.Sector_Title.Create
-                (Commodity_Group =>
-                   Concorde.Db.Commodity_Group.Get_Reference_By_Tag ("title"),
-                 Index           => Natural (Vector.Last_Index) + 1,
-                 Initial_Price   => Price,
-                 Mass            => 0.1,
-                 Density         => 0.1,
-                 Tag             => Tag,
-                 Zone            =>
-                   Concorde.Db.Zone.Get_Zone
-                     (To_Database_Reference (Zone))
-                 .Get_Zone_Reference,
-                 World_Sector    => Sector);
-         begin
-            Add_To_Cache (Concorde.Db.Sector_Title.Get (Title));
-         end;
-
-      end if;
-
-      return Get (Tag);
-   end Create_Title;
 
    ------------
    -- Exists --

@@ -9,10 +9,7 @@ with Concorde.Money;
 with Concorde.Quantities;
 
 with Concorde.Agents;
-with Concorde.Commodities;
 with Concorde.Star_Systems;
-with Concorde.Sectors;
-with Concorde.Stock;
 with Concorde.Terrain;
 with Concorde.Worlds;
 
@@ -27,7 +24,6 @@ with Concorde.Db.Faction;
 with Concorde.Db.Market;
 with Concorde.Db.Script;
 with Concorde.Db.Script_Line;
-with Concorde.Db.Sector_Use;
 with Concorde.Db.Shareholder;
 with Concorde.Db.Star_System_Distance;
 with Concorde.Db.World;
@@ -46,12 +42,6 @@ package body Concorde.Factions.Create is
    function Find_Home_Sector
      (World : Concorde.Db.World_Reference)
       return Concorde.Db.World_Sector_Reference;
-
-   procedure Initialize_Zone
-     (Company     : Concorde.Db.Company_Reference;
-      Sector      : Concorde.Db.World_Sector_Reference;
-      Sector_Use  : Concorde.Db.Sector_Use_Reference;
-      Zone_Config : Tropos.Configuration);
 
    --------------------
    -- Create_Faction --
@@ -87,8 +77,6 @@ package body Concorde.Factions.Create is
                         Spend      => Concorde.Money.Zero);
          Sector  : constant Concorde.Db.World_Sector_Reference :=
            Find_Home_Sector (Capital);
-         Neighbours : constant Concorde.Worlds.World_Sector_Array :=
-           Concorde.Worlds.Get_Neighbours (Sector);
          Faction : constant Concorde.Db.Faction_Reference :=
                      Concorde.Db.Faction.Create
                        (Name          => Name,
@@ -139,36 +127,6 @@ package body Concorde.Factions.Create is
             Sector  => Sector,
             Faction => Faction,
             Config  => Setup);
-
-         Initialize_Zone
-           (Company     => Company,
-            Sector      => Sector,
-            Sector_Use  =>
-              Concorde.Db.Sector_Use.Get_Reference_By_Tag ("urban"),
-            Zone_Config => Setup.Child ("capital-sector"));
-
-         declare
-            Next : Natural := 0;
-         begin
-            for Sector_Use_Config of Setup.Child ("sector-use") loop
-               declare
-                  Sector_Use : constant Concorde.Db.Sector_Use_Reference :=
-                    Concorde.Db.Sector_Use.Get_Reference_By_Tag
-                      (Sector_Use_Config.Config_Name);
-               begin
-                  for I in 1 .. Sector_Use_Config.Get ("count") loop
-                     Next := Next + 1;
-                     exit when Next > Neighbours'Last;
-
-                     Initialize_Zone (Company,
-                                      Neighbours (Next), Sector_Use,
-                                      Sector_Use_Config.Child ("zones"));
-
-                  end loop;
-               end;
-               exit when Next > Neighbours'Last;
-            end loop;
-         end;
 
          Concorde.Db.Shareholder.Create
            (Company => Company,
@@ -384,62 +342,5 @@ package body Concorde.Factions.Create is
 
       return Concorde.Db.Null_World_Reference;
    end Find_Homeworld;
-
-   ---------------------
-   -- Initialize_Zone --
-   ---------------------
-
-   procedure Initialize_Zone
-     (Company     : Concorde.Db.Company_Reference;
-      Sector      : Concorde.Db.World_Sector_Reference;
-      Sector_Use  : Concorde.Db.Sector_Use_Reference;
-      Zone_Config : Tropos.Configuration)
-   is
-      Owner      : constant Concorde.Db.Owner_Reference :=
-        Concorde.Db.Company.Get (Company).Get_Owner_Reference;
-      Has_Stock  : constant Concorde.Db.Has_Stock_Reference :=
-        Concorde.Sectors.Has_Stock_Reference (Sector)
-        with Unreferenced;
-   begin
-
-      Concorde.Db.World_Sector.Update_World_Sector (Sector)
-        .Set_Sector_Use (Sector_Use)
-        .Set_Owner (Owner)
-        .Done;
-
-      for Available_Config of Zone_Config loop
-         if not Commodities.Exists
-           (Available_Config.Config_Name)
-         then
-            raise Constraint_Error with
-              "zone: no such commodity: "
-              & Available_Config.Config_Name;
-         end if;
-
-         declare
-            General_Commodity : constant Commodities.Commodity_Reference :=
-              Commodities.Get (Available_Config.Config_Name);
-            Price             : constant Concorde.Money.Price_Type :=
-              Commodities.Initial_Price (General_Commodity);
-            Stock : constant Concorde.Db.Has_Stock_Reference :=
-              Concorde.Db.Company.Get (Company).Get_Has_Stock_Reference;
-            Commodity : constant Concorde.Commodities.Commodity_Reference :=
-              Concorde.Commodities.Create_Title
-                (Sector, General_Commodity, Price);
-            Lease     : constant Concorde.Commodities.Commodity_Reference :=
-              Concorde.Commodities.Create_Lease
-                (Commodity, 360);
-            Quantity          : constant Concorde.Quantities.Quantity_Type :=
-              Concorde.Quantities.To_Quantity
-                (Real (Float'(Available_Config.Value)));
-         begin
-            Concorde.Stock.Add_Initial_Stock
-              (Stock, Commodity, Quantity);
-            Concorde.Stock.Add_Initial_Stock
-              (Stock, Lease, Quantity);
-         end;
-      end loop;
-
-   end Initialize_Zone;
 
 end Concorde.Factions.Create;
