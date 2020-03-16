@@ -49,7 +49,8 @@ package body Concorde.Managers.Colonies is
      (Manager : not null access Root_Colony_Manager_Type);
 
    function Image (X : Real) return String
-                   renames Concorde.Real_Images.Approximate_Image;
+                   renames Concorde.Real_Images.Approximate_Image
+     with Unreferenced;
 
    --------------
    -- Activate --
@@ -191,15 +192,15 @@ package body Concorde.Managers.Colonies is
                New_Size : constant Non_Negative_Real :=
                             Real'Max (Pop.Size + Births - Deaths, 0.0);
             begin
-               Concorde.Logging.Log
-                 (Actor    => "colony",
-                  Location => Concorde.Worlds.Name (Colony.World),
-                  Category => "pop changes",
-                  Message  =>
-                    "old=" & Image (Pop.Size)
-                  & "; births=" & Image (Births)
-                  & "; deaths=" & Image (Deaths)
-                  & "; new size=" & Image (New_Size));
+--                 Concorde.Logging.Log
+--                   (Actor    => "colony",
+--                    Location => Concorde.Worlds.Name (Colony.World),
+--                    Category => "pop changes",
+--                    Message  =>
+--                      "old=" & Image (Pop.Size)
+--                    & "; births=" & Image (Births)
+--                    & "; deaths=" & Image (Deaths)
+--                    & "; new size=" & Image (New_Size));
                Concorde.Db.Pop.Update_Pop (Pop.Get_Pop_Reference)
                  .Set_Size (New_Size)
                  .Done;
