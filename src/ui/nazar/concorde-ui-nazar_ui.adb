@@ -88,6 +88,11 @@ package body Concorde.UI.Nazar_UI is
 --                  (Concorde.Db.Market.Get_Reference_By_World
 --                       (Faction.Capital_World.Reference_World))));
 
+      if Builder.Has_View ("faction-colonies") then
+         Builder.Get_View ("faction-colonies").Set_Model
+           (Concorde.UI.Models.Colonies.Faction_Colony_Table (Faction));
+      end if;
+
       if Builder.Has_View ("colony-pop-groups") then
          Builder.Get_View ("colony-pop-groups").Set_Model
            (Concorde.UI.Models.Colonies.Colony_Pop_Group_Model
