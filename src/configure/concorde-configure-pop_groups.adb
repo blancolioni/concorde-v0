@@ -78,7 +78,7 @@ package body Concorde.Configure.Pop_Groups is
       Metric ("");
 
       if Is_Wealth_Group then
-         Metric ("base-income");
+         Metric ("base-income", Concorde.Db.Money);
       end if;
 
    end Configure_Pop_Group;
