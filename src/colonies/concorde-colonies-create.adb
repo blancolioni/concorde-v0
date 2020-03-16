@@ -21,6 +21,7 @@ with Concorde.Db.Account;
 with Concorde.Db.Colony;
 with Concorde.Db.Colony_Policy;
 with Concorde.Db.Colony_Pop_Group;
+with Concorde.Db.Colony_Sector;
 with Concorde.Db.Economic_Sector;
 with Concorde.Db.Faction;
 with Concorde.Db.Group_Influence;
@@ -442,8 +443,12 @@ package body Concorde.Colonies.Create is
       Zone_Config : Tropos.Configuration;
       Sizes       : in out Sector_Size_Maps.Map)
    is
-      pragma Unreferenced (Colony, Sector);
    begin
+
+      Concorde.Db.Colony_Sector.Create
+        (Colony       => Colony,
+         World_Sector => Sector);
+
       for Config of Zone_Config loop
          declare
             Tag : constant String := Config.Config_Name;
