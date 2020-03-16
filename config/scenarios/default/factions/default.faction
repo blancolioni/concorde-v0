@@ -50,8 +50,8 @@ ships = {
 
 capital-sector = {
    administration = 10 
-   commercial = 10 
-   industrial = 10
+   commercial = 100
+   industrial = 100
    residential = 1000
 }
 
