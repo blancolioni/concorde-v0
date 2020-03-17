@@ -12,7 +12,6 @@ with Concorde.Real_Images;
 with Concorde.Random;
 
 with Concorde.Money;
-with Concorde.Quantities;
 
 with Concorde.Network;
 with Concorde.Worlds;
@@ -487,10 +486,6 @@ package body Concorde.Colonies.Create is
                Concorde.Money.To_Money (Get ("cash"));
       Total_Pop : constant Real := Get ("total-population");
 
-      Owner_Faction : constant Concorde.Db.Owner_Reference :=
-                        Concorde.Db.Faction.Get (Faction)
-                        .Get_Owner_Reference;
-
       Account : constant Concorde.Db.Account_Reference :=
                   Concorde.Db.Account.Create
                     (Guarantor  => Concorde.Db.Faction.Get (Faction).Account,
@@ -507,8 +502,6 @@ package body Concorde.Colonies.Create is
                      Account           => Account,
                      Last_Earn         => Concorde.Money.Zero,
                      Last_Spend        => Concorde.Money.Zero,
-                     Capacity          =>
-                       Concorde.Quantities.To_Quantity (1.0e6),
                      World             => World,
                      Faction           => Faction,
                      Capital           => Sector,
@@ -613,7 +606,7 @@ package body Concorde.Colonies.Create is
 
       Concorde.Db.World_Sector.Update_World_Sector (Sector)
         .Set_Sector_Use (Concorde.Db.Sector_Use.Get_Reference_By_Tag ("urban"))
-          .Set_Owner (Owner_Faction)
+          .Set_Faction (Faction)
           .Done;
 
       Initialize_Zone
@@ -638,7 +631,7 @@ package body Concorde.Colonies.Create is
                   Concorde.Db.World_Sector.Update_World_Sector
                     (Neighbours (Next))
                       .Set_Sector_Use (Sector_Use)
-                      .Set_Owner (Owner_Faction)
+                      .Set_Faction (Faction)
                       .Done;
                   Initialize_Zone (Colony, Neighbours (Next),
                                    Sector_Use_Config.Child ("zones"),

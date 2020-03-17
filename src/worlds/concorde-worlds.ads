@@ -1,5 +1,7 @@
 private with Ada.Containers.Doubly_Linked_Lists;
 
+with Concorde.Quantities;
+
 with Concorde.Db;
 with Concorde.Db.World_Sector;
 
@@ -43,7 +45,7 @@ package Concorde.Worlds is
 
    function Climate
      (World : Concorde.Db.World_Reference)
-      return Concorde.Db.Climate_Reference;
+      return Concorde.Db.World_Climate;
 
    function Habitability
      (World : Concorde.Db.World_Reference)
@@ -99,8 +101,9 @@ package Concorde.Worlds is
      (Sector  : Concorde.Db.World_Sector_Reference;
       Process : not null access
         procedure (Resource : Concorde.Db.Resource_Reference;
-                   Accessibility : Unit_Real;
-                   Abundance     : Non_Negative_Real));
+                   Concentration : Unit_Real;
+                   Difficulty    : Unit_Real;
+                   Available     : Concorde.Quantities.Quantity_Type));
 
    type Sector_Vertex is
       record

@@ -1,11 +1,8 @@
-with Ada.Text_IO;
-
 with Tropos.Reader;
 
 with Concorde.Configure.Commodities;
 
 with Concorde.Db.Movement;
-with Concorde.Db.Skill;
 with Concorde.Db.Unit;
 
 package body Concorde.Configure.Units is
@@ -27,36 +24,6 @@ package body Concorde.Configure.Units is
       function Get (Name : String) return Real
       is (Real (Float'(Unit_Config.Get (Name, 0.0))));
 
-      function Get_Skill return Concorde.Db.Skill_Reference;
-
-      ---------------
-      -- Get_Skill --
-      ---------------
-
-      function Get_Skill return Concorde.Db.Skill_Reference is
-         Skills_Config : constant Tropos.Configuration :=
-           Unit_Config.Child ("skills");
-      begin
-         for Config of Skills_Config loop
-            declare
-               use Concorde.Db;
-               Tag : constant String := Config.Config_Name;
-               Ref : constant Skill_Reference :=
-                 Concorde.Db.Skill.Get_Reference_By_Tag (Tag);
-            begin
-               if Ref = Null_Skill_Reference then
-                  Ada.Text_IO.Put_Line
-                    (Ada.Text_IO.Standard_Error,
-                     "warning: " & Unit_Config.Config_Name
-                     & ": no such skill: " & Tag);
-               else
-                  return Ref;
-               end if;
-            end;
-         end loop;
-         return Concorde.Db.Null_Skill_Reference;
-      end Get_Skill;
-
       Unit : constant Concorde.Db.Unit_Reference :=
         Concorde.Db.Unit.Create
           (Tag        => Unit_Config.Config_Name,
@@ -68,8 +35,7 @@ package body Concorde.Configure.Units is
            Attack     => Get ("attack"),
            Discipline => Get ("discipline"),
            Recon      => Get ("recon"),
-           Camoflage  => Get ("camoflage"),
-           Skill      => Get_Skill);
+           Camoflage  => Get ("camoflage"));
 
       Constructed : constant Concorde.Db.Constructed_Reference :=
         Concorde.Db.Unit.Get (Unit).Get_Constructed_Reference;

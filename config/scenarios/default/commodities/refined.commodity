@@ -1,0 +1,35 @@
+steel = {
+   parts = {
+	   iron = 2
+	   coal = 1
+	}
+}
+
+petroleum = {
+   parts = { hydrocarbon = 2 }
+}
+   
+refined-crystals = {
+   parts = { crystals = 2 }
+}
+
+industrial-chemicals = {
+   parts = {
+     hydrocarbon = 1
+     semiconductors = 1
+     rare-earths = 1
+	 }
+}
+
+plastics = {
+  parts = {
+    hydrocarbon = 2
+	}
+}
+
+ship-fuel = {
+   parts = {
+      gases = 2
+	  hydrocarbon = 1
+	  }
+}

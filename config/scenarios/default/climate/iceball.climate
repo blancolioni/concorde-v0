@@ -1,8 +1,6 @@
 terrain = {
-   mountain = 5
-   plain = 5
-   volcanic = 5
+   mountains = 2%
+   hills = 5%
+   plain = 97%
 }
-
-default-terrain = ice
 habitability = 25

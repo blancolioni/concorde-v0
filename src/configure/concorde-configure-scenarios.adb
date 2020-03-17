@@ -2,7 +2,6 @@ with Ada.Text_IO;
 
 with Concorde.Options;
 
-with Concorde.Configure.Climates;
 with Concorde.Configure.Commodities;
 with Concorde.Configure.Economy;
 with Concorde.Configure.Facilities;
@@ -44,7 +43,6 @@ package body Concorde.Configure.Scenarios is
 
       Concorde.Configure.Terrain.Configure_Terrain (Scenario_Name);
       Concorde.Configure.Zones.Configure_Zones (Scenario_Name);
-      Concorde.Configure.Climates.Configure_Climates (Scenario_Name);
 
       Concorde.Configure.Metrics.Configure_Metrics (Scenario_Name);
       Concorde.Configure.Economy.Configure_Economic_Sectors (Scenario_Name);

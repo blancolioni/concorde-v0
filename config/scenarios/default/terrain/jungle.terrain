@@ -1,8 +1,0 @@
-name = Jungle
-color = "#004b49"
-hazard = 0.05
-resource = {
-   fissile = 15 
-   hydrocarbon = 20 
-   oil = 20 
-}

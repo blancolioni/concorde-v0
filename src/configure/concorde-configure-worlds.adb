@@ -1,24 +1,62 @@
-with Ada.Text_IO;
+with Ada.Containers.Vectors;
 
-with Concorde.Random;
+with WL.Random.Height_Maps;
 
-with Concorde.Climates;
+with Concorde.Constants;
+with Concorde.Logging;
 with Concorde.Solar_System;
 with Concorde.Surfaces;
+with Concorde.Terrain;
+
+with Concorde.Configure.Resources;
 
 with Concorde.Db.Climate_Terrain;
-with Concorde.Db.Deposit;
+with Concorde.Db.Elevation;
+with Concorde.Db.Feature;
 with Concorde.Db.Sector_Neighbour;
 with Concorde.Db.Sector_Vertex;
-with Concorde.Db.Terrain_Resource;
+with Concorde.Db.Star_System;
+with Concorde.Db.Terrain;
 with Concorde.Db.World;
 with Concorde.Db.World_Sector;
 
 package body Concorde.Configure.Worlds is
 
+   package Heights renames WL.Random.Height_Maps;
+
+   type Elevation_Terrain is
+      record
+         Elevation : Concorde.Db.Elevation_Reference;
+         Terrain   : Concorde.Db.Terrain_Reference;
+      end record;
+
+   package Elevation_Vectors is
+     new Ada.Containers.Vectors
+       (Positive, Elevation_Terrain);
+
+   type Climate_Terrain_Record is
+      record
+         Terrain   : Concorde.Db.Terrain_Reference;
+         First     : Positive;
+         Last      : Natural;
+         Frequency : Unit_Real;
+         Count     : Natural;
+      end record;
+
+   package Climate_Terrain_Vectors is
+     new Ada.Containers.Vectors (Positive, Climate_Terrain_Record);
+
    procedure Save_Surface
      (Surface : Concorde.Surfaces.Surface_Type;
       World   : Concorde.Db.World.World_Type);
+
+   procedure Get_Climate_Terrain
+     (World  : Concorde.Db.World.World_Type;
+      Vector : out Climate_Terrain_Vectors.Vector);
+
+   function Get_Frequencies
+     (World : Concorde.Db.World.World_Type)
+      return Heights.Frequency_Map;
 
    ----------------------
    -- Generate_Surface --
@@ -36,32 +74,130 @@ package body Concorde.Configure.Worlds is
                        / Concorde.Solar_System.Earth_Radius;
    begin
 
-      case Rec.Category is
-         when Asteroid | Dwarf | Terrestrial | Super_Terrestrial =>
-            Tile_Count := Natural (Radius * 200.0);
-         when Sub_Jovian | Jovian | Super_Jovian =>
+      case Rec.Composition is
+         when Ice | Rock | Rock_Ice | Rock_Iron =>
+            Tile_Count := Natural (Radius * 400.0);
+         when Hydrogen | Gaseous =>
             Tile_Count := 0;
       end case;
 
-      if Tile_Count = 0 then
-         return;
+      if Tile_Count > 0 then
+         declare
+            Surface   : Concorde.Surfaces.Root_Surface_Type;
+         begin
+            Concorde.Logging.Log
+              ("generator", "surfaces", Rec.Name,
+               "Creating surface with "
+               & Tile_Count'Image & " tiles");
+            Surface.Create_Voronoi_Partition (Tile_Count);
+            Save_Surface (Surface, Rec);
+
+            Concorde.Logging.Log
+              ("generator", "surfaces", Rec.Name,
+               "done");
+
+         end;
       end if;
 
       declare
-         Surface   : Concorde.Surfaces.Root_Surface_Type;
+         World_Rec : constant Concorde.Db.World.World_Type :=
+                       Concorde.Db.World.Get (World);
+         System    : constant Concorde.Db.Star_System.Star_System_Type :=
+                       Concorde.Db.Star_System.Get
+                         (World_Rec.Star_System);
       begin
-         Ada.Text_IO.Put_Line
-           (Rec.Name & ": creating surface with "
-            & Tile_Count'Image & " tiles");
-         Surface.Create_Voronoi_Partition (Tile_Count);
-         Save_Surface (Surface, Rec);
-
-         Ada.Text_IO.Put_Line
-           (Rec.Name & ": done");
-
+         Concorde.Configure.Resources.Create_Deposits
+           (World     => World_Rec,
+            Generator =>
+              Concorde.Configure.Resources.Create_Generator
+                (System.X, System.Y, System.Z));
       end;
 
    end Generate_Surface;
+
+   -------------------------
+   -- Get_Climate_Terrain --
+   -------------------------
+
+   procedure Get_Climate_Terrain
+     (World  : Concorde.Db.World.World_Type;
+      Vector : out Climate_Terrain_Vectors.Vector)
+   is
+      Water_Last : constant Natural := World.Sea_Level;
+      Next       : Positive := Water_Last + 1;
+   begin
+
+      if Water_Last > 0 then
+         Vector.Append
+           (Climate_Terrain_Record'
+              (Terrain   => Concorde.Terrain.Ocean,
+               First     => 1,
+               Last      => Water_Last,
+               Frequency => World.Hydrosphere,
+               Count     => Water_Last));
+      end if;
+
+      for Climate_Terrain of
+        Concorde.Db.Climate_Terrain.Select_By_Climate
+          (World.Climate)
+      loop
+
+         declare
+            Hydrosphere  : constant Unit_Real := World.Hydrosphere;
+            Terrain_Freq : constant Unit_Real := Climate_Terrain.Frequency;
+            Frequency    : constant Unit_Real :=
+                             Terrain_Freq * (1.0 - Hydrosphere);
+            Count     : constant Natural :=
+              Natural (Frequency * Real (World.Elevation_Range));
+         begin
+            Vector.Append (Climate_Terrain_Record'
+                             (Terrain   => Climate_Terrain.Terrain,
+                              First     => Next,
+                              Last      => Next + Count - 1,
+                              Frequency => Frequency,
+                              Count     => Count));
+            Next := Next + Count;
+         end;
+      end loop;
+
+      while Next < World.Elevation_Range loop
+         declare
+            Total_Move : Natural := 0;
+            Remaining  : constant Natural :=
+              World.Elevation_Range - Next;
+         begin
+            for Item of Vector loop
+               declare
+                  This_Move : constant Positive :=
+                    Natural'Min
+                      (Natural'Max (Remaining / Vector.Last_Index, 1),
+                       Remaining - Total_Move);
+               begin
+                  Item.First := Item.First + This_Move;
+                  Item.Count := Item.Count + This_Move;
+                  Item.Last := Item.First + Item.Count - 1;
+                  Total_Move := Total_Move + This_Move;
+                  exit when Total_Move = Remaining;
+               end;
+            end loop;
+            Next := Next + Total_Move;
+         end;
+      end loop;
+
+   end Get_Climate_Terrain;
+
+   ---------------------
+   -- Get_Frequencies --
+   ---------------------
+
+   function Get_Frequencies
+     (World : Concorde.Db.World.World_Type)
+      return Heights.Frequency_Map
+   is
+   begin
+      return Freq : constant Heights.Frequency_Map
+        (1 .. World.Elevation_Range) := (others => 1);
+   end Get_Frequencies;
 
    ------------------
    -- Save_Surface --
@@ -71,127 +207,129 @@ package body Concorde.Configure.Worlds is
      (Surface   : Concorde.Surfaces.Surface_Type;
       World     : Concorde.Db.World.World_Type)
    is
+      Freqs : constant Heights.Frequency_Map :=
+                Get_Frequencies (World);
+      Hs    : Heights.Height_Array (1 .. Natural (Surface.Tile_Count));
+
       Tile_Refs : array (1 .. Surface.Tile_Count)
         of Concorde.Db.Sector_Reference;
-      Terrain_Refs : array (1 .. Surface.Tile_Count)
-        of Concorde.Db.Terrain_Reference :=
-          (others => Concorde.Db.Null_Terrain_Reference);
 
-      Climate   : constant Concorde.Db.Climate_Reference := World.Climate;
+      function Base_Temperature
+        (Tile : Surfaces.Surface_Tile_Index)
+         return Non_Negative_Real;
+
+      function Get_Neighbours
+        (Index : Positive)
+         return Heights.Neighbour_Array;
+
+      function Base_Temperature
+        (Tile : Surfaces.Surface_Tile_Index)
+         return Non_Negative_Real
+      is
+         Y : constant Real := Surface.Tile_Centre (Tile) (3);
+      begin
+         return World.Average_Temperature
+           + (0.5 - abs Y) * 10.0;
+      end Base_Temperature;
+
+      --------------------
+      -- Get_Neighbours --
+      --------------------
+
+      function Get_Neighbours
+        (Index : Positive)
+         return Heights.Neighbour_Array
+      is
+         Tile : constant Surfaces.Surface_Tile_Index :=
+                  Surfaces.Surface_Tile_Index (Index);
+      begin
+         return Ns : Heights.Neighbour_Array
+           (1 .. Natural (Surface.Neighbour_Count (Tile)))
+         do
+            for I in Ns'Range loop
+               Ns (I) :=
+                 Positive
+                   (Surface.Neighbour
+                      (Tile,
+                       Surfaces.Tile_Neighbour_Index (I)));
+            end loop;
+         end return;
+      end Get_Neighbours;
+
+      Climate_Vector : Climate_Terrain_Vectors.Vector;
+      Elevation      : Elevation_Vectors.Vector;
+
    begin
-      for Tile_Index in 1 .. Surface.Tile_Count loop
+
+      WL.Random.Reset (World.Seed);
+
+      Get_Climate_Terrain (World, Climate_Vector);
+
+      Heights.Generate_Height_Map
+        (Heights     => Hs,
+         Frequencies => Freqs,
+         Smoothing   => 3,
+         Neighbours  => Get_Neighbours'Access);
+
+      for E of Concorde.Db.Elevation.Scan_By_Top_Record loop
          declare
-            use Concorde.Surfaces;
-
-            type Terrain_Array is
-              array (Tile_Neighbour_Count range <>)
-              of Concorde.Db.Terrain_Reference;
-
-            function Get_Neighbour_Terrain
-              return Terrain_Array;
-
-            ---------------------------
-            -- Get_Neighbour_Terrain --
-            ---------------------------
-
-            function Get_Neighbour_Terrain
-              return Terrain_Array
-            is
-               use type Concorde.Db.Terrain_Reference;
-               Result : Terrain_Array
-                 (1 .. Surface.Neighbour_Count (Tile_Index));
-               Count : Tile_Neighbour_Count := 0;
-            begin
-               for I in Result'Range loop
-                  declare
-                     Neighbour : constant Surface_Tile_Index :=
-                                   Surface.Neighbour (Tile_Index, I);
-                     Terrain   : constant Concorde.Db.Terrain_Reference :=
-                                   Terrain_Refs (Neighbour);
-                  begin
-                     if Terrain /= Concorde.Db.Null_Terrain_Reference then
-                        Count := Count + 1;
-                        Result (Count) := Terrain;
-                     end if;
-                  end;
-               end loop;
-               return Result (1 .. Count);
-            end Get_Neighbour_Terrain;
-
-            Neighbour_Terrain : constant Terrain_Array :=
-                                  Get_Neighbour_Terrain;
-
-            Assigned : Boolean := False;
+            Height  : constant Integer := E.Height + World.Sea_Level;
+            Terrain : Concorde.Db.Terrain_Reference;
          begin
-            for Climate_Terrain of
-              Concorde.Db.Climate_Terrain.Select_By_Climate (Climate)
-            loop
-               declare
-                  use type Concorde.Db.Terrain_Reference;
-                  Chance : Non_Negative_Real :=
-                             Climate_Terrain.Chance;
-                  Count  : Natural := 0;
-               begin
-                  for Terrain of Neighbour_Terrain loop
-                     if Terrain = Climate_Terrain.Terrain then
-                        Count := Count + 1;
-                     end if;
-                  end loop;
-                  Chance := Chance * (1.0 + Real (Count) / 5.0);
-
-                  if Concorde.Random.Unit_Random < Chance then
-                     Terrain_Refs (Tile_Index) := Climate_Terrain.Terrain;
-                     Assigned := True;
+            if Height in 1 .. World.Elevation_Range then
+               for Item of Climate_Vector loop
+                  if Height in Item.First .. Item.Last then
+                     Terrain := Item.Terrain;
                      exit;
                   end if;
-               end;
-            end loop;
+               end loop;
 
-            if not Assigned then
-               Terrain_Refs (Tile_Index) :=
-                 Concorde.Climates.Default_Terrain (Climate);
+               Elevation.Append
+                 (Elevation_Terrain'
+                    (Elevation => E.Get_Elevation_Reference,
+                     Terrain   => Terrain));
             end if;
          end;
       end loop;
 
-      for Tile_Index in 1 .. Surface.Tile_Count loop
+      for I in Tile_Refs'Range loop
          declare
-            use Concorde.Surfaces;
-            Sector : constant Concorde.Db.World_Sector.World_Sector_Type :=
-                       Concorde.Db.World_Sector.Create;
-            Centre : constant Vector_3 := Surface.Tile_Centre (Tile_Index);
+            Centre : constant Concorde.Surfaces.Vector_3 :=
+              Surface.Tile_Centre (I);
+            E      : constant Concorde.Db.Elevation.Elevation_Type :=
+              Concorde.Db.Elevation.Get
+                (Elevation.Element (Hs (Positive (I))).Elevation);
+            Terrain : constant Concorde.Db.Terrain_Reference :=
+              Elevation.Element (Hs (Positive (I))).Terrain;
+            Sector : constant Concorde.Db.World_Sector_Reference :=
+                       Concorde.Db.World_Sector.Create
+                         (Surface             => World.Get_Surface_Reference,
+                          X                   => Centre (1),
+                          Y                   => Centre (2),
+                          Z                   => Centre (3),
+                          Faction             =>
+                            Concorde.Db.Null_Faction_Reference,
+                          World               => World.Get_World_Reference,
+                          Terrain             => Terrain,
+                          Feature             =>
+                            Concorde.Db.Null_Feature_Reference,
+                          Height              => Hs (Positive (I)),
+                          Elevation           => E.Get_Elevation_Reference,
+                          Sector_Use          =>
+                            Concorde.Db.Null_Sector_Use_Reference,
+                          Average_Temperature => Base_Temperature (I));
+            S      : constant Concorde.Db.Sector_Reference :=
+                       Concorde.Db.World_Sector.Get (Sector)
+                       .Get_Sector_Reference;
          begin
-            Sector.Set_World (World);
-            Sector.Set_Surface (World);
-            Sector.Set_X (Centre (1));
-            Sector.Set_Y (Centre (2));
-            Sector.Set_Z (Centre (3));
-            Sector.Set_Terrain (Terrain_Refs (Tile_Index));
-
-            for Terrain_Resource of
-              Concorde.Db.Terrain_Resource.Select_By_Terrain
-                (Terrain_Refs (Tile_Index))
-            loop
-               if Concorde.Random.Unit_Random < Terrain_Resource.Chance then
-                  Concorde.Db.Deposit.Create
-                    (World_Sector  => Sector.Get_World_Sector_Reference,
-                     Resource      => Terrain_Resource.Resource,
-                     Accessibility => Concorde.Random.Unit_Random,
-                     Abundance     =>
-                       (Concorde.Random.Unit_Random + 0.5)
-                     * 1.0e6);
-               end if;
-            end loop;
-
-            for Point of Surface.Tile_Boundary (Tile_Index) loop
+            Tile_Refs (I) := S;
+            for V of Surface.Tile_Boundary (I) loop
                Concorde.Db.Sector_Vertex.Create
-                 (Sector        => Sector.Get_Sector_Reference,
-                  X             => Point (1),
-                  Y             => Point (2),
-                  Z             => Point (3));
+                 (Sector => S,
+                  X      => V (1),
+                  Y      => V (2),
+                  Z      => V (3));
             end loop;
-
-            Tile_Refs (Tile_Index) := Sector.Get_Sector_Reference;
          end;
       end loop;
 
@@ -202,6 +340,35 @@ package body Concorde.Configure.Worlds is
                Neighbour => Tile_Refs (Surface.Neighbour (Tile_Index, I)));
          end loop;
       end loop;
+
+      declare
+         Max_Ice_Sectors : constant Natural :=
+           (if World.Average_Temperature < -20.0
+            then Natural (Surface.Tile_Count)
+            else Natural (Real (Surface.Tile_Count) * World.Hydrosphere));
+         Ice_Sector_Count : Natural := 0;
+         Ice_Feature      : constant Concorde.Db.Feature_Reference :=
+           Concorde.Db.Feature.Get_Reference_By_Tag ("ice");
+      begin
+         for World_Sector of
+           Concorde.Db.World_Sector
+             .Select_World_Temperature_Bounded_By_Average_Temperature
+               (World.Get_World_Reference, 0.0,
+                Concorde.Constants.Freezing_Point_Of_Water)
+         loop
+            exit when Ice_Sector_Count > Max_Ice_Sectors;
+            if World_Sector.Average_Temperature < 243.0
+              or else not Concorde.Db.Terrain.Get (World_Sector.Terrain)
+              .Is_Water
+            then
+               Concorde.Db.World_Sector.Update_World_Sector
+                 (World_Sector.Get_World_Sector_Reference)
+                 .Set_Feature (Ice_Feature)
+                 .Done;
+               Ice_Sector_Count := Ice_Sector_Count + 1;
+            end if;
+         end loop;
+      end;
 
    end Save_Surface;
 

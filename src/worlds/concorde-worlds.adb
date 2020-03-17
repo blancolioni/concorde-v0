@@ -1,7 +1,6 @@
 with Concorde.Configure.Worlds;
 
 with Concorde.Db.Deposit;
-with Concorde.Db.Faction;
 with Concorde.Db.Generation;
 with Concorde.Db.Market;
 with Concorde.Db.Sector_Neighbour;
@@ -92,7 +91,7 @@ package body Concorde.Worlds is
 
    function Climate
      (World : Concorde.Db.World_Reference)
-      return Concorde.Db.Climate_Reference
+      return Concorde.Db.World_Climate
    is
    begin
       return Concorde.Db.World.Get (World).Climate;
@@ -201,8 +200,7 @@ package body Concorde.Worlds is
       return Concorde.Db.Faction_Reference
    is
    begin
-      return Concorde.Db.Faction.Get_Faction
-        (Concorde.Db.World_Sector.Get (Sector).Owner).Get_Faction_Reference;
+      return Concorde.Db.World_Sector.Get (Sector).Faction;
    end Get_Owner;
 
    -----------------
@@ -309,10 +307,10 @@ package body Concorde.Worlds is
      (World : Concorde.Db.World_Reference)
       return Boolean
    is
-      use all type Concorde.Db.World_Category;
+      use all type Concorde.Db.World_Composition;
    begin
-      return Concorde.Db.World.Get (World).Category in
-        Terrestrial .. Super_Terrestrial;
+      return Concorde.Db.World.Get (World).Composition in
+        Ice .. Rock_Iron;
    end Is_Terrestrial;
 
    ------------
@@ -371,16 +369,17 @@ package body Concorde.Worlds is
      (Sector  : Concorde.Db.World_Sector_Reference;
       Process : not null access
         procedure (Resource : Concorde.Db.Resource_Reference;
-                   Accessibility : Unit_Real;
-                   Abundance     : Non_Negative_Real))
+                   Concentration : Unit_Real;
+                   Difficulty    : Unit_Real;
+                   Available     : Concorde.Quantities.Quantity_Type))
    is
    begin
       for Deposit of
         Concorde.Db.Deposit.Select_By_World_Sector
           (Sector)
       loop
-         Process (Deposit.Resource, Deposit.Accessibility,
-                  Deposit.Abundance);
+         Process (Deposit.Resource, Deposit.Concentration,
+                  Deposit.Difficulty, Deposit.Available);
       end loop;
    end Scan_Resources;
 
@@ -416,8 +415,7 @@ package body Concorde.Worlds is
    is
    begin
       Concorde.Db.World_Sector.Update_World_Sector (Sector)
-        .Set_Owner
-          (Concorde.Db.Faction.Get (Faction).Get_Owner_Reference)
+        .Set_Faction (Faction)
         .Done;
    end Set_Owner;
 

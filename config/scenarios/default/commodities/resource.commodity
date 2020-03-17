@@ -1,27 +1,9 @@
-iron = {
-   base-price = 0.1
-}
+names = { iron coal light-metals gases hydrocarbon semiconductors radioactives rare-earths crystals 
+          transuranium neutronium trilithium corbomite }
 
-sulphur = {
-   base_price = 0.2
-}
-
-oil = {
-   base-price = 0.1
-}
-
-coal = {
-   base-price = 0.1
-}
-
-fissile = {
-   base-price = 1
-}
-
-hydrocarbon = {
-   base-price = 0.2
-}
-
-precious = {
-   base-price = 5
+spheres = {
+   count = 100
+   radius = { 100 100 10 }
+   strength = { 10 100 }
+   attenuation = { 1.5 3.5 }
 }

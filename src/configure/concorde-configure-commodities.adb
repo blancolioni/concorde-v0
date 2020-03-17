@@ -1,58 +1,40 @@
-with Ada.Text_IO;
+with Ada.Containers.Indefinite_Vectors;
 
 with Tropos.Reader;
 
 with Concorde.Commodities;
-with Concorde.Properties;
-with Concorde.Money;
+with Concorde.Random;
 
-with Concorde.Db.Commodity_Group;
 with Concorde.Db.Commodity;
 with Concorde.Db.Construction_Input;
-with Concorde.Db.Property_Entry;
+with Concorde.Db.Consumer_Commodity;
+with Concorde.Db.Input_Commodity;
+with Concorde.Db.Manufactured;
 with Concorde.Db.Resource;
-with Concorde.Db.Skill;
+with Concorde.Db.Resource_Sphere;
 with Concorde.Db.Stock_Item;
 with Concorde.Db.Supply_Input;
 
 package body Concorde.Configure.Commodities is
 
-   Next_Index : Natural := 0;
+   type Resource_Availability is
+      record
+         Reference : Concorde.Db.Resource_Reference;
+         Frequency : Unit_Real;
+      end record;
 
-   Resource_Category : Concorde.Db.Commodity_Group_Reference :=
-     Concorde.Db.Null_Commodity_Group_Reference;
-   Skill_Category    : Concorde.Db.Commodity_Group_Reference :=
-     Concorde.Db.Null_Commodity_Group_Reference;
+   type Available_Resources is
+     array (Positive range <>) of Resource_Availability;
 
-   procedure Configure_Category
-     (Category_Config : Tropos.Configuration);
+   procedure Configure_Resources
+     (Config         : Tropos.Configuration);
 
-   procedure Configure_Commodity
-     (Category : Concorde.Db.Commodity_Group_Reference;
-      Config   : Tropos.Configuration);
+   procedure Configure_Non_Resources
+     (Commodity_Config : Tropos.Configuration);
 
-   ------------------------
-   -- Configure_Category --
-   ------------------------
-
-   procedure Configure_Category
-     (Category_Config : Tropos.Configuration)
-   is
-      Name : constant String := Category_Config.Config_Name;
-      Category : constant Concorde.Db.Commodity_Group_Reference :=
-        Concorde.Db.Commodity_Group.Create (Name);
-   begin
-      if Name = "skill" then
-         Skill_Category := Category;
-      elsif Name = "resource" then
-         Resource_Category := Category;
-      end if;
-
-      for Commodity_Config of Category_Config loop
-         Configure_Commodity
-           (Category, Commodity_Config);
-      end loop;
-   end Configure_Category;
+   procedure Configure_Resource_Spheres
+     (Config    : Tropos.Configuration;
+      Available : Available_Resources);
 
    ---------------------------
    -- Configure_Commodities --
@@ -60,120 +42,27 @@ package body Concorde.Configure.Commodities is
 
    procedure Configure_Commodities (Scenario_Name : String) is
    begin
-      for Category_Config of
-        Tropos.Reader.Read_Config
-          (Scenario_Directory
-             (Scenario_Name, "commodities"),
-           "commodity")
-      loop
-         Configure_Category (Category_Config);
-      end loop;
+      Configure_Resources
+        (Tropos.Reader.Read_Config
+           (Scenario_File
+                (Scenario_Name, "commodities", "resource.commodity")));
+      Configure_Non_Resources
+        (Tropos.Reader.Read_Config
+           (Scenario_File
+                (Scenario_Name, "commodities", "water.commodity")));
+      Configure_Non_Resources
+        (Tropos.Reader.Read_Config
+           (Scenario_File
+                (Scenario_Name, "commodities", "power.commodity")));
+      Configure_Non_Resources
+        (Tropos.Reader.Read_Config
+           (Scenario_File
+                (Scenario_Name, "commodities", "refined.commodity")));
+      Configure_Non_Resources
+        (Tropos.Reader.Read_Config
+           (Scenario_File
+                (Scenario_Name, "commodities", "manufactured.commodity")));
    end Configure_Commodities;
-
-   -------------------------
-   -- Configure_Commodity --
-   -------------------------
-
-   procedure Configure_Commodity
-     (Category : Concorde.Db.Commodity_Group_Reference;
-      Config   : Tropos.Configuration)
-   is
-      use type Concorde.Db.Commodity_Group_Reference;
-
-      function Create_Commodity
-        (Tag           : String;
-         Initial_Price : Concorde.Money.Price_Type)
-         return Concorde.Db.Commodity_Reference;
-
-      ----------------------
-      -- Create_Commodity --
-      ----------------------
-
-      function Create_Commodity
-        (Tag           : String;
-         Initial_Price : Concorde.Money.Price_Type)
-         return Concorde.Db.Commodity_Reference
-      is
-      begin
-
-         Next_Index := Next_Index + 1;
-
-         if Category = Skill_Category then
-            declare
-               Ref : constant Concorde.Db.Skill_Reference :=
-                 Concorde.Db.Skill.Create
-                   (Category, Next_Index, Initial_Price, 1.0, 1.0, Tag);
-            begin
-               return Concorde.Db.Skill.Get (Ref).Get_Commodity_Reference;
-            end;
-         elsif Category = Resource_Category then
-            declare
-               Ref : constant Concorde.Db.Resource_Reference :=
-                 Concorde.Db.Resource.Create
-                   (Category, Next_Index, Initial_Price, 1.0, 1.0, Tag);
-            begin
-               return Concorde.Db.Resource.Get (Ref).Get_Commodity_Reference;
-            end;
-         else
-            return Concorde.Db.Commodity.Create
-              (Tag, Category, Next_Index, Initial_Price, 1.0, 1.0);
-         end if;
-      end Create_Commodity;
-
-      Commodity : constant Concorde.Db.Commodity_Reference :=
-        Create_Commodity
-          (Tag           => Config.Config_Name,
-           Initial_Price =>
-             Concorde.Money.To_Price
-               (Real (Float'(Config.Get ("base-price", 1.0)))));
-      Has_Properties : constant Concorde.Db.Has_Properties_Reference :=
-        Concorde.Db.Commodity.Get (Commodity).Get_Has_Properties_Reference;
-
-   begin
-
-      for Property_Config of Config loop
-         if Property_Config.Config_Name = "education" then
-            null;
-         elsif Property_Config.Child_Count > 1 then
-            begin
-               for I in 1 .. Property_Config.Child_Count loop
-                  Concorde.Db.Property_Entry.Create
-                    (Has_Properties => Has_Properties,
-                     Property       =>
-                       Concorde.Properties.Get_Reference
-                         (Property_Config.Config_Name
-                          & Integer'Image (-I)),
-                     Value          =>
-                       Real (Float'(Property_Config.Get (I))));
-               end loop;
-            exception
-               when Constraint_Error =>
-                  Ada.Text_IO.Put_Line
-                    (Ada.Text_IO.Standard_Error,
-                     "property '" & Property_Config.Config_Name & "'"
-                     & " in commodity '" & Config.Config_Name & "'"
-                     & ": bad value: '" & Property_Config.Value);
-            end;
-         else
-            begin
-               Concorde.Db.Property_Entry.Create
-                 (Has_Properties => Has_Properties,
-                  Property       =>
-                    Concorde.Properties.Get_Reference
-                      (Property_Config.Config_Name),
-                  Value          =>
-                    Real (Float'(Property_Config.Value)));
-            exception
-               when Constraint_Error =>
-                  Ada.Text_IO.Put_Line
-                    (Ada.Text_IO.Standard_Error,
-                       "property '" & Property_Config.Config_Name & "'"
-                     & " in commodity '" & Config.Config_Name & "'"
-                     & ": bad value: '" & Property_Config.Value);
-            end;
-         end if;
-      end loop;
-   end Configure_Commodity;
 
    ---------------------------
    -- Configure_Constructed --
@@ -202,8 +91,7 @@ package body Concorde.Configure.Commodities is
             begin
                Concorde.Db.Construction_Input.Create
                  (Constructed => Constructed,
-                  Commodity   =>
-                    Concorde.Commodities.To_Database_Reference (Commodity),
+                  Commodity   => Commodity,
                   Quantity    => Quantity);
             end;
          else
@@ -213,6 +101,171 @@ package body Concorde.Configure.Commodities is
          end if;
       end loop;
    end Configure_Constructed;
+
+   -----------------------------
+   -- Configure_Non_Resources --
+   -----------------------------
+
+   procedure Configure_Non_Resources
+     (Commodity_Config  : Tropos.Configuration)
+   is
+   begin
+      for Item_Config of Commodity_Config loop
+         Concorde.Db.Manufactured.Create
+           (Enabled_By => Concorde.Db.Null_Technology_Reference,
+            Tag        => Item_Config.Config_Name,
+            Mass       => Item_Config.Get ("mass", 1.0));
+      end loop;
+
+      for Item_Config of Commodity_Config loop
+         declare
+            Item : constant Concorde.Db.Manufactured_Reference :=
+                     Concorde.Db.Manufactured.Get_Reference_By_Tag
+                       (Item_Config.Config_Name);
+         begin
+            for Input_Config of Item_Config.Child ("parts") loop
+               declare
+                  use Concorde.Commodities;
+                  Tag      : constant String := Input_Config.Config_Name;
+                  Input    : constant Commodity_Reference :=
+                               (if Exists (Tag)
+                                then Get (Tag)
+                                else raise Constraint_Error with
+                                Item_Config.Config_Name
+                                & ": no such input commodity: " & Tag);
+                  Quantity : constant Concorde.Quantities.Quantity_Type :=
+                               Concorde.Quantities.To_Quantity
+                                 (Input_Config.Value);
+               begin
+                  Concorde.Db.Input_Commodity.Create
+                    (Manufactured => Item,
+                     Commodity    => Input,
+                     Quantity     => Quantity);
+               end;
+            end loop;
+         end;
+      end loop;
+
+      for Item_Config of Commodity_Config loop
+         declare
+            Item : constant Concorde.Db.Commodity_Reference :=
+              Concorde.Db.Commodity.Get_Reference_By_Tag
+                (Item_Config.Config_Name);
+         begin
+            if Item_Config.Contains ("per-pop") then
+               Concorde.Db.Consumer_Commodity.Create
+                 (Commodity    => Item,
+                  Pop_Per_Item =>
+                    Concorde.Quantities.To_Quantity
+                      (Item_Config.Get ("per-pop")));
+            end if;
+         end;
+      end loop;
+
+   end Configure_Non_Resources;
+
+   --------------------------------
+   -- Configure_Resource_Spheres --
+   --------------------------------
+
+   procedure Configure_Resource_Spheres
+     (Config    : Tropos.Configuration;
+      Available : Available_Resources)
+   is
+      Radius : constant Tropos.Configuration := Config.Child ("radius");
+      RX     : constant Real := Real (Float'(Radius.Get (1)));
+      RY     : constant Real := Real (Float'(Radius.Get (2)));
+      RZ     : constant Real := Real (Float'(Radius.Get (3)));
+      S_Min  : constant Real :=
+                 Config.Child ("strength").Get (1);
+      S_Max  : constant Real :=
+                 Config.Child ("strength").Get (2);
+      A_Min  : constant Real :=
+                 Config.Child ("attenuation").Get (1);
+      A_Max  : constant Real :=
+                 Config.Child ("attenuation").Get (2);
+      Total  : Non_Negative_Real := 0.0;
+   begin
+      for R of Available loop
+         Total := Total + R.Frequency;
+      end loop;
+
+      for I in 1 .. Config.Get ("count") loop
+         declare
+            X     : constant Real :=
+                      RX * (Concorde.Random.Unit_Random * 2.0 - 1.0);
+            Y     : constant Real :=
+                      RY * (Concorde.Random.Unit_Random * 2.0 - 1.0);
+            Z     : constant Real :=
+                      RZ * (Concorde.Random.Unit_Random * 2.0 - 1.0);
+            S     : constant Real :=
+                      S_Min + Concorde.Random.Unit_Random * (S_Max - S_Min);
+            R     : constant Real :=
+                      Real'Max
+                        (Concorde.Random.Normal_Random (0.1) * S, RX / 20.0);
+            A     : constant Real :=
+                      A_Min + Concorde.Random.Unit_Random * (A_Max - A_Min);
+            F     : Non_Negative_Real :=
+                      Concorde.Random.Unit_Random * Total;
+            Index : Positive := 1;
+         begin
+            while F > Available (Index).Frequency loop
+               F := F - Available (Index).Frequency;
+               Index := Index + 1;
+            end loop;
+
+            Concorde.Db.Resource_Sphere.Create
+              (Resource    => Available (Index).Reference,
+               Centre_X    => X,
+               Centre_Y    => Y,
+               Centre_Z    => Z,
+               Strength    => S * Available (Index).Frequency,
+               Radius      => R,
+               Attenuation => A);
+         end;
+      end loop;
+   end Configure_Resource_Spheres;
+
+   -------------------------
+   -- Configure_Resources --
+   -------------------------
+
+   procedure Configure_Resources
+     (Config         : Tropos.Configuration)
+   is
+      package Name_Vectors is
+        new Ada.Containers.Indefinite_Vectors (Positive, String);
+      Names : Name_Vectors.Vector;
+   begin
+
+      Concorde.Db.Commodity.Create
+        ("raw-resources", Mass => 1.0);
+
+      for Name_Config of Config.Child ("names") loop
+         Names.Append (Name_Config.Config_Name);
+      end loop;
+
+      declare
+         Refs : Available_Resources (1 .. Names.Last_Index);
+         Freq : Unit_Real := 1.0;
+      begin
+         for I in Refs'Range loop
+            Refs (I) :=
+              Resource_Availability'
+                (Reference =>
+                   Concorde.Db.Resource.Create
+                     (Tag             => Names.Element (I),
+                      Name            => Names.Element (I),
+                      Mass            => 1.0,
+                      Is_Raw_Resource => False),
+                 Frequency => Freq);
+            Freq := Freq * 0.9;
+         end loop;
+
+         Configure_Resource_Spheres (Config.Child ("spheres"), Refs);
+      end;
+
+   end Configure_Resources;
 
    ---------------------
    -- Configure_Stock --
@@ -251,17 +304,11 @@ package body Concorde.Configure.Commodities is
                    (Concorde.Quantities.To_Quantity
                       (Real (Float'(Item_Config.Value))),
                     Factor);
-               Value     : constant Concorde.Money.Money_Type :=
-                 Concorde.Money.Total
-                   (Concorde.Commodities.Initial_Price (Commodity),
-                    Quantity);
             begin
                Concorde.Db.Stock_Item.Create
                  (Has_Stock => Has_Stock,
-                  Commodity =>
-                    Concorde.Commodities.To_Database_Reference (Commodity),
-                  Quantity  => Quantity,
-                  Value     => Value);
+                  Commodity => Commodity,
+                  Quantity  => Quantity);
             end;
          else
             raise Constraint_Error with
@@ -297,9 +344,8 @@ package body Concorde.Configure.Commodities is
                     Factor);
             begin
                Concorde.Db.Supply_Input.Create
-                 (Supplied => Supplied,
-                  Commodity   =>
-                    Concorde.Commodities.To_Database_Reference (Commodity),
+                 (Supplied    => Supplied,
+                  Commodity   => Commodity,
                   Quantity    => Quantity);
             end;
          else
@@ -309,15 +355,5 @@ package body Concorde.Configure.Commodities is
          end if;
       end loop;
    end Configure_Supplied;
-
-   --------------------------
-   -- Next_Commodity_Index --
-   --------------------------
-
-   function Next_Commodity_Index return Positive is
-   begin
-      Next_Index := Next_Index + 1;
-      return Next_Index;
-   end Next_Commodity_Index;
 
 end Concorde.Configure.Commodities;

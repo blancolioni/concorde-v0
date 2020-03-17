@@ -20,4 +20,6 @@ package Concorde.Terrain is
      (Terrain : Concorde.Db.Terrain_Reference)
       return Unit_Real;
 
+   function Ocean return Concorde.Db.Terrain_Reference;
+
 end Concorde.Terrain;

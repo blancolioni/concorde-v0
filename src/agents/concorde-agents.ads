@@ -32,11 +32,6 @@ package Concorde.Agents is
       Cash    : Concorde.Money.Money_Type;
       Tag     : String);
 
-   procedure Move_Assets
-     (From     : Concorde.Db.Agent.Agent_Type;
-      To       : Concorde.Db.Agent.Agent_Type;
-      Fraction : Unit_Real);
-
    function New_Account
      (Starting_Balance : Concorde.Money.Money_Type;
       Guarantor        : Concorde.Db.Account_Reference :=
