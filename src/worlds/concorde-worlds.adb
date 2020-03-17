@@ -76,6 +76,50 @@ package body Concorde.Worlds is
       end if;
    end Check_Surface;
 
+   -------------------
+   -- Circular_Scan --
+   -------------------
+
+   procedure Circular_Scan
+     (Start : Concorde.Db.World_Sector_Reference;
+      Process : not null access
+        function (Sector : Concorde.Db.World_Sector_Reference)
+      return Boolean)
+   is
+      package Sector_Lists is
+        new Ada.Containers.Doubly_Linked_Lists
+          (Concorde.Db.World_Sector_Reference, Concorde.Db."=");
+
+      Visited : Sector_Lists.List;
+      Queued  : Sector_Lists.List;
+   begin
+      for Neighbour of Get_Neighbours (Start) loop
+         Queued.Append (Neighbour);
+      end loop;
+
+      while not Queued.Is_Empty loop
+         declare
+            Current : constant Concorde.Db.World_Sector_Reference :=
+                        Queued.First_Element;
+         begin
+            Queued.Delete_First;
+            if not Visited.Contains (Current) then
+               Visited.Append (Current);
+               if not Process (Current) then
+                  exit;
+               end if;
+
+               for Neighbour of Get_Neighbours (Current) loop
+                  if not Visited.Contains (Neighbour) then
+                     Queued.Append (Neighbour);
+                  end if;
+               end loop;
+            end if;
+         end;
+      end loop;
+
+   end Circular_Scan;
+
    -----------
    -- Clear --
    -----------

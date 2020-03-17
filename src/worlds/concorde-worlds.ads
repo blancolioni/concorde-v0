@@ -66,6 +66,14 @@ package Concorde.Worlds is
      (Sector : Concorde.Db.World_Sector_Reference)
       return World_Sector_Array;
 
+   procedure Circular_Scan
+     (Start : Concorde.Db.World_Sector_Reference;
+      Process : not null access
+        function (Sector : Concorde.Db.World_Sector_Reference)
+      return Boolean);
+
+   --  function should return False if scanning is to stop
+
    procedure Scan_Surface
      (World : Concorde.Db.World_Reference;
       Process : not null access
