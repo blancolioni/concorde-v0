@@ -95,6 +95,20 @@ package body Nazar.Views.Gtk_Views.Console is
                  Ada.Strings.Unbounded.Null_Unbounded_String;
                return True;
             end;
+
+         when Gdk.Types.Keysyms.GDK_BackSpace =>
+            declare
+               use Ada.Strings.Unbounded;
+               Cmd : Unbounded_String renames View.Command_Buffer;
+            begin
+               if Length (Cmd) = 0 then
+                  return True;
+               else
+                  Cmd := Head (Cmd, Length (Cmd) - 1);
+                  return False;
+               end if;
+            end;
+
          when 32 .. 126 =>
             Ada.Strings.Unbounded.Append (View.Command_Buffer,
                                           (1 => Character'Val (Event.Keyval)));
