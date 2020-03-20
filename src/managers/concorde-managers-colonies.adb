@@ -163,14 +163,11 @@ package body Concorde.Managers.Colonies is
 --        end loop;
 
       for Policy of
-        Concorde.Db.Policy.Select_By_Internal (False)
+        Concorde.Db.Policy.Scan_By_Tag
       loop
          Concorde.Colonies.Daily_Policy_Expense
            (Colony => Manager.Colony,
-            Policy => Policy.Get_Policy_Reference,
-            Value  =>
-              Concorde.Network.Current_Value
-                (Colony.Get_Network_Reference, Policy.Tag));
+            Policy => Policy.Get_Policy_Reference);
       end loop;
 
       declare

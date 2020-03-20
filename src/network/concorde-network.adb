@@ -1,23 +1,40 @@
+with Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 
 with WL.String_Maps;
 
-with Concorde.Elementary_Functions;
+with Concorde.Calendar;
+with Concorde.Identifiers;
 with Concorde.Logging;
 with Concorde.Real_Images;
 
+with Concorde.Expressions;
+with Concorde.Parser;
+with Concorde.Symbols;
+with Concorde.Values;
+
 with Concorde.Db.Calculation;
-with Concorde.Db.Child_Calculation;
+with Concorde.Db.Derived_Metric;
 with Concorde.Db.Effect;
 with Concorde.Db.Node;
 with Concorde.Db.Network_Value;
-with Concorde.Db.Policy;
-with Concorde.Db.Value_Multiplier;
+with Concorde.Db.Historical_Value;
 
 package body Concorde.Network is
 
    Log_Updates : constant Boolean := True;
+
+   type Cached_Expression_Record is
+      record
+         Expression : Concorde.Expressions.Expression_Type;
+      end record;
+
+   package Cached_Expression_Maps is
+     new WL.String_Maps (Cached_Expression_Record);
+
+   Expression_Cache : Cached_Expression_Maps.Map;
 
    procedure Log
      (Message : String);
@@ -25,10 +42,19 @@ package body Concorde.Network is
    function Image (X : Real) return String
                    renames Concorde.Real_Images.Approximate_Image;
 
-   function Evaluate
-     (Network     : Concorde.Db.Network_Reference;
-      Calculation : Concorde.Db.Calculation_Reference)
-      return Real;
+   type Network_Environment is
+     new Concorde.Values.Environment_Interface with
+      record
+         Network : Concorde.Db.Network_Reference;
+         X       : Concorde.Db.Node_Reference :=
+                     Concorde.Db.Null_Node_Reference;
+      end record;
+
+   overriding function Get
+     (Environment : Network_Environment;
+      Symbol      : Concorde.Symbols.Symbol_Id;
+      With_Delay  : Real := 0.0)
+      return Concorde.Values.Value_Interface'Class;
 
    ----------------------
    -- Commit_New_Value --
@@ -44,9 +70,14 @@ package body Concorde.Network is
                         Concorde.Db.Network_Value.Get_By_Network_Value
                           (Network, Definition.Get_Node_Reference);
    begin
+      Concorde.Db.Historical_Value.Create
+        (Network => Network,
+         Node    => Definition.Get_Node_Reference,
+         Start   => Concorde.Calendar.Clock,
+         Value   => Node_Value.New_Value);
       Concorde.Db.Network_Value.Update_Network_Value
         (Node_Value.Get_Network_Value_Reference)
-        .Set_Real_Value (Node_Value.New_Value)
+        .Set_Current_Value (Node_Value.New_Value)
         .Done;
    end Commit_New_Value;
 
@@ -61,17 +92,20 @@ package body Concorde.Network is
    begin
       for Node of Concorde.Db.Node.Scan_By_Tag loop
          declare
+            use Concorde.Calendar;
             Value : constant Real := Initial_Value (Node.Tag);
          begin
             Concorde.Db.Network_Value.Create
-              (Network      => Network,
-               Node         => Node.Get_Node_Reference,
-               Active       => True,
-               Changed      => False,
-               Real_Value   => Value,
-               New_Value    => Value,
-               Old_Value    => Value,
-               Changed_At   => Concorde.Calendar.Clock);
+              (Network       => Network,
+               Node          => Node.Get_Node_Reference,
+               Active        => True,
+               Current_Value => Value,
+               New_Value     => Value);
+            Concorde.Db.Historical_Value.Create
+              (Network => Network,
+               Node    => Node.Get_Node_Reference,
+               Start   => Clock - Days (3600),
+               Value   => Value);
          end;
       end loop;
    end Create_Initial_Network;
@@ -87,20 +121,38 @@ package body Concorde.Network is
    is
       Definition    : constant Concorde.Db.Node.Node_Type :=
                         Concorde.Db.Node.Get_By_Tag (Tag);
-      Node_Value    : constant Concorde.Db.Network_Value.Network_Value_Type :=
-                        Concorde.Db.Network_Value.Get_By_Network_Value
-                          (Network, Definition.Get_Node_Reference);
    begin
       if not Definition.Has_Element then
          raise Constraint_Error with
            "no such node: " & Tag;
       end if;
 
+      return Current_Value (Network, Definition.Get_Node_Reference);
+
+   end Current_Value;
+
+   -------------------
+   -- Current_Value --
+   -------------------
+
+   function Current_Value
+     (Network : Concorde.Db.Network_Reference;
+      Node    : Concorde.Db.Node_Reference)
+      return Real
+   is
+      Definition    : constant Concorde.Db.Node.Node_Type :=
+                        Concorde.Db.Node.Get (Node);
+      Node_Value    : constant Concorde.Db.Network_Value.Network_Value_Type :=
+                        Concorde.Db.Network_Value.Get_By_Network_Value
+                          (Network, Node);
+   begin
       case Definition.Content is
          when Concorde.Db.Rating =>
-            return Unit_Clamp (Node_Value.Real_Value);
+            return Signed_Unit_Clamp (Node_Value.Current_Value);
+         when Concorde.Db.Setting =>
+            return Unit_Clamp (Node_Value.Current_Value);
          when Concorde.Db.Quantity | Concorde.Db.Money =>
-            return Node_Value.Real_Value;
+            return Node_Value.Current_Value;
       end case;
    end Current_Value;
 
@@ -113,62 +165,55 @@ package body Concorde.Network is
       Calculation : Concorde.Db.Calculation_Reference)
       return Real
    is
-      use Concorde.Db;
       Rec : constant Concorde.Db.Calculation.Calculation_Type :=
               Concorde.Db.Calculation.Get (Calculation);
+      Env : constant Network_Environment :=
+              Network_Environment'
+                (Network => Network,
+                 X       => Rec.Node);
+      Id  : constant Concorde.Identifiers.Object_Identifier :=
+              Rec.Identifier;
+      Expr : constant Concorde.Expressions.Expression_Type :=
+               (if Expression_Cache.Contains (Id)
+                then Expression_Cache.Element (Id).Expression
+                else raise Constraint_Error with
+                  "calculation not loaded: [" & Id & "]");
    begin
-      if Rec.Node = Null_Node_Reference then
-
-         declare
-            Acc : Real := (if Rec.Is_Sum then 0.0 else 1.0);
-         begin
-            for Child_Calc of
-              Concorde.Db.Child_Calculation.Select_By_Calculation
-                (Calculation)
-            loop
-               declare
-                  Old_Acc : constant Real := Acc;
-                  X : constant Real := Evaluate (Network, Child_Calc.Child);
-               begin
-                  if Rec.Is_Sum then
-                     Acc := Acc + X;
-                  else
-                     Acc := Acc * (1.0 + X);
-                  end if;
-
-                  Concorde.Logging.Log
-                    ("update", "internal",
-                     (if Rec.Is_Sum then "sum" else "product"),
-                     "current value " & Image (Old_Acc)
-                     & "; update value " & Image (X)
-                     & "; new value " & Image (Acc));
-               end;
-            end loop;
-            return Acc;
-         end;
-      else
-         declare
-            use Concorde.Elementary_Functions;
-            Node       : constant Concorde.Db.Node.Node_Type :=
-                           Concorde.Db.Node.Get (Rec.Node);
-            Node_Value : constant Real :=
-                           Inertial_Value
-                             (Network, Node.Tag, Rec.Inertia);
-         begin
-            return Result : constant Real :=
-              Rec.Add + Rec.Multiply * (Node_Value ** Rec.Exponent)
-            do
-               Concorde.Logging.Log
-                 ("update", "internal",
-                  Node.Tag,
-                  Image (Rec.Add) & " + " & Image (Rec.Multiply)
-                  & " * " & Image (Node_Value)
-                  & " ** " & Image (Rec.Exponent)
-                  & " = " & Image (Result));
-            end return;
-         end;
-      end if;
+      return Expr.Evaluate (Env).To_Real;
+   exception
+      when E : others =>
+         raise Constraint_Error with
+           "unable to evaluate: " & Expr.To_String
+           & ": " & Ada.Exceptions.Exception_Message (E);
    end Evaluate;
+
+   ---------
+   -- Get --
+   ---------
+
+   overriding function Get
+     (Environment : Network_Environment;
+      Symbol      : Concorde.Symbols.Symbol_Id;
+      With_Delay  : Real := 0.0)
+      return Concorde.Values.Value_Interface'Class
+   is
+      use type Concorde.Db.Node_Reference;
+      Name : constant String :=
+               Ada.Characters.Handling.To_Lower
+                 (Concorde.Symbols.Get_Name (Symbol));
+      Node : constant Concorde.Db.Node_Reference :=
+               (if Name = "x"
+                then Environment.X
+                else Concorde.Db.Node.Get_Reference_By_Tag (Name));
+      X    : constant Real :=
+               (if Node = Concorde.Db.Null_Node_Reference
+                then (raise Constraint_Error with
+                    "get: no such node: " & Name)
+                else Inertial_Value
+                  (Environment.Network, Node, With_Delay));
+   begin
+      return Concorde.Values.Constant_Value (X);
+   end Get;
 
    --------------------
    -- Inertial_Value --
@@ -185,23 +230,37 @@ package body Concorde.Network is
       return Current_Value (Network, Tag);
    end Inertial_Value;
 
-   -----------------
-   -- Last_Change --
-   -----------------
+   --------------------
+   -- Inertial_Value --
+   --------------------
 
-   function Last_Change
+   function Inertial_Value
      (Network : Concorde.Db.Network_Reference;
-      Tag     : String)
-      return Concorde.Calendar.Time
+      Node    : Concorde.Db.Node_Reference;
+      Inertia : Non_Negative_Real)
+      return Real
    is
-      Definition    : constant Concorde.Db.Node.Node_Type :=
-                        Concorde.Db.Node.Get_By_Tag (Tag);
-      Node_Value    : constant Concorde.Db.Network_Value.Network_Value_Type :=
-                        Concorde.Db.Network_Value.Get_By_Network_Value
-                          (Network, Definition.Get_Node_Reference);
+      pragma Unreferenced (Inertia);
    begin
-      return Node_Value.Changed_At;
-   end Last_Change;
+      return Current_Value (Network, Node);
+   end Inertial_Value;
+
+   ------------------
+   -- Load_Network --
+   ------------------
+
+   procedure Load_Network is
+   begin
+      for Calculation of Concorde.Db.Calculation.Scan_By_Identifier loop
+         if Calculation.Expression /= "" then
+            Expression_Cache.Insert
+              (Key      => Calculation.Identifier,
+               New_Item => (Expression =>
+                                Concorde.Parser.Parse_Expression
+                              (Calculation.Expression)));
+         end if;
+      end loop;
+   end Load_Network;
 
    ---------
    -- Log --
@@ -217,24 +276,6 @@ package body Concorde.Network is
          Category => "",
          Message  => Message);
    end Log;
-
-   --------------------
-   -- Previous_Value --
-   --------------------
-
-   function Previous_Value
-     (Network : Concorde.Db.Network_Reference;
-      Tag     : String)
-      return Real
-   is
-      Definition    : constant Concorde.Db.Node.Node_Type :=
-                        Concorde.Db.Node.Get_By_Tag (Tag);
-      Node_Value    : constant Concorde.Db.Network_Value.Network_Value_Type :=
-                        Concorde.Db.Network_Value.Get_By_Network_Value
-                          (Network, Definition.Get_Node_Reference);
-   begin
-      return Node_Value.Old_Value;
-   end Previous_Value;
 
    -------------------
    -- Set_New_Value --
@@ -254,8 +295,6 @@ package body Concorde.Network is
       Concorde.Db.Network_Value.Update_Network_Value
         (Node_Value.Get_Network_Value_Reference)
         .Set_New_Value (Value)
-        .Set_Changed_At (Concorde.Calendar.Clock)
-        .Set_Old_Value (Node_Value.Real_Value)
         .Done;
    end Set_New_Value;
 
@@ -282,13 +321,6 @@ package body Concorde.Network is
           then Node_Value.Element (Tag)
           else Current_Value (Network, Tag));
 
-      function Scaled_Value
-        (Tag     : String;
-         Current : Real;
-         Scale   : Unit_Real)
-         return Real
-      is (Scale * Current + (1.0 - Scale) * Previous_Value (Network, Tag));
-
       procedure Update_Value
         (Tag       : String;
          New_Value : Real);
@@ -311,36 +343,27 @@ package body Concorde.Network is
 
    begin
 
-      for Policy of
-        Concorde.Db.Policy.Select_By_Internal (True)
+      for Metric of
+        Concorde.Db.Derived_Metric.Scan_By_Tag
       loop
          declare
-            Tag   : constant String := Policy.Tag;
-            Value : Real := 1.0;
+            Tag   : constant String := Metric.Tag;
          begin
-            for Multiplier of
-              Concorde.Db.Value_Multiplier.Select_By_Policy
-                (Policy.Get_Policy_Reference)
-            loop
-               declare
-                  M : constant Real :=
-                        Evaluate (Network,
-                                  Multiplier.Get_Calculation_Reference);
-               begin
-                  Concorde.Logging.Log
-                    ("update", "internal", Tag,
-                     "current value " & Image (Value)
-                     & "; multiplier " & Image (M)
-                     & "; new value " & Image (M * Value));
-                  Value := Value * M;
-               end;
-            end loop;
+            Set_New_Value
+              (Network, Tag,
+               Evaluate
+                 (Network     => Network,
+                  Calculation => Metric.Calculation));
 
-            Set_New_Value (Network, Tag, Value);
             Commit_New_Value (Network, Tag);
 
-            Concorde.Logging.Log
-              ("update", "internal", Tag, Image (Value));
+         exception
+
+            when E : others =>
+               raise Constraint_Error with
+                 "error updating "
+                 & Tag
+                 & ": " & Ada.Exceptions.Exception_Message (E);
          end;
       end loop;
 
@@ -360,17 +383,8 @@ package body Concorde.Network is
 
             for Id of Changed_Ids loop
                declare
-                  use Concorde.Calendar;
                   From_Node : constant Concorde.Db.Node.Node_Type :=
                                 Concorde.Db.Node.Get (Id);
-                  Changed   : constant Time :=
-                                Last_Change (Network, From_Node.Tag);
---                               Concorde.Db.Network_Value.Get_By_Network_Value
---                                    (Network, From_Node.Get_Node_Reference)
---                                    .Changed_At;
-                  Days_Changed : constant Real :=
-                                   Real (Concorde.Calendar.Clock - Changed)
-                                   / Real (Days (1));
                   Updated      : Boolean := False;
                   X            : constant Real :=
                                 Current_Value (From_Node.Tag);
@@ -386,32 +400,21 @@ package body Concorde.Network is
                     Concorde.Db.Effect.Select_By_Node (Id)
                   loop
                      declare
-                        use Concorde.Elementary_Functions;
                         To_Id : constant Node_Reference :=
                                   Effect.To;
                         To_Node : constant Concorde.Db.Node.Node_Type :=
                                     Concorde.Db.Node.Get (To_Id);
-                        D       : constant Real :=
-                                    (if Days_Changed >= Effect.Inertia
-                                     then 1.0
-                                     else Days_Changed
-                                     / Effect.Inertia);
-                        Effective_Value : constant Real :=
-                                            (if D = 1.0
-                                             then X
-                                             else Scaled_Value
-                                               (From_Node.Tag, X, D));
-                        Y       : constant Real :=
-                                    Effect.Add
-                                      + Effect.Multiply
-                                    * (Effective_Value ** Effect.Exponent);
+                        New_Value : constant Real :=
+                                      Evaluate
+                                        (Network,
+                                         Effect.Get_Calculation_Reference);
                      begin
                         Updated := True;
-                        Update_Value (To_Node.Tag, Y);
+                        Update_Value (To_Node.Tag, New_Value);
 
                         Log_Line := Log_Line
                           & " (" & To_Node.Tag & " "
-                          & Image (Y)
+                          & Image (New_Value)
                           & ")";
                      end;
                   end loop;
@@ -419,6 +422,14 @@ package body Concorde.Network is
                   if Updated then
                      Log (To_String (Log_Line));
                   end if;
+
+               exception
+
+                  when E : others =>
+                     raise Constraint_Error with
+                       "error updating "
+                       & From_Node.Tag
+                       & ": " & Ada.Exceptions.Exception_Message (E);
 
                end;
             end loop;

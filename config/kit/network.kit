@@ -1,24 +1,17 @@
+with Identifiers;
+
 package Network is
 
-type Node_Value_Type is (Rating, Money, Quantity);
+type Node_Value_Type is (Rating, Setting, Money, Quantity);
 
 record Node : Localised is
    Content        : Node_Value_Type;
 end Node;
 
-record Calculation is
+record Calculation : Has_Identifier is
    key Node;
-   Is_Sum    : Boolean;
-   Add       : Long_Float;
-   Multiply  : Long_Float;
-   Exponent  : Long_Float;
-   Inertia   : Long_Float;
+   Expression : Text;
 end Calculation;
-
-record Child_Calculation is
-   key Calculation;
-   Child : Calculation;
-end Child_Calculation;
 
 record Effect : Calculation is
    key To    : Node;
@@ -40,18 +33,13 @@ record Group_Influence is
 end Group_Influence;
 
 record Policy : Node is
-   key Internal : Boolean;
-   Min_Cost : Long_Float;
-   Max_Cost : Long_Float;
+   Expense : Calculation;
+   Revenue : Calculation;
 end Policy;
 
-record Cost_Multiplier : Calculation is
-   key Policy;
-end Cost_Multiplier;
-
-record Value_Multiplier : Calculation is
-   key Policy;
-end Value_Multiplier;
+record Derived_Metric : Node is
+   Calculation;
+end Derived_Metric;
 
 record Sector_Use : Localised is
    Parent : Sector_Use;
@@ -70,13 +58,18 @@ record Network;
 record Network_Value is
    key Network;
    key Node;
-   Active         : Boolean;
-   Changed        : Boolean;
-   Real_Value     : Long_Float;
-   New_Value      : Long_Float;
-   Old_Value      : Long_Float;
-   Changed_At     : Time;
+   Active  : Boolean;
+   Current_Value : Long_Float;
+   New_Value     : Long_Float;
    unique key Network_Value with Network, Node;
 end Network_Value;
+
+record Historical_Value is
+   key Network;
+   Node;
+   Start : Time;
+   Value : Long_Float;
+   key Historical_Value with Network, Node, Start;
+end Historical_Value;
 
 end Network;

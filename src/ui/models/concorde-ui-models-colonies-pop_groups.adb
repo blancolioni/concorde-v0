@@ -7,11 +7,11 @@ with Concorde.Calendar;
 with Concorde.Quantities;
 with Concorde.Real_Images;
 
+with Concorde.Network;
+
 with Concorde.Updates.Events;
 
 with Concorde.Db.Pop_Group;
-
-with Concorde.Db.Network_Value;
 
 with Concorde.Db.Node;
 
@@ -23,9 +23,9 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
    type Pop_Group_Record is
       record
          Pop_Group       : Concorde.Db.Pop_Group_Reference;
-         Size_Node       : Concorde.Db.Network_Value_Reference;
-         Income_Node     : Concorde.Db.Network_Value_Reference;
-         Happiness_Node  : Concorde.Db.Network_Value_Reference;
+         Size_Node       : Concorde.Db.Node_Reference;
+         Income_Node     : Concorde.Db.Node_Reference;
+         Happiness_Node  : Concorde.Db.Node_Reference;
       end record;
 
    Column_Type_Array : constant array (Pop_Group_Table_Column)
@@ -39,8 +39,9 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
    type Pop_Group_Model_Record is
      new Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record with
       record
-         Colony : Concorde.Handles.Colony.Colony_Handle;
-         State  : Pop_Group_Vectors.Vector;
+         Colony          : Concorde.Handles.Colony.Colony_Handle;
+         Network         : Concorde.Db.Network_Reference;
+         State           : Pop_Group_Vectors.Vector;
       end record;
 
    overriding function Row_Count
@@ -120,16 +121,16 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
                     when Size =>
                       Concorde.Quantities.Show
                        (Concorde.Quantities.To_Quantity
-                          (Concorde.Db.Network_Value.Get
-                             (Info.Size_Node).Real_Value)),
+                      (Concorde.Network.Current_Value
+                         (Model.Network, Info.Size_Node))),
                     when Income =>
                       Concorde.Real_Images.Approximate_Image
-                        (Concorde.Db.Network_Value.Get
-                        (Info.Income_Node).Real_Value * 100.0),
+                   (Concorde.Network.Current_Value
+                      (Model.Network, Info.Income_Node) * 100.0),
                     when Happiness =>
-                       Concorde.Real_Images.Approximate_Image
-                   (Concorde.Db.Network_Value.Get
-                        (Info.Happiness_Node).Real_Value * 100.0));
+                      Concorde.Real_Images.Approximate_Image
+                   (Concorde.Network.Current_Value
+                      (Model.Network, Info.Happiness_Node) * 100.0));
    begin
       return Nazar.Values.To_Value (Value);
    end Element;
@@ -141,8 +142,6 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
    procedure Load
      (Model : in out Pop_Group_Model_Record'Class)
    is
-      Network : constant Concorde.Db.Network_Reference :=
-                  Model.Colony.Network_Handle.Reference;
    begin
       Model.State.Clear;
       for Pop_Group of
@@ -153,10 +152,8 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
 
             function Node_Reference
               (Name : String)
-               return Concorde.Db.Network_Value_Reference
-            is (Concorde.Db.Network_Value.Get_Reference_By_Network_Value
-                 (Network,
-                  Concorde.Db.Node.Get_Reference_By_Tag (Name)));
+               return Concorde.Db.Node_Reference
+            is (Concorde.Db.Node.Get_Reference_By_Tag (Name));
 
             Info : constant Pop_Group_Record :=
                      Pop_Group_Record'
@@ -184,7 +181,8 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
    is
       Result : constant Pop_Group_Model_Access := new Pop_Group_Model_Record'
         (Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record with
-         Colony => Colony, State => <>);
+         Colony => Colony, Network => Colony.Network_Handle.Reference_Network,
+         State  => <>);
    begin
       Result.Load;
       Concorde.Updates.Events.Update_With_Delay

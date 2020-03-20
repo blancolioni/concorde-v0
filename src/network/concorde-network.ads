@@ -1,5 +1,3 @@
-with Concorde.Calendar;
-
 with Concorde.Db;
 
 package Concorde.Network is
@@ -9,9 +7,9 @@ package Concorde.Network is
       Tag     : String)
       return Real;
 
-   function Previous_Value
+   function Current_Value
      (Network : Concorde.Db.Network_Reference;
-      Tag     : String)
+      Node    : Concorde.Db.Node_Reference)
       return Real;
 
    function Inertial_Value
@@ -20,10 +18,11 @@ package Concorde.Network is
       Inertia : Non_Negative_Real)
       return Real;
 
-   function Last_Change
+   function Inertial_Value
      (Network : Concorde.Db.Network_Reference;
-      Tag     : String)
-      return Concorde.Calendar.Time;
+      Node    : Concorde.Db.Node_Reference;
+      Inertia : Non_Negative_Real)
+      return Real;
 
    procedure Create_Initial_Network
      (Network : Concorde.Db.Network_Reference;
@@ -38,6 +37,13 @@ package Concorde.Network is
    procedure Commit_New_Value
      (Network    : Concorde.Db.Network_Reference;
       Tag        : String);
+
+   function Evaluate
+     (Network     : Concorde.Db.Network_Reference;
+      Calculation : Concorde.Db.Calculation_Reference)
+      return Real;
+
+   procedure Load_Network;
 
    procedure Update
      (Network : Concorde.Db.Network_Reference);

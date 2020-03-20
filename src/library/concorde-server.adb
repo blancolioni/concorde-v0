@@ -16,6 +16,7 @@ with Concorde.Random;
 
 with Concorde.Color;
 with Concorde.Factions.Create;
+with Concorde.Network;
 
 with Concorde.Db.Database;
 
@@ -314,7 +315,7 @@ package body Concorde.Server is
 
    procedure Start is
    begin
-      null;
+      Concorde.Network.Load_Network;
    end Start;
 
    ----------------

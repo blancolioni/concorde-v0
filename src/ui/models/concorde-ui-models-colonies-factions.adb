@@ -125,7 +125,7 @@ package body Concorde.UI.Models.Colonies.Factions is
                       Concorde.Quantities.Show
                        (Concorde.Quantities.To_Quantity
                           (Concorde.Db.Network_Value.Get
-                             (Info.Population_Node).Real_Value)),
+                             (Info.Population_Node).Current_Value)),
                     when Cash =>
                       Concorde.Money.Show
                         (Concorde.Agents.Cash
