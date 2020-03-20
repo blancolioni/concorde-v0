@@ -46,4 +46,15 @@ package body Concorde.Terrain is
       return Boolean
    is (Concorde.Db.Terrain.Get (Terrain).Is_Water);
 
+   -----------
+   -- Ocean --
+   -----------
+
+   function Ocean
+     return Concorde.Db.Terrain_Reference
+   is
+   begin
+      return Concorde.Db.Terrain.Get_Reference_By_Tag ("ocean");
+   end Ocean;
+
 end Concorde.Terrain;

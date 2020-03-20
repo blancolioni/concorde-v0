@@ -6,14 +6,11 @@ with WL.String_Sets;
 with Concorde.Calendar;
 with Concorde.Configure;
 with Concorde.Money;
-with Concorde.Quantities;
 
 with Concorde.Agents;
 with Concorde.Star_Systems;
 with Concorde.Terrain;
 with Concorde.Worlds;
-
-with Concorde.Configure.Installations;
 
 with Concorde.Colonies.Create;
 
@@ -22,11 +19,11 @@ with Concorde.Db.Company;
 with Concorde.Db.Deposit;
 with Concorde.Db.Faction;
 with Concorde.Db.Market;
+with Concorde.Db.Owned_World;
 with Concorde.Db.Script;
 with Concorde.Db.Script_Line;
 with Concorde.Db.Shareholder;
 with Concorde.Db.Star_System_Distance;
-with Concorde.Db.World;
 with Concorde.Db.World_Sector;
 with Concorde.Db.User;
 
@@ -91,7 +88,6 @@ package body Concorde.Factions.Create is
                         Account       => Account,
                         Last_Earn     => Concorde.Money.Zero,
                         Last_Spend    => Concorde.Money.Zero,
-                        Capacity      => Concorde.Quantities.Zero,
                         Red           => Color.Red,
                         Green         => Color.Green,
                         Blue          => Color.Blue,
@@ -110,7 +106,6 @@ package body Concorde.Factions.Create is
               Scheduled    => False,
               Next_Event   => Concorde.Calendar.Clock,
               Manager      => "faction-company",
-              Capacity     => Concorde.Quantities.To_Quantity (1.0e6),
               Faction      => Faction,
               Headquarters => Capital,
               Shares       => Faction_Company_Shares,
@@ -133,13 +128,6 @@ package body Concorde.Factions.Create is
             Agent   => Concorde.Db.Faction.Get (Faction).Get_Agent_Reference,
             Shares  => Remaining_Shares);
 
-         for Installation_Config of
-           Setup.Child ("installations")
-         loop
-            Concorde.Configure.Installations.Configure_Installation
-              (Faction, Sector, Installation_Config);
-         end loop;
-
          if not Setup.Contains ("init-script") then
             Ada.Text_IO.Put_Line
               ("warning: no initial script in " & Setup.Config_Name);
@@ -153,10 +141,9 @@ package body Concorde.Factions.Create is
                Line   => Command.Config_Name);
          end loop;
 
-         Concorde.Db.World.Update_World (Capital)
-           .Set_Owner
-             (Concorde.Db.Faction.Get (Faction).Get_Owner_Reference)
-           .Done;
+         Concorde.Db.Owned_World.Create
+           (Faction => Faction,
+            World   => Capital);
 
          Concorde.Db.Market.Create
            (World => Capital);
@@ -244,8 +231,7 @@ package body Concorde.Factions.Create is
                   Score :=
                     Real'Max
                       (Score,
-                         Deposit.Accessibility
---                      + Deposit.Abundance / 1.0e6 * Deposit.Accessibility
+                         Deposit.Concentration / (1.0 + Deposit.Difficulty)
                        * (1.0 - Concorde.Terrain.Hazard
                          (Concorde.Worlds.Get_Terrain (N))));
                end loop;

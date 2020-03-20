@@ -1,8 +1,0 @@
-name = Hill
-color = "#3F704D"
-hazard = 0.02
-resource = {
-	iron = 20
-	coal = 10
-    precious = 4 
-}

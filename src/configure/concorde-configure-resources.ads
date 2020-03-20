@@ -1,8 +1,39 @@
+private with Ada.Containers.Vectors;
+
 with Tropos;
+
+with Concorde.Db.World;
 
 package Concorde.Configure.Resources is
 
    procedure Configure_Atmosphere_Components
      (Config : Tropos.Configuration);
+
+   type Random_Deposit_Generator is private;
+
+   function Create_Generator
+     (X, Y, Z : Real)
+      return Random_Deposit_Generator;
+
+   procedure Create_Deposits
+     (World     : Concorde.Db.World.World_Type;
+      Generator : Random_Deposit_Generator);
+
+private
+
+   type Resource_Record is
+      record
+         Reference : Concorde.Db.Resource_Reference;
+         Strength  : Non_Negative_Real;
+      end record;
+
+   package Resource_Vectors is
+     new Ada.Containers.Vectors (Positive, Resource_Record);
+
+   type Random_Deposit_Generator is
+      record
+         Resources      : Resource_Vectors.Vector;
+         Total_Strength : Non_Negative_Real := 0.0;
+      end record;
 
 end Concorde.Configure.Resources;

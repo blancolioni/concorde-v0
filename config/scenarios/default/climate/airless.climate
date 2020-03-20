@@ -1,8 +1,6 @@
 terrain = {
-   desert = 5
-   mountain = 20
-   ice = 10
+   rock = 70%
+   mountains = 30%
 }
 
-default-terrain = desert
 habitability = 0

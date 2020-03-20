@@ -1,8 +1,0 @@
-name = Marsh
-color = "#8BA58F"
-hazard = 0.05
-resource = {
-   fissile = 15 
-   hydrocarbon = 20 
-   oil = 20 
-}

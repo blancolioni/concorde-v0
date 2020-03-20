@@ -4,7 +4,6 @@ with Concorde.Calendar;
 with Concorde.Logging;
 
 with Concorde.Db.Commodity;
-with Concorde.Db.Historical_Stock;
 with Concorde.Db.Stock_Item;
 
 package body Concorde.Stock is

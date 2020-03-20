@@ -12,10 +12,11 @@ with Concorde.Real_Images;
 with Concorde.Random;
 
 with Concorde.Money;
-with Concorde.Quantities;
 
 with Concorde.Network;
 with Concorde.Worlds;
+
+with Concorde.Colonies.Sectors;
 
 with Concorde.Db.Account;
 with Concorde.Db.Colony;
@@ -487,10 +488,6 @@ package body Concorde.Colonies.Create is
                Concorde.Money.To_Money (Get ("cash"));
       Total_Pop : constant Real := Get ("total-population");
 
-      Owner_Faction : constant Concorde.Db.Owner_Reference :=
-                        Concorde.Db.Faction.Get (Faction)
-                        .Get_Owner_Reference;
-
       Account : constant Concorde.Db.Account_Reference :=
                   Concorde.Db.Account.Create
                     (Guarantor  => Concorde.Db.Faction.Get (Faction).Account,
@@ -507,15 +504,10 @@ package body Concorde.Colonies.Create is
                      Account           => Account,
                      Last_Earn         => Concorde.Money.Zero,
                      Last_Spend        => Concorde.Money.Zero,
-                     Capacity          =>
-                       Concorde.Quantities.To_Quantity (1.0e6),
                      World             => World,
                      Faction           => Faction,
                      Capital           => Sector,
                      Plurality         => Get ("plurality"));
-
-      Neighbours : constant Concorde.Worlds.World_Sector_Array :=
-                     Concorde.Worlds.Get_Neighbours (Sector);
 
       Network   : constant Concorde.Db.Network_Reference :=
                     Concorde.Db.Colony.Get (Colony).Get_Network_Reference;
@@ -613,7 +605,7 @@ package body Concorde.Colonies.Create is
 
       Concorde.Db.World_Sector.Update_World_Sector (Sector)
         .Set_Sector_Use (Concorde.Db.Sector_Use.Get_Reference_By_Tag ("urban"))
-          .Set_Owner (Owner_Faction)
+          .Set_Faction (Faction)
           .Done;
 
       Initialize_Zone
@@ -623,30 +615,121 @@ package body Concorde.Colonies.Create is
          Sizes       => Sector_Size);
 
       declare
-         Next : Natural := 0;
-      begin
-         for Sector_Use_Config of Config.Child ("sector-use") loop
-            declare
-               Sector_Use : constant Concorde.Db.Sector_Use_Reference :=
-                              Concorde.Db.Sector_Use.Get_Reference_By_Tag
-                                (Sector_Use_Config.Config_Name);
-            begin
-               for I in 1 .. Sector_Use_Config.Get ("count") loop
-                  Next := Next + 1;
-                  exit when Next > Neighbours'Last;
 
-                  Concorde.Db.World_Sector.Update_World_Sector
-                    (Neighbours (Next))
-                      .Set_Sector_Use (Sector_Use)
-                      .Set_Owner (Owner_Faction)
-                      .Done;
-                  Initialize_Zone (Colony, Neighbours (Next),
-                                   Sector_Use_Config.Child ("zones"),
-                                   Sector_Size);
-               end loop;
+         Sector_Use_Config : constant Tropos.Configuration :=
+                               Config.Child ("sector-use");
+
+         package Remaining_Sector_Maps is
+           new WL.String_Maps (Natural);
+
+         Remaining : Remaining_Sector_Maps.Map;
+
+         function Assign_Sector
+           (Sector : Concorde.Db.World_Sector_Reference)
+            return Boolean;
+
+         -------------------
+         -- Assign_Sector --
+         -------------------
+
+         function Assign_Sector
+           (Sector : Concorde.Db.World_Sector_Reference)
+            return Boolean
+         is
+            Best_Sector_Use : Concorde.Db.Sector_Use_Reference :=
+                                Concorde.Db.Null_Sector_Use_Reference;
+            Best_Score      : Real := Real'First;
+            Remaining_Count : Natural := 0;
+         begin
+            for Position in Remaining.Iterate loop
+               declare
+                  Tag : constant String :=
+                          Remaining_Sector_Maps.Key (Position);
+                  Sector_Use : constant Concorde.Db.Sector_Use_Reference :=
+                                 Concorde.Db.Sector_Use.Get_Reference_By_Tag
+                                   (Tag);
+                  Count      : constant Natural :=
+                                 Remaining_Sector_Maps.Element (Position);
+                  Score      : constant Real :=
+                                 Concorde.Colonies.Sectors.Score_Sector
+                                   (Sector, Tag);
+               begin
+                  Remaining_Count := Remaining_Count + Count;
+                  if Score > Best_Score then
+                     Best_Score := Score;
+                     Best_Sector_Use := Sector_Use;
+                  end if;
+               end;
+            end loop;
+
+            if Remaining_Count = 0 then
+               return False;
+            end if;
+
+            declare
+               Tag : constant String :=
+                       Concorde.Db.Sector_Use.Get (Best_Sector_Use).Tag;
+               Use_Config : constant Tropos.Configuration :=
+                              Sector_Use_Config.Child (Tag);
+               Count : constant Positive := Remaining.Element (Tag);
+            begin
+               Concorde.Db.World_Sector.Update_World_Sector (Sector)
+                 .Set_Faction (Faction)
+                 .Set_Sector_Use (Best_Sector_Use)
+                 .Done;
+
+               Initialize_Zone
+                 (Colony      => Colony,
+                  Sector      => Sector,
+                  Zone_Config => Use_Config.Child ("zones"),
+                  Sizes       => Sector_Size);
+
+               if Count = 1 then
+                  Remaining.Delete (Tag);
+               else
+                  Remaining (Tag) := Remaining (Tag) - 1;
+               end if;
             end;
-            exit when Next > Neighbours'Last;
+
+            return Remaining_Count > 1;
+
+         end Assign_Sector;
+
+      begin
+
+         for Sector_Use_Config of Config.Child ("sector-use") loop
+            Remaining.Insert
+              (Sector_Use_Config.Config_Name,
+               Sector_Use_Config.Get ("count"));
          end loop;
+
+         Concorde.Worlds.Circular_Scan
+           (Start   => Sector,
+            Process => Assign_Sector'Access);
+
+--
+--           for Sector_Use_Config of Config.Child ("sector-use") loop
+--              declare
+--                 Sector_Use : constant Concorde.Db.Sector_Use_Reference :=
+--                                Concorde.Db.Sector_Use.Get_Reference_By_Tag
+--                                  (Sector_Use_Config.Config_Name);
+--              begin
+--                 for I in 1 .. Sector_Use_Config.Get ("count") loop
+--                    Next := Next + 1;
+--                    exit when Next > Neighbours'Last;
+--
+--                    Concorde.Db.World_Sector.Update_World_Sector
+--                      (Neighbours (Next))
+--                        .Set_Sector_Use (Sector_Use)
+--                        .Set_Faction (Faction)
+--                        .Done;
+--                    Initialize_Zone (Colony, Neighbours (Next),
+--                                     Sector_Use_Config.Child ("zones"),
+--                                     Sector_Size);
+--                 end loop;
+--              end;
+--              exit when Next > Neighbours'Last;
+--           end loop;
       end;
 
       for Zone of Concorde.Db.Zone.Scan_By_Tag loop

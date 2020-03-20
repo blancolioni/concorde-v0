@@ -1,8 +1,0 @@
-name = Forest
-color = "#F5DEB3"
-hazard = 0.02
-resource = {
-   hydrocarbon = 2
-   oil = 2
-   precious = 1 
-}

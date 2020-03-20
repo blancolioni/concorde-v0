@@ -1,8 +1,0 @@
-name = Ice
-color = "#99B0FF"
-hazard = 0.05
-resource = {
-   fissile = 15 
-   hydrocarbon = 20 
-   oil = 20 
-}
