@@ -936,7 +936,7 @@ package body Concorde.Configure.Star_Systems is
               Primary_Massive     => Star.Get_Massive_Object_Reference,
               Semimajor_Axis      => Orbit * Earth_Orbit,
               Epoch               => Concorde.Calendar.To_Time
-                (-1.0 * Concorde.Random.Unit_Random
+                (Concorde.Random.Unit_Random
                  * Year * Earth_Sidereal_Year),
               Eccentricity        => 0.0,
               Period              => Year * Earth_Sidereal_Year,
