@@ -38,6 +38,24 @@ package Concorde.Network is
      (Network    : Concorde.Db.Network_Reference;
       Tag        : String);
 
+   type Node_Observer is interface;
+
+   procedure Notify
+     (Observer : in out Node_Observer;
+      Network  : Concorde.Db.Network_Reference;
+      Node     : Concorde.Db.Node_Reference)
+   is abstract;
+
+   procedure Add_Observer
+     (Network    : Concorde.Db.Network_Reference;
+      Node       : Concorde.Db.Node_Reference;
+      Observer   : not null access Node_Observer'Class);
+
+   procedure Remove_Observer
+     (Network    : Concorde.Db.Network_Reference;
+      Node       : Concorde.Db.Node_Reference;
+      Observer   : not null access Node_Observer'Class);
+
    function Evaluate
      (Network     : Concorde.Db.Network_Reference;
       Calculation : Concorde.Db.Calculation_Reference)

@@ -36,7 +36,7 @@ package body Concorde.Configure.Policies is
    procedure Configure_Policy (Policy_Config : Tropos.Configuration) is
       Content : constant Concorde.Db.Node_Value_Type :=
                   Concorde.Db.Node_Value_Type'Value
-                    (Policy_Config.Get ("content", "rating"));
+                    (Policy_Config.Get ("content", "setting"));
       Expense_Expr : constant String :=
                        Policy_Config.Get ("cost", "");
       Revenue_Expr : constant String :=

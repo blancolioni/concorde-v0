@@ -10,6 +10,7 @@ with Concorde.UI.Models.Colonies;
 with Concorde.UI.Models.Console;
 with Concorde.UI.Models.Galaxy;
 --  with Concorde.UI.Models.Market;
+with Concorde.UI.Models.Network;
 --  with Concorde.UI.Models.Population;
 
 with Concorde.Paths;
@@ -19,6 +20,8 @@ with Concorde.Handles.Colony;
 
 with Concorde.Db.Faction;
 with Concorde.Handles.Faction;
+
+with Concorde.Db.Policy;
 
 --  with Concorde.Db.Market;
 --  with Concorde.Handles.Market;
@@ -59,6 +62,10 @@ package body Concorde.UI.Nazar_UI is
                   Concorde.Handles.Faction.Get
                     (Concorde.Db.Faction.First_Reference_By_Top_Record
                        (Concorde.Db.R_Faction));
+      Colony  : constant Concorde.Handles.Colony.Colony_Handle :=
+        Concorde.Handles.Colony.Get
+          (Concorde.Db.Colony.First_Reference_By_World
+             (Faction.Capital_World.Reference_World));
    begin
       Result.Top := Builder.Get_View ("Concorde");
       Result.Console.Start_Console
@@ -96,18 +103,23 @@ package body Concorde.UI.Nazar_UI is
       if Builder.Has_View ("colony-pop-groups") then
          Builder.Get_View ("colony-pop-groups").Set_Model
            (Concorde.UI.Models.Colonies.Colony_Pop_Group_Model
-              (Concorde.Handles.Colony.Get
-                   (Concorde.Db.Colony.First_Reference_By_World
-                        (Faction.Capital_World.Reference_World))));
+              (Colony));
       end if;
 
       if Builder.Has_View ("colony-policies") then
          Builder.Get_View ("colony-policies").Set_Model
-           (Concorde.UI.Models.Colonies.Colony_Policy_Model
-              (Concorde.Handles.Colony.Get
-                   (Concorde.Db.Colony.First_Reference_By_World
-                        (Faction.Capital_World.Reference_World))));
+           (Concorde.UI.Models.Colonies.Colony_Policy_Model (Colony));
       end if;
+
+      for Policy of
+        Concorde.Db.Policy.Scan_By_Tag
+      loop
+         if Builder.Has_View (Policy.Tag) then
+            Builder.Get_View (Policy.Tag).Set_Model
+              (Concorde.UI.Models.Network.Network_Node_Model
+                 (Colony.Reference_Network, Policy.Tag));
+         end if;
+      end loop;
 
 --        Builder.Get_View ("population").Set_Model
 --          (Concorde.UI.Models.Population.Population_Model

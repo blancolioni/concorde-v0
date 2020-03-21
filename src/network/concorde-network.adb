@@ -59,6 +59,39 @@ package body Concorde.Network is
    function Save_History (Node : Concorde.Db.Node.Node_Type) return Boolean
    is (Node.Content in Concorde.Db.Rating | Concorde.Db.Setting);
 
+   type Observer_Access is access all Node_Observer'Class;
+
+   package Observer_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Observer_Access);
+
+   function Observer_Key
+     (Network : Concorde.Db.Network_Reference;
+      Node    : Concorde.Db.Node_Reference)
+      return String
+   is (Concorde.Db.To_String (Network) & Concorde.Db.To_String (Node));
+
+   package Observer_Maps is
+     new WL.String_Maps (Observer_Lists.List, Observer_Lists."=");
+
+   Observer_Map : Observer_Maps.Map;
+
+   ------------------
+   -- Add_Observer --
+   ------------------
+
+   procedure Add_Observer
+     (Network    : Concorde.Db.Network_Reference;
+      Node       : Concorde.Db.Node_Reference;
+      Observer   : not null access Node_Observer'Class)
+   is
+      Key : constant String := Observer_Key (Network, Node);
+   begin
+      if not Observer_Map.Contains (Key) then
+         Observer_Map.Insert (Key, Observer_Lists.Empty_List);
+      end if;
+      Observer_Map (Key).Append (Observer_Access (Observer));
+   end Add_Observer;
+
    ----------------------
    -- Commit_New_Value --
    ----------------------
@@ -377,6 +410,23 @@ package body Concorde.Network is
          Category => "",
          Message  => Message);
    end Log;
+
+   procedure Remove_Observer
+     (Network    : Concorde.Db.Network_Reference;
+      Node       : Concorde.Db.Node_Reference;
+      Observer   : not null access Node_Observer'Class)
+   is
+      Key : constant String := Observer_Key (Network, Node);
+      Element : constant Observer_Access := Observer_Access (Observer);
+      Position : Observer_Lists.Cursor;
+   begin
+      pragma Assert (Observer_Map.Contains (Key),
+                     "no observers for key " & Key);
+      Position := Observer_Map (Key).Find (Element);
+      pragma Assert (Observer_Lists.Has_Element (Position),
+                     "observer not found in map");
+      Observer_Map (Key).Delete (Position);
+   end Remove_Observer;
 
    -------------------
    -- Set_New_Value --
