@@ -1,9 +1,97 @@
-names = { iron coal light-metals gases hydrocarbon semiconductors radioactives rare-earths crystals 
-          transuranium neutronium trilithium corbomite }
+iron = {
+    deposits = common
+}
 
-spheres = {
-   count = 100
-   radius = { 100 100 10 }
-   strength = { 10 100 }
-   attenuation = { 1.5 3.5 }
+aluminium = {
+    deposits = {
+        rare = { mass = small }
+        uncommon = { mass = medium }
+        common = { mass = large }
+    }
+}
+
+silicon = {
+    deposits = common
+}
+
+magnesium = {
+    deposits = uncommon
+}
+
+carbon = {
+    deposits = uncommon
+}
+
+nickel = {
+    deposits = {
+        common = { mass = small }
+        uncommon = { mass = medium }
+        rare = { mass = large }
+    }
+}
+
+uranium = {
+    deposits = rare
+}
+
+coal = {
+    deposits = {
+        common = {
+            life-bearing = 4
+            minimum-age = 4G
+        }
+    }
+}
+
+hydrocarbon = {
+    deposits = {
+        uncommon = {
+            life-bearing = 4
+            minimum-age = 4G
+        }
+    }
+}
+
+crystals = {
+    deposits = {
+        sphere = {
+            frequency = 5%
+            radius = { 100 100 10 }
+            strength = { 100 1000 }
+            attenuation = { 1.5 4.5 }
+        }
+    }
+}
+
+transuranium = {
+    deposits = {
+        sphere = {
+            frequency = 1%
+            radius = { 100 100 10 }
+            strength = { 10 100 }
+            attenuation = { 1.5 3.5 }
+        }
+    }
+}
+
+neutronium = {
+    deposits = {
+        sphere = {
+            frequency = 1%
+            radius = { 1 1 1 }
+            strength = { 10 100 }
+            attenuation = { 1.5 3.5 }
+        }
+    }
+}
+
+trilithium = {
+    deposits = {
+        sphere = {
+            frequency = 1%
+            radius = { 1 1 1 }
+            strength = { 10 100 }
+            attenuation = { 1.5 3.5 }
+        }
+    }
 }

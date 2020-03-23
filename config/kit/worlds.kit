@@ -5,7 +5,6 @@ with Knowledge;
 with Localisation;
 with Locations;
 with Quantities;
-with Resources;
 with Star_Systems;
 with Surfaces;
 
@@ -16,6 +15,9 @@ package Worlds is
 
    type World_Climate is
      (Airless, Desert, Iceball, Martian, Temperate, Venusian, Water, Jovian);
+
+   type Stellar_Orbit_Zone is
+     (Red, Yellow, Green, Blue, Black);
 
     record Gas : Localised is
        unique key Formula   : String (16);
@@ -33,12 +35,6 @@ package Worlds is
       Hazard   : Long_Float;
       Is_Water : Boolean;   
    end Terrain;
-   
-   record Terrain_Resource is
-      Terrain;
-      Resource;
-      Chance : Long_Float;
-   end Terrain_Resource;
    
    record Feature : Localised, Has_Color is
       Is_Ice   : Boolean;
@@ -67,7 +63,9 @@ package Worlds is
    record World : Star_System_Object, Has_Name, Knowable, Surface, Is_Generated, Has_Random_Seed, Has_Orbits is
       Composition         : World_Composition;
       Climate             : World_Climate;
+      Orbit_Zone          : Stellar_Orbit_Zone;
       Gas_Giant           : Boolean;
+      Age                 : Long_Float;
       key Habitability    : Long_Float;
       Surface_Pressure    : Long_Float;
 	  Average_Temperature : Long_Float;

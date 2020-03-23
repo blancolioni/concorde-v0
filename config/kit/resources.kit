@@ -1,8 +1,16 @@
 with Commodities;
+with Worlds;
 
 package Resources is 
 
-record Resource : Commodity, Has_Name is
+record Fuzzy_Set is
+   Max_Zero : Long_Float;
+   Min_One  : Long_Float;
+   Max_One  : Long_Float;
+   Min_Zero : Long_Float;
+end Fuzzy_Set;
+   
+record Resource : Commodity is
    Is_Raw_Resource : Boolean;
 end Resource;
 
@@ -16,4 +24,26 @@ record Resource_Sphere is
    Attenuation : Long_Float;
 end Resource_Sphere;
 
+record Resource_Constraint is
+   key Resource;
+   Mass_Constraint     : Boolean;
+   Zone_Constraint     : Boolean;
+   Life_Constraint     : Boolean;
+   Age_Constraint      : Boolean;
+   Sphere_Constraint   : Boolean;
+   Mass                : Fuzzy_Set;
+   Zone                : Stellar_Orbit_Zone;
+   Min_Lifeforms       : Natural;
+   Min_Age             : Long_Float;
+   Resource_Sphere;
+   Mean                : Long_Float;
+   Standard_Deviation  : Long_Float;
+end Resource_Constraint;
+
+record Terrain_Resource is
+  Terrain;
+  Resource;
+  Chance : Long_Float;
+end Terrain_Resource;
+   
 end Resources;
