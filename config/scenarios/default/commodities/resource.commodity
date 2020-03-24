@@ -1,5 +1,23 @@
+water = {
+    free = { 
+        hydrosphere = 10%
+        composition = ice
+    }
+    
+    deposits = {
+       rare = { zone = yellow }
+       uncommon = { zone = green }
+       common = { zone = blue }
+       abundant = { zone = black }
+    }
+}
+
+helium = {
+    deposits = rare
+}
+
 iron = {
-    deposits = common
+    deposits = abundant
 }
 
 aluminium = {
@@ -11,27 +29,23 @@ aluminium = {
 }
 
 silicon = {
-    deposits = common
+    deposits = abundant
 }
 
 magnesium = {
-    deposits = uncommon
-}
-
-carbon = {
-    deposits = uncommon
+    deposits = common
 }
 
 nickel = {
     deposits = {
-        common = { mass = small }
-        uncommon = { mass = medium }
-        rare = { mass = large }
+        abundant = { mass = small }
+        common = { mass = medium }
+        uncommon = { mass = large }
     }
 }
 
 uranium = {
-    deposits = rare
+    deposits = common
 }
 
 coal = {

@@ -53,7 +53,7 @@ package body Concorde.Configure.Commodities is
       Available : Available_Resources)
      with Unreferenced;
 
-   type Frequency_Type is (Common, Uncommon, Rare, Ultrarare);
+   type Frequency_Type is (Abundant, Common, Uncommon, Rare);
 
    type Normal_Value is
       record
@@ -62,10 +62,10 @@ package body Concorde.Configure.Commodities is
       end record;
 
    Standard_Frequencies : constant array (Frequency_Type) of Normal_Value :=
-                            (Common    => (1.0, 0.1),
-                             Uncommon  => (0.2, 0.02),
-                             Rare      => (0.05, 0.005),
-                             Ultrarare => (0.01, 0.001));
+                            (Abundant => (1.0, 0.1),
+                             Common   => (0.2, 0.02),
+                             Uncommon => (0.05, 0.005),
+                             Rare     => (0.01, 0.001));
 
    type Constraint_Application is access
      procedure (Constraint : Concorde.Db.Resource_Constraint_Reference;
@@ -87,6 +87,10 @@ package body Concorde.Configure.Commodities is
       Config     : Tropos.Configuration);
 
    procedure Constrain_Mass
+     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+      Config     : Tropos.Configuration);
+
+   procedure Constrain_Zone
      (Constraint : Concorde.Db.Resource_Constraint_Reference;
       Config     : Tropos.Configuration);
 
@@ -503,6 +507,21 @@ package body Concorde.Configure.Commodities is
         .Done;
    end Constrain_Minimum_Age;
 
+   --------------------
+   -- Constrain_Zone --
+   --------------------
+
+   procedure Constrain_Zone
+     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+      Config     : Tropos.Configuration)
+   is
+   begin
+      Concorde.Db.Resource_Constraint.Update_Resource_Constraint (Constraint)
+        .Set_Zone_Constraint (True)
+        .Set_Zone (Concorde.Db.Stellar_Orbit_Zone'Value (Config.Value))
+        .Done;
+   end Constrain_Zone;
+
    ---------------------------------
    -- Create_Frequency_Constraint --
    ---------------------------------
@@ -576,6 +595,7 @@ package body Concorde.Configure.Commodities is
       Add ("life-bearing", Constrain_Life'Access);
       Add ("mass", Constrain_Mass'Access);
       Add ("minimum-age", Constrain_Minimum_Age'Access);
+      Add ("zone", Constrain_Zone'Access);
    end Initialize_Constraint_Arguments;
 
 end Concorde.Configure.Commodities;
