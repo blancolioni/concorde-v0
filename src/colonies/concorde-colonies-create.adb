@@ -638,7 +638,7 @@ package body Concorde.Colonies.Create is
          is
             Best_Sector_Use : Concorde.Db.Sector_Use_Reference :=
                                 Concorde.Db.Null_Sector_Use_Reference;
-            Best_Score      : Real := Real'First;
+            Best_Score      : Real := 0.0;
             Remaining_Count : Natural := 0;
          begin
             for Position in Remaining.Iterate loop
@@ -666,30 +666,33 @@ package body Concorde.Colonies.Create is
                return False;
             end if;
 
-            declare
-               Tag : constant String :=
-                       Concorde.Db.Sector_Use.Get (Best_Sector_Use).Tag;
-               Use_Config : constant Tropos.Configuration :=
-                              Sector_Use_Config.Child (Tag);
-               Count : constant Positive := Remaining.Element (Tag);
-            begin
-               Concorde.Db.World_Sector.Update_World_Sector (Sector)
-                 .Set_Faction (Faction)
-                 .Set_Sector_Use (Best_Sector_Use)
-                 .Done;
+            if Best_Score > 0.0 then
+               declare
+                  Tag        : constant String :=
+                                 Concorde.Db.Sector_Use.Get
+                                   (Best_Sector_Use).Tag;
+                  Use_Config : constant Tropos.Configuration :=
+                                 Sector_Use_Config.Child (Tag);
+                  Count      : constant Positive := Remaining.Element (Tag);
+               begin
+                  Concorde.Db.World_Sector.Update_World_Sector (Sector)
+                    .Set_Faction (Faction)
+                    .Set_Sector_Use (Best_Sector_Use)
+                    .Done;
 
-               Initialize_Zone
-                 (Colony      => Colony,
-                  Sector      => Sector,
-                  Zone_Config => Use_Config.Child ("zones"),
-                  Sizes       => Sector_Size);
+                  Initialize_Zone
+                    (Colony      => Colony,
+                     Sector      => Sector,
+                     Zone_Config => Use_Config.Child ("zones"),
+                     Sizes       => Sector_Size);
 
-               if Count = 1 then
-                  Remaining.Delete (Tag);
-               else
-                  Remaining (Tag) := Remaining (Tag) - 1;
-               end if;
-            end;
+                  if Count = 1 then
+                     Remaining.Delete (Tag);
+                  else
+                     Remaining (Tag) := Remaining (Tag) - 1;
+                  end if;
+               end;
+            end if;
 
             return Remaining_Count > 1;
 
