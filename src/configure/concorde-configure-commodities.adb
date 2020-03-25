@@ -42,8 +42,7 @@ package body Concorde.Configure.Commodities is
 
    procedure Create_Sphere_Constraint
      (Resource : Concorde.Db.Resource_Reference;
-      Config   : Tropos.Configuration)
-   is null;
+      Config   : Tropos.Configuration);
 
    procedure Configure_Non_Resources
      (Commodity_Config : Tropos.Configuration);
@@ -53,7 +52,7 @@ package body Concorde.Configure.Commodities is
       Available : Available_Resources)
      with Unreferenced;
 
-   type Frequency_Type is (Abundant, Common, Uncommon, Rare);
+   type Frequency_Type is (Unlimited, Abundant, Common, Uncommon, Rare);
 
    type Normal_Value is
       record
@@ -62,9 +61,10 @@ package body Concorde.Configure.Commodities is
       end record;
 
    Standard_Frequencies : constant array (Frequency_Type) of Normal_Value :=
-                            (Abundant => (1.0, 0.1),
-                             Common   => (0.2, 0.02),
-                             Uncommon => (0.05, 0.005),
+                            (Unlimited => (0.0, 0.0),
+                             Abundant  => (1.0, 0.1),
+                             Common   => (0.5, 0.05),
+                             Uncommon => (0.1, 0.01),
                              Rare     => (0.01, 0.001));
 
    type Constraint_Application is access
@@ -77,6 +77,14 @@ package body Concorde.Configure.Commodities is
    Constraint_Argument_Map : Constraint_Argument_Maps.Map;
 
    procedure Initialize_Constraint_Arguments;
+
+   procedure Constrain_Composition
+     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+      Config     : Tropos.Configuration);
+
+   procedure Constrain_Hydrosphere
+     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+      Config     : Tropos.Configuration);
 
    procedure Constrain_Life
      (Constraint : Concorde.Db.Resource_Constraint_Reference;
@@ -325,27 +333,6 @@ package body Concorde.Configure.Commodities is
          Names.Append (Resource_Config.Config_Name);
          Configure_Resource (Resource_Config);
       end loop;
-
---        declare
---           Refs : Available_Resources (1 .. Names.Last_Index);
---           Freq : Unit_Real := 1.0;
---        begin
---           for I in Refs'Range loop
---              Refs (I) :=
---                Resource_Availability'
---                  (Reference =>
---                     Concorde.Db.Resource.Create
---                       (Tag             => Names.Element (I),
---                        Name            => Names.Element (I),
---                        Mass            => 1.0,
---                        Is_Raw_Resource => False),
---                   Frequency => Freq);
---              Freq := Freq * 0.9;
---           end loop;
---
---           Configure_Resource_Spheres (Config.Child ("spheres"), Refs);
---        end;
-
    end Configure_Resources;
 
    ---------------------
@@ -436,6 +423,36 @@ package body Concorde.Configure.Commodities is
          end if;
       end loop;
    end Configure_Supplied;
+
+   ---------------------------
+   -- Constrain_Composition --
+   ---------------------------
+
+   procedure Constrain_Composition
+     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+      Config     : Tropos.Configuration)
+   is
+   begin
+      Concorde.Db.Resource_Constraint.Update_Resource_Constraint (Constraint)
+        .Set_Composition_Constraint (True)
+        .Set_Composition (Concorde.Db.World_Composition'Value (Config.Value))
+        .Done;
+   end Constrain_Composition;
+
+   ---------------------------
+   -- Constrain_Hydrosphere --
+   ---------------------------
+
+   procedure Constrain_Hydrosphere
+     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+      Config     : Tropos.Configuration)
+   is
+   begin
+      Concorde.Db.Resource_Constraint.Update_Resource_Constraint (Constraint)
+        .Set_Hydrosphere_Constraint (True)
+        .Set_Min_Hydrosphere (Real (Long_Float'(Config.Value)))
+        .Done;
+   end Constrain_Hydrosphere;
 
    --------------------
    -- Constrain_Life --
@@ -536,22 +553,31 @@ package body Concorde.Configure.Commodities is
                     Standard_Frequencies (Freq_Name);
       Constraint : constant Concorde.Db.Resource_Constraint_Reference :=
                      Concorde.Db.Resource_Constraint.Create
-                       (Resource            => Resource,
-                        Mass_Constraint     => False,
-                        Zone_Constraint     => False,
-                        Life_Constraint     => False,
-                        Age_Constraint      => False,
-                        Sphere_Constraint   => False,
-                        Mass                =>
+                       (Resource               => Resource,
+                        Mass_Constraint        => False,
+                        Zone_Constraint        => False,
+                        Life_Constraint        => False,
+                        Age_Constraint         => False,
+                        Hydrosphere_Constraint => False,
+                        Composition_Constraint => False,
+                        Sphere_Constraint      => False,
+                        Mass                   =>
                           Concorde.Db.Null_Fuzzy_Set_Reference,
-                        Zone                =>
+                        Zone                   =>
                           Concorde.Db.Black,
-                        Min_Lifeforms       => 0,
-                        Min_Age             => 0.0,
-                        Resource_Sphere     =>
-                          Concorde.Db.Null_Resource_Sphere_Reference,
-                        Mean                => Freq.Mean,
-                        Standard_Deviation  => Freq.Std_Dev);
+                        Composition            => Concorde.Db.Rock_Iron,
+                        Min_Lifeforms          => 0,
+                        Min_Age                => 0.0,
+                        Min_Hydrosphere        => 0.0,
+                        Sphere_Frequency       => 0.0,
+                        Sphere_Rx              => 0.0,
+                        Sphere_Ry              => 0.0,
+                        Sphere_Rz              => 0.0,
+                        Attenuation_Min        => 0.0,
+                        Attenuation_Max        => 0.0,
+                        Unlimited              => Freq_Name = Unlimited,
+                        Mean                   => Freq.Mean,
+                        Standard_Deviation     => Freq.Std_Dev);
    begin
 
       if Constraint_Argument_Map.Is_Empty then
@@ -570,6 +596,48 @@ package body Concorde.Configure.Commodities is
          end if;
       end loop;
    end Create_Frequency_Constraint;
+
+   ------------------------------
+   -- Create_Sphere_Constraint --
+   ------------------------------
+
+   procedure Create_Sphere_Constraint
+     (Resource : Concorde.Db.Resource_Reference;
+      Config   : Tropos.Configuration)
+   is
+      function Get (Field : String;
+                    Index : Natural := 0)
+                    return Real
+      is (if Index = 0
+          then Real (Long_Float'(Config.Get (Field)))
+          else Real (Long_Float'(Config.Child (Field).Get (Index))));
+
+   begin
+      Concorde.Db.Resource_Constraint.Create
+        (Resource               => Resource,
+         Mass_Constraint        => False,
+         Zone_Constraint        => False,
+         Life_Constraint        => False,
+         Age_Constraint         => False,
+         Hydrosphere_Constraint => False,
+         Composition_Constraint => False,
+         Sphere_Constraint      => True,
+         Mass                   => Concorde.Db.Null_Fuzzy_Set_Reference,
+         Zone                   => Concorde.Db.Black,
+         Composition            => Concorde.Db.Hydrogen,
+         Min_Lifeforms          => 0,
+         Min_Age                => 0.0,
+         Min_Hydrosphere        => 0.0,
+         Sphere_Frequency       => Get ("frequency"),
+         Sphere_Rx              => Get ("radius", 1),
+         Sphere_Ry              => Get ("radius", 2),
+         Sphere_Rz              => Get ("radius", 3),
+         Attenuation_Min        => Get ("attenuation", 1),
+         Attenuation_Max        => Get ("attenuation", 2),
+         Unlimited              => False,
+         Mean                   => Get ("strength", 1),
+         Standard_Deviation     => Get ("strength", 2));
+   end Create_Sphere_Constraint;
 
    -------------------------------------
    -- Initialize_Constraint_Arguments --
@@ -592,6 +660,8 @@ package body Concorde.Configure.Commodities is
       end Add;
 
    begin
+      Add ("composition", Constrain_Composition'Access);
+      Add ("hydrosphere", Constrain_Hydrosphere'Access);
       Add ("life-bearing", Constrain_Life'Access);
       Add ("mass", Constrain_Mass'Access);
       Add ("minimum-age", Constrain_Minimum_Age'Access);

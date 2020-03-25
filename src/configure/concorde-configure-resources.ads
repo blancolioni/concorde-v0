@@ -15,6 +15,10 @@ package Concorde.Configure.Resources is
      (X, Y, Z : Real)
       return Random_Deposit_Generator;
 
+   procedure Create_Resource_Spheres
+     (System_Count  : Positive;
+      R_X, R_Y, R_Z : Non_Negative_Real);
+
    procedure Create_Deposits
      (World     : Concorde.Db.World.World_Type;
       Generator : Random_Deposit_Generator);

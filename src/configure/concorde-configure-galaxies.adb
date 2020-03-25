@@ -17,6 +17,8 @@ with Concorde.Solar_System;
 with Concorde.Stars;
 with Concorde.Stars.Tables;
 
+with Concorde.Configure.Resources;
+
 with Concorde.Db.Scenario;
 with Concorde.Db.Star_System;
 with Concorde.Db.Star_System_Distance;
@@ -444,6 +446,12 @@ package body Concorde.Configure.Galaxies is
       end loop;
 
       Progress.Finish;
+
+      Concorde.Configure.Resources.Create_Resource_Spheres
+        (System_Count => Number_Of_Systems,
+         R_X          => Radius_X,
+         R_Y          => Radius_Y,
+         R_Z          => Radius_Z);
 
    end Generate_Galaxy;
 

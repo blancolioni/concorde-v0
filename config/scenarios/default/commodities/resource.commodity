@@ -1,19 +1,28 @@
 water = {
-    free = { 
-        hydrosphere = 10%
-        composition = ice
-    }
     
     deposits = {
-       rare = { zone = yellow }
-       uncommon = { zone = green }
-       common = { zone = blue }
-       abundant = { zone = black }
+        unlimited = { 
+            hydrosphere = 10%
+        }
+        unlimited = { 
+            composition = ice
+        }
+        unlimited = { 
+            composition = rock_ice
+        }
+        rare = { zone = yellow }
+        uncommon = { zone = green }
+        common = { zone = blue }
+        abundant = { zone = black }
     }
 }
 
 helium = {
-    deposits = rare
+    deposits = {
+        rare
+        unlimited = { composition = gaseous }
+        unlimited = { composition = hydrogen }
+    }
 }
 
 iron = {
@@ -45,7 +54,7 @@ nickel = {
 }
 
 uranium = {
-    deposits = common
+    deposits = uncommon
 }
 
 coal = {
@@ -59,7 +68,7 @@ coal = {
 
 hydrocarbon = {
     deposits = {
-        uncommon = {
+        common = {
             life-bearing = 4
             minimum-age = 4G
         }
@@ -70,8 +79,8 @@ crystals = {
     deposits = {
         sphere = {
             frequency = 5%
-            radius = { 100 100 10 }
-            strength = { 100 1000 }
+            radius = { 1 1 1 }
+            strength = { 1000 20 }
             attenuation = { 1.5 4.5 }
         }
     }
@@ -80,10 +89,10 @@ crystals = {
 transuranium = {
     deposits = {
         sphere = {
-            frequency = 1%
-            radius = { 100 100 10 }
-            strength = { 10 100 }
-            attenuation = { 1.5 3.5 }
+            frequency = 2%
+            radius = { 1 1 1 }
+            strength = { 10 1 }
+            attenuation = { 1.1 1.5 }
         }
     }
 }
@@ -93,7 +102,7 @@ neutronium = {
         sphere = {
             frequency = 1%
             radius = { 1 1 1 }
-            strength = { 10 100 }
+            strength = { 100 10 }
             attenuation = { 1.5 3.5 }
         }
     }
@@ -104,7 +113,7 @@ trilithium = {
         sphere = {
             frequency = 1%
             radius = { 1 1 1 }
-            strength = { 10 100 }
+            strength = { 20 2 }
             attenuation = { 1.5 3.5 }
         }
     }

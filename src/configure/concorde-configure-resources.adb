@@ -1,13 +1,12 @@
 with Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Text_IO;
 
 with WL.Random.Weighted_Random_Choices;
 with WL.Random;
 
 with Concorde.Elementary_Functions;
 with Concorde.Random;
-with Concorde.Real_Images;
+--  with Concorde.Real_Images;
 with Concorde.Solar_System;
 
 with Concorde.Db.Deposit;
@@ -16,6 +15,7 @@ with Concorde.Db.Gas;
 with Concorde.Db.Resource;
 with Concorde.Db.Resource_Constraint;
 with Concorde.Db.Resource_Sphere;
+with Concorde.Db.Star_System;
 with Concorde.Db.World_Sector;
 
 package body Concorde.Configure.Resources is
@@ -43,6 +43,9 @@ package body Concorde.Configure.Resources is
        elsif Position <= D
        then (D - Position) / (D - C)
        else 0.0);
+
+--     function Image (X : Real) return String
+--                     renames Concorde.Real_Images.Approximate_Image;
 
    -------------------------------------
    -- Configure_Atmosphere_Components --
@@ -228,6 +231,66 @@ package body Concorde.Configure.Resources is
       return Gen;
    end Create_Generator;
 
+   -----------------------------
+   -- Create_Resource_Spheres --
+   -----------------------------
+
+   procedure Create_Resource_Spheres
+     (System_Count  : Positive;
+      R_X, R_Y, R_Z : Non_Negative_Real)
+   is
+   begin
+      for Constraint of
+        Concorde.Db.Resource_Constraint.Select_By_Sphere_Constraint (True)
+      loop
+         declare
+            RX     : constant Real := Constraint.Sphere_Rx * R_X;
+            RY     : constant Real := Constraint.Sphere_Ry * R_Y;
+            RZ     : constant Real := Constraint.Sphere_Rz * R_Z;
+            Count  : constant Natural :=
+                       Natural (Constraint.Sphere_Frequency
+                                * Real (System_Count));
+         begin
+
+            for I in 1 .. Count loop
+               declare
+                  X     : constant Real :=
+                            RX * (Concorde.Random.Unit_Random * 2.0 - 1.0);
+                  Y     : constant Real :=
+                            RY * (Concorde.Random.Unit_Random * 2.0 - 1.0);
+                  Z     : constant Real :=
+                            RZ * (Concorde.Random.Unit_Random * 2.0 - 1.0);
+                  S      : constant Real :=
+                             Real'Max
+                               (Concorde.Random.Normal_Random
+                                  (Constraint.Standard_Deviation)
+                                + Constraint.Mean,
+                                0.0);
+                  A      : constant Real :=
+                             Constraint.Attenuation_Min
+                               + Concorde.Random.Unit_Random
+                             * (Constraint.Attenuation_Max
+                                - Constraint.Attenuation_Min);
+                  R      : constant Real :=
+                             Concorde.Random.Unit_Random * RX + RX / 2.0;
+               begin
+
+                  if R > 0.0 and then S > 0.0 then
+                     Concorde.Db.Resource_Sphere.Create
+                       (Resource    => Constraint.Resource,
+                        Centre_X    => X,
+                        Centre_Y    => Y,
+                        Centre_Z    => Z,
+                        Strength    => S,
+                        Radius      => R,
+                        Attenuation => A);
+                  end if;
+               end;
+            end loop;
+         end;
+      end loop;
+   end Create_Resource_Spheres;
+
    ------------------
    -- Create_Score --
    ------------------
@@ -247,11 +310,13 @@ package body Concorde.Configure.Resources is
             Weight  : Non_Negative_Real;
          end record;
 
+      function Score_Spheres return Constraint_Record;
+
       package Constraint_Lists is
         new Ada.Containers.Doubly_Linked_Lists (Constraint_Record);
 
       Sub_Constraints : Constraint_Lists.List;
-      Total_Weight : Non_Negative_Real := 0.0;
+      Total_Weight    : Non_Negative_Real := 0.0;
 
       function Check
         (Constraint : Concorde.Db.Resource_Constraint.Resource_Constraint_Type)
@@ -266,6 +331,7 @@ package body Concorde.Configure.Resources is
          return Boolean
       is
          use type Concorde.Db.Stellar_Orbit_Zone;
+         use type Concorde.Db.World_Composition;
       begin
          if Constraint.Zone_Constraint
            and then Constraint.Zone /= World.Orbit_Zone
@@ -285,6 +351,18 @@ package body Concorde.Configure.Resources is
             return False;
          end if;
 
+         if Constraint.Hydrosphere_Constraint
+           and then Constraint.Min_Hydrosphere > World.Hydrosphere
+         then
+            return False;
+         end if;
+
+         if Constraint.Composition_Constraint
+           and then Constraint.Composition /= World.Composition
+         then
+            return False;
+         end if;
+
          if Constraint.Sphere_Constraint then
             return False;
          end if;
@@ -292,13 +370,66 @@ package body Concorde.Configure.Resources is
          return True;
       end Check;
 
+      -------------------
+      -- Score_Spheres --
+      -------------------
+
+      function Score_Spheres return Constraint_Record is
+         System : constant Concorde.Db.Star_System.Star_System_Type :=
+                    Concorde.Db.Star_System.Get (World.Star_System);
+         Mean   : Non_Negative_Real := 0.0;
+      begin
+         for Resource_Sphere of
+           Concorde.Db.Resource_Sphere.Select_By_Resource (Resource)
+         loop
+            declare
+               use Concorde.Elementary_Functions;
+               D : constant Non_Negative_Real :=
+                     Sqrt ((System.X - Resource_Sphere.Centre_X) ** 2
+                           + (System.Y - Resource_Sphere.Centre_Y) ** 2
+                           + (System.Z - Resource_Sphere.Centre_Z) ** 2);
+            begin
+--                 Ada.Text_IO.Put_Line
+--                   (Concorde.Db.Resource.Get (Resource).Tag
+--                    & ": sphere at ("
+--                    & Image (Resource_Sphere.Centre_X)
+--                    & "," & Image (Resource_Sphere.Centre_Y)
+--                    & "," & Image (Resource_Sphere.Centre_Z)
+--                    & ") distance "
+--                    & Image (D)
+--                    & " strength "
+--                    & Image (Resource_Sphere.Strength)
+--                    & " attenuation "
+--                    & Image (Resource_Sphere.Attenuation)
+--                    & " contribution "
+--                      & Image (Resource_Sphere.Strength
+--                      / (D ** Resource_Sphere.Attenuation)));
+               if D < Resource_Sphere.Radius then
+                  Mean := Mean
+                    + Resource_Sphere.Strength
+                    / (D ** Resource_Sphere.Attenuation);
+               end if;
+            end;
+         end loop;
+         return (Mean / 100.0, Mean / 1_000.0, 1.0);
+      end Score_Spheres;
+
    begin
 
       for Constraint of
         Concorde.Db.Resource_Constraint.Select_By_Resource (Resource)
       loop
-         if Check (Constraint) then
-            if Constraint.Mass_Constraint then
+         if Constraint.Sphere_Constraint then
+            declare
+               Sub : constant Constraint_Record := Score_Spheres;
+            begin
+               Sub_Constraints.Append (Sub);
+               Total_Weight := Total_Weight + Sub.Weight;
+            end;
+         elsif Check (Constraint) then
+            if Constraint.Unlimited then
+               return 0;
+            elsif Constraint.Mass_Constraint then
                declare
                   M_E : constant Non_Negative_Real :=
                           World.Mass
@@ -338,9 +469,11 @@ package body Concorde.Configure.Resources is
             end;
          end loop;
 
-         Ada.Text_IO.Put_Line
-           (World.Name & ": " & Concorde.Db.Resource.Get (Resource).Tag
-            & ": " & Concorde.Real_Images.Approximate_Image (Score));
+--           if Score > 0.0 then
+--              Ada.Text_IO.Put_Line
+--                (World.Name & ": " & Concorde.Db.Resource.Get (Resource).Tag
+--                 & ": " & Concorde.Real_Images.Approximate_Image (Score));
+--           end if;
 
          return Natural (Score * 1000.0);
       end;
