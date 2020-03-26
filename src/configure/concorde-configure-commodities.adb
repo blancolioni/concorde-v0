@@ -5,11 +5,14 @@ with WL.String_Maps;
 with Tropos.Reader;
 
 with Concorde.Commodities;
+with Concorde.Identifiers;
 with Concorde.Random;
 
+with Concorde.Db.Calculation;
 with Concorde.Db.Commodity;
 with Concorde.Db.Construction_Input;
 with Concorde.Db.Consumer_Commodity;
+with Concorde.Db.Derived_Metric;
 with Concorde.Db.Fuzzy_Set;
 with Concorde.Db.Input_Commodity;
 with Concorde.Db.Manufactured;
@@ -51,6 +54,10 @@ package body Concorde.Configure.Commodities is
      (Config    : Tropos.Configuration;
       Available : Available_Resources)
      with Unreferenced;
+
+   procedure Configure_Commodity_Metrics
+     (Commodity_Tag  : String;
+      Metrics_Config : Tropos.Configuration);
 
    type Frequency_Type is (Unlimited, Abundant, Common, Uncommon, Rare);
 
@@ -115,20 +122,54 @@ package body Concorde.Configure.Commodities is
       Configure_Non_Resources
         (Tropos.Reader.Read_Config
            (Scenario_File
-                (Scenario_Name, "commodities", "water.commodity")));
-      Configure_Non_Resources
-        (Tropos.Reader.Read_Config
-           (Scenario_File
-                (Scenario_Name, "commodities", "power.commodity")));
-      Configure_Non_Resources
-        (Tropos.Reader.Read_Config
-           (Scenario_File
                 (Scenario_Name, "commodities", "refined.commodity")));
       Configure_Non_Resources
         (Tropos.Reader.Read_Config
            (Scenario_File
                 (Scenario_Name, "commodities", "manufactured.commodity")));
    end Configure_Commodities;
+
+   ---------------------------------
+   -- Configure_Commodity_Metrics --
+   ---------------------------------
+
+   procedure Configure_Commodity_Metrics
+     (Commodity_Tag  : String;
+      Metrics_Config : Tropos.Configuration)
+   is
+   begin
+      for Metric_Config of Metrics_Config loop
+         declare
+            Content : constant Concorde.Db.Node_Value_Type :=
+                        Concorde.Db.Node_Value_Type'Value
+                          (Metric_Config.Get ("content", "rating"));
+            Metric  : constant Concorde.Db.Derived_Metric_Reference :=
+                        Concorde.Db.Derived_Metric.Create
+                          (Content     => Content,
+                           Tag         =>
+                             Commodity_Tag & "-" & Metric_Config.Config_Name,
+                           Calculation =>
+                             Concorde.Db.Null_Calculation_Reference);
+
+            Node    : constant Concorde.Db.Node_Reference :=
+                        Concorde.Db.Derived_Metric.Get (Metric)
+                        .Get_Node_Reference;
+
+            Expression  : constant String :=
+                            To_Single_Line (Metric_Config.Get ("value"));
+
+            Calculation : constant Concorde.Db.Calculation_Reference :=
+                            Concorde.Db.Calculation.Create
+                              (Identifier => Identifiers.Next_Identifier,
+                               Node       => Node,
+                               Expression => Expression);
+         begin
+            Concorde.Db.Derived_Metric.Update_Derived_Metric (Metric)
+              .Set_Calculation (Calculation)
+              .Done;
+         end;
+      end loop;
+   end Configure_Commodity_Metrics;
 
    ---------------------------
    -- Configure_Constructed --
@@ -181,6 +222,8 @@ package body Concorde.Configure.Commodities is
            (Enabled_By => Concorde.Db.Null_Technology_Reference,
             Tag        => Item_Config.Config_Name,
             Mass       => Item_Config.Get ("mass", 1.0));
+         Configure_Commodity_Metrics
+           (Item_Config.Config_Name, Item_Config.Child ("metrics"));
       end loop;
 
       for Item_Config of Commodity_Config loop
@@ -243,6 +286,9 @@ package body Concorde.Configure.Commodities is
                       Tag             => Config.Config_Name,
                       Is_Raw_Resource => False);
    begin
+      Configure_Commodity_Metrics
+        (Config.Config_Name, Config.Child ("metrics"));
+
       for Deposit_Config of Config.Child ("deposits") loop
          if Deposit_Config.Config_Name = "sphere" then
             Create_Sphere_Constraint (Resource, Deposit_Config);
@@ -328,6 +374,9 @@ package body Concorde.Configure.Commodities is
 
       Concorde.Db.Commodity.Create
         ("raw-resources", Mass => 1.0);
+
+      Concorde.Db.Commodity.Create
+        ("power", Mass => 0.0);
 
       for Resource_Config of Config loop
          Names.Append (Resource_Config.Config_Name);

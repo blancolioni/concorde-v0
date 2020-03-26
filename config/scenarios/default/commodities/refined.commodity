@@ -13,3 +13,6 @@ refined-crystals = {
    parts = { crystals = 2 }
 }
 
+plastic = {
+   parts = { hydrocarbon = 2 }
+}

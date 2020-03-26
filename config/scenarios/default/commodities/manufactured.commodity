@@ -1,0 +1,15 @@
+basic-electronics = {
+    parts = {
+        refined-crystals = 2
+        silicon = 2
+        plastic = 2
+    }
+    metrics = {
+        demand = {
+            content = quantity
+            value = [ 
+                sum (poor-population * (max poor-income 0) ** 2) (middle-class-population * (max (middle-class-income + 0.5) 0) ** 2) 
+                ]
+        }
+    }
+}
