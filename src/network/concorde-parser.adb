@@ -43,6 +43,9 @@ package body Concorde.Parser is
       With_Delay  : Real_Time := 0.0)
       return Concorde.Values.Value_Interface'Class;
 
+   function Parse_Application
+     return Concorde.Expressions.Expression_Type;
+
    function Parse_Atomic_Expression
      return Concorde.Expressions.Expression_Type;
 
@@ -52,6 +55,12 @@ package body Concorde.Parser is
 
    function Parse_Expression
      return Concorde.Expressions.Expression_Type;
+
+   function At_Expression return Boolean
+   is (Tok in Tok_Integer_Constant | Tok_Float_Constant
+       | Tok_String_Constant | Tok_Character_Constant
+       | Tok_Identifier | Tok_Sin | Tok_Delay
+       | Tok_Left_Paren);
 
    ---------
    -- Get --
@@ -73,6 +82,27 @@ package body Concorde.Parser is
            "attempt to get value from empty environment";
       end if;
    end Get;
+
+   -----------------------
+   -- Parse_Application --
+   -----------------------
+
+   function Parse_Application
+     return Concorde.Expressions.Expression_Type
+   is
+      Result : Concorde.Expressions.Expression_Type :=
+                 Parse_Atomic_Expression;
+   begin
+      while At_Expression loop
+         declare
+            Argument : constant Concorde.Expressions.Expression_Type :=
+                         Parse_Atomic_Expression;
+         begin
+            Result := Result.Apply (Argument);
+         end;
+      end loop;
+      return Result;
+   end Parse_Application;
 
    -----------------------------
    -- Parse_Atomic_Expression --
@@ -192,7 +222,9 @@ package body Concorde.Parser is
          end;
 
       else
-         Error ("missing expression");
+         Error ("missing expression at "
+                & Tok'Image
+                & " [" & Tok_Text & "]");
          return Concorde.Expressions.Value_Expression
            (Concorde.Values.Constant_Value (0.0));
       end if;
@@ -232,10 +264,14 @@ package body Concorde.Parser is
      (Precedence : Precedence_Range)
       return Concorde.Expressions.Expression_Type
    is
+
+      function Parse_Child return Concorde.Expressions.Expression_Type
+      is (if Precedence = Precedence_Range'First
+          then Parse_Application
+          else Parse_Operator_Expression (Precedence - 1));
+
       Left : constant Concorde.Expressions.Expression_Type :=
-               (if Precedence = Precedence_Range'First
-                then Parse_Atomic_Expression
-                else Parse_Operator_Expression (Precedence - 1));
+               Parse_Child;
       Result : Concorde.Expressions.Expression_Type := Left;
    begin
       while Ops (Tok).Is_Operator
@@ -246,10 +282,7 @@ package body Concorde.Parser is
             Right  : Concorde.Expressions.Expression_Type;
          begin
             Scan;
-            Right :=
-              (if Precedence = Precedence_Range'First
-               then Parse_Atomic_Expression
-               else Parse_Operator_Expression (Precedence - 1));
+            Right := Parse_Child;
             Result := Ops (Op_Tok).Create (Result, Right);
          end;
       end loop;
