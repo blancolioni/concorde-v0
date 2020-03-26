@@ -70,4 +70,8 @@ package Concorde.Configure is
      (Config  : Tropos.Configuration)
       return Real;
 
+   function To_Single_Line
+     (Value : String)
+      return String;
+
 end Concorde.Configure;
