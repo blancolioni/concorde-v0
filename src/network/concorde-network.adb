@@ -387,11 +387,17 @@ package body Concorde.Network is
    begin
       for Calculation of Concorde.Db.Calculation.Scan_By_Identifier loop
          if Calculation.Expression /= "" then
-            Expression_Cache.Insert
-              (Key      => Calculation.Identifier,
-               New_Item => (Expression =>
-                                Concorde.Parser.Parse_Expression
-                              (Calculation.Expression)));
+            Log (Calculation.Expression);
+            declare
+               Expr : constant Concorde.Expressions.Expression_Type :=
+                        Concorde.Parser.Parse_Expression
+                          (Calculation.Expression);
+            begin
+               Log (Expr.To_String);
+               Expression_Cache.Insert
+                 (Key      => Calculation.Identifier,
+                  New_Item => (Expression => Expr));
+            end;
          end if;
       end loop;
    end Load_Network;
@@ -499,14 +505,13 @@ package body Concorde.Network is
       loop
          declare
             Tag   : constant String := Metric.Tag;
+            Value : constant Real := Evaluate (Network, Metric.Calculation);
          begin
             Set_New_Value
-              (Network, Tag,
-               Evaluate
-                 (Network     => Network,
-                  Calculation => Metric.Calculation));
-
+              (Network, Tag, Value);
             Commit_New_Value (Network, Tag);
+
+            Log (Tag & " = " & Image (Value));
 
          exception
 

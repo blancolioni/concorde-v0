@@ -3,6 +3,8 @@ with Ada.Containers.Indefinite_Holders;
 with Concorde.Elementary_Functions;
 with Concorde.Real_Images;
 
+with Concorde.Primitives;
+
 package body Concorde.Expressions is
 
    function New_Expression
@@ -22,6 +24,13 @@ package body Concorde.Expressions is
    overriding function Evaluate
      (Expression  : Value_Expression_Type;
       Environment : Concorde.Values.Environment_Interface'Class;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class;
+
+   overriding function Apply
+     (Expression  : Value_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
       With_Delay  : Real_Time := 0.0)
       return Concorde.Values.Value_Interface'Class;
 
@@ -53,6 +62,13 @@ package body Concorde.Expressions is
       With_Delay  : Real_Time := 0.0)
       return Concorde.Values.Value_Interface'Class;
 
+   overriding function Apply
+     (Expression  : Behavior_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class;
+
    overriding function To_String
      (Expression : Behavior_Expression_Type)
       return String;
@@ -76,6 +92,13 @@ package body Concorde.Expressions is
    overriding function Evaluate
      (Expression  : Identifier_Expression_Type;
       Environment : Concorde.Values.Environment_Interface'Class;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class;
+
+   overriding function Apply
+     (Expression  : Identifier_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
       With_Delay  : Real_Time := 0.0)
       return Concorde.Values.Value_Interface'Class;
 
@@ -110,6 +133,13 @@ package body Concorde.Expressions is
       With_Delay  : Real_Time := 0.0)
       return Concorde.Values.Value_Interface'Class;
 
+   overriding function Apply
+     (Expression  : Operator_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class;
+
    overriding function Free_Variables
      (Expression : Operator_Expression_Type)
       return Concorde.Symbols.Symbol_Id_Array;
@@ -124,6 +154,48 @@ package body Concorde.Expressions is
       New_Value      : String)
       return Expression_Type;
 
+   type Application_Expression_Type is
+     new Root_Expression_Type with
+      record
+         Left     : Expression_Type;
+         Right    : Expression_Type;
+      end record;
+
+   overriding function Evaluate
+     (Expression  : Application_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class;
+
+   overriding function Apply
+     (Expression  : Application_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class;
+
+   overriding function Free_Variables
+     (Expression : Application_Expression_Type)
+      return Concorde.Symbols.Symbol_Id_Array
+   is (Concorde.Symbols."&"
+       (Expression.Left.Free_Variables, Expression.Right.Free_Variables));
+
+   overriding function To_String
+     (Expression : Application_Expression_Type)
+      return String
+   is (Expression.Left.To_String & " "
+       & (if Expression.Right.all in Application_Expression_Type'Class
+          then "(" & Expression.Right.To_String & ")"
+          else Expression.Right.To_String));
+
+   overriding function Replace
+     (Expression     : not null access constant Application_Expression_Type;
+      Original_Value : String;
+      New_Value      : String)
+      return Expression_Type
+   is (Apply (Expression.Left.Replace (Original_Value, New_Value),
+              Expression.Right.Replace (Original_Value, New_Value)));
+
    type Delay_Expression_Type is
      new Root_Expression_Type with
       record
@@ -134,6 +206,13 @@ package body Concorde.Expressions is
    overriding function Evaluate
      (Expression  : Delay_Expression_Type;
       Environment : Concorde.Values.Environment_Interface'Class;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class;
+
+   overriding function Apply
+     (Expression  : Delay_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
       With_Delay  : Real_Time := 0.0)
       return Concorde.Values.Value_Interface'Class;
 
@@ -177,6 +256,129 @@ package body Concorde.Expressions is
        (Operator_Expression_Type'
           ('-', Left, Right)));
 
+   -----------
+   -- Apply --
+   -----------
+
+   overriding function Apply
+     (Expression  : Identifier_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class
+   is
+      pragma Unreferenced (Environment, With_Delay);
+   begin
+      return Concorde.Primitives.Evaluate
+        (Name        => Concorde.Symbols.Get_Name (Expression.Symbol),
+         Arguments   => Arguments);
+   end Apply;
+
+   -----------
+   -- Apply --
+   -----------
+
+   function Apply
+     (Left : not null access constant Root_Expression_Type'Class;
+      Right : not null access constant Root_Expression_Type'Class)
+      return Expression_Type
+   is
+   begin
+      return new Application_Expression_Type'
+        (Left  => Expression_Type (Left),
+         Right => Expression_Type (Right));
+   end Apply;
+
+   -----------
+   -- Apply --
+   -----------
+
+   overriding function Apply
+     (Expression  : Value_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class
+   is
+      pragma Unreferenced (Environment, Arguments, With_Delay);
+   begin
+      return (raise Constraint_Error with
+                "cannot apply value " & Expression.To_String);
+   end Apply;
+
+   -----------
+   -- Apply --
+   -----------
+
+   overriding function Apply
+     (Expression  : Application_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class
+   is
+      New_Arguments : Concorde.Values.Vectors.Vector;
+   begin
+      New_Arguments.Append
+        (Expression.Right.Evaluate (Environment, With_Delay));
+      for Arg of Arguments loop
+         New_Arguments.Append (Arg);
+      end loop;
+
+      return Expression.Left.Apply (Environment, New_Arguments, With_Delay);
+   end Apply;
+
+   -----------
+   -- Apply --
+   -----------
+
+   overriding function Apply
+     (Expression  : Behavior_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class
+   is
+      pragma Unreferenced (Environment, Arguments, With_Delay);
+   begin
+      return (raise Constraint_Error with
+                "cannot apply behaviour " & Expression.To_String);
+   end Apply;
+
+   -----------
+   -- Apply --
+   -----------
+
+   overriding function Apply
+     (Expression  : Operator_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class
+   is
+      pragma Unreferenced (Environment, Arguments, With_Delay);
+   begin
+      return (raise Constraint_Error with
+                "cannot apply operator " & Expression.To_String);
+   end Apply;
+
+   -----------
+   -- Apply --
+   -----------
+
+   overriding function Apply
+     (Expression  : Delay_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      Arguments   : Concorde.Values.Vectors.Vector;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class
+   is
+      pragma Unreferenced (With_Delay);
+   begin
+      return Expression.Inner.Apply
+        (Environment, Arguments, Expression.Delay_Time);
+   end Apply;
+
    -------------------------
    -- Behavior_Expression --
    -------------------------
@@ -206,6 +408,23 @@ package body Concorde.Expressions is
            (Delay_Time => Age,
             Inner      => Inner));
    end Delay_Expression;
+
+   --------------
+   -- Evaluate --
+   --------------
+
+   overriding function Evaluate
+     (Expression  : Application_Expression_Type;
+      Environment : Concorde.Values.Environment_Interface'Class;
+      With_Delay  : Real_Time := 0.0)
+      return Concorde.Values.Value_Interface'Class
+   is
+      Arguments : Concorde.Values.Vectors.Vector;
+   begin
+      Arguments.Append (Expression.Right.Evaluate (Environment, With_Delay));
+      return Expression.Left.Apply (Environment, Arguments, With_Delay);
+   end Evaluate;
+
    --------------
    -- Evaluate --
    --------------
@@ -520,10 +739,13 @@ package body Concorde.Expressions is
                  when '^' => "**");
    begin
       return (if Expression.Left = null then ""
-              else Expression.Left.To_String)
+              elsif Expression.Left.all in Identifier_Expression_Type'Class
+              or else Expression.Left.all in Value_Expression_Type'Class
+              then Expression.Left.To_String & " "
+              else "(" & Expression.Left.To_String & ") ")
         & Op
         & (if Expression.Right = null then ""
-           else Expression.Right.To_String);
+           else " " & Expression.Right.To_String);
    end To_String;
 
    ---------------

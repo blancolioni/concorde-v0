@@ -24,14 +24,12 @@ package body Concorde.Configure.Star_Systems is
    Log_Generation : constant Boolean := False;
 
    use all type Concorde.Db.World_Composition;
-
    subtype World_Composition is Concorde.Db.World_Composition;
 
    subtype Rocky_World is World_Composition range Ice .. Rock_Iron;
 
-   type Orbit_Zone is
-     (Red, Yellow, Green, Blue, Black);
-
+   use all type Concorde.Db.Stellar_Orbit_Zone;
+   subtype Orbit_Zone is Concorde.Db.Stellar_Orbit_Zone;
    subtype Planetary_Zone is Orbit_Zone range Yellow .. Black;
 
    type Atmosphere_Class is (None, Trace, Thin, Standard, Dense);
@@ -944,14 +942,16 @@ package body Concorde.Configure.Star_Systems is
               Identifier          => Concorde.Identifiers.Next_Identifier,
               Composition         => Composition,
               Climate             => Climate,
+              Orbit_Zone          => Zone,
               Gas_Giant           => Gas_Giant,
+              Age                 => Star.Age,
               Habitability        => Habitability,
               Surface_Pressure    => Current_Pressure * Earth_Surface_Pressure,
               Average_Temperature => Current_Temperature,
               Hydrosphere         => Hydrosphere,
               Life                => (if Life_Bearing
                                       then Life_Complexity_Type'Pos
-                                        (Life_Complexity)
+                                        (Life_Complexity) + 1
                                       else 0),
               Smoothness          => Smoothness,
               Elevation_Range     => Elevation_Range,
