@@ -425,6 +425,7 @@ package body Concorde.Network is
          Message  => Message);
    end Log;
 
+   ---------------------
    -- Remove_Observer --
    ---------------------
 
@@ -519,16 +520,6 @@ package body Concorde.Network is
 
    begin
 
-        Concorde.Db.Derived_Metric.Scan_By_Tag
-      loop
-         declare
-            Tag   : constant String := Metric.Tag;
-            Value : constant Real := Current_Value (Tag);
-         begin
-            Log (Tag & " = " & Image (Value));
-         end;
-      end loop;
-
       for Metric of
         Concorde.Db.Derived_Metric.Scan_By_Tag
       loop
@@ -539,8 +530,6 @@ package body Concorde.Network is
             Set_New_Value
               (Network, Tag, Value);
             Commit_New_Value (Network, Tag);
-
-            Log (Tag & " = " & Image (Value));
 
          exception
 
