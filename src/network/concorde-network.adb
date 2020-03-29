@@ -397,13 +397,11 @@ package body Concorde.Network is
    begin
       for Calculation of Concorde.Db.Calculation.Scan_By_Identifier loop
          if Calculation.Expression /= "" then
-            Log (Calculation.Expression);
             declare
                Expr : constant Concorde.Expressions.Expression_Type :=
                         Concorde.Parser.Parse_Expression
                           (Calculation.Expression);
             begin
-               Log (Expr.To_String);
                Expression_Cache.Insert
                  (Key      => Calculation.Identifier,
                   New_Item => (Expression => Expr));
@@ -426,6 +424,9 @@ package body Concorde.Network is
          Category => "",
          Message  => Message);
    end Log;
+
+   -- Remove_Observer --
+   ---------------------
 
    procedure Remove_Observer
      (Network    : Concorde.Db.Network_Reference;
@@ -458,10 +459,18 @@ package body Concorde.Network is
       Node_Value    : constant Concorde.Db.Network_Value.Network_Value_Type :=
                         Concorde.Db.Network_Value.Get_By_Network_Value
                           (Network, Definition.Get_Node_Reference);
+      Clamped_Value : constant Real :=
+                        (case Definition.Content is
+                            when Concorde.Db.Rating =>
+                              Signed_Unit_Clamp (Value),
+                            when Concorde.Db.Setting =>
+                              Unit_Clamp (Value),
+                            when Concorde.Db.Quantity | Concorde.Db.Money =>
+                               Value);
    begin
       Concorde.Db.Network_Value.Update_Network_Value
         (Node_Value.Get_Network_Value_Reference)
-        .Set_New_Value (Value)
+        .Set_New_Value (Clamped_Value)
         .Done;
    end Set_New_Value;
 
@@ -509,6 +518,16 @@ package body Concorde.Network is
       end Update_Value;
 
    begin
+
+        Concorde.Db.Derived_Metric.Scan_By_Tag
+      loop
+         declare
+            Tag   : constant String := Metric.Tag;
+            Value : constant Real := Current_Value (Tag);
+         begin
+            Log (Tag & " = " & Image (Value));
+         end;
+      end loop;
 
       for Metric of
         Concorde.Db.Derived_Metric.Scan_By_Tag
