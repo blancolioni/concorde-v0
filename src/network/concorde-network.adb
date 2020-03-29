@@ -334,44 +334,54 @@ package body Concorde.Network is
          for History of
            Concorde.Db.Historical_Value
              .Select_Historical_Value_From_Bounded_By_From
-               (Network, Node, Start, Clock)
+               (Network, Node, Concorde.Calendar.Start, Start)
          loop
-            declare
-               Full_Duration : constant Duration :=
-                                 History.To - History.From;
-               Partial_Duration : constant Duration :=
-                                    Start - History.From;
-               Scale            : constant Real :=
-                                    Real (Partial_Duration)
-                                    / Real (Full_Duration);
-               Result           : constant Real :=
-                                    History.Value
-                                      + (History.Next - History.Value)
-                                    * Scale;
-            begin
-               Concorde.Logging.Log
-                 (Actor    => "network",
-                  Location => Concorde.Db.Node.Get (Node).Tag,
-                  Category => "inertial value",
-                  Message  =>
-                    "inertia=" & Image (Inertia)
-                  & "; date=" & Image (Start, True)
-                  & "; interval="
-                  & Image (History.From, True)
-                  & " .. "
-                  & Image (History.To, True)
-                  & "; scale="
-                  & Image (Scale)
-                  & "; range="
-                  & Image (History.Value)
-                  & " .. "
-                  & Image (History.Next)
-                  & "; current="
-                  & Image (Current_Value (Network, Node))
-                  & "; inertial value="
-                  & Image (Result));
-               return Result;
-            end;
+            Concorde.Logging.Log
+              (Actor    => "network",
+               Location => Concorde.Db.Node.Get (Node).Tag,
+               Category => "inertial value",
+               Message  =>
+                 "from=" & Image (History.From, True)
+               & "; to=" & Image (History.To, True));
+
+            if History.To > Start then
+               declare
+                  Full_Duration    : constant Duration :=
+                                       History.To - History.From;
+                  Partial_Duration : constant Duration :=
+                                       Start - History.From;
+                  Scale            : constant Real :=
+                                       Real (Partial_Duration)
+                                       / Real (Full_Duration);
+                  Result           : constant Real :=
+                                       History.Value
+                                         + (History.Next - History.Value)
+                                       * Scale;
+               begin
+                  Concorde.Logging.Log
+                    (Actor    => "network",
+                     Location => Concorde.Db.Node.Get (Node).Tag,
+                     Category => "inertial value",
+                     Message  =>
+                       "inertia=" & Image (Inertia)
+                     & "; date=" & Image (Start, True)
+                     & "; interval="
+                     & Image (History.From, True)
+                     & " .. "
+                     & Image (History.To, True)
+                     & "; scale="
+                     & Image (Scale)
+                     & "; range="
+                     & Image (History.Value)
+                     & " .. "
+                     & Image (History.Next)
+                     & "; current="
+                     & Image (Current_Value (Network, Node))
+                     & "; inertial value="
+                     & Image (Result));
+                  return Result;
+               end;
+            end if;
          end loop;
 
          return Current_Value (Network, Node);
