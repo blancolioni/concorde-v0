@@ -41,6 +41,8 @@ manufacturing = 0.2
 service = 0.4
 knowledge = 0.2
 administration = 0.4
+basic-electronics-share = 0.5
+basic-electronics-supply = 100K
 
 ships = {
    scout = 2
@@ -49,7 +51,7 @@ ships = {
 }
 
 capital-sector = {
-   administration = 10 
+   administration = 10
    commercial = 100
    industrial = 100
    residential = 1000

@@ -1,3 +1,5 @@
+with Concorde.Configure.Metrics;
+
 with Concorde.Db.Group_Influence;
 with Concorde.Db.Metric;
 with Concorde.Db.Pop_Group;
@@ -6,6 +8,12 @@ package body Concorde.Configure.Pop_Groups is
 
    procedure Configure_Pop_Group
      (Config : Tropos.Configuration);
+
+   procedure Configure_Pop_Group_Metric
+     (Pop_Group_Tag : String;
+      Metric_Tag    : String;
+      Commodity_Tag : String;
+      Expression    : String);
 
    procedure Configure_Influence
      (Config : Tropos.Configuration);
@@ -81,7 +89,32 @@ package body Concorde.Configure.Pop_Groups is
          Metric ("base-income", Concorde.Db.Money);
       end if;
 
+      for Demand_Config of Config.Child ("demand") loop
+         Configure_Pop_Group_Metric
+           (Pop_Group_Tag => Config.Config_Name,
+            Metric_Tag    => "demand",
+            Commodity_Tag => Demand_Config.Config_Name,
+            Expression    => Demand_Config.Value);
+      end loop;
+
    end Configure_Pop_Group;
+
+   --------------------------------
+   -- Configure_Pop_Group_Metric --
+   --------------------------------
+
+   procedure Configure_Pop_Group_Metric
+     (Pop_Group_Tag : String;
+      Metric_Tag    : String;
+      Commodity_Tag : String;
+      Expression    : String)
+   is
+      pragma Unreferenced (Pop_Group_Tag);
+   begin
+      Concorde.Configure.Metrics.Update_Metric
+        (Metric_Tag    => Commodity_Tag & "-" & Metric_Tag,
+         Calculation   => Expression);
+   end Configure_Pop_Group_Metric;
 
    --------------------------
    -- Configure_Pop_Groups --

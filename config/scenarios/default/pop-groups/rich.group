@@ -8,3 +8,8 @@ politics = {
   society = { position = 0.2 strength = 0.5 }
   spending = { position = 0.1 strength = 0.8 }
 }
+
+demand = {
+    food = [ rich-population * 1.2 ]
+    basic-electronics = [ rich-population * (rich-income + 1) ** 2 ]
+}

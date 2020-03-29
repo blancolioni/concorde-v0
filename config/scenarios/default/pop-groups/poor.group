@@ -11,3 +11,8 @@ politics = {
 influences = {
   self-employed = -1
 }
+
+demand = {
+    food = [ poor-population * (min (1 + poor-income) 1) * (1 - food-price / 2) ]
+    basic-electronics = [ poor-population * (max poor-income 0) ** 2 * ((1 - basic-electronics-price) / 2 + 0.1) ]
+}

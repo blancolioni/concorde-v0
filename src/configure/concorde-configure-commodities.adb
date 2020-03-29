@@ -138,6 +138,7 @@ package body Concorde.Configure.Commodities is
       Metrics_Config : Tropos.Configuration)
    is
    begin
+
       for Metric_Config of Metrics_Config loop
          declare
             Content : constant Concorde.Db.Node_Value_Type :=

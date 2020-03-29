@@ -56,6 +56,9 @@ package body Concorde.Colonies.Create is
       Zone_Config : Tropos.Configuration;
       Sizes       : in out Sector_Size_Maps.Map);
 
+   function Image (X : Real) return String
+                   renames Concorde.Real_Images.Approximate_Image;
+
    -------------------------
    -- Create_Initial_Pops --
    -------------------------
@@ -541,6 +544,8 @@ package body Concorde.Colonies.Create is
             raise Constraint_Error with
               "redefined: " & Name;
          end if;
+         Ada.Text_IO.Put_Line
+           ("override: " & Name & " = " & Image (Value));
          Overrides.Insert (Name, Value);
       end Set_Override;
 
@@ -737,7 +742,8 @@ package body Concorde.Colonies.Create is
 
       for Zone of Concorde.Db.Zone.Scan_By_Tag loop
          if Sector_Size.Contains (Zone.Tag) then
-            Set_Override (Zone.Tag, Sector_Size.Element (Zone.Tag));
+            Set_Override
+              (Zone.Tag, 1000.0 * Sector_Size.Element (Zone.Tag));
          end if;
       end loop;
 

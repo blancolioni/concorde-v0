@@ -12,3 +12,8 @@ politics = {
 influences = {
   state-employees = -1 trade-unionist = -1
 }
+
+demand = {
+    food = [ megarich-population * 1.5 ]
+    basic-electronics = [ megarich-population * 2 ]
+}

@@ -1,8 +1,30 @@
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
+with Ada.Strings.Unbounded;
+
+with WL.String_Maps;
+
 with Tropos.Reader;
 
+with Concorde.Identifiers;
+
+with Concorde.Db.Calculation;
+with Concorde.Db.Derived_Metric;
 with Concorde.Db.Metric;
 
 package body Concorde.Configure.Metrics is
+
+   package String_Lists is
+     new Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
+
+   package String_List_Maps is
+     new WL.String_Maps (String_Lists.List, String_Lists."=");
+
+   Metric_Map : String_List_Maps.Map;
+
+   procedure Create_Derived_Metric
+     (Metric_Tag : String;
+      Content    : Concorde.Db.Node_Value_Type;
+      Expression : String);
 
    -----------------------
    -- Configure_Metrics --
@@ -32,5 +54,78 @@ package body Concorde.Configure.Metrics is
             Content => Concorde.Db.Rating);
       end loop;
    end Configure_Metrics;
+
+   ---------------------------
+   -- Create_Derived_Metric --
+   ---------------------------
+
+   procedure Create_Derived_Metric
+     (Metric_Tag : String;
+      Content    : Concorde.Db.Node_Value_Type;
+      Expression : String)
+   is
+      Calculation : constant Concorde.Db.Calculation_Reference :=
+                      Concorde.Db.Calculation.Create
+                        (Identifier => Concorde.Identifiers.Next_Identifier,
+                         Node       => Concorde.Db.Null_Node_Reference,
+                         Expression => Expression);
+      Metric      : constant Concorde.Db.Derived_Metric_Reference :=
+                      Concorde.Db.Derived_Metric.Create
+                        (Content     => Content,
+                         Tag         => Metric_Tag,
+                         Calculation => Calculation);
+   begin
+      Concorde.Db.Calculation.Update_Calculation (Calculation)
+        .Set_Node (Concorde.Db.Derived_Metric.Get (Metric)
+                   .Get_Node_Reference)
+        .Done;
+   end Create_Derived_Metric;
+
+   ------------------
+   -- Save_Metrics --
+   ------------------
+
+   procedure Save_Metrics is
+      use Ada.Strings.Unbounded;
+   begin
+      for Position in Metric_Map.Iterate loop
+         declare
+            Metric_Tag : constant String :=
+                           String_List_Maps.Key (Position);
+            List       : constant String_Lists.List :=
+                           String_List_Maps.Element (Position);
+            Expression : Unbounded_String;
+         begin
+            for Expr of List loop
+               if Expression = Null_Unbounded_String then
+                  Expression := "(" & To_Unbounded_String (Expr) & ")";
+               else
+                  Expression := Expression & " + (" & Expr & ")";
+               end if;
+            end loop;
+
+            Create_Derived_Metric
+              (Metric_Tag, Concorde.Db.Quantity,
+               To_Single_Line (To_String (Expression)));
+
+         end;
+      end loop;
+   end Save_Metrics;
+
+   -------------------
+   -- Update_Metric --
+   -------------------
+
+   procedure Update_Metric
+     (Metric_Tag    : String;
+      Calculation   : String)
+   is
+   begin
+      if not Metric_Map.Contains (Metric_Tag) then
+         Metric_Map.Insert (Metric_Tag, String_Lists.Empty_List);
+      end if;
+
+      Metric_Map (Metric_Tag).Append (Calculation);
+   end Update_Metric;
 
 end Concorde.Configure.Metrics;
