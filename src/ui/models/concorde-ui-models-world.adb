@@ -48,8 +48,9 @@ package body Concorde.UI.Models.World is
       end record;
 
    function Project
-     (Latitude  : Real;
-      Longitude : Real)
+     (Latitude   : Real;
+      Longitude  : Real;
+      Positive_X : Boolean)
       return Map_Point;
 
    procedure Draw_World
@@ -91,7 +92,7 @@ package body Concorde.UI.Models.World is
          Model.Set_Fill (Fill);
 
          if not Fill then
-            Model.Set_Color ((0.0, 0.0, 0.0, 1.0));
+            Model.Set_Color ((0.75, 0.75, 0.75, 1.0));
          end if;
 
          for Sector of Model.Sectors loop
@@ -104,6 +105,7 @@ package body Concorde.UI.Models.World is
                                Arctan (Sector.Centre.Y, Sector.Centre.X)
                                - Long_0;
                First       : Boolean := True;
+               First_Point : Map_Point;
             begin
                if Centre_Long < -Pi then
                   Centre_Long := Centre_Long + 2.0 * Pi;
@@ -134,14 +136,11 @@ package body Concorde.UI.Models.World is
 
                for Pt of Boundary loop
                   declare
-                     use Nazar;
                      Long    : constant Real :=
                                  Arctan (Pt.Y, Pt.X) - Long_0;
                      Lat     : constant Real := Arcsin (Pt.Z);
-                     Cos_Lat : constant Nazar_Float :=
-                                 Nazar_Float (Cos (Lat));
-                     Map_Pt  : Map_Point :=
-                                 Project (Lat, Long);
+                     Map_Pt  : constant Map_Point :=
+                                 Project (Lat, Long, Centre_Long > 0.0);
                   begin
 --                       Concorde.Logging.Log
 --                         (Actor    => "model",
@@ -165,36 +164,16 @@ package body Concorde.UI.Models.World is
 --                          & Image (Real (Map_Pt.Y))
 --                          & ")");
 --
-                     if Centre_Long < 0.0
-                       and then Real (Map_Pt.X) > Pi / 2.0 - abs Lat
-                     then
-                        Map_Pt.X := Map_Pt.X - 4.0 * Sqrt_2 * Cos_Lat;
---                          Concorde.Logging.Log
---                            (Actor    => "model",
---                             Location => "world",
---                             Category => "draw",
---                             Message  =>
---                               "    move x to " & Image (Real (Map_Pt.X)));
-                     elsif Centre_Long > 0.0
-                       and then Real (Map_Pt.X) < -Pi / 2.0 + abs Lat
-                     then
-                        Map_Pt.X := Map_Pt.X + 4.0 * Sqrt_2 * Cos_Lat;
---                          Concorde.Logging.Log
---                            (Actor    => "model",
---                             Location => "world",
---                             Category => "draw",
---                             Message  =>
---                               "    move x to " & Image (Real (Map_Pt.X)));
-                     end if;
-
                      if First then
                         Model.Move_To (Map_Pt.X, Map_Pt.Y);
                         First := False;
+                        First_Point := Map_Pt;
                      else
                         Model.Line_To (Map_Pt.X, Map_Pt.Y);
                      end if;
                   end;
                end loop;
+               Model.Line_To (First_Point.X, First_Point.Y);
                Model.Render;
             end;
          end loop;
@@ -206,8 +185,9 @@ package body Concorde.UI.Models.World is
    -------------
 
    function Project
-     (Latitude  : Real;
-      Longitude : Real)
+     (Latitude   : Real;
+      Longitude  : Real;
+      Positive_X : Boolean)
       return Map_Point
    is
       use Nazar;
@@ -217,6 +197,8 @@ package body Concorde.UI.Models.World is
       Theta : Real := Latitude;
       Sin_Lat : constant Real := Sin (Latitude);
       Pi_Sin_Lat : constant Real := Pi * Sin_Lat;
+      Abs_Lat    : constant Nazar_Float :=
+                     Nazar_Float (abs Latitude);
       K : constant := 2.0 * Sqrt_2 / Pi;
 
    begin
@@ -235,12 +217,25 @@ package body Concorde.UI.Models.World is
          end loop;
       end if;
 
-      return Map_Point'
-        (X =>
-           Nazar_Float
-             (K * Longitude * Cos (Theta)),
-         Y =>
-           Nazar_Float (Sqrt_2 * Sin (Theta)));
+      declare
+         Cos_Theta : constant Nazar_Float :=
+                       Nazar_Float (Cos (Theta));
+         X         : Nazar_Float :=
+                       Nazar_Float
+                         (K * Longitude) * Cos_Theta;
+         Y         : constant Nazar_Float :=
+                       Nazar_Float (Sqrt_2 * Sin (Theta));
+
+      begin
+         if Positive_X and then X < -Pi / 2.0 + Abs_Lat then
+            X := X + 4.0 * Sqrt_2 * Cos_Theta;
+         elsif not Positive_X and then X > Pi / 2.0 - Abs_Lat then
+            X := X - 4.0 * Sqrt_2 * Cos_Theta;
+         end if;
+
+         return (X, Y);
+      end;
+
    end Project;
 
    -----------------
