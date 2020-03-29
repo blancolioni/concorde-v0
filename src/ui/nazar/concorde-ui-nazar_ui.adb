@@ -11,7 +11,7 @@ with Concorde.UI.Models.Console;
 with Concorde.UI.Models.Galaxy;
 --  with Concorde.UI.Models.Market;
 with Concorde.UI.Models.Network;
---  with Concorde.UI.Models.Population;
+with Concorde.UI.Models.World;
 
 with Concorde.Paths;
 
@@ -36,6 +36,7 @@ package body Concorde.UI.Nazar_UI is
       record
          Top     : Nazar.Views.Nazar_View;
          Galaxy  : Nazar.Controllers.Draw.Nazar_Draw_Controller_Record;
+         World   : Nazar.Controllers.Draw.Nazar_Draw_Controller_Record;
          Console : Nazar.Controllers.Console.Nazar_Console_Controller_Record;
       end record;
 
@@ -82,6 +83,13 @@ package body Concorde.UI.Nazar_UI is
          View  =>
            Nazar.Views.Draw.Nazar_Draw_View
              (Builder.Get_View ("galaxy")));
+
+      Result.World.Start_Draw
+        (Model =>
+           Models.World.World_Model (Faction, Faction.Capital_World),
+         View  =>
+           Nazar.Views.Draw.Nazar_Draw_View
+             (Builder.Get_View ("world")));
 
       Builder.Get_View ("faction-label").Set_Property ("text", Faction.Name);
       Builder.Get_View ("date-label").Set_Model

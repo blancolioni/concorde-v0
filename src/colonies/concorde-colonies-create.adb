@@ -1,7 +1,6 @@
-with Ada.Text_IO;
-
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Vectors;
+with Ada.Text_IO;
 
 with WL.String_Maps;
 with WL.String_Sets;
@@ -57,7 +56,8 @@ package body Concorde.Colonies.Create is
       Sizes       : in out Sector_Size_Maps.Map);
 
    function Image (X : Real) return String
-                   renames Concorde.Real_Images.Approximate_Image;
+                   renames Concorde.Real_Images.Approximate_Image
+     with Unreferenced;
 
    -------------------------
    -- Create_Initial_Pops --
@@ -544,8 +544,6 @@ package body Concorde.Colonies.Create is
             raise Constraint_Error with
               "redefined: " & Name;
          end if;
-         Ada.Text_IO.Put_Line
-           ("override: " & Name & " = " & Image (Value));
          Overrides.Insert (Name, Value);
       end Set_Override;
 
