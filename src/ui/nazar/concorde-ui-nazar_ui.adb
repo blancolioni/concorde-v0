@@ -9,7 +9,6 @@ with Nazar.Controllers.Draw;
 with Concorde.UI.Models.Colonies;
 with Concorde.UI.Models.Console;
 with Concorde.UI.Models.Galaxy;
---  with Concorde.UI.Models.Market;
 with Concorde.UI.Models.Network;
 with Concorde.UI.Models.World;
 
@@ -22,9 +21,6 @@ with Concorde.Db.Faction;
 with Concorde.Handles.Faction;
 
 with Concorde.Db.Policy;
-
---  with Concorde.Db.Market;
---  with Concorde.Handles.Market;
 
 with Concorde.UI.Models.Current_Cash;
 with Concorde.UI.Models.Current_Date;
@@ -117,6 +113,11 @@ package body Concorde.UI.Nazar_UI is
       if Builder.Has_View ("colony-policies") then
          Builder.Get_View ("colony-policies").Set_Model
            (Concorde.UI.Models.Colonies.Colony_Policy_Model (Colony));
+      end if;
+
+      if Builder.Has_View ("colony-market") then
+         Builder.Get_View ("colony-market").Set_Model
+           (Concorde.UI.Models.Colonies.Colony_Market_Model (Colony));
       end if;
 
       for Policy of

@@ -1,4 +1,29 @@
 food = {
+    metrics = {
+    
+        supply = {
+            content = quantity
+            value = [ 100 * farming * (1 + environment) ]
+        }
+        
+        availability = {
+            content = rating
+            
+            value = [ 2 * food-supply / max 1 food-demand - 1 ]
+
+            effect = { 
+                poor = [ x - 0.8 ]
+                middle-class = [ x / 2 - 0.4 ]
+                rich = [ x / 3 - 0.2 ]
+                health = [ x - 1]
+            }
+        }
+        
+        pressure = {
+            content = rating
+            value = [ food-demand / max 1 food-supply - 1 ]
+        }
+    }
 }
 
 basic-electronics = {
@@ -15,7 +40,7 @@ basic-electronics = {
         
         share = {
             content = rating
-            value = 0.5
+            value = [ delay 30 ((1 + basic-electronics-pressure) / 16) ]
         }
         
         supply = {

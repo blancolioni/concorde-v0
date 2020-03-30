@@ -1,8 +1,21 @@
 with Concorde.UI.Models.Colonies.Factions;
+with Concorde.UI.Models.Colonies.Markets;
 with Concorde.UI.Models.Colonies.Policies;
 with Concorde.UI.Models.Colonies.Pop_Groups;
 
 package body Concorde.UI.Models.Colonies is
+
+   -------------------------
+   -- Colony_Market_Model --
+   -------------------------
+
+   function Colony_Market_Model
+     (Colony : Concorde.Handles.Colony.Colony_Handle)
+      return Nazar.Models.Table.Nazar_Table_Model
+   is
+   begin
+      return Markets.Model (Colony);
+   end Colony_Market_Model;
 
    -------------------------
    -- Colony_Policy_Model --
