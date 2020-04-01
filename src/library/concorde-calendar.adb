@@ -2,6 +2,14 @@ with Concorde.Db.Calendar;
 
 package body Concorde.Calendar is
 
+   Year_Zero     : constant := 2900;
+   Start_Clock   : constant Time :=
+                     100 * 360 * 84_600;
+   Current_Clock : Time := Start_Clock;
+
+   function Clock return Time
+   is (Current_Clock);
+
    type Time_Element is (Seconds, Minutes, Hours,
                          Days, Months, Years);
 

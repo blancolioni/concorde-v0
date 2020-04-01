@@ -138,14 +138,6 @@ private
    pragma Import (Intrinsic, ">");
    pragma Import (Intrinsic, ">=");
 
-   Year_Zero     : constant := 2900;
-   Start_Clock   : constant Time :=
-                     55 * 360 * 84_600;
-   Current_Clock : Time := Start_Clock;
-
-   function Clock return Time
-   is (Current_Clock);
-
    function Sub_Second (Date : Time) return Second_Duration
    is (0.0);
 
