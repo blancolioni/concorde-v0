@@ -61,7 +61,7 @@ basic-electronics = {
         
         pressure = {
             content = rating
-            value = [ basic-electronics-demand / basic-electronics-supply - 1 ]
+            value = [ smooth 20 (basic-electronics-demand / max 1 basic-electronics-supply - 1) ]
         }
                 
     }

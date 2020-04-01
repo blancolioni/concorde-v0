@@ -38,9 +38,10 @@ package body Concorde.Parser is
      new Concorde.Values.Environment_Interface with null record;
 
    overriding function Get
-     (Environment : Empty_Environment_Type;
-      Name        : Concorde.Symbols.Symbol_Id;
-      With_Delay  : Real_Time := 0.0)
+     (Environment    : Empty_Environment_Type;
+      Name           : Concorde.Symbols.Symbol_Id;
+      With_Delay     : Real_Time := 0.0;
+      With_Smoothing : Real_Time := 0.0)
       return Concorde.Values.Value_Interface'Class;
 
    function Parse_Application
@@ -59,7 +60,7 @@ package body Concorde.Parser is
    function At_Expression return Boolean
    is (Tok in Tok_Integer_Constant | Tok_Float_Constant
        | Tok_String_Constant | Tok_Character_Constant
-       | Tok_Identifier | Tok_Sin | Tok_Delay
+       | Tok_Identifier | Tok_Sin | Tok_Delay | Tok_Smooth
        | Tok_Left_Paren);
 
    ---------
@@ -67,12 +68,13 @@ package body Concorde.Parser is
    ---------
 
    overriding function Get
-     (Environment : Empty_Environment_Type;
-      Name        : Concorde.Symbols.Symbol_Id;
-      With_Delay  : Real_Time := 0.0)
+     (Environment    : Empty_Environment_Type;
+      Name           : Concorde.Symbols.Symbol_Id;
+      With_Delay     : Real_Time := 0.0;
+      With_Smoothing : Real_Time := 0.0)
       return Concorde.Values.Value_Interface'Class
    is
-      pragma Unreferenced (Environment);
+      pragma Unreferenced (Environment, With_Smoothing);
       use type Concorde.Symbols.Symbol_Id;
    begin
       if Name = Concorde.Symbols.Get_Symbol ("time") then
@@ -161,32 +163,38 @@ package body Concorde.Parser is
             end if;
             return Expr;
          end;
-      elsif Tok = Tok_Delay then
-         Scan;
-         if Tok = Tok_Integer_Constant then
-            declare
-               Delay_Count : constant Natural :=
-                               Natural'Value (Tok_Text);
-            begin
-               Scan;
+      elsif Tok = Tok_Delay or else Tok = Tok_Smooth then
+         declare
+            Smooth : constant Boolean := Tok = Tok_Smooth;
+         begin
+            Scan;
+            if Tok = Tok_Integer_Constant then
                declare
-                  Delay_Formula : constant Expression_Type :=
-                                    Parse_Atomic_Expression;
+                  Days : constant Natural :=
+                           Natural'Value (Tok_Text);
                begin
-                  return Result
-                    (Delay_Expression
-                       (Age   => Real_Time (Delay_Count),
-                        Inner => Delay_Formula));
+                  Scan;
+                  declare
+                     Age   : constant Real_Time := Real_Time (Days);
+                     Inner : constant Expression_Type :=
+                               Parse_Atomic_Expression;
+                     Expr          : constant Expression_Type :=
+                                       (if Smooth
+                                        then Smooth_Expression (Age, Inner)
+                                        else Delay_Expression (Age, Inner));
+                  begin
+                     return Result (Expr);
+                  end;
                end;
-            end;
-         else
-            Error ("missing delay count");
-            while Tok_Indent > 1 loop
-               Scan;
-            end loop;
-            return Concorde.Expressions.Value_Expression
-              (Concorde.Values.Constant_Value (0.0));
-         end if;
+            else
+               Error ("missing day count");
+               while Tok_Indent > 1 loop
+                  Scan;
+               end loop;
+               return Concorde.Expressions.Value_Expression
+                 (Concorde.Values.Constant_Value (0.0));
+            end if;
+         end;
       elsif Tok = Tok_Sin then
          Scan;
          declare

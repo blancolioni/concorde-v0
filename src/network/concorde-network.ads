@@ -15,13 +15,15 @@ package Concorde.Network is
    function Inertial_Value
      (Network : Concorde.Db.Network_Reference;
       Tag     : String;
-      Inertia : Non_Negative_Real)
+      Inertia   : Non_Negative_Real;
+      Smoothing : Non_Negative_Real)
       return Real;
 
    function Inertial_Value
-     (Network : Concorde.Db.Network_Reference;
-      Node    : Concorde.Db.Node_Reference;
-      Inertia : Non_Negative_Real)
+     (Network   : Concorde.Db.Network_Reference;
+      Node      : Concorde.Db.Node_Reference;
+      Inertia   : Non_Negative_Real;
+      Smoothing : Non_Negative_Real)
       return Real;
 
    procedure Create_Initial_Network

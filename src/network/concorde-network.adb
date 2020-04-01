@@ -51,9 +51,10 @@ package body Concorde.Network is
       end record;
 
    overriding function Get
-     (Environment : Network_Environment;
-      Symbol      : Concorde.Symbols.Symbol_Id;
-      With_Delay  : Real := 0.0)
+     (Environment    : Network_Environment;
+      Symbol         : Concorde.Symbols.Symbol_Id;
+      With_Delay     : Real := 0.0;
+      With_Smoothing : Real := 0.0)
       return Concorde.Values.Value_Interface'Class;
 
    function Save_History (Node : Concorde.Db.Node.Node_Type) return Boolean
@@ -102,38 +103,50 @@ package body Concorde.Network is
    is
       Definition    : constant Concorde.Db.Node.Node_Type :=
                         Concorde.Db.Node.Get_By_Tag (Tag);
-      Node : constant Concorde.Db.Node_Reference :=
-               Definition.Get_Node_Reference;
+      Node          : constant Concorde.Db.Node_Reference :=
+                        Definition.Get_Node_Reference;
       Node_Value    : constant Concorde.Db.Network_Value.Network_Value_Type :=
                         Concorde.Db.Network_Value.Get_By_Network_Value
                           (Network, Node);
+      New_History   : Boolean := True;
    begin
       if Node_Value.Current_Value /= Node_Value.New_Value then
-         if Save_History (Definition) then
+         if True or else Save_History (Definition) then
             declare
+               use Concorde.Calendar;
                use Concorde.Db.Historical_Value;
                Previous : constant Historical_Value_Type :=
                             First_By_Previous_Historical_Value
                               (Network, Node, True);
             begin
                if Previous.Has_Element then
-                  Update_Historical_Value
-                    (Previous.Get_Historical_Value_Reference)
-                    .Set_To (Concorde.Calendar.Clock)
-                    .Set_Is_Previous (False)
-                    .Set_Next (Node_Value.New_Value)
-                    .Done;
+                  if Previous.From < Concorde.Calendar.Clock then
+                     Update_Historical_Value
+                       (Previous.Get_Historical_Value_Reference)
+                       .Set_To (Concorde.Calendar.Clock)
+                       .Set_Is_Previous (False)
+                       .Set_Next (Node_Value.New_Value)
+                       .Done;
+                  else
+                     Update_Historical_Value
+                       (Previous.Get_Historical_Value_Reference)
+                       .Set_Value (Node_Value.New_Value)
+                       .Done;
+                     New_History := False;
+                  end if;
                end if;
             end;
 
-            Concorde.Db.Historical_Value.Create
-              (Network     => Network,
-               Node        => Node,
-               Is_Previous => True,
-               From        => Concorde.Calendar.Clock,
-               To          => Concorde.Calendar.Clock,
-               Next        => 0.0,
-               Value       => Node_Value.New_Value);
+            if New_History then
+               Concorde.Db.Historical_Value.Create
+                 (Network     => Network,
+                  Node        => Node,
+                  Is_Previous => True,
+                  From        => Concorde.Calendar.Clock,
+                  To          => Concorde.Calendar.Clock,
+                  Next        => 0.0,
+                  Value       => Node_Value.New_Value);
+            end if;
          end if;
 
          Concorde.Db.Network_Value.Update_Network_Value
@@ -164,7 +177,7 @@ package body Concorde.Network is
                Current_Value => Value,
                New_Value     => Value);
 
-            if Save_History (Node) then
+            if True or else Save_History (Node) then
                Concorde.Db.Historical_Value.Create
                  (Network     => Network,
                   Node        => Node.Get_Node_Reference,
@@ -247,7 +260,9 @@ package body Concorde.Network is
                 else raise Constraint_Error with
                   "calculation not loaded: [" & Id & "]");
    begin
-      return Expr.Evaluate (Env).To_Real;
+      Log ("evaluate: " & Expr.To_String);
+
+      return Expr.Evaluate (Env, Concorde.Expressions.Default_Context).To_Real;
    exception
       when E : others =>
          raise Constraint_Error with
@@ -260,9 +275,10 @@ package body Concorde.Network is
    ---------
 
    overriding function Get
-     (Environment : Network_Environment;
-      Symbol      : Concorde.Symbols.Symbol_Id;
-      With_Delay  : Real := 0.0)
+     (Environment    : Network_Environment;
+      Symbol         : Concorde.Symbols.Symbol_Id;
+      With_Delay     : Real := 0.0;
+      With_Smoothing : Real := 0.0)
       return Concorde.Values.Value_Interface'Class
    is
       use type Concorde.Db.Node_Reference;
@@ -278,7 +294,7 @@ package body Concorde.Network is
                 then (raise Constraint_Error with
                     "get: no such node: " & Name)
                 else Inertial_Value
-                  (Environment.Network, Node, With_Delay));
+                  (Environment.Network, Node, With_Delay, With_Smoothing));
    begin
       return Concorde.Values.Constant_Value (X);
    end Get;
@@ -290,14 +306,16 @@ package body Concorde.Network is
    function Inertial_Value
      (Network : Concorde.Db.Network_Reference;
       Tag     : String;
-      Inertia : Non_Negative_Real)
+      Inertia   : Non_Negative_Real;
+      Smoothing : Non_Negative_Real)
       return Real
    is
    begin
       return Inertial_Value
-        (Network => Network,
-         Node    => Concorde.Db.Node.Get_Reference_By_Tag (Tag),
-         Inertia => Inertia);
+        (Network   => Network,
+         Node      => Concorde.Db.Node.Get_Reference_By_Tag (Tag),
+         Inertia   => Inertia,
+         Smoothing => Smoothing);
    end Inertial_Value;
 
    --------------------
@@ -305,86 +323,146 @@ package body Concorde.Network is
    --------------------
 
    function Inertial_Value
-     (Network : Concorde.Db.Network_Reference;
-      Node    : Concorde.Db.Node_Reference;
-      Inertia : Non_Negative_Real)
+     (Network   : Concorde.Db.Network_Reference;
+      Node      : Concorde.Db.Node_Reference;
+      Inertia   : Non_Negative_Real;
+      Smoothing : Non_Negative_Real)
       return Real
    is
    begin
-      if Inertia = 0.0 or else
-        not Save_History (Concorde.Db.Node.Get (Node))
-      then
+
+      Log ("inertial-value "
+           & Concorde.Db.Node.Get (Node).Tag
+           & " inertia=" & Image (Inertia)
+           & "; smoothing=" & Image (Smoothing));
+
+      if Inertia = 0.0 and then Smoothing = 0.0 then
+--          or else not Save_History (Concorde.Db.Node.Get (Node))
+--        then
          return Current_Value (Network, Node);
       end if;
 
       declare
          use Concorde.Calendar;
-         DT : constant Duration := Days (Inertia);
-         Now   : constant Time := Clock;
-         Start : constant Time := Now - DT;
+         DT     : constant Duration := Days (Inertia);
+         DS     : constant Duration := Days (Smoothing);
+         DH     : Duration := 0.0;
+         Now    : constant Time := Clock;
+         Start  : constant Time := Now - DT - DS;
+         Finish : constant Time := Now - DT;
+         Total  : Real := 0.0;
       begin
-         Concorde.Logging.Log
-           (Actor    => "network",
-            Location => Concorde.Db.Node.Get (Node).Tag,
-            Category => "inertial value",
-            Message  =>
-              "inertia=" & Image (Inertia)
-            & "; start=" & Image (Start, True));
+         Log ("scanning history from "
+              & Image (Concorde.Calendar.Start)
+              & " to "
+              & Image (Finish));
 
          for History of
            Concorde.Db.Historical_Value
              .Select_Historical_Value_From_Bounded_By_From
-               (Network, Node, Concorde.Calendar.Start, Start)
+               (Network, Node, Concorde.Calendar.Start, Finish)
          loop
-            Concorde.Logging.Log
-              (Actor    => "network",
-               Location => Concorde.Db.Node.Get (Node).Tag,
-               Category => "inertial value",
-               Message  =>
-                 "from=" & Image (History.From, True)
-               & "; to=" & Image (History.To, True));
-
-            if History.To > Start then
+            if not History.Is_Previous and then History.To > Start then
                declare
-                  Full_Duration    : constant Duration :=
-                                       History.To - History.From;
-                  Partial_Duration : constant Duration :=
-                                       Start - History.From;
-                  Scale            : constant Real :=
-                                       Real (Partial_Duration)
-                                       / Real (Full_Duration);
-                  Result           : constant Real :=
-                                       History.Value
-                                         + (History.Next - History.Value)
-                                       * Scale;
+                  Min : constant Time :=
+                          (if History.From > Start
+                           then History.From
+                           else Start);
+                  Max : constant Time :=
+                          (if History.To < Finish
+                           then History.To
+                           else Finish);
+                  Min_Scale : constant Real :=
+                                Real (Min - History.From)
+                                / Real (History.To - History.From);
+                  Max_Scale : constant Real :=
+                                Real (Max - History.From)
+                                / Real (History.To - History.From);
+                  Change    : constant Real :=
+                                History.Next - History.Value;
+                  Min_Value : constant Real :=
+                                History.Value
+                                  + Min_Scale * Change;
+                  Max_Value : constant Real :=
+                                History.Value
+                                  + Max_Scale * Change;
+                  Value     : constant Real :=
+                                (if DS = 0.0
+                                 then Min_Value
+                                 else Real (Max - Min) * Min_Value
+                                 + 0.5 * Real (Max - Min)
+                                 * (Max_Value - Min_Value));
                begin
+                  if DS = 0.0 then
+                     Concorde.Logging.Log
+                       (Actor    => "network",
+                        Location => Concorde.Db.Node.Get (Node).Tag,
+                        Category => "inertial value",
+                        Message  =>
+                          "inertial value="
+                        & Image (Value)
+                        & "; inertia=" & Image (Inertia)
+                        & "; date=" & Image (Start)
+                        & "; interval="
+                        & Image (History.From)
+                        & " .. "
+                        & Image (History.To)
+                        & "; scale="
+                        & Image (Min_Scale)
+                        & "; range="
+                        & Image (History.Value)
+                        & " .. "
+                        & Image (History.Next)
+                        & "; current="
+                        & Image (Current_Value (Network, Node)));
+                     return Value;
+                  end if;
+
+                  DH := DH + (Max - Min);
+                  Total := Total + Value;
+
                   Concorde.Logging.Log
                     (Actor    => "network",
                      Location => Concorde.Db.Node.Get (Node).Tag,
-                     Category => "inertial value",
+                     Category => "smoothed value",
                      Message  =>
-                       "inertia=" & Image (Inertia)
-                     & "; date=" & Image (Start, True)
+                       "interval="
                      & "; interval="
-                     & Image (History.From, True)
+                     & Image (History.From)
                      & " .. "
-                     & Image (History.To, True)
-                     & "; scale="
-                     & Image (Scale)
-                     & "; range="
-                     & Image (History.Value)
-                     & " .. "
-                     & Image (History.Next)
-                     & "; current="
-                     & Image (Current_Value (Network, Node))
-                     & "; inertial value="
-                     & Image (Result));
-                  return Result;
+                     & Image (History.To)
+                     & " "
+                     & Image (Real (Max - Min))
+                     & "; range=["
+                     & Image (Min_Value)
+                     & ","
+                     & Image (Max_Value)
+                     & "]; area="
+                     & Image (Value)
+                     & "; new total="
+                     & Image (Total));
                end;
             end if;
          end loop;
 
-         return Current_Value (Network, Node);
+         if Smoothing = 0.0 then
+            return Current_Value (Network, Node);
+         else
+            Total := Total + Real (DS - DH) * Current_Value (Network, Node);
+            Concorde.Logging.Log
+              (Actor    => "network",
+               Location => Concorde.Db.Node.Get (Node).Tag,
+               Category => "smoothed value",
+               Message  =>
+                 "total="
+               & Image (Total)
+               & "; interval="
+               & Image (Real (DS))
+               & "; result="
+               & Image (Total / Real (DS)));
+
+            return Total / Real (DS);
+         end if;
 
       end;
    end Inertial_Value;
@@ -527,6 +605,8 @@ package body Concorde.Network is
             Tag   : constant String := Metric.Tag;
             Value : constant Real := Evaluate (Network, Metric.Calculation);
          begin
+
+            Log (Tag & " := " & Image (Value));
             Set_New_Value
               (Network, Tag, Value);
             Commit_New_Value (Network, Tag);

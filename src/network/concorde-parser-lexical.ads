@@ -16,7 +16,7 @@ private package Concorde.Parser.Lexical is
                  Tok_Integer        => Tok_Integer_Constant,
                  Tok_Float          => Tok_Float_Constant,
                  First_Keyword      => Tok_Delay,
-                 Keywords           => "delay sin",
+                 Keywords           => "delay sin smooth",
                  First_Symbol       => Tok_Comma,
                  Symbols            => ", : ; . % ( ) <- + - * / ** "
                                      & "= /= > < >= <=",

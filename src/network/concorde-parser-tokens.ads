@@ -6,7 +6,7 @@ private package Concorde.Parser.Tokens is
        Tok_Integer_Constant, Tok_Float_Constant,
        Tok_String_Constant, Tok_Character_Constant,
 
-       Tok_Delay, Tok_Sin,
+       Tok_Delay, Tok_Sin, Tok_Smooth,
 
        Tok_Comma, Tok_Colon, Tok_Semicolon, Tok_Dot, Tok_Percent,
        Tok_Left_Paren, Tok_Right_Paren,
