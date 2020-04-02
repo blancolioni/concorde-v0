@@ -5,6 +5,7 @@ with Concorde.Worlds;
 
 with Concorde.Logging;
 with Concorde.Money;
+with Concorde.Quantities;
 with Concorde.Random;
 with Concorde.Real_Images;
 
@@ -12,12 +13,16 @@ with Concorde.Network;
 
 with Concorde.Db.Colony;
 with Concorde.Db.Colony_Policy;
+with Concorde.Db.Deposit;
 with Concorde.Db.Network_Value;
 with Concorde.Db.Node;
 with Concorde.Db.Policy;
 with Concorde.Db.Pop;
 with Concorde.Db.Pop_Group;
 with Concorde.Db.Pop_Group_Member;
+with Concorde.Db.Resource;
+with Concorde.Db.Sector_Use;
+with Concorde.Db.World_Sector;
 
 package body Concorde.Managers.Colonies is
 
@@ -49,8 +54,7 @@ package body Concorde.Managers.Colonies is
      (Manager : not null access Root_Colony_Manager_Type);
 
    function Image (X : Real) return String
-                   renames Concorde.Real_Images.Approximate_Image
-     with Unreferenced;
+                   renames Concorde.Real_Images.Approximate_Image;
 
    --------------
    -- Activate --
@@ -61,8 +65,111 @@ package body Concorde.Managers.Colonies is
    is
       Colony : constant Concorde.Db.Colony.Colony_Type :=
                  Concorde.Db.Colony.Get (Manager.Colony);
+      Network : constant Concorde.Db.Network_Reference :=
+                  Colony.Get_Network_Reference;
+
+      procedure Update_Mining_Production;
 
       procedure Update_Population_Sizes;
+
+      procedure Update_Mining_Production is
+
+         package Resource_Mining_Maps is
+           new WL.String_Maps (Non_Negative_Real);
+
+         Mined_Resource : Resource_Mining_Maps.Map;
+
+         Mine : constant Concorde.Db.Sector_Use_Reference :=
+                  Concorde.Db.Sector_Use.Get_Reference_By_Tag ("mine");
+      begin
+
+         for World_Sector of
+           Concorde.Db.World_Sector.Select_By_World_Sector_Use
+             (World      => Colony.World,
+              Sector_Use => Mine)
+         loop
+            declare
+               Deposit : constant Concorde.Db.Deposit.Deposit_Type :=
+                           Concorde.Db.Deposit.Get_By_World_Sector
+                             (World_Sector.Get_World_Sector_Reference);
+            begin
+               if Deposit.Has_Element then
+                  declare
+                     Tag : constant String :=
+                             Concorde.Db.Resource.Get (Deposit.Resource).Tag;
+                     Concentration : constant Real :=
+                                       Deposit.Concentration;
+                     Available     : constant Real :=
+                                       Concorde.Quantities.To_Real
+                                         (Deposit.Available);
+                     Factor        : constant Real :=
+                                       (Concorde.Random.Unit_Random + 0.5)
+                                       * Concentration;
+                     Mined         : constant Non_Negative_Real :=
+                                       Available * Factor;
+                     Remaining     : constant Non_Negative_Real :=
+                                       Real'Max (Available - Mined / 100.0,
+                                                 0.0);
+                     New_Conc      : constant Real :=
+                                       Concentration
+                                         * (1.0 - Mined / Remaining / 100.0);
+                  begin
+                     if Mined > 0.0 then
+                        if not Mined_Resource.Contains (Tag) then
+                           Mined_Resource.Insert (Tag, Mined);
+                        else
+                           Mined_Resource (Tag) :=
+                             Mined_Resource (Tag) + Mined;
+                        end if;
+
+                        Concorde.Logging.Log
+                          (Actor    => "mine",
+                           Location => Concorde.Worlds.Name (Colony.World),
+                           Category => Tag,
+                           Message  =>
+                             "available "
+                           & Image (Available)
+                           & "; concentration "
+                           & Image (Concentration * 100.0)
+                           & "%"
+                           & "; factor "
+                           & Image (Factor * 100.0) & "%"
+                           & "; mined "
+                           & Image (Mined)
+                           & " remaining "
+                           & Image (Remaining)
+                           & " new concentration "
+                           & Image (New_Conc * 100.0) & "%");
+                        Concorde.Db.Deposit.Update_Deposit
+                          (Deposit.Get_Deposit_Reference)
+                          .Set_Concentration (New_Conc)
+                          .Set_Difficulty (1.0 - New_Conc)
+                          .Set_Available
+                            (Concorde.Quantities.To_Quantity (Remaining))
+                          .Done;
+                     end if;
+                  end;
+               end if;
+            end;
+         end loop;
+
+         for Position in Mined_Resource.Iterate loop
+            declare
+               Tag : constant String :=
+                       Resource_Mining_Maps.Key (Position) & "-production";
+               Quantity : constant Real :=
+                            Resource_Mining_Maps.Element (Position);
+            begin
+               Concorde.Network.Set_New_Value (Network, Tag, Quantity);
+               Concorde.Network.Commit_New_Value (Network, Tag);
+            end;
+         end loop;
+
+      end Update_Mining_Production;
+
+      -----------------------------
+      -- Update_Population_Sizes --
+      -----------------------------
 
       procedure Update_Population_Sizes is
 
@@ -132,6 +239,8 @@ package body Concorde.Managers.Colonies is
 
       Update_Population_Sizes;
 
+      Update_Mining_Production;
+
       Concorde.Network.Update (Colony.Get_Network_Reference);
 
       for Policy of
@@ -149,18 +258,6 @@ package body Concorde.Managers.Colonies is
          Concorde.Colonies.Daily_Tax_Revenue
            (Manager.Colony, Pop.Get_Pop_Reference);
       end loop;
-
---
---        for Group_Values of
---          Manager.Group_Nodes
---        loop
---           Concorde.Colonies.Daily_Tax_Revenue
---             (Colony  => Manager.Colony,
---              Group   => Group_Values.Group);
---              Rate    => Get (Group_Values.Tax_Rate),
---              Income  => Get (Group_Values.Income),
---              Evasion => Get (Group_Values.Tax_Evasion));
---        end loop;
 
       for Policy of
         Concorde.Db.Policy.Scan_By_Tag
@@ -189,15 +286,6 @@ package body Concorde.Managers.Colonies is
                New_Size : constant Non_Negative_Real :=
                             Real'Max (Pop.Size + Births - Deaths, 0.0);
             begin
---                 Concorde.Logging.Log
---                   (Actor    => "colony",
---                    Location => Concorde.Worlds.Name (Colony.World),
---                    Category => "pop changes",
---                    Message  =>
---                      "old=" & Image (Pop.Size)
---                    & "; births=" & Image (Births)
---                    & "; deaths=" & Image (Deaths)
---                    & "; new size=" & Image (New_Size));
                Concorde.Db.Pop.Update_Pop (Pop.Get_Pop_Reference)
                  .Set_Size (New_Size)
                  .Done;

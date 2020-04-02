@@ -20,6 +20,8 @@ with Concorde.Db.Derived_Metric;
 with Concorde.Db.Fuzzy_Set;
 with Concorde.Db.Input_Commodity;
 with Concorde.Db.Manufactured;
+with Concorde.Db.Metric;
+with Concorde.Db.Node;
 with Concorde.Db.Resource;
 with Concorde.Db.Resource_Constraint;
 with Concorde.Db.Resource_Sphere;
@@ -164,10 +166,11 @@ package body Concorde.Configure.Commodities is
          Content : Concorde.Db.Node_Value_Type;
          Expr    : String)
       is
+         Node_Tag : constant String := Commodity_Tag & "-" & Tag;
       begin
-         if not Configured.Contains (Tag) then
+         if not Concorde.Db.Node.Get_By_Tag (Node_Tag).Has_Element then
             Ada.Text_IO.Put_Line
-              ("auto: " & Commodity_Tag & "-" & Tag & " = " & Expr);
+              ("auto: " & Node_Tag & " = " & Expr);
             Add_Calculation
               (Tag     => Tag,
                Content => Content,
@@ -402,8 +405,15 @@ package body Concorde.Configure.Commodities is
                       Tag             => Config.Config_Name,
                       Is_Raw_Resource => False);
    begin
---        Configure_Commodity_Metrics
---          (Config.Config_Name, Config, Config.Child ("metrics"));
+      Concorde.Db.Metric.Create
+        (Content => Concorde.Db.Quantity,
+         Tag     => Config.Config_Name & "-production");
+
+      Concorde.Configure.Metrics.Update_Metric
+        (Config.Config_Name & "-demand", "0");
+
+      Configure_Commodity_Metrics
+        (Config.Config_Name, Config, Config.Child ("metrics"));
 
       for Deposit_Config of Config.Child ("deposits") loop
          if Deposit_Config.Config_Name = "sphere" then
