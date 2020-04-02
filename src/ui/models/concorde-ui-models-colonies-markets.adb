@@ -17,13 +17,14 @@ with Concorde.Db.Node;
 package body Concorde.UI.Models.Colonies.Markets is
 
    type Market_Table_Column is
-     (Name, Demand, Supply, Pressure, Price);
+     (Name, Demand, Supply, Share, Pressure, Price);
 
    type Market_Record is
       record
          Commodity : Concorde.Handles.Commodity.Commodity_Handle;
          Demand    : Concorde.Db.Network_Value_Reference;
          Supply    : Concorde.Db.Network_Value_Reference;
+         Share     : Concorde.Db.Network_Value_Reference;
          Pressure  : Concorde.Db.Network_Value_Reference;
          Price     : Concorde.Db.Network_Value_Reference;
       end record;
@@ -132,6 +133,9 @@ package body Concorde.UI.Models.Colonies.Markets is
       function Demand return String
       is (Quantity (Get_Value (Info.Demand)));
 
+      function Share return String
+      is (Image (Get_Value (Info.Share) * 100.0));
+
       function Pressure return String
       is (Image (Get_Value (Info.Pressure) * 100.0));
 
@@ -143,6 +147,7 @@ package body Concorde.UI.Models.Colonies.Markets is
                     when Name     => Info.Commodity.Tag,
                     when Supply   => Supply,
                     when Demand   => Demand,
+                    when Share    => Share,
                     when Pressure => Pressure,
                     when Price    => Price);
    begin
@@ -157,6 +162,10 @@ package body Concorde.UI.Models.Colonies.Markets is
      (Model : in out Market_Model_Record'Class)
    is
       procedure Add (Commodity : String);
+
+      ---------
+      -- Add --
+      ---------
 
       procedure Add (Commodity : String) is
 
@@ -174,6 +183,8 @@ package body Concorde.UI.Models.Colonies.Markets is
                     Net ("demand");
          Supply : constant Concorde.Db.Network_Value_Reference :=
                     Net ("supply");
+         Share  : constant Concorde.Db.Network_Value_Reference :=
+                    Net ("share");
          Pressure : constant Concorde.Db.Network_Value_Reference :=
                     Net ("pressure");
          Price : constant Concorde.Db.Network_Value_Reference :=
@@ -185,6 +196,7 @@ package body Concorde.UI.Models.Colonies.Markets is
               (Commodity => Handle,
                Demand    => Demand,
                Supply    => Supply,
+               Share     => Share,
                Pressure  => Pressure,
                Price     => Price));
       end Add;
@@ -192,6 +204,11 @@ package body Concorde.UI.Models.Colonies.Markets is
    begin
 
       Model.State.Clear;
+      Add ("silicon");
+      Add ("hydrocarbon");
+      Add ("crystals");
+      Add ("plastic");
+      Add ("refined-crystals");
       Add ("food");
       Add ("basic-electronics");
    end Load;

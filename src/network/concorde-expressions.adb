@@ -514,8 +514,20 @@ package body Concorde.Expressions is
          when '/' =>
             Result := Left.To_Real / Right.To_Real;
          when '^' =>
-            Result := Concorde.Elementary_Functions."**"
-              (Left.To_Real, Right.To_Real);
+            declare
+               X : constant Real := Left.To_Real;
+               Y : constant Real := Right.To_Real;
+            begin
+               if X < 0.0 then
+                  if Y < 0.0 then
+                     Result := 1.0 / X ** Natural (-Y);
+                  else
+                     Result := X ** Natural (Y);
+                  end if;
+               else
+                  Result := Concorde.Elementary_Functions."**" (X, Y);
+               end if;
+            end;
       end case;
       return Concorde.Values.Constant_Value (Result);
    end Evaluate;

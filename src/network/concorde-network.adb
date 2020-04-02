@@ -2,6 +2,7 @@ with Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Exceptions;
 with Ada.Strings.Unbounded;
+with Ada.Text_IO;
 
 with WL.String_Maps;
 
@@ -265,9 +266,14 @@ package body Concorde.Network is
       return Expr.Evaluate (Env, Concorde.Expressions.Default_Context).To_Real;
    exception
       when E : others =>
-         raise Constraint_Error with
-           "unable to evaluate: " & Expr.To_String
-           & ": " & Ada.Exceptions.Exception_Message (E);
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            "unable to evaluate: " & Expr.To_String
+            & ": " & Ada.Exceptions.Exception_Message (E));
+
+         raise Constraint_Error
+           with Ada.Exceptions.Exception_Message (E);
+
    end Evaluate;
 
    ---------

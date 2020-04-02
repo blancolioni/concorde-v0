@@ -1,8 +1,12 @@
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Text_IO;
 
 with WL.String_Maps;
+with WL.String_Sets;
 
 with Tropos.Reader;
+
+with Concorde.Configure.Metrics;
 
 with Concorde.Commodities;
 with Concorde.Identifiers;
@@ -57,6 +61,7 @@ package body Concorde.Configure.Commodities is
 
    procedure Configure_Commodity_Metrics
      (Commodity_Tag  : String;
+      Coefficients   : Tropos.Configuration;
       Metrics_Config : Tropos.Configuration);
 
    type Frequency_Type is (Unlimited, Abundant, Common, Uncommon, Rare);
@@ -135,8 +140,77 @@ package body Concorde.Configure.Commodities is
 
    procedure Configure_Commodity_Metrics
      (Commodity_Tag  : String;
+      Coefficients   : Tropos.Configuration;
       Metrics_Config : Tropos.Configuration)
    is
+      Configured : WL.String_Sets.Set;
+
+      procedure Add_Calculation
+        (Tag     : String;
+         Content : Concorde.Db.Node_Value_Type;
+         Expr    : String);
+
+      procedure Add_Auto_Calculation
+        (Tag     : String;
+         Content : Concorde.Db.Node_Value_Type;
+         Expr    : String);
+
+      --------------------------
+      -- Add_Auto_Calculation --
+      --------------------------
+
+      procedure Add_Auto_Calculation
+        (Tag     : String;
+         Content : Concorde.Db.Node_Value_Type;
+         Expr    : String)
+      is
+      begin
+         if not Configured.Contains (Tag) then
+            Ada.Text_IO.Put_Line
+              ("auto: " & Commodity_Tag & "-" & Tag & " = " & Expr);
+            Add_Calculation
+              (Tag     => Tag,
+               Content => Content,
+               Expr    => Expr);
+         end if;
+      end Add_Auto_Calculation;
+
+      ---------------------
+      -- Add_Calculation --
+      ---------------------
+
+      procedure Add_Calculation
+        (Tag     : String;
+         Content : Concorde.Db.Node_Value_Type;
+         Expr    : String)
+      is
+         Metric  : constant Concorde.Db.Derived_Metric_Reference :=
+                     Concorde.Db.Derived_Metric.Create
+                       (Content     => Content,
+                        Tag         =>
+                          Commodity_Tag & "-" & Tag,
+                        Calculation =>
+                          Concorde.Db.Null_Calculation_Reference);
+
+         Node    : constant Concorde.Db.Node_Reference :=
+                     Concorde.Db.Derived_Metric.Get (Metric)
+                     .Get_Node_Reference;
+
+         Expression  : constant String :=
+                         To_Single_Line (Expr);
+
+         Calculation : constant Concorde.Db.Calculation_Reference :=
+                         Concorde.Db.Calculation.Create
+                           (Identifier => Identifiers.Next_Identifier,
+                            Node       => Node,
+                            Expression => Expression);
+      begin
+         Concorde.Db.Derived_Metric.Update_Derived_Metric (Metric)
+           .Set_Calculation (Calculation)
+           .Done;
+         Configured.Include (Tag);
+      end Add_Calculation;
+
    begin
 
       for Metric_Config of Metrics_Config loop
@@ -144,32 +218,72 @@ package body Concorde.Configure.Commodities is
             Content : constant Concorde.Db.Node_Value_Type :=
                         Concorde.Db.Node_Value_Type'Value
                           (Metric_Config.Get ("content", "rating"));
-            Metric  : constant Concorde.Db.Derived_Metric_Reference :=
-                        Concorde.Db.Derived_Metric.Create
-                          (Content     => Content,
-                           Tag         =>
-                             Commodity_Tag & "-" & Metric_Config.Config_Name,
-                           Calculation =>
-                             Concorde.Db.Null_Calculation_Reference);
-
-            Node    : constant Concorde.Db.Node_Reference :=
-                        Concorde.Db.Derived_Metric.Get (Metric)
-                        .Get_Node_Reference;
-
-            Expression  : constant String :=
-                            To_Single_Line (Metric_Config.Get ("value"));
-
-            Calculation : constant Concorde.Db.Calculation_Reference :=
-                            Concorde.Db.Calculation.Create
-                              (Identifier => Identifiers.Next_Identifier,
-                               Node       => Node,
-                               Expression => Expression);
          begin
-            Concorde.Db.Derived_Metric.Update_Derived_Metric (Metric)
-              .Set_Calculation (Calculation)
-              .Done;
+            Add_Calculation
+              (Tag     => Metric_Config.Config_Name,
+               Content => Content,
+               Expr    => Metric_Config.Get ("value"));
          end;
       end loop;
+
+      declare
+         function P (Name, Default : String) return String
+         is (Coefficients.Get (Name, Default));
+
+         function T (Tag : String) return String
+         is (Commodity_Tag & "-" & Tag);
+
+      begin
+         Add_Auto_Calculation
+           (Tag     => "price",
+            Content => Concorde.Db.Rating,
+            Expr    =>
+              "delay "
+            & P ("price-pressure-delay", "14")
+            & " " & T ("pressure"));
+
+         Add_Auto_Calculation
+           (Tag     => "pressure",
+            Content => Concorde.Db.Rating,
+            Expr    =>
+              "smooth "
+            & P ("pressure-smoothing", "14")
+            & " (" & T ("demand") & " / max 1 " & T ("supply") & " - 1)");
+
+         Add_Auto_Calculation
+           (Tag     => "production",
+            Content => Concorde.Db.Quantity,
+            Expr    =>
+              P ("production-sector", "service")
+            & " * "
+            & T ("share")
+            & " * "
+            & P ("supply-coefficient", "1000"));
+
+         Concorde.Configure.Metrics.Update_Metric
+           (Commodity_Tag & "-supply",
+            T ("production"));
+
+         Add_Auto_Calculation
+           (Tag     => "share",
+            Content => Concorde.Db.Rating,
+            Expr    =>
+              "smooth " & P ("market-share-self-smoothing", "14")
+            & " " & T ("share")
+            & " + delay " & P ("market-share-pressure-delay", "14")
+            & " (" & T ("pressure") & " * "
+            & P ("market-share-pressure-factor", "0.01")
+            & ")");
+
+         for Part_Config of Coefficients.Child ("parts") loop
+            Concorde.Configure.Metrics.Update_Metric
+              (Metric_Tag  => Part_Config.Config_Name & "-demand",
+               Calculation =>
+                 Part_Config.Value & " * "
+               & T ("production"));
+         end loop;
+      end;
+
    end Configure_Commodity_Metrics;
 
    ---------------------------
@@ -224,7 +338,8 @@ package body Concorde.Configure.Commodities is
             Tag        => Item_Config.Config_Name,
             Mass       => Item_Config.Get ("mass", 1.0));
          Configure_Commodity_Metrics
-           (Item_Config.Config_Name, Item_Config.Child ("metrics"));
+           (Item_Config.Config_Name, Item_Config,
+            Item_Config.Child ("metrics"));
       end loop;
 
       for Item_Config of Commodity_Config loop
@@ -287,8 +402,8 @@ package body Concorde.Configure.Commodities is
                       Tag             => Config.Config_Name,
                       Is_Raw_Resource => False);
    begin
-      Configure_Commodity_Metrics
-        (Config.Config_Name, Config.Child ("metrics"));
+--        Configure_Commodity_Metrics
+--          (Config.Config_Name, Config, Config.Child ("metrics"));
 
       for Deposit_Config of Config.Child ("deposits") loop
          if Deposit_Config.Config_Name = "sphere" then

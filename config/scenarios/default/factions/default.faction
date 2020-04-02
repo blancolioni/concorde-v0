@@ -41,8 +41,8 @@ manufacturing = 0.2
 service = 0.4
 knowledge = 0.2
 administration = 0.4
-basic-electronics-share = 0.5
-basic-electronics-supply = 100K
+basic-electronics-share = 1
+basic-electronics-supply = 50K
 
 ships = {
    scout = 2
