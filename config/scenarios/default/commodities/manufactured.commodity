@@ -37,6 +37,8 @@ basic-electronics = {
     market-share-pressure-factor = 0.04
     market-share-self-smoothing = 10
     pressure-smoothing = 10
+    pressure-price-smoothing = 14
+    pressure-price-delay = 7
     supply-coefficient = 10000
     production-sector = manufacturing
 

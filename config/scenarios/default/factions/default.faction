@@ -41,8 +41,14 @@ manufacturing = 0.2
 service = 0.4
 knowledge = 0.2
 administration = 0.4
-basic-electronics-share = 1
-basic-electronics-supply = 50K
+basic-electronics-share = 0.1
+basic-electronics-stockpile = 100K
+silicon-stockpile = 1M
+hydrocarbon-stockpile = 1M
+crystals-stockpile = 1M
+plastic-stockpile = 200K
+refined-crystals-stockpile = 200K
+food-stockpile = 10M
 
 ships = {
    scout = 2

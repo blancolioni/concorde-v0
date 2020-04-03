@@ -1,4 +1,5 @@
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
 with WL.String_Maps;
@@ -65,6 +66,9 @@ package body Concorde.Configure.Commodities is
      (Commodity_Tag  : String;
       Coefficients   : Tropos.Configuration;
       Metrics_Config : Tropos.Configuration);
+
+   procedure Create_Standard_Nodes
+     (Commodity_Tag : String);
 
    type Frequency_Type is (Unlimited, Abundant, Common, Uncommon, Rare);
 
@@ -246,14 +250,6 @@ package body Concorde.Configure.Commodities is
             & " " & T ("pressure"));
 
          Add_Auto_Calculation
-           (Tag     => "pressure",
-            Content => Concorde.Db.Rating,
-            Expr    =>
-              "smooth "
-            & P ("pressure-smoothing", "14")
-            & " (" & T ("demand") & " / max 1 " & T ("supply") & " - 1)");
-
-         Add_Auto_Calculation
            (Tag     => "production",
             Content => Concorde.Db.Quantity,
             Expr    =>
@@ -278,13 +274,47 @@ package body Concorde.Configure.Commodities is
             & P ("market-share-pressure-factor", "0.01")
             & ")");
 
-         for Part_Config of Coefficients.Child ("parts") loop
-            Concorde.Configure.Metrics.Update_Metric
-              (Metric_Tag  => Part_Config.Config_Name & "-demand",
-               Calculation =>
-                 Part_Config.Value & " * "
-               & T ("production"));
-         end loop;
+         declare
+            use Ada.Strings.Unbounded;
+            Part_Count    : Natural := 0;
+            Part_Pressure : Unbounded_String :=
+                              To_Unbounded_String ("0");
+            Availability  : constant String :=
+                              "smooth "
+                              & P ("pressure-smoothing", "14")
+                              & " (" & T ("demand")
+                            & " / max 1 " & T ("supply") & " - 1)";
+            Sell_Price    : constant String :=
+                              "smooth " & P ("pressure-price-smoothing", "14")
+                            & " " & T ("price");
+         begin
+            for Part_Config of Coefficients.Child ("parts") loop
+               Concorde.Configure.Metrics.Update_Metric
+                 (Metric_Tag  => Part_Config.Config_Name & "-demand",
+                  Calculation =>
+                    Part_Config.Value & " * "
+                  & T ("production"));
+               Part_Count := Part_Count + Part_Config.Value;
+            end loop;
+
+            for Part_Config of Coefficients.Child ("parts") loop
+               Part_Pressure := Part_Pressure
+                 & " + "
+                 & Part_Config.Config_Name & "-price * "
+                 & Part_Config.Value;
+            end loop;
+
+            Add_Auto_Calculation
+              (Tag     => "pressure",
+               Content => Concorde.Db.Rating,
+               Expr    =>
+                 "((" & Availability & ")"
+               & " + (" & Sell_Price & ")"
+               & (if Part_Count = 0 then ") / 2"
+                 else " + (" & To_String (Part_Pressure) & ")"
+                 & " /" & Positive'Image (Part_Count)
+                 & ") / 3"));
+         end;
       end;
 
    end Configure_Commodity_Metrics;
@@ -334,12 +364,21 @@ package body Concorde.Configure.Commodities is
    procedure Configure_Non_Resources
      (Commodity_Config  : Tropos.Configuration)
    is
+      function Get (Config  : Tropos.Configuration;
+                    Name    : String;
+                    Default : Real)
+                    return Concorde.Money.Price_Type
+      is (Concorde.Money.To_Price
+          (Real (Long_Float'(Config.Get (Name, Default)))));
+
    begin
       for Item_Config of Commodity_Config loop
          Concorde.Db.Manufactured.Create
            (Enabled_By => Concorde.Db.Null_Technology_Reference,
             Tag        => Item_Config.Config_Name,
+            Base_Price => Get (Item_Config, "base-price", 10.0),
             Mass       => Item_Config.Get ("mass", 1.0));
+         Create_Standard_Nodes (Item_Config.Config_Name);
          Configure_Commodity_Metrics
            (Item_Config.Config_Name, Item_Config,
             Item_Config.Child ("metrics"));
@@ -399,15 +438,25 @@ package body Concorde.Configure.Commodities is
    procedure Configure_Resource
      (Config         : Tropos.Configuration)
    is
+      function Get
+        (Name : String;
+         Default : Long_Float)
+         return Concorde.Money.Price_Type
+      is (Concorde.Money.To_Price
+          (Real (Long_Float'(Config.Get (Name, Default)))));
+
       Resource : constant Concorde.Db.Resource_Reference :=
                    Concorde.Db.Resource.Create
                      (Mass            => 1.0,
                       Tag             => Config.Config_Name,
+                      Base_Price      => Get ("base-price", 1.0),
                       Is_Raw_Resource => False);
    begin
       Concorde.Db.Metric.Create
         (Content => Concorde.Db.Quantity,
          Tag     => Config.Config_Name & "-production");
+
+      Create_Standard_Nodes (Config.Config_Name);
 
       Concorde.Configure.Metrics.Update_Metric
         (Config.Config_Name & "-demand", "0");
@@ -499,10 +548,14 @@ package body Concorde.Configure.Commodities is
    begin
 
       Concorde.Db.Commodity.Create
-        ("raw-resources", Mass => 1.0);
+        ("raw-resources",
+         Base_Price => Concorde.Money.To_Price (0.1),
+         Mass       => 1.0);
 
       Concorde.Db.Commodity.Create
-        ("power", Mass => 0.0);
+        ("power",
+         Base_Price => Concorde.Money.To_Price (0.1),
+         Mass       => 0.0);
 
       for Resource_Config of Config loop
          Names.Append (Resource_Config.Config_Name);
@@ -813,6 +866,19 @@ package body Concorde.Configure.Commodities is
          Mean                   => Get ("strength", 1),
          Standard_Deviation     => Get ("strength", 2));
    end Create_Sphere_Constraint;
+
+   ---------------------------
+   -- Create_Standard_Nodes --
+   ---------------------------
+
+   procedure Create_Standard_Nodes
+     (Commodity_Tag : String)
+   is
+   begin
+      Concorde.Db.Metric.Create
+        (Content => Concorde.Db.Quantity,
+         Tag     => Commodity_Tag & "-stockpile");
+   end Create_Standard_Nodes;
 
    -------------------------------------
    -- Initialize_Constraint_Arguments --

@@ -21,7 +21,9 @@ with Concorde.Db.Account;
 with Concorde.Db.Colony;
 with Concorde.Db.Colony_Policy;
 with Concorde.Db.Colony_Pop_Group;
+with Concorde.Db.Colony_Price;
 with Concorde.Db.Colony_Sector;
+with Concorde.Db.Commodity;
 with Concorde.Db.Economic_Sector;
 with Concorde.Db.Faction;
 with Concorde.Db.Group_Influence;
@@ -548,6 +550,16 @@ package body Concorde.Colonies.Create is
       end Set_Override;
 
    begin
+
+      for Commodity of
+        Concorde.Db.Commodity.Scan_By_Tag
+      loop
+         Concorde.Db.Colony_Price.Create
+           (Colony    => Colony,
+            Commodity => Commodity.Get_Commodity_Reference,
+            Price     => Commodity.Base_Price);
+      end loop;
+
       Create_Initial_Pops
         (Faction               => Faction,
          World                 => World,

@@ -9,7 +9,8 @@ with Technology;
 package Commodities is
 
 record Commodity : Localised is
-   Mass  : Long_Float;
+   Mass       : Long_Float;
+   Base_Price : Price_Type;
 end Commodity;
 
 record Has_Stock;

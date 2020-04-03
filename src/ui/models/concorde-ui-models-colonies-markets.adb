@@ -4,12 +4,14 @@ with Nazar.Models.Array_Table;
 with Nazar.Values;
 
 with Concorde.Calendar;
+with Concorde.Money;
 with Concorde.Quantities;
 with Concorde.Real_Images;
 with Concorde.Updates.Events;
 
 with Concorde.Handles.Commodity;
 
+with Concorde.Db.Colony_Price;
 with Concorde.Db.Commodity;
 with Concorde.Db.Network_Value;
 with Concorde.Db.Node;
@@ -140,7 +142,13 @@ package body Concorde.UI.Models.Colonies.Markets is
       is (Image (Get_Value (Info.Pressure) * 100.0));
 
       function Price return String
-      is (Image (Get_Value (Info.Price) * 100.0));
+      is (Concorde.Money.Show
+          (Concorde.Money.Adjust_Price
+           (Concorde.Db.Colony_Price.Get_By_Commodity_Price
+            (Model.Colony.Reference_Colony,
+             Info.Commodity.Reference_Commodity)
+            .Price,
+            1.0 + Get_Value (Info.Price))));
 
       Value : constant String :=
                 (case Col is
