@@ -23,6 +23,7 @@ with Concorde.Db.Colony_Policy;
 with Concorde.Db.Colony_Pop_Group;
 with Concorde.Db.Colony_Price;
 with Concorde.Db.Colony_Sector;
+with Concorde.Db.Colony_Zone;
 with Concorde.Db.Commodity;
 with Concorde.Db.Economic_Sector;
 with Concorde.Db.Faction;
@@ -458,12 +459,17 @@ package body Concorde.Colonies.Create is
       for Config of Zone_Config loop
          declare
             Tag : constant String := Config.Config_Name;
---              Zone : constant Concorde.Db.Zone.Zone_Type :=
---                       Concorde.Db.Zone.Get_By_Tag (Tag);
+            Zone : constant Concorde.Db.Zone_Reference :=
+                     Concorde.Db.Zone.Get_Reference_By_Tag (Tag);
             Size : constant Non_Negative_Real :=
                      Non_Negative_Real
                        (Float'(Config.Value));
          begin
+            Concorde.Db.Colony_Zone.Create
+              (Colony       => Colony,
+               World_Sector => Sector,
+               Zone         => Zone,
+               Size         => Size);
             if Sizes.Contains (Tag) then
                Sizes (Tag) := Sizes (Tag) + Size;
             else

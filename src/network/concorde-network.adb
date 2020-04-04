@@ -263,7 +263,11 @@ package body Concorde.Network is
    begin
       Log ("evaluate: " & Expr.To_String);
 
-      return Expr.Evaluate (Env, Concorde.Expressions.Default_Context).To_Real;
+      return Result : constant Real :=
+        Expr.Evaluate (Env, Concorde.Expressions.Default_Context).To_Real
+      do
+         Log ("result: " & Image (Result));
+      end return;
    exception
       when E : others =>
          Ada.Text_IO.Put_Line
@@ -337,14 +341,13 @@ package body Concorde.Network is
    is
    begin
 
-      Log ("inertial-value "
-           & Concorde.Db.Node.Get (Node).Tag
-           & " inertia=" & Image (Inertia)
-           & "; smoothing=" & Image (Smoothing));
-
       if Inertia = 0.0 and then Smoothing = 0.0 then
---          or else not Save_History (Concorde.Db.Node.Get (Node))
---        then
+
+         Log ("current-value "
+              & Concorde.Db.Node.Get (Node).Tag
+              & " = "
+              & Image (Current_Value (Network, Node)));
+
          return Current_Value (Network, Node);
       end if;
 
@@ -553,6 +556,11 @@ package body Concorde.Network is
                             when Concorde.Db.Quantity | Concorde.Db.Money =>
                                Value);
    begin
+      if not Definition.Has_Element then
+         raise Constraint_Error with
+           "no such node: " & Tag;
+      end if;
+
       Concorde.Db.Network_Value.Update_Network_Value
         (Node_Value.Get_Network_Value_Reference)
         .Set_New_Value (Clamped_Value)

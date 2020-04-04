@@ -13,6 +13,9 @@ with Concorde.Network;
 
 with Concorde.Db.Colony;
 with Concorde.Db.Colony_Policy;
+with Concorde.Db.Colony_Price;
+with Concorde.Db.Colony_Zone;
+with Concorde.Db.Commodity;
 with Concorde.Db.Deposit;
 with Concorde.Db.Network_Value;
 with Concorde.Db.Node;
@@ -21,8 +24,7 @@ with Concorde.Db.Pop;
 with Concorde.Db.Pop_Group;
 with Concorde.Db.Pop_Group_Member;
 with Concorde.Db.Resource;
-with Concorde.Db.Sector_Use;
-with Concorde.Db.World_Sector;
+with Concorde.Db.Zone;
 
 package body Concorde.Managers.Colonies is
 
@@ -68,9 +70,38 @@ package body Concorde.Managers.Colonies is
       Network : constant Concorde.Db.Network_Reference :=
                   Colony.Get_Network_Reference;
 
+      procedure Update_Colony_Prices;
+
       procedure Update_Mining_Production;
 
       procedure Update_Population_Sizes;
+
+      --------------------------
+      -- Update_Colony_Prices --
+      --------------------------
+
+      procedure Update_Colony_Prices is
+      begin
+         for Colony_Price of
+           Concorde.Db.Colony_Price.Select_By_Colony (Manager.Colony)
+         loop
+            declare
+               Tag : constant String :=
+                       Concorde.Db.Commodity.Get (Colony_Price.Commodity).Tag
+                     & "-base-price";
+               Price : constant Real :=
+                         Concorde.Money.To_Real (Colony_Price.Price);
+            begin
+               Concorde.Network.Set_New_Value
+                 (Network, Tag, Price);
+               Concorde.Network.Commit_New_Value (Network, Tag);
+            end;
+         end loop;
+      end Update_Colony_Prices;
+
+      ------------------------------
+      -- Update_Mining_Production --
+      ------------------------------
 
       procedure Update_Mining_Production is
 
@@ -79,19 +110,20 @@ package body Concorde.Managers.Colonies is
 
          Mined_Resource : Resource_Mining_Maps.Map;
 
-         Mine : constant Concorde.Db.Sector_Use_Reference :=
-                  Concorde.Db.Sector_Use.Get_Reference_By_Tag ("mine");
+         Mine : constant Concorde.Db.Zone_Reference :=
+                  Concorde.Db.Zone.Get_Reference_By_Tag ("mine");
       begin
 
-         for World_Sector of
-           Concorde.Db.World_Sector.Select_By_World_Sector_Use
-             (World      => Colony.World,
-              Sector_Use => Mine)
+         for Colony_Zone of
+           Concorde.Db.Colony_Zone.Select_By_Colony_Zone
+             (Colony => Manager.Colony,
+              Zone   => Mine)
          loop
             declare
+               Sector  : constant Concorde.Db.World_Sector_Reference :=
+                           Colony_Zone.World_Sector;
                Deposit : constant Concorde.Db.Deposit.Deposit_Type :=
-                           Concorde.Db.Deposit.Get_By_World_Sector
-                             (World_Sector.Get_World_Sector_Reference);
+                           Concorde.Db.Deposit.Get_By_World_Sector (Sector);
             begin
                if Deposit.Has_Element then
                   declare
@@ -103,10 +135,13 @@ package body Concorde.Managers.Colonies is
                                        Concorde.Quantities.To_Real
                                          (Deposit.Available);
                      Factor        : constant Real :=
-                                       (Concorde.Random.Unit_Random + 0.5)
-                                       * Concentration;
+                                       Real'Max
+                                         (Concentration / 10.0,
+                                          Concorde.Random.Normal_Random
+                                            (Concentration / 10.0)
+                                          + Concentration);
                      Mined         : constant Non_Negative_Real :=
-                                       Available * Factor;
+                                       Factor * Colony_Zone.Size;
                      Remaining     : constant Non_Negative_Real :=
                                        Real'Max (Available - Mined / 100.0,
                                                  0.0);
@@ -237,6 +272,8 @@ package body Concorde.Managers.Colonies is
          Category => "managed",
          Message  => "activating");
 
+      Update_Colony_Prices;
+
       Update_Population_Sizes;
 
       Update_Mining_Production;
@@ -262,7 +299,7 @@ package body Concorde.Managers.Colonies is
       for Policy of
         Concorde.Db.Policy.Scan_By_Tag
       loop
-         Concorde.Colonies.Daily_Policy_Expense
+         Concorde.Colonies.Execute_Daily_Policy
            (Colony => Manager.Colony,
             Policy => Policy.Get_Policy_Reference);
       end loop;

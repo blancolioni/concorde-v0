@@ -1,4 +1,5 @@
 with Ada.Containers.Vectors;
+with Ada.Text_IO;
 
 with Nazar.Models.Array_Table;
 with Nazar.Values;
@@ -150,16 +151,33 @@ package body Concorde.UI.Models.Colonies.Markets is
             .Price,
             1.0 + Get_Value (Info.Price))));
 
-      Value : constant String :=
-                (case Col is
-                    when Name     => Info.Commodity.Tag,
-                    when Supply   => Supply,
-                    when Demand   => Demand,
-                    when Share    => Share,
-                    when Pressure => Pressure,
-                    when Price    => Price);
    begin
-      return Nazar.Values.To_Value (Value);
+
+      declare
+
+         Value : constant String :=
+                   (case Col is
+                       when Name     => Info.Commodity.Tag,
+                       when Supply   => Supply,
+                       when Demand   => Demand,
+                       when Share    => Share,
+                       when Pressure => Pressure,
+                       when Price    => Price);
+      begin
+         return Nazar.Values.To_Value (Value);
+      end;
+
+   exception
+      when others =>
+         Ada.Text_IO.Put_Line
+           ("error getting row for "
+            & Info.Commodity.Tag
+            & ": supply=" & Image (Get_Value (Info.Supply))
+            & "; demand=" & Image (Get_Value (Info.Demand))
+            & "; p-prod=" & Image (Get_Value (Info.Pressure))
+            & "; share=" & Image (Get_Value (Info.Share))
+            & "; price=" & Image (Get_Value (Info.Price)));
+         raise;
    end Element;
 
    ----------
@@ -194,7 +212,7 @@ package body Concorde.UI.Models.Colonies.Markets is
          Share  : constant Concorde.Db.Network_Value_Reference :=
                     Net ("share");
          Pressure : constant Concorde.Db.Network_Value_Reference :=
-                    Net ("pressure");
+                    Net ("p-prod");
          Price : constant Concorde.Db.Network_Value_Reference :=
                     Net ("price");
 

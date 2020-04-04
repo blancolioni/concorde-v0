@@ -42,14 +42,18 @@ service = 0.4
 knowledge = 0.2
 administration = 0.4
 basic-electronics-share = 0.1
-basic-electronics-stockpile = 100K
+basic-electronics-stockpile = 1M
+basic-electronics-sell-stock = 1%
 silicon-stockpile = 1M
+silicon-min-stock = 2M
 hydrocarbon-stockpile = 1M
+hydrocarbon-sell-stock = 1%
 crystals-stockpile = 1M
 plastic-stockpile = 200K
 refined-crystals-stockpile = 200K
+refined-crystals-sell-stock = 1%
 food-stockpile = 10M
-
+food-min-stock = 100K
 ships = {
    scout = 2
    transport = 1
@@ -76,11 +80,11 @@ military = {
 sector-use = {
    farmland = {
       count = 1
-	  zones = { farm = 5K }
+	  zones = { farm = 25K }
 	  }
    mine = {
-      count = 3
-	  zones = { mine = 5K }
+      count = 12
+	  zones = { mine = 50K }
       }
 }
 
