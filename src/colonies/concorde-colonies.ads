@@ -2,7 +2,7 @@ with Concorde.Db;
 
 package Concorde.Colonies is
 
-   procedure Daily_Policy_Expense
+   procedure Execute_Daily_Policy
      (Colony  : Concorde.Db.Colony_Reference;
       Policy  : Concorde.Db.Policy_Reference);
 

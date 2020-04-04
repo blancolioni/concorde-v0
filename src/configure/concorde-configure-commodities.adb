@@ -900,7 +900,7 @@ package body Concorde.Configure.Commodities is
          Content         => Concorde.Db.Quantity,
          Expr            =>
            "min (max (" & T ("supply") & " - " & T ("demand") & ") 0) "
-         & "(max (" & T ("stockpile") & " - " & T ("min-stock") & ") 0)");
+         & "(max (" & T ("min-stock") & " - " & T ("stockpile") & ") 0)");
 
       Concorde.Configure.Metrics.Update_Metric
         (T ("supply"),

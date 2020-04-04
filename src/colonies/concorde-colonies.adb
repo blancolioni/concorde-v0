@@ -22,55 +22,6 @@ package body Concorde.Colonies is
                    renames Concorde.Real_Images.Approximate_Image
      with Unreferenced;
 
-   --------------------------
-   -- Daily_Policy_Expense --
-   --------------------------
-
-   procedure Daily_Policy_Expense
-     (Colony  : Concorde.Db.Colony_Reference;
-      Policy  : Concorde.Db.Policy_Reference)
-   is
-      use Concorde.Db;
-      Policy_Rec : constant Concorde.Db.Policy.Policy_Type :=
-                     Concorde.Db.Policy.Get (Policy);
-      Colony_Rec : constant Concorde.Db.Colony.Colony_Type :=
-                     Concorde.Db.Colony.Get (Colony);
-      Policy_Tag : constant String := Policy_Rec.Tag;
-      Network : constant Concorde.Db.Network_Reference :=
-                     Colony_Rec.Get_Network_Reference;
-      Expense    : constant Real :=
-                     (if Policy_Rec.Expense = Null_Calculation_Reference
-                      then 0.0
-                      else Concorde.Network.Evaluate
-                        (Network     => Network,
-                         Calculation => Policy_Rec.Expense));
-   begin
-      if Expense > 0.0 then
-         declare
-            Amount : constant Concorde.Money.Money_Type :=
-                       Concorde.Money.To_Money (Expense);
-
-         begin
-            Concorde.Logging.Log
-              (Actor    =>
-                 Concorde.Factions.Name (Colony_Rec.Faction),
-               Location =>
-                 Concorde.Worlds.Name (Colony_Rec.World),
-               Category => "expense",
-               Message  => Policy_Tag & " costs "
-               & Concorde.Money.Show (Amount));
-
-            Concorde.Db.Colony_Policy.Update_Colony_Policy
-              (Concorde.Db.Colony_Policy.Get_Reference_By_Colony_Policy
-                 (Colony, Policy))
-                .Set_Expense (Amount)
-              .Done;
-            Concorde.Agents.Remove_Cash
-              (Colony_Rec, Amount, Policy_Tag);
-         end;
-      end if;
-   end Daily_Policy_Expense;
-
    -----------------------
    -- Daily_Tax_Revenue --
    -----------------------
@@ -171,5 +122,84 @@ package body Concorde.Colonies is
       end;
 
    end Daily_Tax_Revenue;
+
+   --------------------------
+   -- Execute_Daily_Policy --
+   --------------------------
+
+   procedure Execute_Daily_Policy
+     (Colony  : Concorde.Db.Colony_Reference;
+      Policy  : Concorde.Db.Policy_Reference)
+   is
+      use Concorde.Db;
+      Policy_Rec : constant Concorde.Db.Policy.Policy_Type :=
+                     Concorde.Db.Policy.Get (Policy);
+      Colony_Rec : constant Concorde.Db.Colony.Colony_Type :=
+                     Concorde.Db.Colony.Get (Colony);
+      Policy_Tag : constant String := Policy_Rec.Tag;
+      Network : constant Concorde.Db.Network_Reference :=
+                     Colony_Rec.Get_Network_Reference;
+      Expense    : constant Real :=
+                     (if Policy_Rec.Expense = Null_Calculation_Reference
+                      then 0.0
+                      else Concorde.Network.Evaluate
+                        (Network     => Network,
+                         Calculation => Policy_Rec.Expense));
+      Revenue    : constant Real :=
+                     (if Policy_Rec.Revenue = Null_Calculation_Reference
+                      then 0.0
+                      else Concorde.Network.Evaluate
+                        (Network     => Network,
+                         Calculation => Policy_Rec.Revenue));
+   begin
+      if Expense > 0.0 then
+         declare
+            Amount : constant Concorde.Money.Money_Type :=
+                       Concorde.Money.To_Money (Expense);
+
+         begin
+            Concorde.Logging.Log
+              (Actor    =>
+                 Concorde.Factions.Name (Colony_Rec.Faction),
+               Location =>
+                 Concorde.Worlds.Name (Colony_Rec.World),
+               Category => "expense",
+               Message  => Policy_Tag & " costs "
+               & Concorde.Money.Show (Amount));
+
+            Concorde.Db.Colony_Policy.Update_Colony_Policy
+              (Concorde.Db.Colony_Policy.Get_Reference_By_Colony_Policy
+                 (Colony, Policy))
+                .Set_Expense (Amount)
+              .Done;
+            Concorde.Agents.Remove_Cash
+              (Colony_Rec, Amount, Policy_Tag);
+         end;
+      end if;
+      if Revenue > 0.0 then
+         declare
+            Amount : constant Concorde.Money.Money_Type :=
+                       Concorde.Money.To_Money (Revenue);
+
+         begin
+            Concorde.Logging.Log
+              (Actor    =>
+                 Concorde.Factions.Name (Colony_Rec.Faction),
+               Location =>
+                 Concorde.Worlds.Name (Colony_Rec.World),
+               Category => "revenue",
+               Message  => Policy_Tag & " earns "
+               & Concorde.Money.Show (Amount));
+
+            Concorde.Db.Colony_Policy.Update_Colony_Policy
+              (Concorde.Db.Colony_Policy.Get_Reference_By_Colony_Policy
+                 (Colony, Policy))
+                .Set_Revenue (Amount)
+              .Done;
+            Concorde.Agents.Add_Cash
+              (Colony_Rec, Amount, Policy_Tag);
+         end;
+      end if;
+   end Execute_Daily_Policy;
 
 end Concorde.Colonies;
