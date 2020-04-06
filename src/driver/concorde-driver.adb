@@ -73,23 +73,23 @@ begin
          Update_Days : constant Natural :=
            Concorde.Options.Update_Count;
       begin
-         Process.Start_Bar ("Updating", Update_Days * 24, True);
+         if Update_Days > 0 then
+            Process.Start_Bar ("Updating", Update_Days * 24, True);
 
-         for Day_Index in 1 .. Update_Days loop
-            for Hour_Index in 1 .. 24 loop
-               for Minute_Index in 1 .. 60 loop
-                  Concorde.Calendar.Advance (60.0);
-                  Concorde.Updates.Control.Execute_Pending_Updates;
+            for Day_Index in 1 .. Update_Days loop
+               for Hour_Index in 1 .. 24 loop
+                  for Minute_Index in 1 .. 60 loop
+                     Concorde.Calendar.Advance (60.0);
+                     Concorde.Updates.Control.Execute_Pending_Updates;
+                  end loop;
+                  Process.Tick;
                end loop;
                Process.Tick;
             end loop;
-         end loop;
-
-         Process.Finish;
+            Process.Finish;
+         end if;
 
       end;
-
-      Ada.Text_IO.New_Line;
 
    else
 
