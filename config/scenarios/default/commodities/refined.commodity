@@ -13,14 +13,14 @@
    
 refined-crystals = {
     base-price = 3
-    supply-coefficient = 10000
+    supply-coefficient = 10
     production-sector = refining
     parts = { crystals = 2 }
 }
 
 plastic = {
     base-price = 3
-    supply-coefficient = 10000
+    supply-coefficient = 10
     production-sector = refining
     parts = { hydrocarbon = 2 }
 }

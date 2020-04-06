@@ -149,7 +149,7 @@ package body Concorde.Colonies.Create is
         (IG : Income_Group)
       is
          Group_Size : constant Real :=
-                        IG.Proportion * Total_Pop;
+                        IG.Proportion * Total_Pop / 1000.0;
          Pop_Count  : constant Real := Real (Pops_Per_Wealth_Group);
          Size       : constant Real := Group_Size / Pop_Count;
       begin
@@ -498,8 +498,6 @@ package body Concorde.Colonies.Create is
 
       Cash : constant Concorde.Money.Money_Type :=
                Concorde.Money.To_Money (Get ("cash"));
-      Total_Pop : constant Real := Get ("total-population");
-
       Account : constant Concorde.Db.Account_Reference :=
                   Concorde.Db.Account.Create
                     (Guarantor  => Concorde.Db.Faction.Get (Faction).Account,
@@ -579,6 +577,7 @@ package body Concorde.Colonies.Create is
 
       declare
          Sizes  : Setting_Maps.Map;
+         Total  : Non_Negative_Real := 0.0;
       begin
          for Pop of
            Concorde.Db.Pop.Select_By_Colony
@@ -600,10 +599,11 @@ package body Concorde.Colonies.Create is
                   declare
                      E : Real renames Sizes (Tag);
                   begin
-                     E := E + Non_Negative_Real (Pop.Size);
+                     E := E + Pop.Size;
                   end;
                end;
             end loop;
+            Total := Total + Pop.Size;
          end loop;
 
          for Position in Sizes.Iterate loop
@@ -615,7 +615,7 @@ package body Concorde.Colonies.Create is
                  (Key & "-population", Size);
                Set_Override
                  (Key & "-proportion",
-                  Size / Total_Pop);
+                  Size / Total);
                Set_Override (Key, 0.0);
             end;
          end loop;

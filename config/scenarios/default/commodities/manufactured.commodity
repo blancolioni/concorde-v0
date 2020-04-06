@@ -9,9 +9,9 @@ food = {
     
     metrics = {
 
-        supply = {
+        production = {
             content = quantity
-            value = [ 100 * farming * (1 + environment) ]
+            value = [ farming * (1 + environment) ]
         }
         
         availability = {
@@ -39,7 +39,7 @@ basic-electronics = {
     pressure-smoothing = 10
     pressure-price-smoothing = 14
     pressure-price-delay = 7
-    supply-coefficient = 10000
+    supply-coefficient = 10
     production-sector = manufacturing
 
     parts = {
