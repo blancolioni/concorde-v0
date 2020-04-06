@@ -1,3 +1,5 @@
+with GCS.Errors;
+
 with Concorde.Parser.Tokens;               use Concorde.Parser.Tokens;
 with Concorde.Parser.Lexical;              use Concorde.Parser.Lexical;
 
@@ -256,10 +258,16 @@ package body Concorde.Parser is
       return Concorde.Expressions.Expression_Type
    is
    begin
+      GCS.Errors.Clear_Errors;
       Open_String (Source);
       return Expression : constant Concorde.Expressions.Expression_Type :=
         Parse_Expression
       do
+         if GCS.Errors.Has_Errors then
+            Close;
+            raise Constraint_Error with
+              "errors in expression: " & Source;
+         end if;
          Close;
       end return;
    end Parse_Expression;
