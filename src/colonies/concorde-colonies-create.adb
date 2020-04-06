@@ -343,6 +343,7 @@ package body Concorde.Colonies.Create is
          & Concorde.Real_Images.Approximate_Image (Total_Pop));
 
       declare
+         use all type Concorde.Db.Record_Type;
          Min_Income : Non_Negative_Real := Non_Negative_Real'Last;
          Max_Income : Non_Negative_Real := Non_Negative_Real'First;
       begin
@@ -350,7 +351,7 @@ package body Concorde.Colonies.Create is
 
             All_Groups.Append (Group.Get_Pop_Group_Reference);
 
-            if Group.Is_Wealth_Group then
+            if Group.Top_Record = R_Wealth_Group then
                declare
                   Income      : constant Non_Negative_Real :=
                                   Initial_Setting

@@ -1,4 +1,5 @@
 wealth-group = yes
+priority = 100
 
 politics = {
   corporate = { position = 0.8 strength = 0.8 }

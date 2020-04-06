@@ -21,10 +21,31 @@ package body Concorde.Configure.Metrics is
 
    Metric_Map : String_List_Maps.Map;
 
-   procedure Create_Derived_Metric
-     (Metric_Tag : String;
+   ---------------------
+   -- Add_Calculation --
+   ---------------------
+
+   procedure Add_Calculation
+     (Tag        : String;
       Content    : Concorde.Db.Node_Value_Type;
-      Expression : String);
+      Expression : String)
+   is
+      Calculation : constant Concorde.Db.Calculation_Reference :=
+                      Concorde.Db.Calculation.Create
+                        (Identifier => Concorde.Identifiers.Next_Identifier,
+                         Node       => Concorde.Db.Null_Node_Reference,
+                         Expression => Expression);
+      Metric      : constant Concorde.Db.Derived_Metric_Reference :=
+                      Concorde.Db.Derived_Metric.Create
+                        (Content     => Content,
+                         Tag         => Tag,
+                         Calculation => Calculation);
+   begin
+      Concorde.Db.Calculation.Update_Calculation (Calculation)
+        .Set_Node (Concorde.Db.Derived_Metric.Get (Metric)
+                   .Get_Node_Reference)
+        .Done;
+   end Add_Calculation;
 
    -----------------------
    -- Configure_Metrics --
@@ -55,32 +76,6 @@ package body Concorde.Configure.Metrics is
       end loop;
    end Configure_Metrics;
 
-   ---------------------------
-   -- Create_Derived_Metric --
-   ---------------------------
-
-   procedure Create_Derived_Metric
-     (Metric_Tag : String;
-      Content    : Concorde.Db.Node_Value_Type;
-      Expression : String)
-   is
-      Calculation : constant Concorde.Db.Calculation_Reference :=
-                      Concorde.Db.Calculation.Create
-                        (Identifier => Concorde.Identifiers.Next_Identifier,
-                         Node       => Concorde.Db.Null_Node_Reference,
-                         Expression => Expression);
-      Metric      : constant Concorde.Db.Derived_Metric_Reference :=
-                      Concorde.Db.Derived_Metric.Create
-                        (Content     => Content,
-                         Tag         => Metric_Tag,
-                         Calculation => Calculation);
-   begin
-      Concorde.Db.Calculation.Update_Calculation (Calculation)
-        .Set_Node (Concorde.Db.Derived_Metric.Get (Metric)
-                   .Get_Node_Reference)
-        .Done;
-   end Create_Derived_Metric;
-
    ------------------
    -- Save_Metrics --
    ------------------
@@ -104,7 +99,7 @@ package body Concorde.Configure.Metrics is
                end if;
             end loop;
 
-            Create_Derived_Metric
+            Add_Calculation
               (Metric_Tag, Concorde.Db.Quantity,
                To_Single_Line (To_String (Expression)));
 

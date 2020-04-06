@@ -4,7 +4,8 @@ package Network is
 
 type Node_Value_Type is (Rating, Setting, Money, Quantity);
 
-record Node : Localised is
+record Node is
+   unique key Tag : String (64) is display;
    Content        : Node_Value_Type;
 end Node;
 
@@ -20,10 +21,16 @@ end Effect;
 record Metric : Node is
 end Metric;
 
+record Has_Priority is
+    key Priority : Natural;
+end Has_Priority;
+
 record Pop_Group : Localised is
-   key Is_Wealth_Group : Boolean;
    Proportion          : Long_Float;
 end Pop_Group;
+
+record Wealth_Group : Pop_Group, Has_Priority is
+end Wealth_Group;
 
 record Group_Influence is
    key From  : Pop_Group;
@@ -32,6 +39,12 @@ record Group_Influence is
    unique key Group_Influence with From, To;
 end Group_Influence;
 
+record Pop_Group_Demand is
+   key Pop_Group;
+   key Commodity;
+   unique key Pop_Group_Demand with Pop_Group, Commodity;
+end Pop_Group_Demand;
+   
 record Policy : Node is
    Expense : Calculation;
    Revenue : Calculation;

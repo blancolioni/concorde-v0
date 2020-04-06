@@ -22,8 +22,10 @@ with Concorde.Db.Node;
 with Concorde.Db.Policy;
 with Concorde.Db.Pop;
 with Concorde.Db.Pop_Group;
+with Concorde.Db.Pop_Group_Demand;
 with Concorde.Db.Pop_Group_Member;
 with Concorde.Db.Resource;
+with Concorde.Db.Wealth_Group;
 with Concorde.Db.Zone;
 
 package body Concorde.Managers.Colonies is
@@ -71,6 +73,8 @@ package body Concorde.Managers.Colonies is
                   Colony.Get_Network_Reference;
 
       procedure Update_Colony_Prices;
+
+      procedure Update_Population_Demands;
 
       procedure Update_Mining_Production;
 
@@ -202,6 +206,97 @@ package body Concorde.Managers.Colonies is
 
       end Update_Mining_Production;
 
+      procedure Update_Population_Demands is
+         package Real_Maps is
+           new WL.String_Maps (Real);
+
+         Remaining_Map : Real_Maps.Map;
+
+         function Remaining
+           (Commodity : Concorde.Db.Commodity_Reference)
+            return Non_Negative_Real;
+
+         procedure Receive
+           (Commodity : Concorde.Db.Commodity_Reference;
+            Quantity  : Real);
+
+         -------------
+         -- Receive --
+         -------------
+
+         procedure Receive
+           (Commodity : Concorde.Db.Commodity_Reference;
+            Quantity  : Real)
+         is
+            Tag : constant String :=
+                    Concorde.Db.Commodity.Get (Commodity).Tag;
+         begin
+            pragma Assert (Remaining_Map.Contains (Tag),
+                           "remaining map did not contain " & Tag);
+            Remaining_Map (Tag) := Remaining_Map (Tag) - Quantity;
+         end Receive;
+
+         ---------------
+         -- Remaining --
+         ---------------
+
+         function Remaining
+           (Commodity : Concorde.Db.Commodity_Reference)
+            return Non_Negative_Real
+         is
+            Tag : constant String := Concorde.Db.Commodity.Get (Commodity).Tag;
+         begin
+            if not Remaining_Map.Contains (Tag) then
+               Remaining_Map.Insert
+                 (Tag,
+                  Concorde.Network.Current_Value
+                    (Network, Tag & "-supply"));
+            end if;
+            return Remaining_Map.Element (Tag);
+         end Remaining;
+
+      begin
+         for Pop_Group of
+           Concorde.Db.Wealth_Group.Scan_By_Priority
+         loop
+
+            for Pop_Group_Demand of
+              Concorde.Db.Pop_Group_Demand.Select_By_Pop_Group
+                (Pop_Group.Get_Pop_Group_Reference)
+            loop
+               declare
+                  Commodity : constant Concorde.Db.Commodity_Reference :=
+                                 Pop_Group_Demand.Commodity;
+                  Demand_Tag : constant String :=
+                                 Pop_Group.Tag
+                                 & "-"
+                                 & Concorde.Db.Commodity.Get (Commodity).Tag
+                               & "-"
+                                 & "demand";
+                  Receive_Tag : constant String :=
+                                  Pop_Group.Tag
+                                  & "-"
+                                  & Concorde.Db.Commodity.Get (Commodity).Tag
+                                  & "-"
+                                  & "recv";
+
+                  Demand     : constant Real :=
+                                  Concorde.Network.Current_Value
+                                    (Network, Demand_Tag);
+                  Supply     : constant Real :=
+                                 Remaining (Commodity);
+                  Received   : constant Real := Real'Min (Supply, Demand);
+               begin
+                  Concorde.Network.Set_New_Value
+                    (Network, Receive_Tag, Received);
+                  Concorde.Network.Commit_New_Value
+                    (Network, Receive_Tag);
+                  Receive (Commodity, Received);
+               end;
+            end loop;
+         end loop;
+      end Update_Population_Demands;
+
       -----------------------------
       -- Update_Population_Sizes --
       -----------------------------
@@ -273,6 +368,8 @@ package body Concorde.Managers.Colonies is
          Message  => "activating");
 
       Update_Colony_Prices;
+
+      Update_Population_Demands;
 
       Update_Population_Sizes;
 
@@ -400,7 +497,7 @@ package body Concorde.Managers.Colonies is
 
    begin
       for Group of
-        Concorde.Db.Pop_Group.Select_By_Is_Wealth_Group (True)
+        Concorde.Db.Wealth_Group.Scan_By_Tag
       loop
          Add_Group (Group.Tag);
       end loop;
