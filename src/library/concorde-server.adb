@@ -13,6 +13,7 @@ with Concorde.Configure.Scenarios;
 with Concorde.Options;
 with Concorde.Paths;
 with Concorde.Random;
+with Concorde.Random_Names;
 
 with Concorde.Color;
 with Concorde.Factions.Create;
@@ -306,6 +307,8 @@ package body Concorde.Server is
       if Concorde.Options.Randomise then
          WL.Random.Randomise;
       end if;
+
+      Concorde.Random_Names.Load_Names;
 
    end Initialize;
 

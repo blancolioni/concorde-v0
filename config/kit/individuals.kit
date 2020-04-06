@@ -1,0 +1,34 @@
+package Characters is
+
+record Ability : Localised;
+
+record Individual : Agent is
+    key Faction;
+    First_Name   : String (32);
+    Last_Name    : String (32);
+    Gender       : Long_Float;
+    key Power    : Natural;
+end Individual;
+
+record Ability_Score is
+    key Individual;
+    Ability;
+    Score : Natural;
+    unique key Ability_Score with Individual, Ability;
+end Ability_Score;
+
+record Career : Localised is
+    Qualification : Ability;
+    Check         : Natural;
+end Career;
+
+record Assignment : Localised is
+   key Career;
+   Survival_Ability : Ability;
+   Survival_Check   : Natural;
+   Advance_Ability  : Ability;
+   Advance_Check    : Natural;
+end Assignment;
+
+
+end Characters;

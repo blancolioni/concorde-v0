@@ -1,0 +1,16 @@
+qualification = { int = 6 }
+
+assignment = {
+    law-enforcement = {
+        survival = { end = 6 }
+        advance  = { int = 6 }
+    }
+    intelligence = {
+        survival = { int = 7 }
+        advance  = { int = 5 }
+    }
+    corporate = {
+        survival = { int = 5 }
+        advance  = { int = 7 }
+    }
+}

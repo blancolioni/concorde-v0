@@ -58,6 +58,9 @@ refined-crystals-share = 0.1
 food-stockpile = 10K
 food-min-stock = 100
 food-sell-stock = 1%
+
+character-count = 100
+
 ships = {
    scout = 2
    transport = 1

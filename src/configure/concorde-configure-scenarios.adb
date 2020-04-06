@@ -2,6 +2,7 @@ with Ada.Text_IO;
 
 with Concorde.Options;
 
+with Concorde.Configure.Careers;
 with Concorde.Configure.Commodities;
 with Concorde.Configure.Economy;
 with Concorde.Configure.Facilities;
@@ -49,6 +50,8 @@ package body Concorde.Configure.Scenarios is
       Concorde.Configure.Pop_Groups.Configure_Pop_Groups (Scenario_Name);
       Concorde.Configure.Policies.Configure_Policies (Scenario_Name);
       Concorde.Configure.Metrics.Save_Metrics;
+
+      Concorde.Configure.Careers.Configure_Careers (Scenario_Name);
 
       Concorde.Configure.Facilities.Configure_Facilities (Scenario_Name);
       Concorde.Configure.Units.Configure_Units (Scenario_Name);

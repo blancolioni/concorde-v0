@@ -13,6 +13,7 @@ with Concorde.Paths;
 
 with Concorde.Calendar;
 
+with Concorde.Db.Ability;
 with Concorde.Db.User;
 with Concorde.Db.Calendar;
 
@@ -136,6 +137,12 @@ package body Concorde.Configure is
         (Tropos.Reader.Read_Config
            (Concorde.Paths.Config_File
                 ("star-systems/atmosphere.txt")));
+      Concorde.Db.Ability.Create ("str");
+      Concorde.Db.Ability.Create ("dex");
+      Concorde.Db.Ability.Create ("end");
+      Concorde.Db.Ability.Create ("int");
+      Concorde.Db.Ability.Create ("edu");
+      Concorde.Db.Ability.Create ("cha");
    end Initialize_Database;
 
    ------------------------

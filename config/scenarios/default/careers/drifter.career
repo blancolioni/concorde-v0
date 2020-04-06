@@ -1,0 +1,17 @@
+qualification = { int = 0 }
+
+assignment = {
+    barbarian = {
+        survival = { end = 7 }
+        advance  = { str = 7 }
+    }
+    wanderer = {
+        survival = { end = 7 }
+        advance  = { int = 7 }
+    }
+    scavenger = {
+        survival = { dex = 7 }
+        advance  = { end = 7 }
+    }
+}
+

@@ -8,6 +8,7 @@ source_dir = src/configure
 source_dir = src/driver
 source_dir = src/facilities
 source_dir = src/factions
+source_dir = src/individuals
 source_dir = src/installations
 source_dir = src/kit
 source_dir = src/library
