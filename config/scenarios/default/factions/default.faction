@@ -57,6 +57,7 @@ refined-crystals-sell-stock = 1%
 refined-crystals-share = 0.1
 food-stockpile = 10K
 food-min-stock = 100
+food-sell-stock = 1%
 ships = {
    scout = 2
    transport = 1
@@ -82,7 +83,7 @@ military = {
 
 sector-use = {
    farmland = {
-      count = 2
+      count = 4
 	  zones = { farm = 100 }
 	  }
    mine = {
