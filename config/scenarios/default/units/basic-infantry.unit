@@ -1,15 +1,10 @@
 build = {
-   small-arms = 100
-   fuel = 10
 }
 
 supply = {
-   small-arms = 2
-   fuel = 2
 }
 
 skills = {
-   infantry-training = 1
 }
 
 movement-type = foot 

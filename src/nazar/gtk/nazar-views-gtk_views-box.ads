@@ -8,7 +8,7 @@ with Nazar.Views.Orientable;
 package Nazar.Views.Gtk_Views.Box is
 
    type Nazar_Gtk_Box_View_Record is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Box.Box_View_Interface
    with private;
 
@@ -27,7 +27,7 @@ package Nazar.Views.Gtk_Views.Box is
 private
 
    type Nazar_Gtk_Box_View_Record is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Box.Box_View_Interface with
       record
          Box         : Gtk.Box.Gtk_Box;
@@ -39,7 +39,7 @@ private
       return String
    is ("nazar-gtk-box-view");
 
-   overriding procedure Model_Changed
+   overriding procedure Update_From_Model
      (View : in out Nazar_Gtk_Box_View_Record);
 
    overriding function Orientation

@@ -6,39 +6,26 @@ with WL.String_Sets;
 with Concorde.Calendar;
 with Concorde.Configure;
 with Concorde.Money;
-with Concorde.Quantities;
 
 with Concorde.Agents;
-with Concorde.Commodities;
 with Concorde.Star_Systems;
-with Concorde.Sectors;
-with Concorde.Stock;
 with Concorde.Terrain;
 with Concorde.Worlds;
 
-with Concorde.Configure.Commodities;
-with Concorde.Configure.Installations;
+with Concorde.Colonies.Create;
 
 with Concorde.Db.Account;
-with Concorde.Db.Army;
 with Concorde.Db.Company;
 with Concorde.Db.Deposit;
 with Concorde.Db.Faction;
 with Concorde.Db.Market;
-with Concorde.Db.Pop;
-with Concorde.Db.Regiment;
+with Concorde.Db.Owned_World;
 with Concorde.Db.Script;
 with Concorde.Db.Script_Line;
-with Concorde.Db.Sector_Use;
 with Concorde.Db.Shareholder;
-with Concorde.Db.Skill;
-with Concorde.Db.Stock_Item;
 with Concorde.Db.Star_System_Distance;
-with Concorde.Db.World;
 with Concorde.Db.World_Sector;
-with Concorde.Db.Unit;
 with Concorde.Db.User;
-with Concorde.Db.Utility_Class;
 
 package body Concorde.Factions.Create is
 
@@ -52,17 +39,6 @@ package body Concorde.Factions.Create is
    function Find_Home_Sector
      (World : Concorde.Db.World_Reference)
       return Concorde.Db.World_Sector_Reference;
-
-   procedure Initialize_Zone
-     (Company     : Concorde.Db.Company_Reference;
-      Sector      : Concorde.Db.World_Sector_Reference;
-      Sector_Use  : Concorde.Db.Sector_Use_Reference;
-      Zone_Config : Tropos.Configuration);
-
-   procedure Create_Pop_Regiment
-     (Pop    : Concorde.Db.Pop_Reference;
-      Army   : Concorde.Db.Army_Reference;
-      Supply : Tropos.Configuration);
 
    --------------------
    -- Create_Faction --
@@ -98,8 +74,6 @@ package body Concorde.Factions.Create is
                         Spend      => Concorde.Money.Zero);
          Sector  : constant Concorde.Db.World_Sector_Reference :=
            Find_Home_Sector (Capital);
-         Neighbours : constant Concorde.Worlds.World_Sector_Array :=
-           Concorde.Worlds.Get_Neighbours (Sector);
          Faction : constant Concorde.Db.Faction_Reference :=
                      Concorde.Db.Faction.Create
                        (Name          => Name,
@@ -112,7 +86,8 @@ package body Concorde.Factions.Create is
                         Next_Event    => Concorde.Calendar.Clock,
                         Manager       => "default-faction",
                         Account       => Account,
-                        Capacity      => Concorde.Quantities.Zero,
+                        Last_Earn     => Concorde.Money.Zero,
+                        Last_Spend    => Concorde.Money.Zero,
                         Red           => Color.Red,
                         Green         => Color.Green,
                         Blue          => Color.Blue,
@@ -124,145 +99,34 @@ package body Concorde.Factions.Create is
            Concorde.Db.Company.Create
              (Account      =>
                 Concorde.Agents.New_Account (Concorde.Money.Zero),
+              Last_Earn     => Concorde.Money.Zero,
+              Last_Spend    => Concorde.Money.Zero,
               Name         => Name,
               Active       => True,
               Scheduled    => False,
               Next_Event   => Concorde.Calendar.Clock,
               Manager      => "faction-company",
-              Capacity     => Concorde.Quantities.To_Quantity (1.0e6),
               Faction      => Faction,
               Headquarters => Capital,
               Shares       => Faction_Company_Shares,
               Dividend     => 0.2);
-         Army       : constant Concorde.Db.Army_Reference :=
-           Concorde.Db.Army.Create
-             (Account      =>
-                Concorde.Agents.New_Account
-                  (Concorde.Money.Zero, Account),
-              Active       => True,
-              Scheduled    => False,
-              Next_Event   => Concorde.Calendar.Clock,
-              Manager      => "default-army",
-              Name         => "1st Colonial Army",
-              Capacity     => Concorde.Quantities.To_Quantity (1.0e6),
-              Faction      => Faction,
-              World        => Capital,
-              World_Sector => Sector);
-         Remaining_Shares : Natural := Faction_Company_Shares;
+         Remaining_Shares : constant Natural := Faction_Company_Shares;
          Script           : constant Concorde.Db.Script_Reference :=
            Concorde.Db.Script.Create ("rc", User);
          Line_Index       : Natural := 0;
 
       begin
 
-         Initialize_Zone
-           (Company     => Company,
-            Sector      => Sector,
-            Sector_Use  =>
-              Concorde.Db.Sector_Use.Get_Reference_By_Tag ("urban"),
-            Zone_Config => Setup.Child ("capital-sector"));
-
-         declare
-            Next : Natural := 0;
-         begin
-            for Sector_Use_Config of Setup.Child ("sector-use") loop
-               declare
-                  Sector_Use : constant Concorde.Db.Sector_Use_Reference :=
-                    Concorde.Db.Sector_Use.Get_Reference_By_Tag
-                      (Sector_Use_Config.Config_Name);
-               begin
-                  for I in 1 .. Sector_Use_Config.Get ("count") loop
-                     Next := Next + 1;
-                     exit when Next > Neighbours'Last;
-
-                     Initialize_Zone (Company,
-                                      Neighbours (Next), Sector_Use,
-                                      Sector_Use_Config.Child ("zones"));
-
-                  end loop;
-               end;
-               exit when Next > Neighbours'Last;
-            end loop;
-         end;
-
-         for Pop_Config of
-           Setup.Child ("pops")
-         loop
-            declare
-               Size : constant Concorde.Quantities.Quantity_Type :=
-                        Concorde.Quantities.To_Quantity
-                          (Real (Float'(Pop_Config.Get ("size"))));
-               Cash : constant Concorde.Money.Money_Type :=
-                        Concorde.Money.To_Money
-                          (Real (Float'(Pop_Config.Get ("cash"))));
-               Account : constant Concorde.Db.Account_Reference :=
-                 Concorde.Agents.New_Account (Cash);
-               Ownership : constant Unit_Real :=
-                 Real (Float'(Pop_Config.Get ("faction-share", 0.0)));
-               Is_Regiment : constant Boolean :=
-                 Pop_Config.Get ("regiment");
-               Pop : constant Concorde.Db.Pop_Reference :=
-                 Concorde.Db.Pop.Create
-                   (Transported_Size => Concorde.Quantities.To_Real (Size),
-                    Active           => True,
-                    Scheduled        => False,
-                    Next_Event       => Concorde.Calendar.Clock,
-                    Manager          => "default-pop",
-                    Account          => Account,
-                    Production       => Concorde.Db.Null_Production_Reference,
-                    Capacity         => Concorde.Quantities.Scale (Size, 10.0),
-                    Faction          => Faction,
-                    World            => Capital,
-                    World_Sector     => Sector,
-                    Employer         => Concorde.Db.Null_Employer_Reference,
-                    Utility_Class    =>
-                      Concorde.Db.Utility_Class.Get_Reference_By_Name
-                        ("default-pop"),
-                    Size             => Size,
-                    Salary           => Concorde.Money.Zero,
-                    Hours            => 1.0,
-                    Health           => 1.0,
-                    Happy            => 1.0,
-                    Education        => 1.0);
-            begin
-               Concorde.Configure.Commodities.Configure_Stock
-                 (Concorde.Db.Pop.Get (Pop), Pop_Config.Child ("skills"),
-                  Factor => Concorde.Quantities.To_Real (Size));
-
-               if Ownership > 0.0 then
-                  declare
-                     Shares : constant Natural :=
-                       Natural (Real (Faction_Company_Shares) * Ownership);
-                  begin
-                     Concorde.Db.Shareholder.Create
-                       (Company => Company,
-                        Agent   =>
-                          Concorde.Db.Pop.Get (Pop).Get_Agent_Reference,
-                        Shares  => Shares);
-                     Remaining_Shares := Remaining_Shares - Shares;
-                  end;
-               end if;
-
-               if Is_Regiment then
-                  Create_Pop_Regiment
-                    (Pop, Army,
-                     Setup.Child ("military"));
-               end if;
-
-            end;
-         end loop;
+         Concorde.Colonies.Create.New_Colony
+           (World   => Capital,
+            Sector  => Sector,
+            Faction => Faction,
+            Config  => Setup);
 
          Concorde.Db.Shareholder.Create
            (Company => Company,
             Agent   => Concorde.Db.Faction.Get (Faction).Get_Agent_Reference,
             Shares  => Remaining_Shares);
-
-         for Installation_Config of
-           Setup.Child ("installations")
-         loop
-            Concorde.Configure.Installations.Configure_Installation
-              (Faction, Sector, Installation_Config);
-         end loop;
 
          if not Setup.Contains ("init-script") then
             Ada.Text_IO.Put_Line
@@ -277,10 +141,9 @@ package body Concorde.Factions.Create is
                Line   => Command.Config_Name);
          end loop;
 
-         Concorde.Db.World.Update_World (Capital)
-           .Set_Owner
-             (Concorde.Db.Faction.Get (Faction).Get_Owner_Reference)
-           .Done;
+         Concorde.Db.Owned_World.Create
+           (Faction => Faction,
+            World   => Capital);
 
          Concorde.Db.Market.Create
            (World => Capital);
@@ -330,69 +193,6 @@ package body Concorde.Factions.Create is
       end loop;
    end Create_Factions;
 
-   -------------------------
-   -- Create_Pop_Regiment --
-   -------------------------
-
-   procedure Create_Pop_Regiment
-     (Pop    : Concorde.Db.Pop_Reference;
-      Army   : Concorde.Db.Army_Reference;
-      Supply : Tropos.Configuration)
-   is
-      function Choose_Unit
-         return Concorde.Db.Unit_Reference;
-
-      -----------------
-      -- Choose_Unit --
-      -----------------
-
-      function Choose_Unit
-        return Concorde.Db.Unit_Reference
-      is
-      begin
-         for Stock_Item of
-           Concorde.Db.Stock_Item.Select_By_Has_Stock
-             (Concorde.Db.Pop.Get (Pop).Get_Has_Stock_Reference)
-         loop
-            declare
-               Commodity : constant Concorde.Commodities.Commodity_Reference :=
-                 Concorde.Commodities.Get_Commodity (Stock_Item.Commodity);
-            begin
-               if Concorde.Commodities.Is_Skill (Commodity) then
-                  declare
-                     Skill : constant Concorde.Db.Skill_Reference :=
-                       Concorde.Db.Skill.Get_Skill (Stock_Item.Commodity)
-                       .Get_Skill_Reference;
-                  begin
-                     for Unit of
-                       Concorde.Db.Unit.Select_By_Skill (Skill)
-                     loop
-                        return Unit.Get_Unit_Reference;
-                     end loop;
-                  end;
-               end if;
-            end;
-         end loop;
-
-         raise Constraint_Error with
-           "unable to find a unit type to match pop skills";
-      end Choose_Unit;
-
-      Regiment : constant Concorde.Db.Regiment_Reference :=
-        Concorde.Db.Regiment.Create
-          (Army         => Army,
-           Pop          => Pop,
-           Unit         => Choose_Unit,
-           Strength     => 1_000,
-           Morale       => 1.0,
-           Organisation => 1.0);
-      Supplied : constant Concorde.Db.Supplied_Reference :=
-        Concorde.Db.Regiment.Get (Regiment).Get_Supplied_Reference;
-   begin
-      Concorde.Configure.Commodities.Configure_Supplied
-        (Supplied, Supply);
-   end Create_Pop_Regiment;
-
    ----------------------
    -- Find_Home_Sector --
    ----------------------
@@ -431,8 +231,7 @@ package body Concorde.Factions.Create is
                   Score :=
                     Real'Max
                       (Score,
-                         Deposit.Accessibility
---                      + Deposit.Abundance / 1.0e6 * Deposit.Accessibility
+                         Deposit.Concentration / (1.0 + Deposit.Difficulty)
                        * (1.0 - Concorde.Terrain.Hazard
                          (Concorde.Worlds.Get_Terrain (N))));
                end loop;
@@ -529,62 +328,5 @@ package body Concorde.Factions.Create is
 
       return Concorde.Db.Null_World_Reference;
    end Find_Homeworld;
-
-   ---------------------
-   -- Initialize_Zone --
-   ---------------------
-
-   procedure Initialize_Zone
-     (Company     : Concorde.Db.Company_Reference;
-      Sector      : Concorde.Db.World_Sector_Reference;
-      Sector_Use  : Concorde.Db.Sector_Use_Reference;
-      Zone_Config : Tropos.Configuration)
-   is
-      Owner      : constant Concorde.Db.Owner_Reference :=
-        Concorde.Db.Company.Get (Company).Get_Owner_Reference;
-      Has_Stock  : constant Concorde.Db.Has_Stock_Reference :=
-        Concorde.Sectors.Has_Stock_Reference (Sector)
-        with Unreferenced;
-   begin
-
-      Concorde.Db.World_Sector.Update_World_Sector (Sector)
-        .Set_Sector_Use (Sector_Use)
-        .Set_Owner (Owner)
-        .Done;
-
-      for Available_Config of Zone_Config loop
-         if not Commodities.Exists
-           (Available_Config.Config_Name)
-         then
-            raise Constraint_Error with
-              "zone: no such commodity: "
-              & Available_Config.Config_Name;
-         end if;
-
-         declare
-            General_Commodity : constant Commodities.Commodity_Reference :=
-              Commodities.Get (Available_Config.Config_Name);
-            Price             : constant Concorde.Money.Price_Type :=
-              Commodities.Initial_Price (General_Commodity);
-            Stock : constant Concorde.Db.Has_Stock_Reference :=
-              Concorde.Db.Company.Get (Company).Get_Has_Stock_Reference;
-            Commodity : constant Concorde.Commodities.Commodity_Reference :=
-              Concorde.Commodities.Create_Title
-                (Sector, General_Commodity, Price);
-            Lease     : constant Concorde.Commodities.Commodity_Reference :=
-              Concorde.Commodities.Create_Lease
-                (Commodity, 360);
-            Quantity          : constant Concorde.Quantities.Quantity_Type :=
-              Concorde.Quantities.To_Quantity
-                (Real (Float'(Available_Config.Value)));
-         begin
-            Concorde.Stock.Add_Initial_Stock
-              (Stock, Commodity, Quantity);
-            Concorde.Stock.Add_Initial_Stock
-              (Stock, Lease, Quantity);
-         end;
-      end loop;
-
-   end Initialize_Zone;
 
 end Concorde.Factions.Create;

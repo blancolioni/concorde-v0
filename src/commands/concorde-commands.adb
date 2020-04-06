@@ -1,411 +1,225 @@
-with Ada.Characters.Handling;
-with Ada.Exceptions;
-with Ada.Strings.Fixed;
+with WL.String_Maps;
+
+with Nazar.Interfaces.Text;
+with Nazar.Interfaces.Text_Writer;
+
+with Concorde.Calendar;
+
+with Concorde.Updates.Control;
 
 package body Concorde.Commands is
 
-   package Command_Maps is
-     new WL.String_Maps (Root_Concorde_Command'Class);
+   package Info_Maps is new WL.String_Maps (String);
 
-   Map : Command_Maps.Map;
+   Command_Usage : Info_Maps.Map;
+   Command_Help  : Info_Maps.Map;
 
-   procedure Set_Flag
-     (Arguments : in out Argument_List;
-      Flag      : String);
+   type Time_Acceleration_Command is
+     new System_Command with null record;
 
-   procedure Set_Named_Value
-     (Arguments : in out Argument_List;
-      Name      : String;
-      Value     : String);
+   overriding function Name
+     (Command : Time_Acceleration_Command)
+      return String
+   is ("set-speed");
 
-   procedure Set_Value
-     (Arguments : in out Argument_List;
-      Value     : String);
+   overriding function Check
+     (Command   : Time_Acceleration_Command;
+      Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class)
+      return Boolean;
 
-   function Scan_Arguments
-     (Context       : Concorde.Contexts.Context_Type;
-      Argument_Line : String)
-      return Argument_List;
+   overriding procedure Execute
+     (Command     : Time_Acceleration_Command;
+      Arguments   : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
+      Writer      : in out Nazar.Interfaces.Text_Writer
+      .Text_Writer_Interface'Class);
 
-   procedure Iterate_Words
-     (Context : Concorde.Contexts.Context_Type;
-      Text    : String;
-      Process : not null access
-        procedure (Word : String));
+   type Pause_Resume_Command is
+     new System_Command with
+      record
+         Pause : Boolean;
+      end record;
 
-   procedure Execute_Single_Command
-     (Command : String;
-      Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Concorde.Writers.Writer_Interface'Class);
+   overriding function Name
+     (Command : Pause_Resume_Command)
+      return String
+   is (if Command.Pause then "pause" else "resume");
+
+   overriding function Check
+     (Command   : Pause_Resume_Command;
+      Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class)
+      return Boolean;
+
+   overriding procedure Execute
+     (Command     : Pause_Resume_Command;
+      Arguments   : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
+      Writer      : in out Nazar.Interfaces.Text_Writer
+      .Text_Writer_Interface'Class);
+
+   -----------
+   -- Check --
+   -----------
+
+   overriding function Check
+     (Command   : Time_Acceleration_Command;
+      Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Command);
+   begin
+      if Arguments.Argument_Count /= 1 then
+         return False;
+      end if;
+
+      declare
+         Arg : constant String := Arguments.Argument (1);
+      begin
+         return Arg = "slow" or else Arg = "medium" or else Arg = "fast"
+           or else Arg = "maximum"
+           or else (for all Ch of Arg => Ch in '0' .. '9');
+      end;
+   end Check;
+
+   -----------
+   -- Check --
+   -----------
+
+   overriding function Check
+     (Command   : Pause_Resume_Command;
+      Arguments : Nazar.Interfaces.Commands.Arguments_Interface'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Command);
+   begin
+      return Arguments.Argument_Count = 0;
+   end Check;
 
    -------------
    -- Execute --
    -------------
 
-   procedure Execute
-     (Command   : Root_Concorde_Command'Class;
-      Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Concorde.Writers.Writer_Interface'Class;
-      Arguments : Argument_List)
+   overriding procedure Execute
+     (Command     : Time_Acceleration_Command;
+      Arguments   : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
+      Writer      : in out Nazar.Interfaces.Text_Writer
+      .Text_Writer_Interface'Class)
    is
+      pragma Unreferenced (Command, Environment, Writer);
+      Speed : constant String := Arguments.Argument (1);
+      Acc   : Duration := 0.0;
    begin
-      if Command.Administrator_Only
-        and then not Context.Is_Administrator
-      then
-         Writer.Put_Error
-           ("You must be an administrator to perform this action");
-         return;
+      if Speed = "slow" then
+         Acc := 60.0;
+      elsif Speed = "medium" then
+         Acc := 3600.0;
+      elsif Speed = "fast" then
+         Acc := Concorde.Calendar.Days (1);
+      elsif Speed = "maximum" then
+         Acc := Concorde.Calendar.Days (10);
+      else
+         Acc := Duration'Value (Speed);
       end if;
-      Command.Perform (Context, Writer, Arguments);
-   exception
-      when E : others =>
-         Writer.Put_Error
-           (Ada.Exceptions.Exception_Message (E));
+
+      Concorde.Updates.Control.Set_Advance_Speed (Acc);
    end Execute;
 
-   --------------------------
-   -- Execute_Command_Line --
-   --------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Execute_Command_Line
-     (Line    : String;
-      Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Concorde.Writers.Writer_Interface'Class)
+   overriding procedure Execute
+     (Command     : Pause_Resume_Command;
+      Arguments   : Nazar.Interfaces.Commands.Arguments_Interface'Class;
+      Environment : not null access
+        Nazar.Interfaces.Text.Text_Environment_Interface'Class;
+      Writer      : in out Nazar.Interfaces.Text_Writer
+      .Text_Writer_Interface'Class)
    is
-
-      function Is_Integer (Image : String) return Boolean;
-
-      ----------------
-      -- Is_Integer --
-      ----------------
-
-      function Is_Integer (Image : String) return Boolean is
-         First : Boolean := True;
-      begin
-         for Ch of Image loop
-            if Ch in '+' | '-' then
-               if not First then
-                  return False;
-               end if;
-            elsif Ch not in '0' .. '9' then
-               return False;
-            end if;
-            First := False;
-         end loop;
-         return True;
-      end Is_Integer;
-
+      pragma Unreferenced (Arguments, Environment, Writer);
    begin
-      if Ada.Strings.Fixed.Trim (Line, Ada.Strings.Both) = "" then
-         return;
+      if Command.Pause then
+         Concorde.Updates.Control.Pause_Updates;
+      else
+         Concorde.Updates.Control.Resume_Updates;
       end if;
+   end Execute;
 
-      if Line = "!!" then
-         if Context.History_Length > 0 then
-            declare
-               Command : constant String := Context.Get_History (-1);
-            begin
-               Writer.Put_Line (Command);
-               Execute_Single_Command (Command, Context, Writer);
-            end;
-         else
-            Writer.Put_Error ("!!: event not found");
-         end if;
-         return;
-      end if;
+   ----------
+   -- Help --
+   ----------
 
-      if Line (Line'First) = '!'
-        and then Is_Integer (Line (Line'First + 1 .. Line'Last))
-      then
-         declare
-            Image : constant String := Line (Line'First + 1 .. Line'Last);
-            X     : constant Integer := Integer'Value (Image);
-         begin
-            if abs X <= Context.History_Length then
-               declare
-                  Command : constant String :=
-                              Context.Get_History (X);
-               begin
-                  Writer.Put_Line (Command);
-                  Execute_Single_Command (Command, Context, Writer);
-               end;
-            else
-               Writer.Put_Error (Line & ": event not found");
-            end if;
-            return;
-         end;
-      end if;
-
-      Context.Append_History (Line);
-      Execute_Single_Command (Line, Context, Writer);
-
-   end Execute_Command_Line;
-
-   ----------------------------
-   -- Execute_Single_Command --
-   ----------------------------
-
-   procedure Execute_Single_Command
-     (Command : String;
-      Context   : in out Concorde.Contexts.Context_Type;
-      Writer    : in out Concorde.Writers.Writer_Interface'Class)
+   overriding function Help
+     (Command : System_Command)
+      return String
    is
-      Extended_Line : constant String := Command & ' ';
-      First         : constant Positive :=
-                        Ada.Strings.Fixed.Index_Non_Blank (Extended_Line);
-      Index         : constant Positive :=
-                        Ada.Strings.Fixed.Index (Extended_Line, " ", First);
-      Command_Name  : constant String :=
-                        Extended_Line
-                          (Extended_Line'First .. Index - 1);
+      Command_Class : System_Command'Class renames
+        System_Command'Class (Command);
    begin
-      if not Map.Contains (Command_Name) then
-         Writer.Put_Error (Command_Name & ": command not found");
-         return;
+      if Command_Help.Contains (Command_Class.Name) then
+         return Command_Help.Element (Command_Class.Name);
+      else
+         return "no help information";
       end if;
+   end Help;
 
-      declare
-         Command   : constant Root_Concorde_Command'Class :=
-                       Map.Element (Command_Name);
-         Arguments : constant Argument_List :=
-                       Scan_Arguments
-                         (Context,
-                          Extended_Line (Index + 1 .. Extended_Line'Last));
-      begin
-         Command.Execute (Context, Writer, Arguments);
-      end;
-   end Execute_Single_Command;
+   ---------------------------
+   -- Set_Time_Acceleration --
+   ---------------------------
+
+   function Set_Time_Acceleration
+      return Nazar.Interfaces.Commands.Command_Interface'Class
+   is
+   begin
+      return Command : Time_Acceleration_Command;
+   end Set_Time_Acceleration;
 
    -------------------
-   -- Iterate_Words --
+   -- Start_Updates --
    -------------------
 
-   procedure Iterate_Words
-     (Context : Concorde.Contexts.Context_Type;
-      Text    : String;
-      Process : not null access
-        procedure (Word : String))
+   function Start_Updates
+      return Nazar.Interfaces.Commands.Command_Interface'Class
    is
-      use Ada.Characters.Handling;
-      Double_Quote : Boolean := False;
-      Single_Quote : Boolean := False;
-      Escape       : Boolean := False;
-      Variable     : Boolean := False;
-      Skipping     : Boolean := True;
-      Buffer       : String (1 .. 1024);
-      Index        : Natural := 0;
-      Var_Index    : Natural := 0;
-
-      procedure Add (Ch : Character);
-
-      procedure Check_Variable;
-
-      ---------
-      -- Add --
-      ---------
-
-      procedure Add (Ch : Character) is
-      begin
-         Index := Index + 1;
-         Buffer (Index) := Ch;
-      end Add;
-
-      --------------------
-      -- Check_Variable --
-      --------------------
-
-      procedure Check_Variable is
-      begin
-         if Variable then
-            declare
-               Name : constant String := Buffer (Var_Index .. Index);
-               Value : constant String :=
-                         Context.Value (Name, "");
-            begin
-               Index := Var_Index - 1;
-               for Ch of Value loop
-                  Add (Ch);
-               end loop;
-            end;
-            Variable := False;
-         end if;
-      end Check_Variable;
-
    begin
-      for Ch of Text loop
-         if Skipping then
-            if not Is_Space (Ch) then
-               Skipping := False;
-               Index := Buffer'First - 1;
-            end if;
-         end if;
+      return Command : constant Pause_Resume_Command :=
+        Pause_Resume_Command'
+          (Pause => False);
+   end Start_Updates;
 
-         if not Skipping then
-            if Escape then
-               Add (Ch);
-               Escape := False;
-            elsif Double_Quote then
-               if Ch = '"' then
-                  Double_Quote := False;
-               else
-                  if Ch = '$' then
-                     Variable := True;
-                     Var_Index := Index + 1;
-                  else
-                     Add (Ch);
-                  end if;
-               end if;
-            elsif Single_Quote then
-               if Ch = ''' then
-                  Single_Quote := False;
-               else
-                  Add (Ch);
-               end if;
-            elsif Ch = '\' then
-               Escape := True;
-            elsif Ch = ''' then
-               Single_Quote := True;
-            elsif Ch = '"' then
-               Double_Quote := True;
-            elsif Is_Space (Ch) then
-               Check_Variable;
-               Process (Buffer (Buffer'First .. Index));
-               Index := 0;
-               Skipping := True;
-            else
-               if Variable
-                 and then not Is_Alphanumeric (Ch)
-                 and then Ch not in '-' | '_'
-               then
-                  Check_Variable;
-               end if;
-               if Ch = '$' then
-                  Variable := True;
-                  Var_Index := Index + 1;
-               else
-                  Add (Ch);
-               end if;
-            end if;
-         end if;
-      end loop;
+   ------------------
+   -- Stop_Updates --
+   ------------------
 
-      if not Skipping then
-         Check_Variable;
-         Process (Buffer (Buffer'First .. Index));
+   function Stop_Updates
+      return Nazar.Interfaces.Commands.Command_Interface'Class
+   is
+   begin
+      return Command : constant Pause_Resume_Command :=
+        Pause_Resume_Command'
+          (Pause => True);
+   end Stop_Updates;
+
+   -----------
+   -- Usage --
+   -----------
+
+   overriding function Usage
+     (Command : System_Command)
+      return String
+   is
+      Command_Class : System_Command'Class renames
+        System_Command'Class (Command);
+   begin
+      if Command_Usage.Contains (Command_Class.Name) then
+         return Command_Usage.Element (Command_Class.Name);
+      else
+         return "no usage information";
       end if;
-
-   end Iterate_Words;
-
-   --------------
-   -- Register --
-   --------------
-
-   procedure Register
-     (Command_Name : String;
-      Command      : Root_Concorde_Command'Class)
-   is
-   begin
-      Map.Insert (Command_Name, Command);
-   end Register;
-
-   --------------------
-   -- Scan_Arguments --
-   --------------------
-
-   function Scan_Arguments
-     (Context       : Concorde.Contexts.Context_Type;
-      Argument_Line : String)
-      return Argument_List
-   is
-
-      Arguments : Argument_List;
-
-      procedure Process_Argument
-        (Arg : String);
-
-      ----------------------
-      -- Process_Argument --
-      ----------------------
-
-      procedure Process_Argument
-        (Arg : String)
-      is
-      begin
-         if Arg = "-" or else Arg = "--" then
-            null;
-         elsif Arg (Arg'First) = '-'
-           and then Arg (Arg'First + 1) = '-'
-         then
-            declare
-               Equal_Index : constant Natural :=
-                               Ada.Strings.Fixed.Index (Arg, "=");
-            begin
-               if Equal_Index = 0 then
-                  Set_Flag (Arguments, Arg (Arg'First + 2 .. Arg'Last));
-               else
-                  declare
-                     Name  : constant String :=
-                               Arg (Arg'First + 2 .. Equal_Index - 1);
-                     Value : constant String :=
-                               Arg (Equal_Index + 1 .. Arg'Last);
-                  begin
-                     Set_Named_Value
-                       (Arguments => Arguments,
-                        Name      => Name,
-                        Value     => Value);
-                  end;
-               end if;
-            end;
-         elsif Arg (Arg'First) = '-' then
-            for Ch of Arg (Arg'First + 1 .. Arg'Last) loop
-               Set_Flag (Arguments, (1 => Ch));
-            end loop;
-         else
-            Set_Value (Arguments, Arg);
-         end if;
-
-      end Process_Argument;
-
-   begin
-      Iterate_Words (Context, Argument_Line, Process_Argument'Access);
-      return Arguments;
-   end Scan_Arguments;
-
-   --------------
-   -- Set_Flag --
-   --------------
-
-   procedure Set_Flag
-     (Arguments : in out Argument_List;
-      Flag      : String)
-   is
-   begin
-      Arguments.Map.Insert (Flag, "");
-   end Set_Flag;
-
-   ---------------------
-   -- Set_Named_Value --
-   ---------------------
-
-   procedure Set_Named_Value
-     (Arguments : in out Argument_List;
-      Name      : String;
-      Value     : String)
-   is
-   begin
-      Arguments.Map.Insert (Name, Value);
-   end Set_Named_Value;
-
-   ---------------
-   -- Set_Value --
-   ---------------
-
-   procedure Set_Value
-     (Arguments : in out Argument_List;
-      Value     : String)
-   is
-   begin
-      Arguments.Vector.Append (Value);
-   end Set_Value;
+   end Usage;
 
 end Concorde.Commands;

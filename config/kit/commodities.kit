@@ -4,47 +4,37 @@ with Colors;
 with Money;
 with Properties;
 with Quantities;
+with Technology;
 
 package Commodities is
 
-   record Commodity_Group : Localised;
-	
-   record Commodity : Localised, Has_Properties with Vector, Map is
-      key Commodity_Group;
-	  key Index     : Positive;
-      Initial_Price : Price_Type;
-      Mass          : Long_Float;
-      Density       : Long_Float;
-   end Commodity;
-   
-   record Resource : Commodity;
-   
-   record Skill : Commodity;
-   
-   record Lease : Commodity is
-      key Leased_Commodity : Commodity;
-	  Term    : Positive;
-   end Lease;
-   
-   record Has_Stock is
-      Capacity : Quantity_Type;
-   end Has_Stock;
-   
-   record Stock_Item is
-      key Has_Stock;
-      Commodity;
-      Quantity : Quantity_Type;
-      Value    : Money_Type;
-      unique key Stock_Item with Has_Stock, Commodity;
-   end Stock_Item;
-   
-   record Historical_Stock is
-      Time_Stamp : Time;
-      Has_Stock;
-      Commodity;
-      Quantity : Quantity_Type;
-      Value    : Money_Type;
-      unique key Historical_Stock with Has_Stock, Commodity, Time_Stamp;
-   end Historical_Stock;
-   
+record Commodity : Localised is
+   Mass       : Long_Float;
+   Base_Price : Price_Type;
+end Commodity;
+
+record Has_Stock;
+
+record Stock_Item is
+   key Has_Stock;
+   Commodity;
+   Quantity : Quantity_Type;
+   unique key Stock_Item with Has_Stock, Commodity;
+end Stock_Item;
+
+record Manufactured : Commodity, Technological is
+end Manufactured;
+
+record Input_Commodity is
+   key Manufactured;
+   key Commodity;
+   Quantity : Quantity_Type;
+   unique key Input_Commodity with Manufactured, Commodity;
+end Input_Commodity;
+
+record Consumer_Commodity is
+   key Commodity;
+   Pop_Per_Item   : Quantity_Type;
+end Consumer_Commodity;
+
 end Commodities;

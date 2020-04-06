@@ -5,6 +5,8 @@ with Nazar.Models.Environment;
 with Concorde.Options;
 with Concorde.Version;
 
+with Concorde.Commands;
+
 with Concorde.Server;
 
 with Concorde.UI.Entities;
@@ -47,6 +49,14 @@ package body Concorde.UI.Models.Console is
       do
          Model.Initialize
            (Concorde.UI.Entities.Root, Environment, Default_Scope);
+
+         Model.Set_Command
+           (Concorde.Commands.Set_Time_Acceleration);
+         Model.Set_Command
+           (Concorde.Commands.Start_Updates);
+         Model.Set_Command
+           (Concorde.Commands.Stop_Updates);
+
          Model.Put_Line
            ("Concorde " & Concorde.Version.Version_String);
       end return;

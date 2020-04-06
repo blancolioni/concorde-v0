@@ -38,6 +38,11 @@ package Nazar.Builder is
       Name    : String)
       return Nazar.Views.Nazar_View;
 
+   function Has_View
+     (Builder : Nazar_Builder_Record'Class;
+      Name    : String)
+      return Boolean;
+
 private
 
    package View_Maps is

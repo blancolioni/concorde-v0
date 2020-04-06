@@ -9,6 +9,8 @@ package Concorde is
 
    subtype Non_Negative_Real is Real range 0.0 .. Real'Last;
 
+   subtype Real_Time is Real;
+
    function Clamp (X : Real;
                    Lo, Hi : Real)
                    return Real

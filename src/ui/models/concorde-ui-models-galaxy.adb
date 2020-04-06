@@ -55,9 +55,9 @@ package body Concorde.UI.Models.Galaxy is
    procedure Draw_Galaxy
      (Model : in out Root_Galaxy_Model'Class);
 
-   -----------------------
-   -- Get_Draw_Commands --
-   -----------------------
+   -----------------
+   -- Draw_Galaxy --
+   -----------------
 
    procedure Draw_Galaxy
      (Model : in out Root_Galaxy_Model'Class)
@@ -68,7 +68,10 @@ package body Concorde.UI.Models.Galaxy is
          for Link of Rec.Nearby loop
             declare
                X : constant Nazar_Unit_Float :=
-                     Nazar_Unit_Float (0.75 / Link.Distance + 0.125);
+                     Nazar_Unit_Float
+                       (Nazar_Float'Min
+                          (Nazar_Float (0.55 / Link.Distance + 0.125),
+                           1.0));
             begin
                Model.Move_To (Rec.X, Rec.Y);
                Model.Set_Color (X, X, X);
@@ -87,25 +90,23 @@ package body Concorde.UI.Models.Galaxy is
          Model.Set_Color (Rec.Color);
          Model.Circle (2.0);
          Model.Render;
+
+         if Rec.Capital.Has_Element then
+            Model.Save_State;
+            Model.Set_Fill (False);
+            Model.Set_Color
+              (Nazar.Nazar_Unit_Float (Rec.Capital.Red),
+               Nazar.Nazar_Unit_Float (Rec.Capital.Green),
+               Nazar.Nazar_Unit_Float (Rec.Capital.Blue));
+            Model.Circle (5.0);
+            Model.Render;
+            Model.Restore_State;
+         end if;
+
       end loop;
 
       Model.Restore_State;
 
---           if Rec.Capital.Has_Element then
---              Commands.Add (Factory.Save);
---              Commands.Add
---                (Factory.Color
---                   (Rec.Capital.Red,
---                    Rec.Capital.Green,
---                    Rec.Capital.Blue));
---              Commands.Add
---                (Factory.Line_Width (3.0));
---              Commands.Add
---                (Factory.Arc (Screen (5.0)));
---              Commands.Add
---                (Factory.Render);
---              Commands.Add (Factory.Restore);
---           end if;
    end Draw_Galaxy;
 
    ------------------
@@ -174,7 +175,7 @@ package body Concorde.UI.Models.Galaxy is
            Concorde.Db.Star_System_Distance
              .Select_Star_System_Range_Bounded_By_Distance
                (Model.Systems.Element (Star_System_Index).Handle.Reference,
-                0.0, 8.0)
+                0.0, 4.0)
          loop
             declare
                subtype Nazar_Float is Nazar.Nazar_Float;

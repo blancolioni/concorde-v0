@@ -1,6 +1,7 @@
 project_name = Concorde
 source_dir = src
 source_dir = src/agents
+source_dir = src/colonies
 source_dir = src/commands
 source_dir = src/commodities
 source_dir = src/configure
@@ -12,11 +13,7 @@ source_dir = src/kit
 source_dir = src/library
 source_dir = src/managers
 source_dir = src/markets
-source_dir = src/nazar
-source_dir = src/nazar/aws
-source_dir = src/nazar/builder
-source_dir = src/nazar/gtk
-source_dir = src/nazar/text
+source_dir = src/network
 source_dir = src/pops
 source_dir = src/sessions
 source_dir = src/ships
@@ -39,6 +36,8 @@ depend = { project = Tropos version = any }
 depend = { project = Wlib version = any }
 depend = { project = marlowe version = any }
 depend = { project = kit version = any }
+depend = { project = nazar version = any }
+depend = { project = nazargtk version = any }
 depend = { project = aws external = yes }
 depend = { project = GtkAda external = yes }
 language = Ada

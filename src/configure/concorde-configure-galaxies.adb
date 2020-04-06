@@ -7,13 +7,17 @@ with Ada.Numerics.Long_Elementary_Functions;
 
 with WL.String_Sets;
 
+with Concorde.Calendar;
 with Concorde.Elementary_Functions;
+with Concorde.Identifiers;
 with Concorde.Random;
 with Concorde.Real_Images;
 
 with Concorde.Solar_System;
 with Concorde.Stars;
 with Concorde.Stars.Tables;
+
+with Concorde.Configure.Resources;
 
 with Concorde.Db.Scenario;
 with Concorde.Db.Star_System;
@@ -59,9 +63,9 @@ package body Concorde.Configure.Galaxies is
                   use Concorde.Elementary_Functions;
                begin
                   Concorde.Db.Star_System_Distance.Create
-                    (From     => From.Get_Star_System_Reference,
-                     To       => To.Get_Star_System_Reference,
-                     Distance =>
+                    (Star_System => From.Get_Star_System_Reference,
+                     To          => To.Get_Star_System_Reference,
+                     Distance    =>
                        Sqrt ((To.X - From.X) ** 2 +
                          (To.Y - From.Y) ** 2 +
                          (To.Z - From.Z) ** 2));
@@ -336,6 +340,9 @@ package body Concorde.Configure.Galaxies is
             declare
                Volume : constant Non_Negative_Real :=
                           4.0 * Ada.Numerics.Pi * (Radius ** 3) / 3.0;
+               Temperature : constant Non_Negative_Real :=
+                 (Luminosity ** 0.25)
+                 * Concorde.Solar_System.Solar_Surface_Temperature;
                Age    : constant Non_Negative_Real :=
                           1.0e10
                             * Solar_Masses
@@ -346,22 +353,19 @@ package body Concorde.Configure.Galaxies is
                            Primary               =>
                              Concorde.Db.Null_Star_System_Object_Reference,
                            Mass                  => Mass,
+                           Identifier            =>
+                             Concorde.Identifiers.Next_Identifier,
                            Radius                => Radius,
                            Density               => Mass / Volume,
-                           Zero_Longitude        =>
-                             Concorde.Random.Unit_Random * 360.0,
-                           Semimajor_Axis        => 0.0,
+                           Primary_Massive       =>
+                             Concorde.Db.Null_Massive_Object_Reference,
+                           Epoch                 => Concorde.Calendar.Clock,
                            Period                => 0.0,
+                           Semimajor_Axis        => 0.0,
                            Eccentricity          => 0.0,
                            Rotation_Period       => 0.0,
                            Tilt                  => 0.0,
-                           Surface_Acceleration  => 0.0,
                            Surface_Gravity       => 0.0,
-                           Escape_Velocity       => 0.0,
-                           Surface_Temperature   => 0.0,
-                           Min_Molecular_Weight  => 0.0,
-                           Rms_Velocity          => 0.0,
-                           Resonant_Period       => False,
                            Red                   => R,
                            Green                 => G,
                            Blue                  => B,
@@ -369,10 +373,42 @@ package body Concorde.Configure.Galaxies is
                            Class                 => Class,
                            Subclass              => Subclass,
                            Luminosity            => Luminosity,
+                           Temperature           => Temperature,
                            Age                   => Age,
                            Ecosphere             =>
                              Concorde.Elementary_Functions.Sqrt
                                (Luminosity));
+--                            (Star_System           => Star_System,
+--                             Primary               =>
+--                               Concorde.Db.Null_Star_System_Object_Reference,
+--                             Mass                  => Mass,
+--                             Radius                => Radius,
+--                             Density               => Mass / Volume,
+--                             Zero_Longitude        =>
+--                               Concorde.Random.Unit_Random * 360.0,
+--                             Semimajor_Axis        => 0.0,
+--                             Period                => 0.0,
+--                             Eccentricity          => 0.0,
+--                             Rotation_Period       => 0.0,
+--                             Tilt                  => 0.0,
+--                             Surface_Acceleration  => 0.0,
+--                             Surface_Gravity       => 0.0,
+--                             Escape_Velocity       => 0.0,
+--                             Surface_Temperature   => 0.0,
+--                             Min_Molecular_Weight  => 0.0,
+--                             Rms_Velocity          => 0.0,
+--                             Resonant_Period       => False,
+--                             Red                   => R,
+--                             Green                 => G,
+--                             Blue                  => B,
+--                             Name                  => System_Name,
+--                             Class                 => Class,
+--                             Subclass              => Subclass,
+--                             Luminosity            => Luminosity,
+--                             Age                   => Age,
+--                             Ecosphere             =>
+--                               Concorde.Elementary_Functions.Sqrt
+--                                 (Luminosity));
             begin
                if False then
                   Ada.Text_IO.Put (Concorde.Stars.Name (Star));
@@ -398,9 +434,9 @@ package body Concorde.Configure.Galaxies is
                exit when Count > Stored_Nearest_Count;
 
                Concorde.Db.Star_System_Distance.Create
-                 (From     => Vector.Element (I).Reference,
-                  To       => Vector.Element (Nearest.To).Reference,
-                  Distance =>
+                 (Star_System => Vector.Element (I).Reference,
+                  To          => Vector.Element (Nearest.To).Reference,
+                  Distance    =>
                     Sqrt (Distance
                       (Vector.Element (I),
                            Vector.Element (Nearest.To))));
@@ -410,6 +446,12 @@ package body Concorde.Configure.Galaxies is
       end loop;
 
       Progress.Finish;
+
+      Concorde.Configure.Resources.Create_Resource_Spheres
+        (System_Count => Number_Of_Systems,
+         R_X          => Radius_X,
+         R_Y          => Radius_Y,
+         R_Z          => Radius_Z);
 
    end Generate_Galaxy;
 

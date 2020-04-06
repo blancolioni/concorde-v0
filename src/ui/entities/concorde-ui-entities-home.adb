@@ -3,9 +3,10 @@ with Ada.Strings.Unbounded;
 
 with Concorde.UI.Entities.Directories;
 with Concorde.UI.Entities.Generic_Database_Entity;
-with Concorde.Db.Faction;
 
+with Concorde.Db.Faction;
 with Concorde.Db.World;
+with Concorde.Db.Owned_World;
 
 package body Concorde.UI.Entities.Home is
 
@@ -51,13 +52,13 @@ package body Concorde.UI.Entities.Home is
       return Concorde.Db.World_Reference
    is
       use Concorde.Db;
-      Owner   : constant Owner_Reference :=
-        Concorde.Db.Faction.Get (Faction).Get_Owner_Reference;
-      World   : constant Concorde.Db.World.World_Type :=
-        Concorde.Db.World.First_By_Name (Name);
+      Ref   : constant World_Reference :=
+                World.First_Reference_By_Name (Name);
    begin
-      if World.Owner = Owner then
-         return World.Get_World_Reference;
+      if Ref /= Null_World_Reference
+        and then Owned_World.Is_Owned_World (Faction, Ref)
+      then
+         return Ref;
       else
          return Null_World_Reference;
       end if;
@@ -98,10 +99,8 @@ package body Concorde.UI.Entities.Home is
         procedure (World : Concorde.Db.World.World_Interface'Class))
    is
    begin
-      for World of Concorde.Db.World.Select_By_Owner
-        (Concorde.Db.Faction.Get (Faction).Get_Owner_Reference)
-      loop
-         Process (World);
+      for Owned of Concorde.Db.Owned_World.Select_By_Faction (Faction) loop
+         Process (Concorde.Db.World.Get (Owned.World));
       end loop;
    end Iterate_Owned_Worlds;
 

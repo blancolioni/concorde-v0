@@ -44,6 +44,7 @@ package body Nazar.Views is
       View.Declare_Property ("attach-right", 1);
       View.Declare_Property ("attach-bottom", 1);
       View.Declare_Property ("expand", True);
+      View.Declare_Property ("pack-end", False);
    end Declare_Properties;
 
    ----------

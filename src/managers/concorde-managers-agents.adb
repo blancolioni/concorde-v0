@@ -613,6 +613,10 @@ package body Concorde.Managers.Agents is
      (Manager : Root_Agent_Manager_Type'Class)
    is
    begin
+      Concorde.Db.Agent.Update_Agent (Manager.Agent)
+        .Set_Last_Earn (Manager.Last_Earn)
+        .Set_Last_Spend (Manager.Last_Spend)
+        .Done;
       Concorde.Db.Account.Update_Account (Manager.Account)
         .Set_Earn (Concorde.Money.Zero)
         .Set_Spend (Concorde.Money.Zero)

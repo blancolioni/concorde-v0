@@ -1,7 +1,0 @@
-name = Swamp
-color = "#416825"
-hazard = 0.05
-resource = {
-   hydrocarbon = 2 
-   oil = 2
-}

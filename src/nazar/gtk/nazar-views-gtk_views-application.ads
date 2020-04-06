@@ -6,7 +6,7 @@ with Nazar.Views.Application;
 package Nazar.Views.Gtk_Views.Application is
 
    type Nazar_Gtk_Application_View_Record is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Application.Nazar_Application_View_Interface
    with private;
 
@@ -24,7 +24,7 @@ package Nazar.Views.Gtk_Views.Application is
 private
 
    type Nazar_Gtk_Application_View_Record is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Application.Nazar_Application_View_Interface with
       record
          Window : Gtk.Window.Gtk_Window;
@@ -35,7 +35,7 @@ private
       return String
    is ("nazar-gtk-application-view");
 
-   overriding procedure Model_Changed
+   overriding procedure Update_From_Model
      (View : in out Nazar_Gtk_Application_View_Record);
 
    overriding procedure Append

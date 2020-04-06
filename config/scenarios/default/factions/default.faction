@@ -1,85 +1,63 @@
 cash = 10K
 
-pops = {
-   pop = {
-      size = 100K
-      cash = 1000K
-	  faction-share = 5%
-      }
-   pop = {
-      size = 100
-      cash = 100K
-	  faction-share = 30%
-      }
-   pop = {
-      size = 1K
-	  cash = 1K
-	  skills = { infantry-training = 1 }
-	  faction-share = 1%
-	  regiment = yes
-	  }
-   pop = {
-      size = 100
-	  cash = 1K
-	  skills = { chemistry = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 100
-	  cash = 1K
-	  skills = { gunsmith = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 1K
-	  cash = 10K
-	  skills = { farming = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 1K
-	  cash = 10K
-	  skills = { farming = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 1K
-	  cash = 10K
-	  skills = { farming = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 1K
-	  cash = 10K
-	  skills = { farming = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 1K
-	  cash = 10K
-	  skills = { farming = 1 }
-	  faction-share = 1%
-	  }
-   pop = {
-      size = 100
-	  cash = 2K
-	  skills = { cooking = 1 }
-	  faction-share = 0.1%
-	  }
-   pop = {
-      size = 100
-	  cash = 2K
-	  skills = { cooking = 1 }
-	  faction-share = 0.1%
-	  }
-   pop = {
-      size = 100
-	  cash = 2K
-	  skills = { cooking = 1 }
-	  faction-share = 0.1%
-	  }
-}
-
+gdp = ~1G
+total-population = ~1M
+tax-evasion = 0.1
+income-tax = 0.33
+luxury-tax = 0.1
+sales-tax = 0.2
+technology = 1
+worker-productivity = 1
+import-tariffs = 0.1
+state-health-service = 0.5
+state-pensions = 0.2
+state-schools = 0.5
+military-spending = 0.5
+research-spending = 0.2
+pollution-controls = 0.0
+voting-rights = 0.0
+poverty-rate = 0.1
+foreign-relations = 1
+poor-base-income = 1
+middle-class-base-income = 5
+rich-base-income = 20
+megarich-base-income = 100
+megarich-income-tax-rate = 25%
+rich-income-tax-rate = 20%
+middle-class-income-tax-rate = 15%
+poor-income-tax-rate = 5%
+equality = 50%
+birth-rate = 2%
+death-rate = 1%
+pop-size = 100K
+wages = 0.0
+education = 0.5
+gini = 0.6
+apathy = 0.1
+farming = 1
+mining = 1
+refining = 0.8
+manufacturing = 0.2
+service = 0.4
+knowledge = 0.2
+administration = 0.4
+plastic-share = 0.1
+basic-electronics-share = 0.1
+basic-electronics-stockpile = 1000
+basic-electronics-sell-stock = 1%
+silicon-stockpile = 1000
+silicon-min-stock = 2000
+hydrocarbon-stockpile = 2000
+hydrocarbon-sell-stock = 1%
+crystals-stockpile = 1000
+crystals-sell-stock = 1%
+plastic-stockpile = 200
+refined-crystals-stockpile = 200
+refined-crystals-sell-stock = 1%
+refined-crystals-share = 0.1
+food-stockpile = 10K
+food-min-stock = 100
+food-sell-stock = 1%
 ships = {
    scout = 2
    transport = 1
@@ -87,55 +65,31 @@ ships = {
 }
 
 capital-sector = {
-   administration = 10 
-   commercial = 10 
-   industrial = 10
-   residential = 100
+   administration = 10
+   commercial = 100
+   industrial = 100
+   residential = 1000
 }
 
 military = {
-   salary = 1
-   supply = {
-      basic-takeout = 20
-	  grain = 60
-	  vegetables = 40
-	  fruit = 10
-	  }
+   salary = 3
+   army = {
+      name = "1st Colonial Army"
+      regiment = {
+         basic-infantry-unit
+      }
+   }
 }
 
 sector-use = {
    farmland = {
-      count = 1
-	  zones = { farm = 5K }
+      count = 4
+	  zones = { farm = 100 }
 	  }
    mine = {
-      count = 3
-	  zones = { mine = 5K }
+      count = 8
+	  zones = { mine = 100 }
       }
-}
-
-installations = {
-   agora = {
-      manager = default-agora
-      cash = 10M
-      stock = {
-         grain = 10K
-         fruit = 50K
-         vegetables = 50K
-         basic-takeout = 5K
-		 regular-takeout = 1K
-		 basic-meal = 100
-		 regular-meal = 50
-		 luxury-meal = 10
-		 small-arms = 10
-		 fuel = 10
-		 steel = 100
-		 ammunition = 100
-		 sulphur = 1000
-		 coal = 1000
-		 iron = 1000
-      }
-    }
 }
 
 init-script = {

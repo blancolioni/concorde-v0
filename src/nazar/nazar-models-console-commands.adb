@@ -10,6 +10,11 @@ package body Nazar.Models.Console.Commands is
 
    type Cat_Command_Record is new Internal_Command with null record;
 
+   overriding function Name
+     (Command : Cat_Command_Record)
+      return String
+   is ("cat");
+
    overriding function Usage
      (Command : Cat_Command_Record)
       return String;
@@ -32,6 +37,11 @@ package body Nazar.Models.Console.Commands is
       .Text_Writer_Interface'Class);
 
    type Change_Scope_Command_Record is new Internal_Command with null record;
+
+   overriding function Name
+     (Command : Change_Scope_Command_Record)
+      return String
+   is ("cd");
 
    overriding function Usage
      (Command : Change_Scope_Command_Record)
@@ -56,6 +66,11 @@ package body Nazar.Models.Console.Commands is
 
    type Echo_Command_Record is new Internal_Command with null record;
 
+   overriding function Name
+     (Command : Echo_Command_Record)
+      return String
+   is ("echo");
+
    overriding function Usage
      (Command : Echo_Command_Record)
       return String;
@@ -78,6 +93,11 @@ package body Nazar.Models.Console.Commands is
       .Text_Writer_Interface'Class);
 
    type List_Command_Record is new Internal_Command with null record;
+
+   overriding function Name
+     (Command : List_Command_Record)
+      return String
+   is ("ls");
 
    overriding function Usage
      (Command : List_Command_Record)

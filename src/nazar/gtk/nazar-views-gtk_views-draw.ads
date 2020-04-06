@@ -7,7 +7,7 @@ with Nazar.Views.Draw;
 package Nazar.Views.Gtk_Views.Draw is
 
    type Nazar_Gtk_Draw_View_Record is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Draw.Draw_View_Interface
    with private;
 
@@ -23,7 +23,7 @@ package Nazar.Views.Gtk_Views.Draw is
 private
 
    type Nazar_Gtk_Draw_View_Record is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Draw.Draw_View_Interface with
       record
          Draw_Area : Gtk.Drawing_Area.Gtk_Drawing_Area;
@@ -36,7 +36,7 @@ private
       return String
    is ("nazar-gtk-draw-view");
 
-   overriding procedure Model_Changed
+   overriding procedure Update_From_Model
      (View : in out Nazar_Gtk_Draw_View_Record);
 
    overriding procedure Set_Model

@@ -1,9 +1,0 @@
-name = Grassland
-color = "#018E0E"
-hazard = 0.01
-resource = {
-   fissile = 2
-   hydrocarbon = 5
-   oil = 5 
-   precious = 1
-}

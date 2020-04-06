@@ -1,8 +1,0 @@
-name = Mountain
-color = "#fffafa"
-hazard = 0.05
-resource = {
-   iron = 20 
-   coal = 15 
-   precious = 4 
-}

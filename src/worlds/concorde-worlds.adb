@@ -1,17 +1,11 @@
-with Concorde.Calendar;
-
-with Concorde.Agents;
 with Concorde.Configure.Worlds;
 
 with Concorde.Db.Deposit;
-with Concorde.Db.Faction;
 with Concorde.Db.Generation;
 with Concorde.Db.Market;
-with Concorde.Db.Pop;
 with Concorde.Db.Sector_Neighbour;
 with Concorde.Db.Sector_Vertex;
 with Concorde.Db.World;
-with Concorde.Db.Utility_Class;
 
 package body Concorde.Worlds is
 
@@ -22,45 +16,6 @@ package body Concorde.Worlds is
 
    procedure Check_Surface
      (World : Concorde.Db.World_Reference);
-
-   --------------------
-   -- Add_Population --
-   --------------------
-
-   procedure Add_Population
-     (Sector  : Concorde.Db.World_Sector_Reference;
-      Faction : Concorde.Db.Faction_Reference;
-      Size    : Concorde.Quantities.Quantity_Type;
-      Cash    : Concorde.Money.Money_Type)
-   is
-      Account : constant Concorde.Db.Account_Reference :=
-        Concorde.Agents.New_Account (Cash);
-   begin
-      Concorde.Db.Pop.Create
-        (Active           => True,
-         Scheduled        => False,
-         Next_Event       => Concorde.Calendar.Clock,
-         Manager          => "default-pop",
-         Account          => Account,
-         Production       => Concorde.Db.Null_Production_Reference,
-         Capacity         => Size,
-         Transported_Size => Concorde.Quantities.To_Real (Size),
-         Faction          => Faction,
-         World            =>
-           Concorde.Db.World_Sector.Get (Sector).World,
-         World_Sector     => Sector,
-         Employer         => Concorde.Db.Null_Employer_Reference,
-         Utility_Class    =>
-           Concorde.Db.Utility_Class.Get_Reference_By_Name
-             ("default-pop"),
-         Salary           => Concorde.Money.Zero,
-         Size             => Size,
-         Hours            => 1.0,
-         Health           => 1.0,
-         Happy            => 1.0,
-         Education        => 1.0);
-
-   end Add_Population;
 
    -----------------
    -- Best_Sector --
@@ -121,6 +76,50 @@ package body Concorde.Worlds is
       end if;
    end Check_Surface;
 
+   -------------------
+   -- Circular_Scan --
+   -------------------
+
+   procedure Circular_Scan
+     (Start : Concorde.Db.World_Sector_Reference;
+      Process : not null access
+        function (Sector : Concorde.Db.World_Sector_Reference)
+      return Boolean)
+   is
+      package Sector_Lists is
+        new Ada.Containers.Doubly_Linked_Lists
+          (Concorde.Db.World_Sector_Reference, Concorde.Db."=");
+
+      Visited : Sector_Lists.List;
+      Queued  : Sector_Lists.List;
+   begin
+      for Neighbour of Get_Neighbours (Start) loop
+         Queued.Append (Neighbour);
+      end loop;
+
+      while not Queued.Is_Empty loop
+         declare
+            Current : constant Concorde.Db.World_Sector_Reference :=
+                        Queued.First_Element;
+         begin
+            Queued.Delete_First;
+            if not Visited.Contains (Current) then
+               Visited.Append (Current);
+               if not Process (Current) then
+                  exit;
+               end if;
+
+               for Neighbour of Get_Neighbours (Current) loop
+                  if not Visited.Contains (Neighbour) then
+                     Queued.Append (Neighbour);
+                  end if;
+               end loop;
+            end if;
+         end;
+      end loop;
+
+   end Circular_Scan;
+
    -----------
    -- Clear --
    -----------
@@ -136,7 +135,7 @@ package body Concorde.Worlds is
 
    function Climate
      (World : Concorde.Db.World_Reference)
-      return Concorde.Db.Climate_Reference
+      return Concorde.Db.World_Climate
    is
    begin
       return Concorde.Db.World.Get (World).Climate;
@@ -245,8 +244,7 @@ package body Concorde.Worlds is
       return Concorde.Db.Faction_Reference
    is
    begin
-      return Concorde.Db.Faction.Get_Faction
-        (Concorde.Db.World_Sector.Get (Sector).Owner).Get_Faction_Reference;
+      return Concorde.Db.World_Sector.Get (Sector).Faction;
    end Get_Owner;
 
    -----------------
@@ -353,10 +351,10 @@ package body Concorde.Worlds is
      (World : Concorde.Db.World_Reference)
       return Boolean
    is
-      use all type Concorde.Db.World_Category;
+      use all type Concorde.Db.World_Composition;
    begin
-      return Concorde.Db.World.Get (World).Category in
-        Terrestrial .. Super_Terrestrial;
+      return Concorde.Db.World.Get (World).Composition in
+        Ice .. Rock_Iron;
    end Is_Terrestrial;
 
    ------------
@@ -415,16 +413,17 @@ package body Concorde.Worlds is
      (Sector  : Concorde.Db.World_Sector_Reference;
       Process : not null access
         procedure (Resource : Concorde.Db.Resource_Reference;
-                   Accessibility : Unit_Real;
-                   Abundance     : Non_Negative_Real))
+                   Concentration : Unit_Real;
+                   Difficulty    : Unit_Real;
+                   Available     : Concorde.Quantities.Quantity_Type))
    is
    begin
       for Deposit of
         Concorde.Db.Deposit.Select_By_World_Sector
           (Sector)
       loop
-         Process (Deposit.Resource, Deposit.Accessibility,
-                  Deposit.Abundance);
+         Process (Deposit.Resource, Deposit.Concentration,
+                  Deposit.Difficulty, Deposit.Available);
       end loop;
    end Scan_Resources;
 
@@ -460,8 +459,7 @@ package body Concorde.Worlds is
    is
    begin
       Concorde.Db.World_Sector.Update_World_Sector (Sector)
-        .Set_Owner
-          (Concorde.Db.Faction.Get (Faction).Get_Owner_Reference)
+        .Set_Faction (Faction)
         .Done;
    end Set_Owner;
 

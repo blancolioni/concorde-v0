@@ -2,6 +2,14 @@ with Concorde.Db.Calendar;
 
 package body Concorde.Calendar is
 
+   Year_Zero     : constant := 2900;
+   Start_Clock   : constant Time :=
+                     100 * 360 * 84_600;
+   Current_Clock : Time := Start_Clock;
+
+   function Clock return Time
+   is (Current_Clock);
+
    type Time_Element is (Seconds, Minutes, Hours,
                          Days, Months, Years);
 
@@ -20,7 +28,7 @@ package body Concorde.Calendar is
                    Hours   => (3600, 24, 0),
                    Days    => (24 * 3600, 30, 1),
                    Months  => (30 * 24 * 3600, 12, 1),
-                   Years   => (12 * 30 * 24 * 3600, 0, 3447));
+                   Years   => (12 * 30 * 24 * 3600, 0, Year_Zero));
 
    function Convert
      (T       : Time;
@@ -336,7 +344,7 @@ package body Concorde.Calendar is
 
    function Start return Time is
    begin
-      return 0;
+      return Start_Clock;
    end Start;
 
    ----------------
@@ -345,7 +353,7 @@ package body Concorde.Calendar is
 
    function Start_Year return Year_Number is
    begin
-      return 3447;
+      return Year_Zero;
    end Start_Year;
 
    ----------------

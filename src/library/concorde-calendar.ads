@@ -103,6 +103,7 @@ package Concorde.Calendar is
       return Time;
 
    function Start_Year return Year_Number;
+   function Zero_Time return Time;
    function Start return Time;
 
    procedure Advance (Seconds : Duration);
@@ -130,17 +131,12 @@ package Concorde.Calendar is
 
 private
 
-   type Time is range -2 ** 63 .. 2 ** 63 - 1;
+   type Time is range 0 .. 2 ** 63 - 1;
 
    pragma Import (Intrinsic, "<");
    pragma Import (Intrinsic, "<=");
    pragma Import (Intrinsic, ">");
    pragma Import (Intrinsic, ">=");
-
-   Current_Clock : Time := 0;
-
-   function Clock return Time
-   is (Current_Clock);
 
    function Sub_Second (Date : Time) return Second_Duration
    is (0.0);
@@ -177,5 +173,7 @@ private
 
    function Delay_Days (Days_Delay : Non_Negative_Real) return Time
    is (Clock + Days (Days_Delay));
+
+   function Zero_Time return Time is (0);
 
 end Concorde.Calendar;

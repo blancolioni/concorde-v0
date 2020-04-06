@@ -1,3 +1,5 @@
+with Nazar.Gtk_Main;
+
 package body Nazar.Views.Gtk_Views is
 
    ----------------
@@ -5,7 +7,7 @@ package body Nazar.Views.Gtk_Views is
    ----------------
 
    procedure Initialize
-     (View : not null access Root_Gtk_View_Type'Class;
+     (View : not null access Nazar_Gtk_View_Record'Class;
       Top  : not null access Gtk.Widget.Gtk_Widget_Record'Class)
    is
    begin
@@ -18,12 +20,21 @@ package body Nazar.Views.Gtk_Views is
       View.Self.Initialize;
    end Initialize;
 
+   -------------------
+   -- Model_Changed --
+   -------------------
+
+   overriding procedure Model_Changed (View : in out Nazar_Gtk_View_Record) is
+   begin
+      Nazar.Gtk_Main.Schedule_Update (View.Self.View);
+   end Model_Changed;
+
    --------------
    -- Set_Name --
    --------------
 
    overriding procedure Set_Name
-     (View  : in out Root_Gtk_View_Type;
+     (View  : in out Nazar_Gtk_View_Record;
       Name  : String)
    is
    begin
@@ -35,7 +46,7 @@ package body Nazar.Views.Gtk_Views is
    -- Show --
    ----------
 
-   overriding procedure Show (View : in out Root_Gtk_View_Type) is
+   overriding procedure Show (View : in out Nazar_Gtk_View_Record) is
    begin
       View.Widget.Show_All;
    end Show;
@@ -44,7 +55,10 @@ package body Nazar.Views.Gtk_Views is
    -- Widget --
    ------------
 
-   function Widget (View : Root_Gtk_View_Type) return Gtk.Widget.Gtk_Widget is
+   function Widget
+     (View : Nazar_Gtk_View_Record)
+      return Gtk.Widget.Gtk_Widget
+   is
    begin
       return View.Top_Widget;
    end Widget;

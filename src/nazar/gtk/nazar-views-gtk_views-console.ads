@@ -10,7 +10,7 @@ with Nazar.Views.Console;
 package Nazar.Views.Gtk_Views.Console is
 
    type Root_Gtk_Console_View is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Console.Console_View_Interface
    with private;
 
@@ -26,7 +26,7 @@ package Nazar.Views.Gtk_Views.Console is
 private
 
    type Root_Gtk_Console_View is
-     new Root_Gtk_View_Type
+     new Nazar_Gtk_View_Record
      and Nazar.Views.Console.Console_View_Interface with
       record
          Last_Line      : Nazar.Models.Text_Writer.Line_Cursor;
@@ -40,7 +40,7 @@ private
       return String
    is ("nazar-gtk-console-view");
 
-   overriding procedure Model_Changed
+   overriding procedure Update_From_Model
      (View : in out Root_Gtk_Console_View);
 
    type Model_Access is

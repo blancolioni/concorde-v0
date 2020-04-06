@@ -176,17 +176,6 @@ package body Nazar.Views.Gtk_Views.Draw is
       Cairo.Line_To (Render.Cr, Render.X, Render.Y);
    end Line_To;
 
-   -------------------
-   -- Model_Changed --
-   -------------------
-
-   overriding procedure Model_Changed
-     (View : in out Nazar_Gtk_Draw_View_Record)
-   is
-   begin
-      null;
-   end Model_Changed;
-
    -------------
    -- Move_To --
    -------------
@@ -314,8 +303,19 @@ package body Nazar.Views.Gtk_Views.Draw is
         Nazar.Models.Draw.Nazar_Draw_Model (Model).Bounding_Box;
    begin
       View.Viewport := Bounding_Box;
-      Nazar.Views.Gtk_Views.Root_Gtk_View_Type (View.all)
+      Nazar.Views.Gtk_Views.Nazar_Gtk_View_Record (View.all)
         .Set_Model (Model);
    end Set_Model;
+
+   -----------------------
+   -- Update_From_Model --
+   -----------------------
+
+   overriding procedure Update_From_Model
+     (View : in out Nazar_Gtk_Draw_View_Record)
+   is
+   begin
+      null;
+   end Update_From_Model;
 
 end Nazar.Views.Gtk_Views.Draw;

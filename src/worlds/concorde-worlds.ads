@@ -1,6 +1,5 @@
 private with Ada.Containers.Doubly_Linked_Lists;
 
-with Concorde.Money;
 with Concorde.Quantities;
 
 with Concorde.Db;
@@ -46,7 +45,7 @@ package Concorde.Worlds is
 
    function Climate
      (World : Concorde.Db.World_Reference)
-      return Concorde.Db.Climate_Reference;
+      return Concorde.Db.World_Climate;
 
    function Habitability
      (World : Concorde.Db.World_Reference)
@@ -66,6 +65,14 @@ package Concorde.Worlds is
    function Get_Neighbours
      (Sector : Concorde.Db.World_Sector_Reference)
       return World_Sector_Array;
+
+   procedure Circular_Scan
+     (Start : Concorde.Db.World_Sector_Reference;
+      Process : not null access
+        function (Sector : Concorde.Db.World_Sector_Reference)
+      return Boolean);
+
+   --  function should return False if scanning is to stop
 
    procedure Scan_Surface
      (World : Concorde.Db.World_Reference;
@@ -98,18 +105,13 @@ package Concorde.Worlds is
      (Sector  : Concorde.Db.World_Sector_Reference;
       Faction : Concorde.Db.Faction_Reference);
 
-   procedure Add_Population
-     (Sector  : Concorde.Db.World_Sector_Reference;
-      Faction : Concorde.Db.Faction_Reference;
-      Size    : Concorde.Quantities.Quantity_Type;
-      Cash    : Concorde.Money.Money_Type);
-
    procedure Scan_Resources
      (Sector  : Concorde.Db.World_Sector_Reference;
       Process : not null access
         procedure (Resource : Concorde.Db.Resource_Reference;
-                   Accessibility : Unit_Real;
-                   Abundance     : Non_Negative_Real));
+                   Concentration : Unit_Real;
+                   Difficulty    : Unit_Real;
+                   Available     : Concorde.Quantities.Quantity_Type));
 
    type Sector_Vertex is
       record

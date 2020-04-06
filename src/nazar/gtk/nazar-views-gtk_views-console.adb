@@ -44,42 +44,6 @@ package body Nazar.Views.Gtk_Views.Console is
       end return;
    end Gtk_Console_View;
 
-   -------------------
-   -- Model_Changed --
-   -------------------
-
-   overriding procedure Model_Changed (View : in out Root_Gtk_Console_View) is
-
-      procedure Put_Class_Line
-        (Class : Nazar.Interfaces.Text_Writer.Text_Class;
-         Line  : String);
-
-      --------------------
-      -- Put_Class_Line --
-      --------------------
-
-      procedure Put_Class_Line
-        (Class : Nazar.Interfaces.Text_Writer.Text_Class;
-         Line  : String)
-      is
-         use all type Nazar.Interfaces.Text_Writer.Text_Class;
-      begin
-         case Class is
-            when Standard_Text =>
-               View.Text_Buffer.Insert_At_Cursor (Line & Character'Val (10));
-            when Error_Text =>
-               View.Text_Buffer.Insert_At_Cursor (Line & Character'Val (10));
-         end case;
-      end Put_Class_Line;
-
-   begin
-      View.Console_Model.Iterate_Lines
-        (Start   => View.Last_Line,
-         Process => Put_Class_Line'Access);
-      View.Text_Buffer.Insert_At_Cursor
-        (View.Console_Model.Get_Prompt_Text);
-   end Model_Changed;
-
    function Nazar_Gtk_Console_View_Create
      return Nazar_View
    is
@@ -131,6 +95,20 @@ package body Nazar.Views.Gtk_Views.Console is
                  Ada.Strings.Unbounded.Null_Unbounded_String;
                return True;
             end;
+
+         when Gdk.Types.Keysyms.GDK_BackSpace =>
+            declare
+               use Ada.Strings.Unbounded;
+               Cmd : Unbounded_String renames View.Command_Buffer;
+            begin
+               if Length (Cmd) = 0 then
+                  return True;
+               else
+                  Cmd := Head (Cmd, Length (Cmd) - 1);
+                  return False;
+               end if;
+            end;
+
          when 32 .. 126 =>
             Ada.Strings.Unbounded.Append (View.Command_Buffer,
                                           (1 => Character'Val (Event.Keyval)));
@@ -139,5 +117,43 @@ package body Nazar.Views.Gtk_Views.Console is
             return True;
       end case;
    end On_Text_View_Key_Press;
+
+   -----------------------
+   -- Update_From_Model --
+   -----------------------
+
+   overriding procedure Update_From_Model
+     (View : in out Root_Gtk_Console_View)
+   is
+
+      procedure Put_Class_Line
+        (Class : Nazar.Interfaces.Text_Writer.Text_Class;
+         Line  : String);
+
+      --------------------
+      -- Put_Class_Line --
+      --------------------
+
+      procedure Put_Class_Line
+        (Class : Nazar.Interfaces.Text_Writer.Text_Class;
+         Line  : String)
+      is
+         use all type Nazar.Interfaces.Text_Writer.Text_Class;
+      begin
+         case Class is
+            when Standard_Text =>
+               View.Text_Buffer.Insert_At_Cursor (Line & Character'Val (10));
+            when Error_Text =>
+               View.Text_Buffer.Insert_At_Cursor (Line & Character'Val (10));
+         end case;
+      end Put_Class_Line;
+
+   begin
+      View.Console_Model.Iterate_Lines
+        (Start   => View.Last_Line,
+         Process => Put_Class_Line'Access);
+      View.Text_Buffer.Insert_At_Cursor
+        (View.Console_Model.Get_Prompt_Text);
+   end Update_From_Model;
 
 end Nazar.Views.Gtk_Views.Console;

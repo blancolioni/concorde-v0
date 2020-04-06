@@ -13,20 +13,20 @@ package body Nazar.Views.Gtk_Views.Box is
       Child : not null access Nazar_View_Record'Class)
    is
    begin
-      View.Box.Pack_Start
-        (Nazar_Gtk_View (Child).Widget,
-         Expand =>
-           Nazar.Values.To_Boolean
-             (Child.Get_Property ("expand")));
+      if Nazar.Values.To_Boolean (Child.Get_Property ("pack-end")) then
+         View.Box.Pack_End
+           (Nazar_Gtk_View (Child).Widget,
+            Expand =>
+              Nazar.Values.To_Boolean
+                (Child.Get_Property ("expand")));
+      else
+         View.Box.Pack_Start
+           (Nazar_Gtk_View (Child).Widget,
+            Expand =>
+              Nazar.Values.To_Boolean
+                (Child.Get_Property ("expand")));
+      end if;
    end Append;
-
-   -------------------
-   -- Model_Changed --
-   -------------------
-
-   overriding procedure Model_Changed
-     (View : in out Nazar_Gtk_Box_View_Record)
-   is null;
 
    -------------------------------
    -- Nazar_Gtk_Box_View_Create --
@@ -85,5 +85,9 @@ package body Nazar.Views.Gtk_Views.Box is
             when Horizontal => Gtk.Enums.Orientation_Horizontal,
             when Vertical   => Gtk.Enums.Orientation_Vertical);
    end Set_Orientation;
+
+   overriding procedure Update_From_Model
+     (View : in out Nazar_Gtk_Box_View_Record)
+   is null;
 
 end Nazar.Views.Gtk_Views.Box;
