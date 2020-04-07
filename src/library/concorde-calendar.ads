@@ -131,7 +131,7 @@ package Concorde.Calendar is
 
 private
 
-   type Time is range 0 .. 2 ** 63 - 1;
+   type Time is range -2 ** 63 .. 2 ** 63 - 1;
 
    pragma Import (Intrinsic, "<");
    pragma Import (Intrinsic, "<=");

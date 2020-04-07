@@ -1,5 +1,7 @@
 with Ada.Text_IO;
 
+with Tropos.Reader;
+
 with Concorde.Options;
 
 with Concorde.Configure.Careers;
@@ -10,6 +12,7 @@ with Concorde.Configure.Galaxies;
 with Concorde.Configure.Metrics;
 with Concorde.Configure.Policies;
 with Concorde.Configure.Pop_Groups;
+with Concorde.Configure.Skills;
 with Concorde.Configure.Terrain;
 with Concorde.Configure.Units;
 with Concorde.Configure.Utility;
@@ -17,6 +20,7 @@ with Concorde.Configure.Zones;
 
 with Concorde.Configure.Tasks;
 
+with Concorde.Db.Ability;
 with Concorde.Db.Scenario;
 
 package body Concorde.Configure.Scenarios is
@@ -51,6 +55,14 @@ package body Concorde.Configure.Scenarios is
       Concorde.Configure.Policies.Configure_Policies (Scenario_Name);
       Concorde.Configure.Metrics.Save_Metrics;
 
+      for Ability_Config of
+        Tropos.Reader.Read_Config
+          (Scenario_File (Scenario_Name, "individuals", "abilities.txt"))
+      loop
+         Concorde.Db.Ability.Create (Ability_Config.Config_Name);
+      end loop;
+
+      Concorde.Configure.Skills.Configure_Skills (Scenario_Name);
       Concorde.Configure.Careers.Configure_Careers (Scenario_Name);
 
       Concorde.Configure.Facilities.Configure_Facilities (Scenario_Name);

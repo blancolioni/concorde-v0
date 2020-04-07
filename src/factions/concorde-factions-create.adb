@@ -1,15 +1,11 @@
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Exceptions;
 with Ada.Text_IO;
 
-with WL.Random;
 with WL.String_Sets;
 
 with Concorde.Calendar;
 with Concorde.Configure;
 with Concorde.Money;
-with Concorde.Random;
-with Concorde.Random_Names;
 
 with Concorde.Agents;
 with Concorde.Star_Systems;
@@ -18,13 +14,10 @@ with Concorde.Worlds;
 
 with Concorde.Colonies.Create;
 
-with Concorde.Db.Ability;
-with Concorde.Db.Ability_Score;
 with Concorde.Db.Account;
 with Concorde.Db.Company;
 with Concorde.Db.Deposit;
 with Concorde.Db.Faction;
-with Concorde.Db.Individual;
 with Concorde.Db.Market;
 with Concorde.Db.Owned_World;
 with Concorde.Db.Script;
@@ -154,77 +147,6 @@ package body Concorde.Factions.Create is
 
          Concorde.Db.Market.Create
            (World => Capital);
-
-         begin
-            for I in 1 .. Setup.Get ("character-count", 20) loop
-               declare
-                  function Roll_3D6 return Positive is
-                    (WL.Random.Random_Number (1, 6)
-                     + WL.Random.Random_Number (1, 6)
-                     + WL.Random.Random_Number (1, 6));
-                  Base_Gender  : constant Signed_Unit_Real :=
-                                   Signed_Unit_Clamp
-                                     (Concorde.Random.Normal_Random (0.1));
-                  Gender       : constant Signed_Unit_Real :=
-                                   (if Base_Gender < 0.0
-                                    then -1.0 - Base_Gender
-                                    else 1.0 - Base_Gender);
-                  Power        : Natural := 0;
-                  Account      : constant Concorde.Db.Account_Reference :=
-                                   Concorde.Db.Account.Create
-                                     (Concorde.Db.Null_Account_Reference,
-                                      Start_Cash =>
-                                        Concorde.Money.To_Money (100.0),
-                                      Cash       =>
-                                        Concorde.Money.To_Money (100.0),
-                                      Earn       => Concorde.Money.Zero,
-                                      Spend      => Concorde.Money.Zero);
-                  function First_Name return String
-                  is (if Gender >= 0.0
-                      then Concorde.Random_Names.Random_Female_Name
-                      else Concorde.Random_Names.Random_Male_Name);
-
-                  function Last_Name return String
-                  is (Concorde.Random_Names.Random_Last_Name);
-
-                  Ref          : constant Concorde.Db.Individual_Reference :=
-                                   Concorde.Db.Individual.Create
-                                     (Account      => Account,
-                                      Last_Earn    => Concorde.Money.Zero,
-                                      Last_Spend   => Concorde.Money.Zero,
-                                      Faction      => Faction,
-                                      First_Name   => First_Name,
-                                      Last_Name    => Last_Name,
-                                      Gender       => Gender,
-                                      Power        => 0);
-               begin
-                  for Ability of
-                    Concorde.Db.Ability.Scan_By_Tag
-                  loop
-                     declare
-                        Score : constant Positive := Roll_3D6;
-                     begin
-                        Concorde.Db.Ability_Score.Create
-                          (Individual => Ref,
-                           Ability    => Ability.Get_Ability_Reference,
-                           Score      => Score);
-                        Power := Power + Score;
-                     end;
-                  end loop;
-
-                  Concorde.Db.Individual.Update_Individual (Ref)
-                    .Set_Power (Power)
-                    .Done;
-
-               end;
-            end loop;
-         exception
-            when E : others =>
-               Ada.Text_IO.Put_Line
-                 (Ada.Text_IO.Standard_Error,
-                  "error while creating characters: "
-                  & Ada.Exceptions.Exception_Message (E));
-         end;
 
          return Faction;
       end;

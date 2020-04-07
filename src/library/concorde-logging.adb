@@ -56,15 +56,23 @@ package body Concorde.Logging is
    -- Start_Logging --
    -------------------
 
-   procedure Start_Logging is
+   procedure Start_Logging
+     (Log_Name : String)
+   is
       Log_Directory : constant String :=
                         Concorde.Options.Log_Folder;
+      Log_File_Name : constant String :=
+                        "concorde"
+                        & (if Log_Name = "" then ""
+                           else "-" & Log_Name)
+                        & ".log";
    begin
       if not Ada.Directories.Exists (Log_Directory) then
          Ada.Directories.Create_Directory (Log_Directory);
       end if;
       Ada.Text_IO.Create (Log_File, Ada.Text_IO.Out_File,
-                          Log_Directory & "/concorde.log");
+                          Ada.Directories.Compose
+                            (Log_Directory, Log_File_Name));
       Logging_Enabled := True;
    end Start_Logging;
 

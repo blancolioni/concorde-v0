@@ -2,9 +2,8 @@ with Concorde.Db.Calendar;
 
 package body Concorde.Calendar is
 
-   Year_Zero     : constant := 2900;
-   Start_Clock   : constant Time :=
-                     100 * 360 * 84_600;
+   Year_Zero     : constant := 2950;
+   Start_Clock   : constant Time := 0;
    Current_Clock : Time := Start_Clock;
 
    function Clock return Time
@@ -387,7 +386,7 @@ package body Concorde.Calendar is
       return Time
    is
    begin
-      return T : Time := Time (Year) do
+      return T : Time := Time (Year - Year_Zero) do
          T := T * 12 + Time (Month);
          T := T * 30 + Time (Day);
          T := T * 86_400 + Time (Seconds);

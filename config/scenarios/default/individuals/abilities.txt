@@ -1,0 +1,7 @@
+str
+dex
+end
+int
+edu
+cha
+soc

@@ -16,6 +16,7 @@ with Concorde.Network;
 with Concorde.Worlds;
 
 with Concorde.Colonies.Sectors;
+with Concorde.Individuals.Create;
 
 with Concorde.Db.Account;
 with Concorde.Db.Colony;
@@ -439,6 +440,21 @@ package body Concorde.Colonies.Create is
          Add_Pop_Group (IG);
       end loop;
 
+      for I in 1 .. Natural (Total_Pop / 10_000.0) loop
+         declare
+            use Concorde.Calendar;
+            Age_In_Years : constant Non_Negative_Real :=
+                             Real'Max
+                               (18.0,
+                                Concorde.Random.Normal_Random (5.0) + 35.0);
+            Age_Duration : constant Duration :=
+                             Duration (Age_In_Years) * Days (360.0);
+         begin
+            Concorde.Individuals.Create.New_Individual
+              (Colony, Concorde.Calendar.Clock - Age_Duration);
+         end;
+      end loop;
+
    end Create_Initial_Pops;
 
    ---------------------
@@ -731,30 +747,6 @@ package body Concorde.Colonies.Create is
          Concorde.Worlds.Circular_Scan
            (Start   => Sector,
             Process => Assign_Sector'Access);
-
---
---           for Sector_Use_Config of Config.Child ("sector-use") loop
---              declare
---                 Sector_Use : constant Concorde.Db.Sector_Use_Reference :=
---                                Concorde.Db.Sector_Use.Get_Reference_By_Tag
---                                  (Sector_Use_Config.Config_Name);
---              begin
---                 for I in 1 .. Sector_Use_Config.Get ("count") loop
---                    Next := Next + 1;
---                    exit when Next > Neighbours'Last;
---
---                    Concorde.Db.World_Sector.Update_World_Sector
---                      (Neighbours (Next))
---                        .Set_Sector_Use (Sector_Use)
---                        .Set_Faction (Faction)
---                        .Done;
---                    Initialize_Zone (Colony, Neighbours (Next),
---                                     Sector_Use_Config.Child ("zones"),
---                                     Sector_Size);
---                 end loop;
---              end;
---              exit when Next > Neighbours'Last;
---           end loop;
       end;
 
       for Zone of Concorde.Db.Zone.Scan_By_Tag loop

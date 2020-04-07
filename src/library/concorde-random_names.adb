@@ -96,7 +96,7 @@ package body Concorde.Random_Names is
       end Normalize;
 
    begin
-      Name_Random.Reset (Gen);
+      Name_Random.Reset (Gen, 0);
       Load (Last_Names, "last-names");
       Load (Female_Names, "female-first-names");
       Load (Male_Names, "male-first-names");
