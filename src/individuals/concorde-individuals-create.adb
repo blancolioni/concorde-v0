@@ -225,6 +225,45 @@ package body Concorde.Individuals.Create is
             end;
          end loop;
 
+         if Choices.Is_Empty then
+            for Assignment of
+              Concorde.Db.Assignment.Select_By_Career (Default)
+            loop
+               declare
+                  Career : constant Handles.Career.Career_Handle :=
+                             Handles.Career.Get (Assignment.Career);
+                  Score  : Integer := 0;
+
+                  function Score_Check
+                    (Ability    : Concorde.Db.Ability_Reference;
+                     Check      : Positive)
+                  return Integer
+                  is (Ability_Modifier (Individual, Ability) - Check);
+
+               begin
+                  Score := Score
+                    + Score_Check (Assignment.Survival_Ability,
+                                   Assignment.Survival_Check)
+                    + Score_Check (Assignment.Advance_Ability,
+                                   Assignment.Advance_Check)
+                    + 20;
+
+                  if Score > 0 then
+                     Log (Handle,
+                          Career.Tag & "/" & Assignment.Tag
+                          & ": score ="
+                          & Score'Image);
+                     Choices.Insert
+                       (Assignment.Get_Assignment_Reference, Score);
+                  else
+                     Log (Handle,
+                          "skipping "
+                          & Career.Tag & "/" & Assignment.Tag);
+                  end if;
+               end;
+            end loop;
+         end if;
+
          declare
             Result : constant Concorde.Db.Assignment_Reference :=
                        (if Choices.Is_Empty
@@ -279,6 +318,8 @@ package body Concorde.Individuals.Create is
                           Handle.First_Name & " " & Handle.Last_Name
                         & " " & Concorde.Calendar.Image (Current_Start)
                         & ": starts new career "
+                        & Assignment.Career.Tag
+                        & "/"
                         & Assignment.Tag);
                      exit;
                   end if;
