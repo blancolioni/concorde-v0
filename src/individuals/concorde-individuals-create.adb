@@ -210,16 +210,16 @@ package body Concorde.Individuals.Create is
                     + 20;
 
                   if Score > 0 then
-                     Log (Handle,
-                          Career.Tag & "/" & Assignment.Tag
-                          & ": score ="
-                          & Score'Image);
+--                       Log (Handle,
+--                            Career.Tag & "/" & Assignment.Tag
+--                            & ": score ="
+--                            & Score'Image);
                      Choices.Insert
                        (Assignment.Get_Assignment_Reference, Score);
-                  else
-                     Log (Handle,
-                          "skipping "
-                          & Career.Tag & "/" & Assignment.Tag);
+--                    else
+--                       Log (Handle,
+--                            "skipping "
+--                            & Career.Tag & "/" & Assignment.Tag);
                   end if;
                end if;
             end;
@@ -230,8 +230,8 @@ package body Concorde.Individuals.Create is
               Concorde.Db.Assignment.Select_By_Career (Default)
             loop
                declare
-                  Career : constant Handles.Career.Career_Handle :=
-                             Handles.Career.Get (Assignment.Career);
+--                    Career : constant Handles.Career.Career_Handle :=
+--                               Handles.Career.Get (Assignment.Career);
                   Score  : Integer := 0;
 
                   function Score_Check
@@ -249,16 +249,16 @@ package body Concorde.Individuals.Create is
                     + 20;
 
                   if Score > 0 then
-                     Log (Handle,
-                          Career.Tag & "/" & Assignment.Tag
-                          & ": score ="
-                          & Score'Image);
+--                       Log (Handle,
+--                            Career.Tag & "/" & Assignment.Tag
+--                            & ": score ="
+--                            & Score'Image);
                      Choices.Insert
                        (Assignment.Get_Assignment_Reference, Score);
-                  else
-                     Log (Handle,
-                          "skipping "
-                          & Career.Tag & "/" & Assignment.Tag);
+--                    else
+--                       Log (Handle,
+--                            "skipping "
+--                            & Career.Tag & "/" & Assignment.Tag);
                   end if;
                end;
             end loop;
@@ -351,69 +351,72 @@ package body Concorde.Individuals.Create is
          Current_Start := Current_Finish;
          Current_Finish := Current_Start + Term;
 
-         declare
-            Survival : constant Integer :=
-                         Concorde.Individuals.Check
-                           (Individual => Individual,
-                            Ability    =>
-                              Current_Assignment.Survival_Ability
-                            .Reference_Ability,
-                            Modifiers  => 0,
-                            Difficulty => Current_Assignment.Survival_Check);
-         begin
-            Log (Handle,
-                 "checking survival ("
-                 & Current_Assignment.Survival_Ability.Tag
-                 & Current_Assignment.Survival_Check'Image
-                 & "): "
-                 & (if Survival < 0
-                   then "FAIL"
-                   else "Pass"));
-            if Survival < 0 then
-               Log (Handle, "leaving career");
-               Choose_Career := True;
-            elsif Current_Rank < 6 then
-               declare
-                  Advance : constant Integer :=
-                               Concorde.Individuals.Check
-                                 (Individual => Individual,
-                                  Ability    =>
-                                    Current_Assignment.Advance_Ability
-                                  .Reference_Ability,
-                                  Modifiers  => 0,
-                                  Difficulty =>
-                                    Current_Assignment.Advance_Check);
-               begin
-                  Log (Handle,
-                       "checking advancement ("
-                       & Current_Assignment.Advance_Ability.Tag
-                       & Current_Assignment.Advance_Check'Image
-                       & "): "
-                       & (if Advance < 0
-                         then "FAIL"
-                         else "Pass"));
-                  if Advance >= 0 then
-                     Log (Handle, "rank goes up");
-                     Current_Rank := Current_Rank + 1;
+         if Current_Start <= Clock then
+            declare
+               Survival : constant Integer :=
+                            Concorde.Individuals.Check
+                              (Individual => Individual,
+                               Ability    =>
+                                 Current_Assignment.Survival_Ability
+                               .Reference_Ability,
+                               Modifiers  => 0,
+                               Difficulty =>
+                                 Current_Assignment.Survival_Check);
+            begin
+               Log (Handle,
+                    "checking survival ("
+                    & Current_Assignment.Survival_Ability.Tag
+                    & Current_Assignment.Survival_Check'Image
+                    & "): "
+                    & (if Survival < 0
+                      then "FAIL"
+                      else "Pass"));
+               if Survival < 0 then
+                  Log (Handle, "leaving career");
+                  Choose_Career := True;
+               elsif Current_Rank < 6 then
+                  declare
+                     Advance : constant Integer :=
+                                 Concorde.Individuals.Check
+                                   (Individual => Individual,
+                                    Ability    =>
+                                      Current_Assignment.Advance_Ability
+                                    .Reference_Ability,
+                                    Modifiers  => 0,
+                                    Difficulty =>
+                                      Current_Assignment.Advance_Check);
+                  begin
+                     Log (Handle,
+                          "checking advancement ("
+                          & Current_Assignment.Advance_Ability.Tag
+                          & Current_Assignment.Advance_Check'Image
+                          & "): "
+                          & (if Advance < 0
+                            then "FAIL"
+                            else "Pass"));
+                     if Advance >= 0 then
+                        Log (Handle, "rank goes up");
+                        Current_Rank := Current_Rank + 1;
 
-                     declare
-                        use Concorde.Db.Assignment_Rank;
-                        Rank : constant Assignment_Rank_Type :=
-                                 Get_By_Assignment_Rank
-                                   (Current_Assignment.Reference_Assignment,
-                                    Current_Rank);
-                     begin
-                        if Rank.Tag /= "" then
-                           Concorde.Db.Individual.Update_Individual
-                             (Individual)
-                             .Set_Title (Rank.Tag)
-                             .Done;
-                        end if;
-                     end;
-                  end if;
-               end;
-            end if;
-         end;
+                        declare
+                           use Concorde.Db.Assignment_Rank;
+                           Rank : constant Assignment_Rank_Type :=
+                                    Get_By_Assignment_Rank
+                                      (Current_Assignment.Reference_Assignment,
+                                       Current_Rank);
+                        begin
+                           if Rank.Tag /= "" then
+                              Concorde.Db.Individual.Update_Individual
+                                (Individual)
+                                .Set_Title (Rank.Tag)
+                                .Done;
+                           end if;
+                        end;
+                     end if;
+                  end;
+               end if;
+            end;
+         end if;
       end loop;
 
       Log (Handle,
