@@ -27,6 +27,29 @@ advancement-tables = {
     }
 }
 
+mishaps = {
+    1 = evt-severely-injured
+    2 = evt-criminal-offers-deal
+    3 = evt-investigation-gone-wrong
+    4 = evt-learn-too-much
+    5 = evt-friend-gets-hurt
+    6 = evt-injured
+}
+
+events = {
+    2 = mishap
+    3 = evt-dangerous-investigation
+    4 = evt-mission-complete
+    5 = evt-establish-contact-network
+    6 = evt-advanced-training
+    7 = life-event
+    8 = evt-undercover
+    9 = evt-above-and-beyond
+    10 = specialist-vehicle-training
+    11 = evt-befriended-by-senior
+    12 = evt-uncover-conspiracy
+}
+
 assignment = {
     barbarian = {
         survival = { end = 7 }

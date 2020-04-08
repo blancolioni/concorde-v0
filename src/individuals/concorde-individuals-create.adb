@@ -12,6 +12,7 @@ with Concorde.Random;
 with Concorde.Random_Names;
 
 with Concorde.Agents;
+with Concorde.Events;
 
 with Concorde.Handles.Ability;
 with Concorde.Handles.Advancement;
@@ -26,6 +27,7 @@ with Concorde.Db.Account;
 with Concorde.Db.Advancement_Table;
 with Concorde.Db.Assignment;
 with Concorde.Db.Assignment_Rank;
+with Concorde.Db.Career_Mishap;
 with Concorde.Db.Colony;
 with Concorde.Db.Individual;
 with Concorde.Db.Individual_Career;
@@ -145,6 +147,8 @@ package body Concorde.Individuals.Create is
 
       procedure Apply_Advancement
         (Advance : Concorde.Handles.Advancement.Advancement_Class);
+
+      procedure Execute_Mishap;
 
       -----------------------
       -- Apply_Advancement --
@@ -296,6 +300,34 @@ package body Concorde.Individuals.Create is
             return Handles.Assignment.Get (Result);
          end;
       end Choose_Assignment;
+
+      --------------------
+      -- Execute_Mishap --
+      --------------------
+
+      procedure Execute_Mishap is
+
+         package Event_Vectors is
+           new Ada.Containers.Vectors
+             (Positive, Concorde.Db.Event_Reference, Concorde.Db."=");
+         Mishaps : Event_Vectors.Vector;
+      begin
+         for M of Concorde.Db.Career_Mishap.Select_By_Career
+           (Current_Assignment.Career.Reference_Career)
+         loop
+            Mishaps.Append (M.Event);
+         end loop;
+
+         declare
+            Index : constant Positive :=
+                      WL.Random.Random_Number (1, Mishaps.Last_Index);
+            Event : constant Concorde.Db.Event_Reference :=
+                      Mishaps (Index);
+         begin
+            Concorde.Events.Execute_Event (Event, Individual);
+         end;
+
+      end Execute_Mishap;
 
    begin
 
@@ -469,7 +501,7 @@ package body Concorde.Individuals.Create is
                       then "FAIL"
                       else "Pass"));
                if Survival < 0 then
-                  Log (Handle, "leaving career");
+                  Execute_Mishap;
                   Choose_Career := True;
                elsif Current_Rank < 6 then
                   declare

@@ -6,6 +6,7 @@ source_dir = src/commands
 source_dir = src/commodities
 source_dir = src/configure
 source_dir = src/driver
+source_dir = src/events
 source_dir = src/facilities
 source_dir = src/factions
 source_dir = src/individuals
