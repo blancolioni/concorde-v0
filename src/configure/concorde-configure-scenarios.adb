@@ -7,6 +7,7 @@ with Concorde.Options;
 with Concorde.Configure.Careers;
 with Concorde.Configure.Commodities;
 with Concorde.Configure.Economy;
+with Concorde.Configure.Events;
 with Concorde.Configure.Facilities;
 with Concorde.Configure.Galaxies;
 with Concorde.Configure.Metrics;
@@ -59,10 +60,26 @@ package body Concorde.Configure.Scenarios is
         Tropos.Reader.Read_Config
           (Scenario_File (Scenario_Name, "individuals", "abilities.txt"))
       loop
-         Concorde.Db.Ability.Create (Ability_Config.Config_Name);
+         declare
+            Category : constant Concorde.Db.Ability_Category :=
+                         (if Ability_Config.Contains ("physical")
+                          then Concorde.Db.Physical
+                          elsif Ability_Config.Contains ("mental")
+                          then Concorde.Db.Mental
+                          elsif Ability_Config.Contains ("social")
+                          then Concorde.Db.Social
+                          else (raise Constraint_Error with
+                              "cannot categorise: "
+                            & Ability_Config.Config_Name));
+         begin
+            Concorde.Db.Ability.Create (Ability_Config.Config_Name,
+                                        Category);
+         end;
       end loop;
 
       Concorde.Configure.Skills.Configure_Skills (Scenario_Name);
+      Concorde.Configure.Events.Configure_Events (Scenario_Name);
+
       Concorde.Configure.Careers.Configure_Careers (Scenario_Name);
 
       Concorde.Configure.Facilities.Configure_Facilities (Scenario_Name);

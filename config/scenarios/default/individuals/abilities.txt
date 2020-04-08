@@ -1,7 +1,7 @@
-str
-dex
-end
-int
-edu
-cha
-soc
+str = { physical }
+dex = { physical }
+end = { physical }
+int = { mental }
+edu = { mental }
+cha = { social }
+soc = { social }

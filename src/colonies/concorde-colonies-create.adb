@@ -446,7 +446,7 @@ package body Concorde.Colonies.Create is
             Age_In_Years : constant Non_Negative_Real :=
                              Real'Max
                                (18.0,
-                                Concorde.Random.Normal_Random (5.0) + 35.0);
+                                Concorde.Random.Normal_Random (10.0) + 40.0);
             Age_Duration : constant Duration :=
                              Duration (Age_In_Years) * Days (360.0);
          begin

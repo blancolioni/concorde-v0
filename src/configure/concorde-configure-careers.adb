@@ -1,3 +1,5 @@
+with Ada.Text_IO;
+
 with Tropos.Reader;
 
 with Concorde.Db.Ability;
@@ -7,6 +9,8 @@ with Concorde.Db.Assignment;
 with Concorde.Db.Assignment_Rank;
 with Concorde.Db.Career;
 with Concorde.Db.Career_Benefit;
+with Concorde.Db.Career_Mishap;
+with Concorde.Db.Event;
 with Concorde.Db.Skill;
 
 package body Concorde.Configure.Careers is
@@ -268,6 +272,24 @@ package body Concorde.Configure.Careers is
 
          for Assignment_Config of Career_Config.Child ("assignment") loop
             Configure_Assignment (Career, Assignment_Config);
+         end loop;
+
+         for Mishap_Config of Career_Config.Child ("mishaps") loop
+            declare
+               use Concorde.Db;
+               Event : constant Event_Reference :=
+                         Concorde.Db.Event.Get_Reference_By_Tag
+                           (Mishap_Config.Value);
+            begin
+               if Event = Null_Event_Reference then
+                  Ada.Text_IO.Put_Line
+                    ("undefined event: " & Mishap_Config.Value);
+               else
+                  Concorde.Db.Career_Mishap.Create
+                    (Career => Career,
+                     Event  => Event);
+               end if;
+            end;
          end loop;
       end;
 

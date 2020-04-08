@@ -1,11 +1,15 @@
 with Calendar;
+with Events;
 with Ships;
 with World_Sectors;
 
-
 package Characters is
 
-record Ability : Localised;
+type Ability_Category is (Physical, Mental, Social);
+
+record Ability : Localised is
+    key Category : Ability_Category;
+end Ability;
 
 record Skill : Localised;
 
@@ -76,7 +80,8 @@ record Advancement_Table : Advancement is
     key Career;
     Assignment;
     DR : Positive;
-    unique key Advancement_Table with Career, Table, Assignment, DR;
+    key Advancement_Table with Career, Table, Assignment;
+    unique key Advancement_Entry with Career, Table, Assignment, DR;
 end Advancement_Table;
 
 record Career_Benefit : Advancement is
@@ -84,6 +89,11 @@ record Career_Benefit : Advancement is
    Index   : Positive;
    unique key Career_Benefit with Career, Index;
 end Career_Benefit;
+
+record Career_Mishap is
+   key Career;
+   Event;
+end Career_Mishap;
 
 record Individual_Career is
     key Individual;
@@ -93,5 +103,18 @@ record Individual_Career is
     Term_Start  : Time;
     Term_Finish : Time;
 end Individual_Career;
+
+record Change_Ability : Event_Effect is
+   Category : Ability_Category;
+   Ability;
+   Low      : Integer;
+   High     : Integer;
+end Change_Ability;
+
+record Change_Skill : Event_Effect is
+   Skill;
+   Low  : Integer;
+   High : Integer;
+end Change_Skill;
 
 end Characters;

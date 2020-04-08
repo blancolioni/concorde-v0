@@ -1,5 +1,7 @@
 with Concorde.Abilities;
 
+with Concorde.Handles.Individual;
+
 with Concorde.Db;
 
 package Concorde.Individuals is
@@ -32,5 +34,25 @@ package Concorde.Individuals is
          (Score      => Ability_Score (Individual, Ability),
           Modifiers  => Modifiers,
           Difficulty => Difficulty));
+
+   procedure Advance_Skill
+     (Individual : Concorde.Db.Individual_Reference;
+      Skill      : Concorde.Db.Skill_Reference)
+     with Post => Has_Skill (Individual, Skill);
+
+   function Has_Skill
+     (Individual : Concorde.Db.Individual_Reference;
+      Skill      : Concorde.Db.Skill_Reference)
+      return Boolean;
+
+   function Current_Level
+     (Individual : Concorde.Db.Individual_Reference;
+      Skill      : Concorde.Db.Skill_Reference)
+      return Natural
+     with Pre => Has_Skill (Individual, Skill);
+
+   procedure Log
+     (Individual : Concorde.Handles.Individual.Individual_Handle;
+      Message    : String);
 
 end Concorde.Individuals;
