@@ -4,7 +4,7 @@ with Tropos.Reader;
 
 with Concorde.Db.Ability;
 with Concorde.Db.Change_Ability;
-with Concorde.Db.Change_Skill;
+with Concorde.Db.Gain_Skill;
 with Concorde.Db.Child_Event;
 with Concorde.Db.Event;
 with Concorde.Db.Event_Choice;
@@ -188,22 +188,21 @@ package body Concorde.Configure.Events is
          Configure => Configure_Event'Access);
    end Configure_Events;
 
+   ----------------------------
+   -- Configure_Skill_Change --
+   ----------------------------
+
    procedure Configure_Skill_Change
      (Choice : Concorde.Db.Event_Choice_Reference;
       Config : Tropos.Configuration)
    is
-      Value : constant String := Config.Value;
-      Low   : Integer;
-      High  : Integer;
    begin
-      Get_Change_Range (Value, Low, High);
-      Concorde.Db.Change_Skill.Create
+      Concorde.Db.Gain_Skill.Create
         (Event_Choice => Choice,
          Skill        =>
            Concorde.Db.Skill.Get_Reference_By_Tag
              (Config.Config_Name),
-         Low          => Low,
-         High         => High);
+         Level        => Config.Value);
    end Configure_Skill_Change;
 
    ----------------------

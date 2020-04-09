@@ -90,6 +90,42 @@ package body Concorde.Individuals is
       end if;
    end Advance_Skill;
 
+   procedure Advance_Skill
+     (Individual : Concorde.Db.Individual_Reference;
+      Skill      : Concorde.Db.Skill_Reference;
+      Level      : Natural)
+   is
+   begin
+      if not Has_Skill (Individual, Skill) then
+         Log (Concorde.Handles.Individual.Get (Individual),
+              "gains "
+              & Concorde.Db.Skill.Get (Skill).Tag
+              & " at level" & Level'Image);
+
+         Concorde.Db.Skill_Level.Create
+           (Individual => Individual,
+            Skill      => Skill,
+            Level      => Level);
+      elsif Current_Level (Individual, Skill) < Level then
+         declare
+            use Concorde.Db.Skill_Level;
+            Skill_Level : constant Concorde.Db.Skill_Level_Reference :=
+                            Get_Reference_By_Skill_Level
+                              (Individual, Skill);
+         begin
+            Update_Skill_Level (Skill_Level)
+              .Set_Level (Level)
+              .Done;
+         end;
+
+         Log (Concorde.Handles.Individual.Get (Individual),
+              "raises "
+              & Concorde.Db.Skill.Get (Skill).Tag
+              & " to level"
+              & Level'Image);
+      end if;
+   end Advance_Skill;
+
    -------------------
    -- Current_Level --
    -------------------

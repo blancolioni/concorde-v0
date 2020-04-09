@@ -111,10 +111,9 @@ record Change_Ability : Event_Effect is
    High     : Integer;
 end Change_Ability;
 
-record Change_Skill : Event_Effect is
+record Gain_Skill : Event_Effect is
    Skill;
-   Low  : Integer;
-   High : Integer;
-end Change_Skill;
+   Level   : Integer;
+end Gain_Skill;
 
 end Characters;

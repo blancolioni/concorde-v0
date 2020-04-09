@@ -36,6 +36,12 @@ package Concorde.Individuals is
       Skill      : Concorde.Db.Skill_Reference)
      with Post => Has_Skill (Individual, Skill);
 
+   procedure Advance_Skill
+     (Individual : Concorde.Db.Individual_Reference;
+      Skill      : Concorde.Db.Skill_Reference;
+      Level      : Natural)
+     with Post => Has_Skill (Individual, Skill);
+
    function Has_Skill
      (Individual : Concorde.Db.Individual_Reference;
       Skill      : Concorde.Db.Skill_Reference)

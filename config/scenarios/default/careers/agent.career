@@ -56,7 +56,7 @@ events = {
     7 = life-event
     8 = evt-undercover
     9 = evt-above-and-beyond
-    10 = specialist-vehicle-training
+    10 = evt-specialist-vehicle-training
     11 = evt-befriended-by-senior
     12 = evt-uncover-conspiracy
 }

@@ -15,7 +15,9 @@ with Concorde.Db.Child_Event;
 with Concorde.Db.Event;
 with Concorde.Db.Event_Choice;
 with Concorde.Db.Event_Effect;
+with Concorde.Db.Gain_Skill;
 with Concorde.Db.Individual;
+with Concorde.Db.Skill;
 
 package body Concorde.Events is
 
@@ -49,9 +51,14 @@ package body Concorde.Events is
      (Effect : Concorde.Db.Event_Effect_Reference;
       Target : Concorde.Db.Individual_Reference);
 
+   procedure Handle_Gain_Skill
+     (Effect : Concorde.Db.Event_Effect_Reference;
+      Target : Concorde.Db.Individual_Reference);
+
    Effect_Handlers : constant array (Concorde.Db.Record_Type) of Effect_Handler
      := (Concorde.Db.R_Child_Event    => Handle_Child_Event'Access,
          Concorde.Db.R_Change_Ability => Handle_Change_Ability'Access,
+         Concorde.Db.R_Gain_Skill     => Handle_Gain_Skill'Access,
          others                       => null);
 
    --------------------
@@ -100,7 +107,7 @@ package body Concorde.Events is
             Chosen : constant Positive :=
                        (if Handle.Random_Choice
                         then WL.Random.Random_Number (1, Choices.Last_Index)
-                        else 1);
+                        else WL.Random.Random_Number (1, Choices.Last_Index));
          begin
             for Effect of
               Concorde.Db.Event_Effect.Select_By_Event_Choice
@@ -182,6 +189,27 @@ package body Concorde.Events is
       Log (Event, Target, "executing child event");
       Execute_Event (Event, Target);
    end Handle_Child_Event;
+
+   -----------------------
+   -- Handle_Gain_Skill --
+   -----------------------
+
+   procedure Handle_Gain_Skill
+     (Effect : Concorde.Db.Event_Effect_Reference;
+      Target : Concorde.Db.Individual_Reference)
+   is
+      use Concorde.Db;
+      Change : constant Concorde.Db.Gain_Skill.Gain_Skill_Type :=
+                 Concorde.Db.Gain_Skill.Get_Gain_Skill (Effect);
+      Skill  : constant Skill_Reference := Change.Skill;
+   begin
+      Log (Effect, Target,
+           Concorde.Db.Skill.Get (Skill).Tag & Change.Level'Image);
+      Concorde.Individuals.Advance_Skill
+        (Individual => Target,
+         Skill      => Skill,
+         Level      => Change.Level);
+   end Handle_Gain_Skill;
 
    ---------
    -- Log --
