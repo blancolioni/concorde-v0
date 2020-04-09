@@ -25,12 +25,10 @@ package Concorde.Individuals is
    function Check
      (Individual : Concorde.Db.Individual_Reference;
       Ability    : Concorde.Db.Ability_Reference;
-      Modifiers  : Integer;
       Difficulty : Positive)
       return Concorde.Abilities.Check_Result
-   is (Concorde.Abilities.Check
+   is (Concorde.Abilities.Check_Ability
          (Score      => Ability_Score (Individual, Ability),
-          Modifiers  => Modifiers,
           Difficulty => Difficulty));
 
    procedure Advance_Skill

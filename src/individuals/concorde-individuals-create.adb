@@ -141,6 +141,7 @@ package body Concorde.Individuals.Create is
       Current_Rank       : Natural := 0;
       Tried_Careers      : WL.String_Sets.Set;
       First_Career       : Boolean := True;
+      Career_Count       : Natural := 0;
 
       function Choose_Assignment
         return Concorde.Handles.Assignment.Assignment_Handle;
@@ -159,9 +160,6 @@ package body Concorde.Individuals.Create is
       is
          use type Concorde.Money.Money_Type;
       begin
-         Log (Handle, "apply advancement"
-              & Concorde.Db.To_String (Advance.Reference_Advancement));
-
          if Advance.Cash > Concorde.Money.Zero then
             Log (Handle, "cash: " & Concorde.Money.Show (Advance.Cash));
             Concorde.Agents.Add_Cash
@@ -245,10 +243,8 @@ package body Concorde.Individuals.Create is
                   Default := Career.Reference_Career;
                elsif not Tried_Careers.Contains (Career.Tag) then
                   Score := Score
-                    + Score_Check (Career.Qualification.Reference_Ability,
-                                   Career.Check)
-                    + Score_Check (Assignment.Survival_Ability,
-                                   Assignment.Survival_Check)
+                    + 2 * Score_Check (Assignment.Survival_Ability,
+                                       Assignment.Survival_Check)
                     + Score_Check (Assignment.Advance_Ability,
                                    Assignment.Advance_Check)
                     + 20;
@@ -276,11 +272,11 @@ package body Concorde.Individuals.Create is
 
                begin
                   Score := Score
-                    + Score_Check (Assignment.Survival_Ability,
-                                   Assignment.Survival_Check)
+                    + 2 * Score_Check (Assignment.Survival_Ability,
+                                       Assignment.Survival_Check)
                     + Score_Check (Assignment.Advance_Ability,
                                    Assignment.Advance_Check)
-                    + 20;
+                    + 30;
 
                   if Score > 0 then
                      Choices.Insert
@@ -340,45 +336,59 @@ package body Concorde.Individuals.Create is
             loop
                declare
                   use Concorde.Handles.Assignment;
-                  Assignment    : constant Assignment_Handle :=
-                                    Choose_Assignment;
-                  Qualification : constant Concorde.Abilities.Check_Result :=
-                                    Concorde.Individuals.Check
-                                      (Individual => Individual,
-                                       Ability    =>
-                                         Assignment.Career.Qualification
-                                       .Reference_Ability,
-                                       Modifiers  => 0,
-                                       Difficulty =>
-                                         Assignment.Career.Check);
+                  Assignment     : constant Assignment_Handle :=
+                                     Choose_Assignment;
+                  Auto_Qualified : constant Boolean :=
+                                     Assignment.Career.Check = 0;
                begin
-                  Tried_Careers.Include (Assignment.Career.Tag);
 
-                  if not Qualification.Success then
+                  if Auto_Qualified then
+                     Current_Assignment := Assignment;
+                     exit;
+                  end if;
+
+                  declare
+                     Check : constant Abilities.Check_Result :=
+                               Concorde.Individuals.Check
+                                 (Individual => Individual,
+                                  Ability    =>
+                                    Assignment.Career.Qualification
+                                  .Reference_Ability,
+                                  Difficulty =>
+                                    Assignment.Career.Check + Career_Count);
+                  begin
+                     Tried_Careers.Include (Assignment.Career.Tag);
+
                      Log (Handle,
                           Assignment.Career.Tag
                           & "/"
                           & Assignment.Tag
-                          & ": failed to qualify");
-                  else
-                     Current_Assignment := Assignment;
-                     Current_Rank := 0;
-
-                     Concorde.Logging.Log
-                       (Actor    => "",
-                        Location => Handle.World_Sector.World.Name,
-                        Category => "career",
-                        Message  =>
-                          Handle.First_Name & " " & Handle.Last_Name
-                        & " " & Concorde.Calendar.Image (Current_Start)
-                        & ": starts new career "
-                        & Assignment.Career.Tag
-                        & "/"
-                        & Assignment.Tag);
-                     exit;
-                  end if;
+                          & " "
+                          & Assignment.Career.Qualification.Tag
+                          & ": " & Abilities.Show (Check));
+                     if Check.Success then
+                        Current_Assignment := Assignment;
+                        exit;
+                     end if;
+                  end;
                end;
             end loop;
+
+            Current_Rank := 0;
+            Career_Count := Career_Count + 1;
+
+            Concorde.Logging.Log
+              (Actor    => "",
+               Location => Handle.World_Sector.World.Name,
+               Category => "career",
+               Message  =>
+                 Handle.First_Name & " " & Handle.Last_Name
+               & " " & Concorde.Calendar.Image (Current_Start)
+               & ": starts new career "
+               & Current_Assignment.Career.Tag
+               & "/"
+               & Current_Assignment.Tag);
+
          else
             Concorde.Logging.Log
               (Actor    => "",
@@ -488,7 +498,6 @@ package body Concorde.Individuals.Create is
                                Ability    =>
                                  Current_Assignment.Survival_Ability
                                .Reference_Ability,
-                               Modifiers  => 0,
                                Difficulty =>
                                  Current_Assignment.Survival_Check);
             begin
@@ -497,9 +506,7 @@ package body Concorde.Individuals.Create is
                     & Current_Assignment.Survival_Ability.Tag
                     & Current_Assignment.Survival_Check'Image
                     & "): "
-                    & (if Survival.Success
-                      then "Pass"
-                      else "FAIL"));
+                    & Concorde.Abilities.Show (Survival));
                if not Survival.Success then
                   Execute_Mishap;
                   Choose_Career := True;
@@ -511,7 +518,6 @@ package body Concorde.Individuals.Create is
                                     Ability    =>
                                       Current_Assignment.Advance_Ability
                                     .Reference_Ability,
-                                    Modifiers  => 0,
                                     Difficulty =>
                                       Current_Assignment.Advance_Check);
                   begin
@@ -520,9 +526,7 @@ package body Concorde.Individuals.Create is
                           & Current_Assignment.Advance_Ability.Tag
                           & Current_Assignment.Advance_Check'Image
                           & "): "
-                          & (if Advance.Success
-                            then "Pass"
-                            else "FAIL"));
+                          & Concorde.Abilities.Show (Advance));
                      if Advance.Success then
                         Log (Handle, "rank goes up");
                         Current_Rank := Current_Rank + 1;
