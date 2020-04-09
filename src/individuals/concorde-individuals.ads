@@ -26,11 +26,9 @@ package Concorde.Individuals is
      (Individual : Concorde.Db.Individual_Reference;
       Ability    : Concorde.Db.Ability_Reference;
       Modifiers  : Integer;
-      Difficulty : Natural)
-      return Integer
-   is (if Difficulty = 0
-       then 0
-       else Concorde.Abilities.Check
+      Difficulty : Positive)
+      return Concorde.Abilities.Check_Result
+   is (Concorde.Abilities.Check
          (Score      => Ability_Score (Individual, Ability),
           Modifiers  => Modifiers,
           Difficulty => Difficulty));

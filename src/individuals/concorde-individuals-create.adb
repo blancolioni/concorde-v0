@@ -342,7 +342,7 @@ package body Concorde.Individuals.Create is
                   use Concorde.Handles.Assignment;
                   Assignment    : constant Assignment_Handle :=
                                     Choose_Assignment;
-                  Qualification : constant Integer :=
+                  Qualification : constant Concorde.Abilities.Check_Result :=
                                     Concorde.Individuals.Check
                                       (Individual => Individual,
                                        Ability    =>
@@ -354,7 +354,7 @@ package body Concorde.Individuals.Create is
                begin
                   Tried_Careers.Include (Assignment.Career.Tag);
 
-                  if Qualification < 0 then
+                  if not Qualification.Success then
                      Log (Handle,
                           Assignment.Career.Tag
                           & "/"
@@ -482,7 +482,7 @@ package body Concorde.Individuals.Create is
 
          if Current_Start <= Clock then
             declare
-               Survival : constant Integer :=
+               Survival : constant Concorde.Abilities.Check_Result :=
                             Concorde.Individuals.Check
                               (Individual => Individual,
                                Ability    =>
@@ -497,15 +497,15 @@ package body Concorde.Individuals.Create is
                     & Current_Assignment.Survival_Ability.Tag
                     & Current_Assignment.Survival_Check'Image
                     & "): "
-                    & (if Survival < 0
-                      then "FAIL"
-                      else "Pass"));
-               if Survival < 0 then
+                    & (if Survival.Success
+                      then "Pass"
+                      else "FAIL"));
+               if not Survival.Success then
                   Execute_Mishap;
                   Choose_Career := True;
                elsif Current_Rank < 6 then
                   declare
-                     Advance : constant Integer :=
+                     Advance : constant Concorde.Abilities.Check_Result :=
                                  Concorde.Individuals.Check
                                    (Individual => Individual,
                                     Ability    =>
@@ -520,10 +520,10 @@ package body Concorde.Individuals.Create is
                           & Current_Assignment.Advance_Ability.Tag
                           & Current_Assignment.Advance_Check'Image
                           & "): "
-                          & (if Advance < 0
-                            then "FAIL"
-                            else "Pass"));
-                     if Advance >= 0 then
+                          & (if Advance.Success
+                            then "Pass"
+                            else "FAIL"));
+                     if Advance.Success then
                         Log (Handle, "rank goes up");
                         Current_Rank := Current_Rank + 1;
 

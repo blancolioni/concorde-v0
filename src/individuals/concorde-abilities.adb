@@ -19,17 +19,17 @@ package body Concorde.Abilities is
      (Score      : Natural;
       Modifiers  : Integer;
       Difficulty : Positive)
-      return Integer
+      return Check_Result
    is
       Roll : constant Positive := WL.Random.Random_Number (1, 6)
                + WL.Random.Random_Number (1, 6);
       Total : constant Integer := Roll + Check_Modifier (Score) + Modifiers;
    begin
-      if Roll = 2 then
-         return Integer'Min (Total - Difficulty, -1);
-      else
-         return Total - Difficulty;
-      end if;
+      return Check_Result'
+        (Roll       => Roll,
+         Modifier   => Modifiers,
+         Difficulty => Difficulty,
+         Success    => Roll > 2 and then Total >= Difficulty);
    end Check;
 
    --------------------
