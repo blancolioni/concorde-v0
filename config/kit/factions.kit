@@ -12,11 +12,12 @@ with Worlds;
 
 package Factions is
 
-   record Faction : Has_Name, Has_Adjective, Has_Plural_Name, Has_Color, Has_Knowledge, Has_Orders, Order_Target, Owner, Managed, Agent is
-      key User;
-      key Capital_System : Star_System;
-      key Capital_World  : World;
-   end Faction;
+    record Faction : Has_Name, Has_Adjective, Has_Plural_Name, Has_Color, Has_Knowledge, Has_Orders, Order_Target, Owner, Managed, Agent is
+        key Human : Boolean;
+        key User;
+        key Capital_System : Star_System;
+        key Capital_World  : World;
+    end Faction;
 
    record Faction_Knowledge : Knowledge is
       key Faction;

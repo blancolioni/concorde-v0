@@ -37,15 +37,6 @@ begin
       return;
    end if;
 
-   if Concorde.Options.Add_Faction then
-
-      Concorde.Logging.Start_Logging ("add-factions");
-      Concorde.Server.Add_Factions;
-      Concorde.Logging.Stop_Logging;
-      return;
-
-   end if;
-
    Concorde.Managers.Loader.Register_Managers;
 
    Concorde.Logging.Start_Logging ("");

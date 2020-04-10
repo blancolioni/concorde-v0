@@ -66,13 +66,22 @@ military = {
 }
 
 sector-use = {
+    urban = {
+        count = 20
+        zones = {
+           administration = 10 
+           commercial = 100
+           industrial = 100
+           residential = 1000
+        }
+    }
    farmland = {
-      count = 1
-	  zones = { farm = 5K }
+      count = 12
+	  zones = { farm = 100 }
 	  }
    mine = {
-      count = 3
-	  zones = { mine = 5K }
+      count = 16
+	  zones = { mine = 100 }
       }
 }
 

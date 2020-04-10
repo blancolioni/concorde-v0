@@ -15,8 +15,4 @@ package Concorde.Factions.Create is
       Setup       : Tropos.Configuration)
       return Concorde.Db.Faction_Reference;
 
-   procedure Create_Factions
-     (Faction_Config : Tropos.Configuration;
-      Setup_Config   : Tropos.Configuration);
-
 end Concorde.Factions.Create;

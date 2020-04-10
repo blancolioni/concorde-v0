@@ -6,7 +6,6 @@ with WL.Localisation;
 with WL.Random.Names;
 
 with Tropos.Reader;
-with Tropos.Writer;
 
 with Concorde.Configure.Scenarios;
 
@@ -34,83 +33,9 @@ package body Concorde.Server is
       Argument_Value : String)
       return Boolean;
 
-   ------------------
-   -- Add_Factions --
-   ------------------
-
-   procedure Add_Factions is
+   procedure Add_Faction is
       Database_Open : Boolean := False;
    begin
-      if Concorde.Options.Faction_Names_File /= "" then
-         if not Have_Required_Argument
-           ("faction-colors-file", Concorde.Options.Faction_Colors_File)
-         then
-            return;
-         end if;
-
-         if Concorde.Options.Randomise then
-            Concorde.Random.Reset;
-            WL.Random.Randomise;
-         else
-            Concorde.Random.Reset (Concorde.Options.Random_Seed);
-            WL.Random.Reset (Concorde.Options.Random_Seed);
-         end if;
-
-         Concorde.Db.Database.Open;
-         Database_Open := True;
-
-         declare
-            Name_Config    : constant Tropos.Configuration :=
-              Tropos.Reader.Read_Config
-                (Concorde.Paths.Config_File
-                   (Concorde.Options.Faction_Names_File));
-            Color_Config   : constant Tropos.Configuration :=
-              Tropos.Reader.Read_Config
-                (Concorde.Paths.Config_File
-                   (Concorde.Options.Faction_Colors_File));
-            Scenario_Name  : constant String :=
-              (if Concorde.Options.Scenario = ""
-               then "default"
-               else Concorde.Options.Scenario);
-            Faction_Setup  : constant String :=
-              Concorde.Options.Faction_Setup_Path;
-            Setup_Path     : constant String :=
-              Concorde.Configure.Scenario_File
-                (Scenario_Name  => Scenario_Name,
-                 Directory_Name => "factions",
-                 File_Name      =>
-                   (if Faction_Setup = ""
-                    then "default"
-                    else Faction_Setup)
-                 & ".faction");
-            Faction_Config : Tropos.Configuration :=
-              Tropos.New_Config ("factions");
-            Position       : Tropos.Cursor := Color_Config.First;
-         begin
-
-            for Config of Name_Config loop
-               declare
-                  New_Config : Tropos.Configuration := Config;
-               begin
-                  New_Config.Add
-                    ("color", Tropos.Element (Position).Config_Name);
-                  Faction_Config.Add (New_Config);
-                  Tropos.Next (Position);
-               end;
-            end loop;
-            Tropos.Writer.Write_Config (Faction_Config, "factions.config");
-
-            Concorde.Factions.Create.Create_Factions
-              (Faction_Config => Faction_Config,
-               Setup_Config   => Tropos.Reader.Read_Config (Setup_Path));
-         end;
-
-         Concorde.Db.Database.Close;
-         Database_Open := False;
-
-         return;
-      end if;
-
       if not Have_Required_Argument
         ("account-name", Concorde.Options.Account_Name)
         or else not Have_Required_Argument
@@ -229,7 +154,7 @@ package body Concorde.Server is
          end if;
          raise;
 
-   end Add_Factions;
+   end Add_Faction;
 
    ---------------------
    -- Create_Scenario --

@@ -581,6 +581,8 @@ package body Concorde.Colonies.Create is
             Price     => Commodity.Base_Price);
       end loop;
 
+      Ada.Text_IO.Put_Line ("creating initial population");
+
       Create_Initial_Pops
         (Faction               => Faction,
          World                 => World,
@@ -590,6 +592,8 @@ package body Concorde.Colonies.Create is
          Apathy                => Get ("apathy"),
          Gini                  => Get ("gini", 0.5),
          Pops_Per_Wealth_Group => 10);
+
+      Ada.Text_IO.Put_Line ("allocating pop groups");
 
       declare
          Sizes  : Setting_Maps.Map;
@@ -636,6 +640,8 @@ package body Concorde.Colonies.Create is
             end;
          end loop;
       end;
+
+      Ada.Text_IO.Put_Line ("populating initial zones");
 
       Set_Override
         ("environment",
@@ -748,6 +754,8 @@ package body Concorde.Colonies.Create is
            (Start   => Sector,
             Process => Assign_Sector'Access);
       end;
+
+      Ada.Text_IO.Put_Line ("creating economy network");
 
       for Zone of Concorde.Db.Zone.Scan_By_Tag loop
          if Sector_Size.Contains (Zone.Tag) then
