@@ -440,7 +440,7 @@ package body Concorde.Colonies.Create is
          Add_Pop_Group (IG);
       end loop;
 
-      for I in 1 .. Natural (Total_Pop / 10_000.0) loop
+      for I in 1 .. Natural (Log (Total_Pop, 10.0) * 10.0) loop
          declare
             use Concorde.Calendar;
             Age_In_Years : constant Non_Negative_Real :=
