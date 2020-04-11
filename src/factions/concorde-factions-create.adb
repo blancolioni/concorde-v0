@@ -87,6 +87,7 @@ package body Concorde.Factions.Create is
                         Account       => Account,
                         Last_Earn     => Concorde.Money.Zero,
                         Last_Spend    => Concorde.Money.Zero,
+                        Human         => False,
                         Red           => Color.Red,
                         Green         => Color.Green,
                         Blue          => Color.Blue,
