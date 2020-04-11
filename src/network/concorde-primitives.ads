@@ -1,3 +1,5 @@
+private with WL.String_Maps;
+
 with Concorde.Values.Vectors;
 
 package Concorde.Primitives is
@@ -50,5 +52,10 @@ private
      (Primitive : Binary_Primitive)
       return Natural
       is (2);
+
+   package Primitive_Maps is
+     new WL.String_Maps (Primitive_Interface'Class);
+
+   Map : Primitive_Maps.Map;
 
 end Concorde.Primitives;

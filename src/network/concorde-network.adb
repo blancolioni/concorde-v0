@@ -1,20 +1,20 @@
 with Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Exceptions;
-with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
 with WL.String_Maps;
 
 with Concorde.Calendar;
 with Concorde.Identifiers;
-with Concorde.Logging;
 with Concorde.Real_Images;
 
 with Concorde.Expressions;
 with Concorde.Parser;
 with Concorde.Symbols;
 with Concorde.Values;
+
+with Concorde.Primitives.Loader;
 
 with Concorde.Db.Calculation;
 with Concorde.Db.Derived_Metric;
@@ -24,8 +24,6 @@ with Concorde.Db.Network_Value;
 with Concorde.Db.Historical_Value;
 
 package body Concorde.Network is
-
-   Log_Updates : constant Boolean := True;
 
    type Cached_Expression_Record is
       record
@@ -37,11 +35,9 @@ package body Concorde.Network is
 
    Expression_Cache : Cached_Expression_Maps.Map;
 
-   procedure Log
-     (Message : String);
-
    function Image (X : Real) return String
-                   renames Concorde.Real_Images.Approximate_Image;
+                   renames Concorde.Real_Images.Approximate_Image
+     with Unreferenced;
 
    type Network_Environment is
      new Concorde.Values.Environment_Interface with
@@ -261,13 +257,8 @@ package body Concorde.Network is
                 else raise Constraint_Error with
                   "calculation not loaded: [" & Id & "]");
    begin
-      Log ("evaluate: " & Expr.To_String);
-
       return Result : constant Real :=
-        Expr.Evaluate (Env, Concorde.Expressions.Default_Context).To_Real
-      do
-         Log ("result: " & Image (Result));
-      end return;
+        Expr.Evaluate (Env, Concorde.Expressions.Default_Context).To_Real;
    exception
       when E : others =>
          Ada.Text_IO.Put_Line
@@ -343,10 +334,10 @@ package body Concorde.Network is
 
       if Inertia = 0.0 and then Smoothing = 0.0 then
 
-         Log ("current-value "
-              & Concorde.Db.Node.Get (Node).Tag
-              & " = "
-              & Image (Current_Value (Network, Node)));
+--           Log ("current-value "
+--                & Concorde.Db.Node.Get (Node).Tag
+--                & " = "
+--                & Image (Current_Value (Network, Node)));
 
          return Current_Value (Network, Node);
       end if;
@@ -361,10 +352,10 @@ package body Concorde.Network is
          Finish : constant Time := Now - DT;
          Total  : Real := 0.0;
       begin
-         Log ("scanning history from "
-              & Image (Concorde.Calendar.Start)
-              & " to "
-              & Image (Finish));
+--           Log ("scanning history from "
+--                & Image (Concorde.Calendar.Start)
+--                & " to "
+--                & Image (Finish));
 
          for History of
            Concorde.Db.Historical_Value
@@ -403,53 +394,11 @@ package body Concorde.Network is
                                  * (Max_Value - Min_Value));
                begin
                   if DS = 0.0 then
-                     Concorde.Logging.Log
-                       (Actor    => "network",
-                        Location => Concorde.Db.Node.Get (Node).Tag,
-                        Category => "inertial value",
-                        Message  =>
-                          "inertial value="
-                        & Image (Value)
-                        & "; inertia=" & Image (Inertia)
-                        & "; date=" & Image (Start)
-                        & "; interval="
-                        & Image (History.From)
-                        & " .. "
-                        & Image (History.To)
-                        & "; scale="
-                        & Image (Min_Scale)
-                        & "; range="
-                        & Image (History.Value)
-                        & " .. "
-                        & Image (History.Next)
-                        & "; current="
-                        & Image (Current_Value (Network, Node)));
                      return Value;
                   end if;
 
                   DH := DH + (Max - Min);
                   Total := Total + Value;
-
-                  Concorde.Logging.Log
-                    (Actor    => "network",
-                     Location => Concorde.Db.Node.Get (Node).Tag,
-                     Category => "smoothed value",
-                     Message  =>
-                       "interval="
-                     & "; interval="
-                     & Image (History.From)
-                     & " .. "
-                     & Image (History.To)
-                     & " "
-                     & Image (Real (Max - Min))
-                     & "; range=["
-                     & Image (Min_Value)
-                     & ","
-                     & Image (Max_Value)
-                     & "]; area="
-                     & Image (Value)
-                     & "; new total="
-                     & Image (Total));
                end;
             end if;
          end loop;
@@ -458,18 +407,6 @@ package body Concorde.Network is
             return Current_Value (Network, Node);
          else
             Total := Total + Real (DS - DH) * Current_Value (Network, Node);
-            Concorde.Logging.Log
-              (Actor    => "network",
-               Location => Concorde.Db.Node.Get (Node).Tag,
-               Category => "smoothed value",
-               Message  =>
-                 "total="
-               & Image (Total)
-               & "; interval="
-               & Image (Real (DS))
-               & "; result="
-               & Image (Total / Real (DS)));
-
             return Total / Real (DS);
          end if;
 
@@ -482,6 +419,7 @@ package body Concorde.Network is
 
    procedure Load_Network is
    begin
+      Concorde.Primitives.Loader.Load_Primitives;
       for Calculation of Concorde.Db.Calculation.Scan_By_Identifier loop
          if Calculation.Expression /= "" then
             declare
@@ -496,21 +434,6 @@ package body Concorde.Network is
          end if;
       end loop;
    end Load_Network;
-
-   ---------
-   -- Log --
-   ---------
-
-   procedure Log
-     (Message  : String)
-   is
-   begin
-      Concorde.Logging.Log
-        (Actor    => "economy",
-         Location => "",
-         Category => "",
-         Message  => Message);
-   end Log;
 
    ---------------------
    -- Remove_Observer --
@@ -585,11 +508,6 @@ package body Concorde.Network is
       Changed_Ids : Node_Lists.List;
       Node_Value  : Node_Maps.Map;
 
-      function Current_Value (Tag : String) return Real
-      is (if Node_Value.Contains (Tag)
-          then Node_Value.Element (Tag)
-          else Current_Value (Network, Tag));
-
       procedure Update_Value
         (Tag       : String;
          New_Value : Real);
@@ -620,7 +538,6 @@ package body Concorde.Network is
             Value : constant Real := Evaluate (Network, Metric.Calculation);
          begin
 
-            Log (Tag & " := " & Image (Value));
             Set_New_Value
               (Network, Tag, Value);
             Commit_New_Value (Network, Tag);
@@ -645,7 +562,6 @@ package body Concorde.Network is
 
       while not Changed_Ids.Is_Empty loop
          declare
-            use Ada.Strings.Unbounded;
             New_Changed_Ids : Node_Lists.List;
          begin
 
@@ -653,15 +569,6 @@ package body Concorde.Network is
                declare
                   From_Node : constant Concorde.Db.Node.Node_Type :=
                                 Concorde.Db.Node.Get (Id);
-                  Updated      : Boolean := False;
-                  X            : constant Real :=
-                                Current_Value (From_Node.Tag);
-                  Log_Line     : Unbounded_String :=
-                                     To_Unbounded_String
-                                       ("[" & From_Node.Tag
-                                        & "="
-                                        & Image (X)
-                                        & "]");
                begin
 
                   for Effect of
@@ -677,19 +584,9 @@ package body Concorde.Network is
                                         (Network,
                                          Effect.Get_Calculation_Reference);
                      begin
-                        Updated := True;
                         Update_Value (To_Node.Tag, New_Value);
-
-                        Log_Line := Log_Line
-                          & " (" & To_Node.Tag & " "
-                          & Image (New_Value)
-                          & ")";
                      end;
                   end loop;
-
-                  if Updated then
-                     Log (To_String (Log_Line));
-                  end if;
 
                exception
 
@@ -713,12 +610,6 @@ package body Concorde.Network is
                      New_Changed_Ids.Append (Id);
                      Set_New_Value (Network, Tag, Value);
                      Commit_New_Value (Network, Tag);
-
-                     if Log_Updates then
-                        Log (Tag
-                             & "="
-                             & Image (Value));
-                     end if;
                   end;
                end loop;
                Node_Value.Clear;
