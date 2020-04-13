@@ -7,12 +7,15 @@ with Nazar.Controllers.Console;
 with Nazar.Controllers.Draw;
 
 with Concorde.UI.Models.Colonies;
+with Concorde.UI.Models.Commodities;
 with Concorde.UI.Models.Console;
 with Concorde.UI.Models.Galaxy;
 with Concorde.UI.Models.Network;
 with Concorde.UI.Models.World;
 
 with Concorde.Paths;
+
+with Concorde.Db.Commodity;
 
 with Concorde.Db.Colony;
 with Concorde.Handles.Colony;
@@ -118,6 +121,35 @@ package body Concorde.UI.Nazar_UI is
       if Builder.Has_View ("colony-market") then
          Builder.Get_View ("colony-market").Set_Model
            (Concorde.UI.Models.Colonies.Colony_Market_Model (Colony));
+      end if;
+
+      if Builder.Has_View ("food-market") then
+         Builder.Get_View ("food-market").Set_Model
+           (Concorde.UI.Models.Commodities.Commodity_Market_Model
+              (Commodity =>
+                   Concorde.Db.Commodity.Get_Reference_By_Tag ("food")));
+      end if;
+
+      if Builder.Has_View ("silicon-market") then
+         Builder.Get_View ("silicon-market").Set_Model
+           (Concorde.UI.Models.Commodities.Commodity_Market_Model
+              (Commodity =>
+                   Concorde.Db.Commodity.Get_Reference_By_Tag ("silicon")));
+      end if;
+
+      if Builder.Has_View ("plastic-market") then
+         Builder.Get_View ("plastic-market").Set_Model
+           (Concorde.UI.Models.Commodities.Commodity_Market_Model
+              (Commodity =>
+                   Concorde.Db.Commodity.Get_Reference_By_Tag ("plastic")));
+      end if;
+
+      if Builder.Has_View ("basic-electronics-market") then
+         Builder.Get_View ("basic-electronics-market").Set_Model
+           (Concorde.UI.Models.Commodities.Commodity_Market_Model
+              (Commodity =>
+                   Concorde.Db.Commodity.Get_Reference_By_Tag
+                 ("basic-electronics")));
       end if;
 
       for Policy of
