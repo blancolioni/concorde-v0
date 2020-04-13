@@ -206,7 +206,12 @@ package body Concorde.Managers.Colonies is
 
       end Update_Mining_Production;
 
+      -------------------------------
+      -- Update_Population_Demands --
+      -------------------------------
+
       procedure Update_Population_Demands is
+
          package Real_Maps is
            new WL.String_Maps (Real);
 

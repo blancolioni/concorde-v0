@@ -31,9 +31,6 @@ package body Concorde.Colonies is
       Pop     : Concorde.Db.Pop_Reference)
    is
 
-      function Image (X : Real) return String
-                      renames Concorde.Real_Images.Approximate_Image;
-
       Pop_Rec   : constant Concorde.Db.Pop.Pop_Type :=
                     Concorde.Db.Pop.Get (Pop);
       Rec       : constant Concorde.Db.Colony.Colony_Type :=
@@ -87,21 +84,6 @@ package body Concorde.Colonies is
                       (Total_Taxable,
                        Rate * (1.0 - Evasion));
    begin
-      Concorde.Logging.Log
-        (Actor    =>
-           Concorde.Factions.Name (Rec.Faction),
-         Location =>
-           Concorde.Worlds.Name (Rec.World),
-         Category => "tax",
-         Message  => "group="
-         & Wealth_Group.Tag
-         & "; size=" & Image (Pop_Rec.Size)
-         & "; rate=" & Image (Rate * 100.0) & "%"
-         & "; income="
-         & Concorde.Money.Show
-           (Concorde.Money.To_Money (Final_Income))
-         & "; evasion=" & Image (Evasion * 100.0) & "%"
-         & "; revenue=" & Concorde.Money.Show (Revenue));
 
       Concorde.Agents.Add_Cash
         (Concorde.Db.Colony.Get (Colony),

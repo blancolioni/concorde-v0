@@ -1,6 +1,6 @@
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Unbounded;
-with Ada.Text_IO;
+--  with Ada.Text_IO;
 
 with WL.String_Maps;
 
@@ -160,9 +160,6 @@ package body Concorde.Configure.Commodities is
       Concorde.Db.Derived_Metric.Update_Derived_Metric (Metric)
         .Set_Calculation (Calculation)
         .Done;
-      Ada.Text_IO.Put_Line
-        (Commodity_Tag & ": " & Calculation_Tag
-         & " = " & Expr);
    end Add_Calculation;
 
    ---------------------------
