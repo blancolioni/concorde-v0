@@ -114,9 +114,9 @@ package body Concorde.Commands is
       Acc   : Duration := 0.0;
    begin
       if Speed = "slow" then
-         Acc := 60.0;
-      elsif Speed = "medium" then
          Acc := 3600.0;
+      elsif Speed = "medium" then
+         Acc := 6.0 * 3600.0;
       elsif Speed = "fast" then
          Acc := Concorde.Calendar.Days (1);
       elsif Speed = "maximum" then
