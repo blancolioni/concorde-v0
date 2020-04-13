@@ -222,6 +222,10 @@ package body Concorde.Configure.Worlds is
         (Index : Positive)
          return Heights.Neighbour_Array;
 
+      ----------------------
+      -- Base_Temperature --
+      ----------------------
+
       function Base_Temperature
         (Tile : Surfaces.Surface_Tile_Index)
          return Non_Negative_Real
@@ -300,7 +304,11 @@ package body Concorde.Configure.Worlds is
               Concorde.Db.Elevation.Get
                 (Elevation.Element (Hs (Positive (I))).Elevation);
             Terrain : constant Concorde.Db.Terrain_Reference :=
-              Elevation.Element (Hs (Positive (I))).Terrain;
+                        Elevation.Element (Hs (Positive (I))).Terrain;
+            Ave_Temp : constant Real :=
+                         Base_Temperature (I)
+                         - (if E.Height <= 0 then 0.0
+                            else 6.5 * Real (E.Height) / 100.0);
             Sector : constant Concorde.Db.World_Sector_Reference :=
                        Concorde.Db.World_Sector.Create
                          (Surface             => World.Get_Surface_Reference,
@@ -317,7 +325,7 @@ package body Concorde.Configure.Worlds is
                           Elevation           => E.Get_Elevation_Reference,
                           Sector_Use          =>
                             Concorde.Db.Null_Sector_Use_Reference,
-                          Average_Temperature => Base_Temperature (I));
+                          Average_Temperature => Ave_Temp);
             S      : constant Concorde.Db.Sector_Reference :=
                        Concorde.Db.World_Sector.Get (Sector)
                        .Get_Sector_Reference;

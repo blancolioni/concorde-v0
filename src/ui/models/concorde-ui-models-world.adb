@@ -10,6 +10,7 @@ with Concorde.Real_Images;
 
 with Concorde.Worlds;
 
+with Concorde.Handles.Feature;
 with Concorde.Handles.Has_Color;
 with Concorde.Handles.Terrain;
 
@@ -260,9 +261,13 @@ package body Concorde.UI.Models.World is
                         Concorde.Handles.Terrain.Get (Sector.Terrain);
             Faction : constant Concorde.Handles.Faction.Faction_Handle :=
                         Concorde.Handles.Faction.Get (Sector.Faction);
+            Feature : constant Concorde.Handles.Feature.Feature_Handle :=
+                        Concorde.Handles.Feature.Get (Sector.Feature);
             Color   : constant Nazar.Colors.Nazar_Color :=
                         (if Faction.Has_Element
                          then To_Nazar_Color (Faction)
+                         elsif Feature.Has_Element
+                         then To_Nazar_Color (Feature)
                          else To_Nazar_Color (Terrain));
          begin
             Result.Sectors.Append
