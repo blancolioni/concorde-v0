@@ -2,11 +2,14 @@ with Ada.Containers.Indefinite_Holders;
 with Ada.Containers.Vectors;
 with Ada.Numerics;
 
+with WL.String_Maps;
+
 with Nazar.Colors;
 
 with Concorde.Elementary_Functions;
 with Concorde.Logging;
 with Concorde.Real_Images;
+with Concorde.Trigonometry;
 
 with Concorde.Worlds;
 
@@ -25,27 +28,34 @@ package body Concorde.UI.Models.World is
      new Ada.Containers.Indefinite_Holders
        (Concorde.Worlds.Sector_Vertex_Array, Concorde.Worlds."=");
 
+   type Map_Point is
+      record
+         X, Y : Nazar.Nazar_Float;
+      end record;
+
    type Sector_Model is
       record
-         Owner    : Concorde.Handles.Faction.Faction_Handle;
-         Sector   : Concorde.Db.World_Sector_Reference;
-         Centre   : Concorde.Worlds.Sector_Vertex;
-         Boundary : Vertex_Holders.Holder;
-         Color    : Nazar.Colors.Nazar_Color;
+         Owner      : Concorde.Handles.Faction.Faction_Handle;
+         Sector     : Concorde.Db.World_Sector_Reference;
+         Centre     : Concorde.Worlds.Sector_Vertex;
+         Map_Centre : Map_Point;
+         Boundary   : Vertex_Holders.Holder;
+         Color      : Nazar.Colors.Nazar_Color;
+         Wind       : Real;
+         Wind_To    : Natural;
       end record;
 
    package Sector_Model_Vectors is
       new Ada.Containers.Vectors (Positive, Sector_Model);
 
+   package Sector_Reference_Maps is
+     new WL.String_Maps (Positive);
+
    type World_Model_Type is
      new Nazar.Models.Draw.Root_Draw_Model with
       record
          Sectors : Sector_Model_Vectors.Vector;
-      end record;
-
-   type Map_Point is
-      record
-         X, Y : Nazar.Nazar_Float;
+         Ref_Map : Sector_Reference_Maps.Map;
       end record;
 
    function Project
@@ -102,6 +112,7 @@ package body Concorde.UI.Models.World is
                                Sector.Color;
                Boundary    : constant Concorde.Worlds.Sector_Vertex_Array :=
                                Sector.Boundary.Element;
+               Centre_Lat  : constant Real := Arcsin (Sector.Centre.Z);
                Centre_Long : Real :=
                                Arctan (Sector.Centre.Y, Sector.Centre.X)
                                - Long_0;
@@ -114,25 +125,10 @@ package body Concorde.UI.Models.World is
                   Centre_Long := Centre_Long - 2.0 * Pi;
                end if;
 
---                 Concorde.Logging.Log
---                   (Actor    => "model",
---                    Location => "world",
---                    Category => "draw",
---                    Message  =>
---                      "centre = ("
---                    & Image (Sector.Centre.X)
---                    & ","
---                    & Image (Sector.Centre.Y)
---                    & ","
---                    & Image (Sector.Centre.Z)
---                    & "); lat/long = ("
---                    & Image (Arcsin (Sector.Centre.Z) * 180.0 / Pi)
---                    & ","
---                    & Image (Centre_Long)
---                    & ")");
-
                if Fill then
                   Model.Set_Color (Color);
+                  Sector.Map_Centre :=
+                    Project (Centre_Lat, Centre_Long, Centre_Long > 0.0);
                end if;
 
                for Pt of Boundary loop
@@ -143,28 +139,6 @@ package body Concorde.UI.Models.World is
                      Map_Pt  : constant Map_Point :=
                                  Project (Lat, Long, Centre_Long > 0.0);
                   begin
---                       Concorde.Logging.Log
---                         (Actor    => "model",
---                          Location => "world",
---                          Category => "draw",
---                          Message  =>
---                            "    pt = ("
---                          & Image (Pt.X)
---                          & ","
---                          & Image (Pt.Y)
---                          & ","
---                          & Image (Pt.Z)
---                          & "); lat/long = ("
---                          & Image (Lat * 180.0 / Pi)
---                          & ","
---                          & Image (Long)
---                          & ")"
---                          & "; map pt = ("
---                          & Image (Real (Map_Pt.X))
---                          & ","
---                          & Image (Real (Map_Pt.Y))
---                          & ")");
---
                      if First then
                         Model.Move_To (Map_Pt.X, Map_Pt.Y);
                         First := False;
@@ -179,6 +153,52 @@ package body Concorde.UI.Models.World is
             end;
          end loop;
       end loop;
+
+      Model.Set_Color (0.0, 0.0, 0.0, 1.0);
+      for Sector of Model.Sectors loop
+         declare
+            use Nazar;
+            From : constant Map_Point :=
+                     (Sector.Map_Centre.X, Sector.Map_Centre.Y);
+            To_S : constant Sector_Model :=
+                     Model.Sectors.Element (Sector.Wind_To);
+            To   : constant Map_Point :=
+                     (From.X + (To_S.Map_Centre.X - From.X) / 2.0,
+                      From.Y + (To_S.Map_Centre.Y - From.Y) / 2.0);
+            DX   : constant Nazar_Float := To.X - From.X;
+            DY   : constant Nazar_Float := To.Y - From.Y;
+            D    : constant Non_Negative_Real :=
+                     Sqrt (Real (DX) ** 2 + Real (DY) ** 2);
+            N    : constant Map_Point :=
+                     (DX / Nazar_Float (D), DY / Nazar_Float (D));
+            AX   : constant Nazar_Float := 0.025 * (-N.Y - N.X);
+            AY   : constant Nazar_Float := 0.025 * (N.X - N.Y);
+         begin
+            Model.Move_To (From.X, From.Y);
+            Model.Line_To (To.X, To.Y);
+            Model.Line_To (To.X + AX, To.Y + AY);
+            Model.Move_To (To.X, To.Y);
+            Model.Line_To (To.X - AY, To.Y + AX);
+
+            Model.Render;
+            Concorde.Logging.Log
+              ("model", "world", "draw",
+               "wind = "
+               & Image (180.0 * Sector.Wind / Pi)
+               & "; to ="
+               & Sector.Wind_To'Image
+               & "; line ("
+               & Image (Real (From.X))
+               & ","
+               & Image (Real (From.Y))
+               & ") -> ("
+               & Image (Real (To.X))
+               & ","
+               & Image (Real (To.Y))
+               & ")");
+         end;
+      end loop;
+
    end Draw_World;
 
    -------------
@@ -272,13 +292,49 @@ package body Concorde.UI.Models.World is
          begin
             Result.Sectors.Append
               (Sector_Model'
-                 (Sector   => Ref,
-                  Owner    => Concorde.Handles.Faction.Get (Sector.Faction),
-                  Centre   => Concorde.Worlds.Get_Centre (Ref),
-                  Boundary =>
+                 (Sector     => Ref,
+                  Owner      => Concorde.Handles.Faction.Get (Sector.Faction),
+                  Centre     => Concorde.Worlds.Get_Centre (Ref),
+                  Map_Centre => (0.0, 0.0),
+                  Boundary   =>
                     Vertex_Holders.To_Holder
                       (Concorde.Worlds.Get_Vertices (Ref)),
-                  Color    => Color));
+                  Color      => Color,
+                  Wind       => Sector.Prevailing_Wind,
+                  Wind_To    => 0));
+            Result.Ref_Map.Insert
+              (Concorde.Db.To_String (Ref), Result.Sectors.Last_Index);
+         end;
+      end loop;
+
+      for Sector of Result.Sectors loop
+         declare
+            use Concorde.Trigonometry;
+            Wind    : constant Angle := From_Degrees (Sector.Wind);
+            To      : Concorde.Db.World_Sector_Reference :=
+                        Concorde.Db.Null_World_Sector_Reference;
+            Closest : Angle := From_Radians (0.0);
+            First   : Boolean := True;
+         begin
+
+            for Neighbour of
+              Concorde.Worlds.Get_Neighbours (Sector.Sector)
+            loop
+               declare
+                  Bearing : constant Angle :=
+                              Concorde.Worlds.Get_Bearing
+                                (Sector.Sector, Neighbour);
+               begin
+                  if First or else Wind - Bearing < Closest then
+                     Closest := Bearing;
+                     To := Neighbour;
+                     First := False;
+                  end if;
+               end;
+            end loop;
+            Sector.Wind_To :=
+              Result.Ref_Map.Element
+                (Concorde.Db.To_String (To));
          end;
       end loop;
 

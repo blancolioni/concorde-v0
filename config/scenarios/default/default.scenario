@@ -1,5 +1,5 @@
-#capital-system = no
-#faction-names = faction-names-small
-capital-system = yes
-faction-names = faction-names
+capital-system = no
+faction-names = faction-names-small
+#capital-system = yes
+#faction-names = faction-names
 faction-colors = faction-colors

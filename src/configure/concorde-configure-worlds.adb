@@ -4,6 +4,7 @@ with Ada.Containers.Vectors;
 with WL.Random.Height_Maps;
 
 with Concorde.Constants;
+with Concorde.Elementary_Functions;
 with Concorde.Logging;
 with Concorde.Solar_System;
 with Concorde.Surfaces;
@@ -223,6 +224,10 @@ package body Concorde.Configure.Worlds is
         (Index : Positive)
          return Heights.Neighbour_Array;
 
+      function Prevailing_Wind
+        (Latitude : Real)
+         return Real;
+
       ----------------------
       -- Base_Temperature --
       ----------------------
@@ -260,6 +265,30 @@ package body Concorde.Configure.Worlds is
             end loop;
          end return;
       end Get_Neighbours;
+
+      ---------------------
+      -- Prevailing_Wind --
+      ---------------------
+
+      function Prevailing_Wind
+        (Latitude : Real)
+         return Real
+      is
+      begin
+         if Latitude > 60.0 then
+            return -90.0;
+         elsif Latitude > 30.0 then
+            return 90.0 - (Latitude - 30.0) * 3.0;
+         elsif Latitude > 0.0 then
+            return 180.0 + Latitude * 2.0;
+         elsif Latitude > -30.0 then
+            return 180.0 - Latitude * 2.0;
+         elsif Latitude > -60.0 then
+            return -90.0 - (Latitude + 30.0) * 3.0;
+         else
+            return 90.0;
+         end if;
+      end Prevailing_Wind;
 
       Climate_Vector : Climate_Terrain_Vectors.Vector;
       Elevation      : Elevation_Vectors.Vector;
@@ -300,7 +329,10 @@ package body Concorde.Configure.Worlds is
       for I in Tile_Refs'Range loop
          declare
             Centre : constant Concorde.Surfaces.Vector_3 :=
-              Surface.Tile_Centre (I);
+                       Surface.Tile_Centre (I);
+            Latitude : constant Real :=
+                         Concorde.Elementary_Functions.Arcsin
+                           (Centre (3), 360.0);
             E      : constant Concorde.Db.Elevation.Elevation_Type :=
               Concorde.Db.Elevation.Get
                 (Elevation.Element (Hs (Positive (I))).Elevation);
@@ -326,7 +358,11 @@ package body Concorde.Configure.Worlds is
                           Elevation           => E.Get_Elevation_Reference,
                           Sector_Use          =>
                             Concorde.Db.Null_Sector_Use_Reference,
-                          Average_Temperature => Ave_Temp);
+                          Average_Temperature => Ave_Temp,
+                          Prevailing_Wind     => Prevailing_Wind (Latitude),
+                          Moisture            =>
+                            (if Concorde.Terrain.Is_Water (Terrain)
+                             then 1.0 else 0.0));
             S      : constant Concorde.Db.Sector_Reference :=
                        Concorde.Db.World_Sector.Get (Sector)
                        .Get_Sector_Reference;

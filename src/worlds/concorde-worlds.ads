@@ -1,6 +1,8 @@
 private with Ada.Containers.Doubly_Linked_Lists;
 
 with Concorde.Quantities;
+with Concorde.Spheres;
+with Concorde.Trigonometry;
 
 with Concorde.Db;
 with Concorde.Db.World_Sector;
@@ -66,6 +68,14 @@ package Concorde.Worlds is
      (Sector : Concorde.Db.World_Sector_Reference)
       return World_Sector_Array;
 
+   function Get_Bearing
+     (From, To : Concorde.Db.World_Sector_Reference)
+      return Concorde.Trigonometry.Angle;
+
+   function Get_Distance
+     (From, To : Concorde.Db.World_Sector_Reference)
+      return Non_Negative_Real;
+
    procedure Circular_Scan
      (Start : Concorde.Db.World_Sector_Reference;
       Process : not null access
@@ -113,14 +123,21 @@ package Concorde.Worlds is
                    Difficulty    : Unit_Real;
                    Available     : Concorde.Quantities.Quantity_Type));
 
-   type Sector_Vertex is
+   subtype Sector_Vertex is Concorde.Spheres.Surface_Point;
+
+   type Sector_Position is
       record
-         X, Y, Z : Signed_Unit_Real;
+         Latitude  : Real;
+         Longitude : Real;
       end record;
 
    function Get_Centre
      (Sector : Concorde.Db.World_Sector_Reference)
       return Sector_Vertex;
+
+   function Get_Centre
+     (Sector : Concorde.Db.World_Sector_Reference)
+      return Sector_Position;
 
    function Get_Terrain
      (Sector : Concorde.Db.World_Sector_Reference)
