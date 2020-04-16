@@ -10,6 +10,7 @@ with Concorde.Elementary_Functions;
 with Concorde.Identifiers;
 with Concorde.Random;
 with Concorde.Real_Images;
+with Concorde.Trigonometry;
 
 with Concorde.Solar_System;
 
@@ -925,7 +926,8 @@ package body Concorde.Configure.Star_Systems is
               Radius              => Radius * Earth_Radius,
               Density             => Density * Earth_Density,
               Rotation_Period     => Day * 3600.0,
-              Tilt                => Tilt,
+              Tilt                =>
+                Concorde.Trigonometry.From_Degrees (Tilt),
               Surface_Gravity     => Gravity * Earth_Gravity,
               Name                => Name,
 --                Palette             =>

@@ -12,6 +12,7 @@ with Concorde.Elementary_Functions;
 with Concorde.Identifiers;
 with Concorde.Random;
 with Concorde.Real_Images;
+with Concorde.Trigonometry;
 
 with Concorde.Solar_System;
 with Concorde.Stars;
@@ -364,7 +365,8 @@ package body Concorde.Configure.Galaxies is
                            Semimajor_Axis        => 0.0,
                            Eccentricity          => 0.0,
                            Rotation_Period       => 0.0,
-                           Tilt                  => 0.0,
+                           Tilt                  =>
+                             Concorde.Trigonometry.From_Degrees (0.0),
                            Surface_Gravity       => 0.0,
                            Red                   => R,
                            Green                 => G,

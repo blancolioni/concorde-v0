@@ -9,6 +9,7 @@ with Concorde.Logging;
 with Concorde.Solar_System;
 with Concorde.Surfaces;
 with Concorde.Terrain;
+with Concorde.Trigonometry;
 
 with Concorde.Configure.Resources;
 
@@ -216,6 +217,9 @@ package body Concorde.Configure.Worlds is
       Tile_Refs : array (1 .. Surface.Tile_Count)
         of Concorde.Db.Sector_Reference;
 
+      Axial_Tilt : constant Real :=
+                     Concorde.Trigonometry.To_Degrees (World.Tilt);
+
       function Base_Temperature
         (Tile : Surfaces.Surface_Tile_Index)
          return Non_Negative_Real;
@@ -275,18 +279,18 @@ package body Concorde.Configure.Worlds is
          return Real
       is
       begin
-         if Latitude > 60.0 then
-            return -90.0;
-         elsif Latitude > 30.0 then
-            return 90.0 - (Latitude - 30.0) * 3.0;
+         if Latitude > 90.0 - Axial_Tilt then
+            return -135.0;
+         elsif Latitude > Axial_Tilt then
+            return 45.0;
          elsif Latitude > 0.0 then
-            return 180.0 + Latitude * 2.0;
-         elsif Latitude > -30.0 then
-            return 180.0 - Latitude * 2.0;
-         elsif Latitude > -60.0 then
-            return -90.0 - (Latitude + 30.0) * 3.0;
+            return -135.0;
+         elsif Latitude > -Axial_Tilt then
+            return 135.0;
+         elsif Latitude > -90.0 + Axial_Tilt then
+            return -45.0;
          else
-            return 90.0;
+            return 135.0;
          end if;
       end Prevailing_Wind;
 
