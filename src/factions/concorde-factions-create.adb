@@ -25,7 +25,6 @@ with Concorde.Db.Script_Line;
 with Concorde.Db.Shareholder;
 with Concorde.Db.Star_System_Distance;
 with Concorde.Db.World_Sector;
-with Concorde.Db.User;
 
 package body Concorde.Factions.Create is
 
@@ -88,6 +87,7 @@ package body Concorde.Factions.Create is
                         Account       => Account,
                         Last_Earn     => Concorde.Money.Zero,
                         Last_Spend    => Concorde.Money.Zero,
+                        Human         => False,
                         Red           => Color.Red,
                         Green         => Color.Green,
                         Blue          => Color.Blue,
@@ -151,47 +151,6 @@ package body Concorde.Factions.Create is
          return Faction;
       end;
    end Create_Faction;
-
-   ---------------------
-   -- Create_Factions --
-   ---------------------
-
-   procedure Create_Factions
-     (Faction_Config : Tropos.Configuration;
-      Setup_Config   : Tropos.Configuration)
-   is
-   begin
-      for Config of Faction_Config loop
-         Ada.Text_IO.Put_Line
-           ("new faction: " & Config.Get ("name"));
-         declare
-            use type Concorde.Db.Faction_Reference;
-            User : constant Concorde.Db.User_Reference :=
-                     Concorde.Db.User.Create
-                       (Login         => Config.Config_Name,
-                        Password      => "",
-                        Administrator => False);
-            Faction : constant Concorde.Db.Faction_Reference :=
-                        Create_Faction
-                          (User        => User,
-                           Name        => Config.Get ("name"),
-                           Adjective   =>
-                             Config.Get ("adjective", Config.Get ("name")),
-                           Plural_Name =>
-                             Config.Get ("plural", Config.Get ("name")),
-                           Color       =>
-                             Concorde.Color.From_String
-                               (Config.Get ("color", "#ff0000")),
-                           Setup       => Setup_Config);
-         begin
-            if Faction = Concorde.Db.Null_Faction_Reference then
-               Ada.Text_IO.Put_Line
-                 (Ada.Text_IO.Standard_Error,
-                  "failed to create faction");
-            end if;
-         end;
-      end loop;
-   end Create_Factions;
 
    ----------------------
    -- Find_Home_Sector --

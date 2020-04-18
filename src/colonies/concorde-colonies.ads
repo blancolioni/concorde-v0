@@ -2,10 +2,9 @@ with Concorde.Db;
 
 package Concorde.Colonies is
 
-   procedure Daily_Policy_Expense
+   procedure Execute_Daily_Policy
      (Colony  : Concorde.Db.Colony_Reference;
-      Policy  : Concorde.Db.Policy_Reference;
-      Value   : Unit_Real);
+      Policy  : Concorde.Db.Policy_Reference);
 
    procedure Daily_Tax_Revenue
      (Colony  : Concorde.Db.Colony_Reference;

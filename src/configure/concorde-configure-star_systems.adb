@@ -10,6 +10,7 @@ with Concorde.Elementary_Functions;
 with Concorde.Identifiers;
 with Concorde.Random;
 with Concorde.Real_Images;
+with Concorde.Trigonometry;
 
 with Concorde.Solar_System;
 
@@ -24,14 +25,12 @@ package body Concorde.Configure.Star_Systems is
    Log_Generation : constant Boolean := False;
 
    use all type Concorde.Db.World_Composition;
-
    subtype World_Composition is Concorde.Db.World_Composition;
 
    subtype Rocky_World is World_Composition range Ice .. Rock_Iron;
 
-   type Orbit_Zone is
-     (Red, Yellow, Green, Blue, Black);
-
+   use all type Concorde.Db.Stellar_Orbit_Zone;
+   subtype Orbit_Zone is Concorde.Db.Stellar_Orbit_Zone;
    subtype Planetary_Zone is Orbit_Zone range Yellow .. Black;
 
    type Atmosphere_Class is (None, Trace, Thin, Standard, Dense);
@@ -927,7 +926,8 @@ package body Concorde.Configure.Star_Systems is
               Radius              => Radius * Earth_Radius,
               Density             => Density * Earth_Density,
               Rotation_Period     => Day * 3600.0,
-              Tilt                => Tilt,
+              Tilt                =>
+                Concorde.Trigonometry.From_Degrees (Tilt),
               Surface_Gravity     => Gravity * Earth_Gravity,
               Name                => Name,
 --                Palette             =>
@@ -936,7 +936,7 @@ package body Concorde.Configure.Star_Systems is
               Primary_Massive     => Star.Get_Massive_Object_Reference,
               Semimajor_Axis      => Orbit * Earth_Orbit,
               Epoch               => Concorde.Calendar.To_Time
-                (-1.0 * Concorde.Random.Unit_Random
+                (Concorde.Random.Unit_Random
                  * Year * Earth_Sidereal_Year),
               Eccentricity        => 0.0,
               Period              => Year * Earth_Sidereal_Year,
@@ -944,14 +944,16 @@ package body Concorde.Configure.Star_Systems is
               Identifier          => Concorde.Identifiers.Next_Identifier,
               Composition         => Composition,
               Climate             => Climate,
+              Orbit_Zone          => Zone,
               Gas_Giant           => Gas_Giant,
+              Age                 => Star.Age,
               Habitability        => Habitability,
               Surface_Pressure    => Current_Pressure * Earth_Surface_Pressure,
               Average_Temperature => Current_Temperature,
               Hydrosphere         => Hydrosphere,
               Life                => (if Life_Bearing
                                       then Life_Complexity_Type'Pos
-                                        (Life_Complexity)
+                                        (Life_Complexity) + 1
                                       else 0),
               Smoothness          => Smoothness,
               Elevation_Range     => Elevation_Range,

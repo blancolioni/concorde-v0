@@ -316,8 +316,26 @@ package body Concorde.Configure is
       else
          raise Constraint_Error with
          Scenario_Name
-           & ": cannot find scenario directory " & Directory_Name;
+           & ": cannot find scenario file " & Directory_Name & "/" & File_Name;
       end if;
    end Scenario_File;
+
+   --------------------
+   -- To_Single_Line --
+   --------------------
+
+   function To_Single_Line
+     (Value : String)
+      return String
+   is
+   begin
+      return Line : String := Value do
+         for Ch of Line loop
+            if Ch < ' ' then
+               Ch := ' ';
+            end if;
+         end loop;
+      end return;
+   end To_Single_Line;
 
 end Concorde.Configure;

@@ -1,4 +1,5 @@
 wealth-group = yes
+priority = 100
 
 politics = {
   corporate = { position = 0.8 strength = 0.8 }
@@ -7,4 +8,9 @@ politics = {
   order = { position = 0.7 strength = 0.8 }
   society = { position = 0.2 strength = 0.5 }
   spending = { position = 0.1 strength = 0.8 }
+}
+
+demand = {
+    food = [ rich-population * 1.2 ]
+    basic-electronics = [ rich-population * (rich-income + 1) ** 2 ]
 }

@@ -1,5 +1,7 @@
 with Concorde.Configure.Worlds;
 
+with Concorde.Elementary_Functions;
+
 with Concorde.Db.Deposit;
 with Concorde.Db.Generation;
 with Concorde.Db.Market;
@@ -189,6 +191,21 @@ package body Concorde.Worlds is
       return Concorde.Db.Null_World_Sector_Reference;
    end Find_Sector;
 
+   -----------------
+   -- Get_Bearing --
+   -----------------
+
+   function Get_Bearing
+     (From, To : Concorde.Db.World_Sector_Reference)
+      return Concorde.Trigonometry.Angle
+   is
+      use Concorde.Spheres;
+      B   : constant Surface_Point := Get_Centre (From);
+      C   : constant Surface_Point := Get_Centre (To);
+   begin
+      return Get_Bearing (B, C);
+   end Get_Bearing;
+
    ----------------
    -- Get_Centre --
    ----------------
@@ -203,6 +220,45 @@ package body Concorde.Worlds is
       return Sector_Vertex'
         (Rec.X, Rec.Y, Rec.Z);
    end Get_Centre;
+
+   ----------------
+   -- Get_Centre --
+   ----------------
+
+   function Get_Centre
+     (Sector : Concorde.Db.World_Sector_Reference)
+      return Sector_Position
+   is
+      use Concorde.Elementary_Functions;
+      Vertex : constant Sector_Vertex := Get_Centre (Sector);
+   begin
+      return Sector_Position'
+        (Latitude  => Arcsin (Vertex.Z),
+         Longitude => Arctan (Vertex.Y, Vertex.X));
+   end Get_Centre;
+
+   ------------------
+   -- Get_Distance --
+   ------------------
+
+   function Get_Distance
+     (From, To : Concorde.Db.World_Sector_Reference)
+      return Non_Negative_Real
+   is
+      use Concorde.Elementary_Functions;
+      P1 : constant Sector_Vertex := Get_Centre (From);
+      P2 : constant Sector_Vertex := Get_Centre (To);
+      D  : constant Non_Negative_Real :=
+             Sqrt
+               ((P1.X - P2.X) ** 2
+                + (P1.Y - P2.Y) ** 2
+                + (P1.Z - P2.Z) ** 2);
+      A  : constant Real := 2.0 * Arcsin (D / 2.0);
+      R  : constant Non_Negative_Real :=
+             Concorde.Db.World.Get (Get_World (From)).Radius;
+   begin
+      return A * R;
+   end Get_Distance;
 
    --------------------
    -- Get_Neighbours --

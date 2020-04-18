@@ -1,2 +1,2 @@
 ice = yes
-color = "#c0c0c0"
+color = "#e0e0e0"

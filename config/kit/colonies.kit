@@ -20,6 +20,15 @@ record Colony_Sector is
    unique key World_Sector;
 end Colony_Sector;
 
+record Colony_Zone is
+   key Colony;
+   key World_Sector;
+   Zone;
+   Size : Long_Float;
+   key Colony_Zone with Colony, Zone;
+   key Colony_Sector_Zone with Colony, World_Sector, Zone;
+end Colony_Zone;
+   
 record Colony_Pop_Group is
    key Colony;
    Pop_Group;

@@ -1,4 +1,5 @@
 wealth-group = yes
+priority = 10
 
 politics = {
   corporate = { position = 0.9 strength = 0.9 }
@@ -11,4 +12,9 @@ politics = {
 
 influences = {
   state-employees = -1 trade-unionist = -1
+}
+
+demand = {
+    food = [ megarich-population * 1.5 ]
+    basic-electronics = [ megarich-population * 2 ]
 }

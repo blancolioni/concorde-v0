@@ -1,9 +1,171 @@
 with Ada.Numerics;
 
 with Concorde.Elementary_Functions;
+with Concorde.Logging;
 with Concorde.Random;
+with Concorde.Real_Images;
 
 package body Concorde.Spheres is
+
+   function Image (X : Real) return String
+                   renames Concorde.Real_Images.Approximate_Image;
+
+--     function Cross (A, B : Surface_Point) return Surface_Point is
+--       (Normalize
+--     (A.Y * B.Z - A.Z * B.Y, A.Z * B.X - A.X * B.Z, A.X * B.Y - A.Y * B.X));
+--
+--     function Dot (A, B : Surface_Point) return Real
+--     is (A.X * B.X + A.Y * B.Y + A.Z * B.Z);
+
+--     function Get_Bearing
+--       (From, To : Surface_Point)
+--        return Concorde.Trigonometry.Angle
+--     is
+--        use Concorde.Trigonometry;
+--        Lat_1 : constant Angle := Arcsin (From.Z);
+--        Lat_2 : constant Angle := Arcsin (To.Z);
+--        Long_1 : constant Angle := Arctan (From.Y, From.X);
+--        Long_2 : constant Angle := Arctan (To.Y, To.X);
+--        D      : constant Angle := Get_Subtended_Angle (From, To);
+--     begin
+--        if From.Z > 1.0 - 1.0e-6 then
+--           return From_Degrees (270.0);
+--        elsif From.Z < -1.0 + 1.0e-6 then
+--           return From_Degrees (90.0);
+--        end if;
+--
+--        declare
+--           A : constant Angle :=
+--                 Arcsin ((Sin (Lat_2) - Sin (Lat_1) * Cos (D))
+--                         / (Sin (D) * Cos (Lat_1)));
+--        begin
+--           Concorde.Logging.Log
+--             ("angle",
+--              "",
+--              "",
+--              Show (Lat_1, Long_1) & " "
+--              & Show (Lat_2, Long_2) & " "
+--              & ": D = " & Image (To_Degrees (D))
+--              & "; angle = " & Image (To_Degrees (A)));
+--
+--           return A;
+--        end;
+--     end Get_Bearing;
+
+   function Get_Bearing
+     (From, To : Surface_Point)
+      return Concorde.Trigonometry.Angle
+   is
+      use Concorde.Trigonometry;
+      Lat_1   : constant Angle := Arcsin (From.Z);
+      Lat_2   : constant Angle := Arcsin (To.Z);
+      Long_1  : constant Angle := Arctan (From.Y, From.X);
+      Long_2  : constant Angle := Arctan (To.Y, To.X);
+      X       : constant Real :=
+                  Cos (Lat_2) * Sin (Long_2 - Long_1);
+      Y       : constant Real :=
+                  Cos (Lat_1) * Sin (Lat_2)
+                - Sin (Lat_1) * Cos (Lat_2) * Cos (Long_2 - Long_1);
+      A       : constant Angle := Arctan (Y, X);
+
+--        P       : constant Surface_Point :=
+--                    To_Surface_Point (Lat_1, Long_2);
+--        A       : constant Angle := Get_Subtended_Angle (From, To);
+--        B       : constant Angle := Get_Subtended_Angle (From, P);
+--        C       : constant Angle := Get_Subtended_Angle (To, P);
+--        Angle_2 : constant Angle :=
+--                    Arccos ((Cos (C)  - Cos (A) * Cos (B))
+--                            / (Sin (A) * Sin (B)));
+   begin
+      Concorde.Logging.Log
+        ("angle",
+         "",
+         "",
+         Show (Lat_1, Long_1)
+         & " "
+         & Show (Lat_2, Long_2)
+         & " "
+         & ": X = " & Image (X)
+         & "; Y = " & Image (Y)
+         & "; angle = " & Image (To_Degrees (A)));
+
+      return A;
+   end Get_Bearing;
+
+--     function Get_Angle
+--       (P1, P2, P3 : Surface_Point)
+--        return Real
+--     is
+--        use Concorde.Elementary_Functions;
+--        N1 : constant Surface_Point := Cross (P2, P3);
+--        N2 : constant Surface_Point := Cross (P1, P2);
+--        Angle_1 : constant Real := Arccos (Dot (N1, N2));
+--        A       : constant Real := Get_Angle (P1, P2);
+--        B       : constant Real := Get_Angle (P2, P3);
+--        C       : constant Real := Get_Angle (P3, P1);
+--        Angle_2 : constant Real :=
+--                    Arccos ((Cos (C)  - Cos (A) * Cos (B))
+--                            / (Sin (A) * Sin (B)));
+--     begin
+--        if False then
+--           Concorde.Logging.Log
+--             ("angle",
+--              "",
+--              "",
+--              "A = " & Show (P1)
+--              & "; B = " & Show (P2)
+--              & "; C = " & Show (P3)
+--              & "; N1 = B x C = " & Show (N1)
+--              & "; N2 = A x B = " & Show (N2)
+--              & "; N1 . N2 = " & Image (Dot (N1, N2))
+--         & "; angle = arccos (N1 . N2) = " & Image (Angle_1 * 180.0 / Pi));
+--        end if;
+--
+--        Concorde.Logging.Log
+--          ("angle",
+--           "",
+--           "",
+--           Show (P1) & " "
+--           & Show (P2) & " "
+--           & Show (P3)
+--           & ": A = " & Image (A * 180.0 / Pi)
+--           & "; B = " & Image (B * 180.0 / Pi)
+--           & "; C = " & Image (C * 180.0 / Pi)
+--           & "; angle = " & Image (Angle_2 * 180.0 / Pi));
+--
+--        return Angle_2;
+--     end Get_Angle;
+
+   -------------------------
+   -- Get_Subtended_Angle --
+   -------------------------
+
+   function Get_Subtended_Angle
+     (P1, P2 : Surface_Point)
+      return Concorde.Trigonometry.Angle
+   is
+      use Concorde.Elementary_Functions;
+      D  : constant Non_Negative_Real :=
+             Sqrt
+               ((P1.X - P2.X) ** 2
+                + (P1.Y - P2.Y) ** 2
+                + (P1.Z - P2.Z) ** 2);
+      A  : constant Real := 2.0 * Arcsin (D / 2.0);
+   begin
+      return Concorde.Trigonometry.From_Radians (A);
+   end Get_Subtended_Angle;
+
+   ---------------
+   -- Normalize --
+   ---------------
+
+   function Normalize (X, Y, Z : Real) return Surface_Point is
+      use Concorde.Elementary_Functions;
+      D : constant Non_Negative_Real :=
+            Sqrt (X ** 2 + Y ** 2 + Z ** 2);
+   begin
+      return (X / D, Y / D, Z / D);
+   end Normalize;
 
    --------------------------
    -- Random_Sphere_Points --
@@ -103,6 +265,31 @@ package body Concorde.Spheres is
       end loop;
    end Random_Sphere_Points;
 
+   ----------
+   -- Show --
+   ----------
+
+   function Show
+     (Latitude, Longitude : Concorde.Trigonometry.Angle)
+      return String
+   is
+   begin
+      return "("
+        & Image (Concorde.Trigonometry.To_Degrees (Latitude))
+        & "N "
+        & Image (Concorde.Trigonometry.To_Degrees (Longitude))
+        & "E)";
+   end Show;
+
+   ----------
+   -- Show --
+   ----------
+
+   function Show (P : Surface_Point) return String is
+   begin
+      return "(" & Image (P.X) & "," & Image (P.Y) & "," & Image (P.Z) & ")";
+   end Show;
+
    --------------------------
    -- Spiral_Sphere_Points --
    --------------------------
@@ -142,5 +329,20 @@ package body Concorde.Spheres is
          end;
       end loop;
    end Spiral_Sphere_Points;
+
+   ----------------------
+   -- To_Surface_Point --
+   ----------------------
+
+   function To_Surface_Point
+     (Latitude, Longitude : Concorde.Trigonometry.Angle)
+      return Surface_Point
+   is
+      use Concorde.Trigonometry;
+   begin
+      return (Cos (Longitude) * Cos (Latitude),
+              Sin (Longitude) * Cos (Latitude),
+              Sin (Latitude));
+   end To_Surface_Point;
 
 end Concorde.Spheres;

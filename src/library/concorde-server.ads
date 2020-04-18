@@ -6,7 +6,7 @@ package Concorde.Server is
 
    procedure Create_Scenario;
 
-   procedure Add_Factions;
+   procedure Add_Faction;
 
    procedure Start;
 

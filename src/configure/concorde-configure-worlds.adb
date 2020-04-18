@@ -1,12 +1,15 @@
+with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Vectors;
 
 with WL.Random.Height_Maps;
 
 with Concorde.Constants;
+with Concorde.Elementary_Functions;
 with Concorde.Logging;
 with Concorde.Solar_System;
 with Concorde.Surfaces;
 with Concorde.Terrain;
+with Concorde.Trigonometry;
 
 with Concorde.Configure.Resources;
 
@@ -214,6 +217,9 @@ package body Concorde.Configure.Worlds is
       Tile_Refs : array (1 .. Surface.Tile_Count)
         of Concorde.Db.Sector_Reference;
 
+      Axial_Tilt : constant Real :=
+                     Concorde.Trigonometry.To_Degrees (World.Tilt);
+
       function Base_Temperature
         (Tile : Surfaces.Surface_Tile_Index)
          return Non_Negative_Real;
@@ -221,6 +227,14 @@ package body Concorde.Configure.Worlds is
       function Get_Neighbours
         (Index : Positive)
          return Heights.Neighbour_Array;
+
+      function Prevailing_Wind
+        (Latitude : Real)
+         return Real;
+
+      ----------------------
+      -- Base_Temperature --
+      ----------------------
 
       function Base_Temperature
         (Tile : Surfaces.Surface_Tile_Index)
@@ -255,6 +269,30 @@ package body Concorde.Configure.Worlds is
             end loop;
          end return;
       end Get_Neighbours;
+
+      ---------------------
+      -- Prevailing_Wind --
+      ---------------------
+
+      function Prevailing_Wind
+        (Latitude : Real)
+         return Real
+      is
+      begin
+         if Latitude > 90.0 - Axial_Tilt then
+            return -135.0;
+         elsif Latitude > Axial_Tilt then
+            return 45.0;
+         elsif Latitude > 0.0 then
+            return -135.0;
+         elsif Latitude > -Axial_Tilt then
+            return 135.0;
+         elsif Latitude > -90.0 + Axial_Tilt then
+            return -45.0;
+         else
+            return 135.0;
+         end if;
+      end Prevailing_Wind;
 
       Climate_Vector : Climate_Terrain_Vectors.Vector;
       Elevation      : Elevation_Vectors.Vector;
@@ -295,12 +333,19 @@ package body Concorde.Configure.Worlds is
       for I in Tile_Refs'Range loop
          declare
             Centre : constant Concorde.Surfaces.Vector_3 :=
-              Surface.Tile_Centre (I);
+                       Surface.Tile_Centre (I);
+            Latitude : constant Real :=
+                         Concorde.Elementary_Functions.Arcsin
+                           (Centre (3), 360.0);
             E      : constant Concorde.Db.Elevation.Elevation_Type :=
               Concorde.Db.Elevation.Get
                 (Elevation.Element (Hs (Positive (I))).Elevation);
             Terrain : constant Concorde.Db.Terrain_Reference :=
-              Elevation.Element (Hs (Positive (I))).Terrain;
+                        Elevation.Element (Hs (Positive (I))).Terrain;
+            Ave_Temp : constant Real :=
+                         Base_Temperature (I)
+                         - (if E.Height <= 0 then 0.0
+                            else 6.5 * Real (E.Height) / 100.0);
             Sector : constant Concorde.Db.World_Sector_Reference :=
                        Concorde.Db.World_Sector.Create
                          (Surface             => World.Get_Surface_Reference,
@@ -317,7 +362,11 @@ package body Concorde.Configure.Worlds is
                           Elevation           => E.Get_Elevation_Reference,
                           Sector_Use          =>
                             Concorde.Db.Null_Sector_Use_Reference,
-                          Average_Temperature => Base_Temperature (I));
+                          Average_Temperature => Ave_Temp,
+                          Prevailing_Wind     => Prevailing_Wind (Latitude),
+                          Moisture            =>
+                            (if Concorde.Terrain.Is_Water (Terrain)
+                             then 1.0 else 0.0));
             S      : constant Concorde.Db.Sector_Reference :=
                        Concorde.Db.World_Sector.Get (Sector)
                        .Get_Sector_Reference;
@@ -342,13 +391,13 @@ package body Concorde.Configure.Worlds is
       end loop;
 
       declare
-         Max_Ice_Sectors : constant Natural :=
-           (if World.Average_Temperature < -20.0
-            then Natural (Surface.Tile_Count)
-            else Natural (Real (Surface.Tile_Count) * World.Hydrosphere));
-         Ice_Sector_Count : Natural := 0;
-         Ice_Feature      : constant Concorde.Db.Feature_Reference :=
-           Concorde.Db.Feature.Get_Reference_By_Tag ("ice");
+         package Ordered_Sector_Maps is
+           new Ada.Containers.Ordered_Maps
+             (Real, Concorde.Db.World_Sector_Reference, "<",
+              Concorde.Db."=");
+
+         Cold_Sectors : Ordered_Sector_Maps.Map;
+
       begin
          for World_Sector of
            Concorde.Db.World_Sector
@@ -356,18 +405,45 @@ package body Concorde.Configure.Worlds is
                (World.Get_World_Reference, 0.0,
                 Concorde.Constants.Freezing_Point_Of_Water)
          loop
-            exit when Ice_Sector_Count > Max_Ice_Sectors;
-            if World_Sector.Average_Temperature < 243.0
-              or else not Concorde.Db.Terrain.Get (World_Sector.Terrain)
-              .Is_Water
-            then
-               Concorde.Db.World_Sector.Update_World_Sector
-                 (World_Sector.Get_World_Sector_Reference)
+            if Concorde.Db.Terrain.Get (World_Sector.Terrain).Is_Water then
+               if World_Sector.Average_Temperature
+                 < Concorde.Constants.Freezing_Point_Of_Water - 10.0
+               then
+                  Cold_Sectors.Insert
+                    (Key      => World_Sector.Average_Temperature + 10.0,
+                     New_Item => World_Sector.Get_World_Sector_Reference);
+               end if;
+            else
+               if World_Sector.Average_Temperature
+                 < Concorde.Constants.Freezing_Point_Of_Water
+               then
+                  Cold_Sectors.Insert
+                    (Key      => World_Sector.Average_Temperature,
+                     New_Item => World_Sector.Get_World_Sector_Reference);
+               end if;
+            end if;
+         end loop;
+
+         declare
+            Max_Ice_Sectors  : constant Natural :=
+                                 (if World.Average_Temperature < -20.0
+                                  then Natural (Surface.Tile_Count)
+                                  else Natural (Real (Surface.Tile_Count)
+                                    * World.Hydrosphere));
+            Ice_Sector_Count : Natural := 0;
+            Ice_Feature      : constant Concorde.Db.Feature_Reference :=
+                                 Concorde.Db.Feature.Get_Reference_By_Tag
+                                   ("ice");
+         begin
+            for Ref of Cold_Sectors loop
+               exit when Ice_Sector_Count >= Max_Ice_Sectors;
+
+               Concorde.Db.World_Sector.Update_World_Sector (Ref)
                  .Set_Feature (Ice_Feature)
                  .Done;
                Ice_Sector_Count := Ice_Sector_Count + 1;
-            end if;
-         end loop;
+            end loop;
+         end;
       end;
 
    end Save_Surface;

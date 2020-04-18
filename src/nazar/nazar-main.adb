@@ -10,6 +10,7 @@ package body Nazar.Main is
    procedure Init is
    begin
       Nazar.Logging.Start_Logging;
+      Nazar.Signals.Create_Signal ("signal-change-value");
       Nazar.Signals.Create_Signal ("signal-command");
    end Init;
 

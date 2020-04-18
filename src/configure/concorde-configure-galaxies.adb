@@ -12,10 +12,13 @@ with Concorde.Elementary_Functions;
 with Concorde.Identifiers;
 with Concorde.Random;
 with Concorde.Real_Images;
+with Concorde.Trigonometry;
 
 with Concorde.Solar_System;
 with Concorde.Stars;
 with Concorde.Stars.Tables;
+
+with Concorde.Configure.Resources;
 
 with Concorde.Db.Scenario;
 with Concorde.Db.Star_System;
@@ -362,7 +365,8 @@ package body Concorde.Configure.Galaxies is
                            Semimajor_Axis        => 0.0,
                            Eccentricity          => 0.0,
                            Rotation_Period       => 0.0,
-                           Tilt                  => 0.0,
+                           Tilt                  =>
+                             Concorde.Trigonometry.From_Degrees (0.0),
                            Surface_Gravity       => 0.0,
                            Red                   => R,
                            Green                 => G,
@@ -444,6 +448,12 @@ package body Concorde.Configure.Galaxies is
       end loop;
 
       Progress.Finish;
+
+      Concorde.Configure.Resources.Create_Resource_Spheres
+        (System_Count => Number_Of_Systems,
+         R_X          => Radius_X,
+         R_Y          => Radius_Y,
+         R_Z          => Radius_Z);
 
    end Generate_Galaxy;
 

@@ -1,6 +1,7 @@
 with Commodities;
 with Factions;
 with Network;
+with Resources;
 with Worlds;
 
 package World_Sectors is
@@ -14,6 +15,8 @@ package World_Sectors is
 	   Height : Integer;
 	   key Elevation;
 	   Average_Temperature : Long_Float;
+       Prevailing_Wind     : Long_Float;
+       Moisture            : Long_Float;
 	   key World_Sector_Use with World, Sector_Use;
 	   key World_Temperature with World, Average_Temperature;
 	end World_Sector;

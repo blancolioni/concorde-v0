@@ -141,7 +141,7 @@ package body Concorde.UI.Models.Colonies.Policies is
                           when Name     => Policy.Tag,
                           when Setting  =>
                             Concorde.Real_Images.Approximate_Image
-                         (Value_Node.Real_Value * 100.0),
+                         (Value_Node.Current_Value * 100.0),
                           when Income   =>
                             Concorde.Money.Show (Colony_Policy.Revenue),
                           when Expenses =>
@@ -165,7 +165,7 @@ package body Concorde.UI.Models.Colonies.Policies is
    begin
       Model.State.Clear;
       for Policy of
-        Concorde.Db.Policy.Select_By_Internal (False)
+        Concorde.Db.Policy.Scan_By_Tag
       loop
          declare
             use Concorde.Db.Colony_Policy;

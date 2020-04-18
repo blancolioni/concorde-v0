@@ -24,6 +24,11 @@ package body Concorde.Colonies.Sectors is
      (Sector : Concorde.Db.World_Sector_Reference)
       return Real;
 
+   function Score_Urban
+     (Sector : Concorde.Db.World_Sector_Reference)
+      return Real
+   is (Score_Farmland (Sector) + 1.0);
+
    ---------------
    -- Check_Map --
    ---------------
@@ -33,6 +38,7 @@ package body Concorde.Colonies.Sectors is
       if Score_Fn.Is_Empty then
          Score_Fn.Insert ("farmland", Score_Farmland'Access);
          Score_Fn.Insert ("mine", Score_Mine'Access);
+         Score_Fn.Insert ("urban", Score_Urban'Access);
       end if;
    end Check_Map;
 

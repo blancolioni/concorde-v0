@@ -2,7 +2,7 @@ with Nazar.Builder.Gtk_Creator;
 
 with Concorde.UI.Nazar_UI;
 with Concorde.UI.Text_UI;
-with Concorde.UI.Web_UI;
+--  with Concorde.UI.Web_UI;
 
 package body Concorde.UI.Launch is
 
@@ -14,8 +14,8 @@ package body Concorde.UI.Launch is
    begin
       if Name = "" then
          return Concorde.UI.Text_UI.Get_Text_UI;
-      elsif Name = "aws" then
-         return Concorde.UI.Web_UI.Get_Web_UI;
+--        elsif Name = "aws" then
+--           return Concorde.UI.Web_UI.Get_Web_UI;
       elsif Name = "text" then
          return Concorde.UI.Text_UI.Get_Text_UI;
       elsif Name = "gtk" then

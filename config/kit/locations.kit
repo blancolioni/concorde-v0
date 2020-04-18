@@ -8,7 +8,7 @@ record Has_Orbits : Massive_Object;
 
 record Can_Carry;
 
-record Location is
+record Located is
    Class : Location_Class;
    Has_Orbits;
    Can_Carry;
@@ -16,10 +16,6 @@ record Location is
    X            : Long_Float;
    Y            : Long_Float;
    Z            : Long_Float;
-end Location;
-
-record Has_Location is
-   unique key Location;
-end Has_Location;
+end Located;
 
 end Locations;

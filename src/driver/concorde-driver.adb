@@ -31,20 +31,15 @@ begin
    Concorde.Server.Initialize;
 
    if Concorde.Options.Create then
+      Concorde.Logging.Start_Logging ("create");
       Concorde.Server.Create_Scenario;
+      Concorde.Logging.Stop_Logging;
       return;
-   end if;
-
-   if Concorde.Options.Add_Faction then
-
-      Concorde.Server.Add_Factions;
-      return;
-
    end if;
 
    Concorde.Managers.Loader.Register_Managers;
 
-   Concorde.Logging.Start_Logging;
+   Concorde.Logging.Start_Logging ("");
 
    Ada.Text_IO.Put_Line ("opening database ...");
 
@@ -84,7 +79,6 @@ begin
                end loop;
                Process.Tick;
             end loop;
-
             Process.Finish;
          end if;
 

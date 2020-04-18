@@ -55,9 +55,9 @@ package body Concorde.UI.Models.Galaxy is
    procedure Draw_Galaxy
      (Model : in out Root_Galaxy_Model'Class);
 
-   -----------------------
-   -- Get_Draw_Commands --
-   -----------------------
+   -----------------
+   -- Draw_Galaxy --
+   -----------------
 
    procedure Draw_Galaxy
      (Model : in out Root_Galaxy_Model'Class)

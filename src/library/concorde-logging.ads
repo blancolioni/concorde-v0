@@ -6,7 +6,9 @@ package Concorde.Logging is
       Category : String;
       Message  : String);
 
-   procedure Start_Logging;
+   procedure Start_Logging
+     (Log_Name : String);
+
    procedure Stop_Logging;
 
    procedure Start_Update;

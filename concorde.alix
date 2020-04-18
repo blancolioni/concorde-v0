@@ -6,18 +6,15 @@ source_dir = src/commands
 source_dir = src/commodities
 source_dir = src/configure
 source_dir = src/driver
+source_dir = src/events
 source_dir = src/facilities
 source_dir = src/factions
+source_dir = src/individuals
 source_dir = src/installations
 source_dir = src/kit
 source_dir = src/library
 source_dir = src/managers
 source_dir = src/markets
-source_dir = src/nazar
-source_dir = src/nazar/aws
-source_dir = src/nazar/builder
-source_dir = src/nazar/gtk
-source_dir = src/nazar/text
 source_dir = src/network
 source_dir = src/pops
 source_dir = src/sessions
@@ -41,6 +38,8 @@ depend = { project = Tropos version = any }
 depend = { project = Wlib version = any }
 depend = { project = marlowe version = any }
 depend = { project = kit version = any }
+depend = { project = nazar version = any }
+depend = { project = nazargtk version = any }
 depend = { project = aws external = yes }
 depend = { project = GtkAda external = yes }
 language = Ada

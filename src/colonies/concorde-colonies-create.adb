@@ -1,7 +1,6 @@
-with Ada.Text_IO;
-
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Vectors;
+with Ada.Text_IO;
 
 with WL.String_Maps;
 with WL.String_Sets;
@@ -17,12 +16,16 @@ with Concorde.Network;
 with Concorde.Worlds;
 
 with Concorde.Colonies.Sectors;
+with Concorde.Individuals.Create;
 
 with Concorde.Db.Account;
 with Concorde.Db.Colony;
 with Concorde.Db.Colony_Policy;
 with Concorde.Db.Colony_Pop_Group;
+with Concorde.Db.Colony_Price;
 with Concorde.Db.Colony_Sector;
+with Concorde.Db.Colony_Zone;
+with Concorde.Db.Commodity;
 with Concorde.Db.Economic_Sector;
 with Concorde.Db.Faction;
 with Concorde.Db.Group_Influence;
@@ -55,6 +58,10 @@ package body Concorde.Colonies.Create is
       Sector      : Concorde.Db.World_Sector_Reference;
       Zone_Config : Tropos.Configuration;
       Sizes       : in out Sector_Size_Maps.Map);
+
+   function Image (X : Real) return String
+                   renames Concorde.Real_Images.Approximate_Image
+     with Unreferenced;
 
    -------------------------
    -- Create_Initial_Pops --
@@ -143,7 +150,7 @@ package body Concorde.Colonies.Create is
         (IG : Income_Group)
       is
          Group_Size : constant Real :=
-                        IG.Proportion * Total_Pop;
+                        IG.Proportion * Total_Pop / 1000.0;
          Pop_Count  : constant Real := Real (Pops_Per_Wealth_Group);
          Size       : constant Real := Group_Size / Pop_Count;
       begin
@@ -337,6 +344,7 @@ package body Concorde.Colonies.Create is
          & Concorde.Real_Images.Approximate_Image (Total_Pop));
 
       declare
+         use all type Concorde.Db.Record_Type;
          Min_Income : Non_Negative_Real := Non_Negative_Real'Last;
          Max_Income : Non_Negative_Real := Non_Negative_Real'First;
       begin
@@ -344,7 +352,7 @@ package body Concorde.Colonies.Create is
 
             All_Groups.Append (Group.Get_Pop_Group_Reference);
 
-            if Group.Is_Wealth_Group then
+            if Group.Top_Record = R_Wealth_Group then
                declare
                   Income      : constant Non_Negative_Real :=
                                   Initial_Setting
@@ -432,6 +440,21 @@ package body Concorde.Colonies.Create is
          Add_Pop_Group (IG);
       end loop;
 
+      for I in 1 .. Natural (Log (Total_Pop, 10.0) * 10.0) loop
+         declare
+            use Concorde.Calendar;
+            Age_In_Years : constant Non_Negative_Real :=
+                             Real'Max
+                               (18.0,
+                                Concorde.Random.Normal_Random (10.0) + 40.0);
+            Age_Duration : constant Duration :=
+                             Duration (Age_In_Years) * Days (360.0);
+         begin
+            Concorde.Individuals.Create.New_Individual
+              (Colony, Concorde.Calendar.Clock - Age_Duration);
+         end;
+      end loop;
+
    end Create_Initial_Pops;
 
    ---------------------
@@ -453,12 +476,17 @@ package body Concorde.Colonies.Create is
       for Config of Zone_Config loop
          declare
             Tag : constant String := Config.Config_Name;
---              Zone : constant Concorde.Db.Zone.Zone_Type :=
---                       Concorde.Db.Zone.Get_By_Tag (Tag);
+            Zone : constant Concorde.Db.Zone_Reference :=
+                     Concorde.Db.Zone.Get_Reference_By_Tag (Tag);
             Size : constant Non_Negative_Real :=
                      Non_Negative_Real
                        (Float'(Config.Value));
          begin
+            Concorde.Db.Colony_Zone.Create
+              (Colony       => Colony,
+               World_Sector => Sector,
+               Zone         => Zone,
+               Size         => Size);
             if Sizes.Contains (Tag) then
                Sizes (Tag) := Sizes (Tag) + Size;
             else
@@ -486,8 +514,6 @@ package body Concorde.Colonies.Create is
 
       Cash : constant Concorde.Money.Money_Type :=
                Concorde.Money.To_Money (Get ("cash"));
-      Total_Pop : constant Real := Get ("total-population");
-
       Account : constant Concorde.Db.Account_Reference :=
                   Concorde.Db.Account.Create
                     (Guarantor  => Concorde.Db.Faction.Get (Faction).Account,
@@ -545,6 +571,18 @@ package body Concorde.Colonies.Create is
       end Set_Override;
 
    begin
+
+      for Commodity of
+        Concorde.Db.Commodity.Scan_By_Tag
+      loop
+         Concorde.Db.Colony_Price.Create
+           (Colony    => Colony,
+            Commodity => Commodity.Get_Commodity_Reference,
+            Price     => Commodity.Base_Price);
+      end loop;
+
+      Ada.Text_IO.Put_Line ("creating initial population");
+
       Create_Initial_Pops
         (Faction               => Faction,
          World                 => World,
@@ -555,8 +593,11 @@ package body Concorde.Colonies.Create is
          Gini                  => Get ("gini", 0.5),
          Pops_Per_Wealth_Group => 10);
 
+      Ada.Text_IO.Put_Line ("allocating pop groups");
+
       declare
          Sizes  : Setting_Maps.Map;
+         Total  : Non_Negative_Real := 0.0;
       begin
          for Pop of
            Concorde.Db.Pop.Select_By_Colony
@@ -578,10 +619,11 @@ package body Concorde.Colonies.Create is
                   declare
                      E : Real renames Sizes (Tag);
                   begin
-                     E := E + Non_Negative_Real (Pop.Size);
+                     E := E + Pop.Size;
                   end;
                end;
             end loop;
+            Total := Total + Pop.Size;
          end loop;
 
          for Position in Sizes.Iterate loop
@@ -593,11 +635,13 @@ package body Concorde.Colonies.Create is
                  (Key & "-population", Size);
                Set_Override
                  (Key & "-proportion",
-                  Size / Total_Pop);
+                  Size / Total);
                Set_Override (Key, 0.0);
             end;
          end loop;
       end;
+
+      Ada.Text_IO.Put_Line ("populating initial zones");
 
       Set_Override
         ("environment",
@@ -638,7 +682,7 @@ package body Concorde.Colonies.Create is
          is
             Best_Sector_Use : Concorde.Db.Sector_Use_Reference :=
                                 Concorde.Db.Null_Sector_Use_Reference;
-            Best_Score      : Real := Real'First;
+            Best_Score      : Real := 0.0;
             Remaining_Count : Natural := 0;
          begin
             for Position in Remaining.Iterate loop
@@ -666,30 +710,33 @@ package body Concorde.Colonies.Create is
                return False;
             end if;
 
-            declare
-               Tag : constant String :=
-                       Concorde.Db.Sector_Use.Get (Best_Sector_Use).Tag;
-               Use_Config : constant Tropos.Configuration :=
-                              Sector_Use_Config.Child (Tag);
-               Count : constant Positive := Remaining.Element (Tag);
-            begin
-               Concorde.Db.World_Sector.Update_World_Sector (Sector)
-                 .Set_Faction (Faction)
-                 .Set_Sector_Use (Best_Sector_Use)
-                 .Done;
+            if Best_Score > 0.0 then
+               declare
+                  Tag        : constant String :=
+                                 Concorde.Db.Sector_Use.Get
+                                   (Best_Sector_Use).Tag;
+                  Use_Config : constant Tropos.Configuration :=
+                                 Sector_Use_Config.Child (Tag);
+                  Count      : constant Positive := Remaining.Element (Tag);
+               begin
+                  Concorde.Db.World_Sector.Update_World_Sector (Sector)
+                    .Set_Faction (Faction)
+                    .Set_Sector_Use (Best_Sector_Use)
+                    .Done;
 
-               Initialize_Zone
-                 (Colony      => Colony,
-                  Sector      => Sector,
-                  Zone_Config => Use_Config.Child ("zones"),
-                  Sizes       => Sector_Size);
+                  Initialize_Zone
+                    (Colony      => Colony,
+                     Sector      => Sector,
+                     Zone_Config => Use_Config.Child ("zones"),
+                     Sizes       => Sector_Size);
 
-               if Count = 1 then
-                  Remaining.Delete (Tag);
-               else
-                  Remaining (Tag) := Remaining (Tag) - 1;
-               end if;
-            end;
+                  if Count = 1 then
+                     Remaining.Delete (Tag);
+                  else
+                     Remaining (Tag) := Remaining (Tag) - 1;
+                  end if;
+               end;
+            end if;
 
             return Remaining_Count > 1;
 
@@ -706,35 +753,14 @@ package body Concorde.Colonies.Create is
          Concorde.Worlds.Circular_Scan
            (Start   => Sector,
             Process => Assign_Sector'Access);
-
---
---           for Sector_Use_Config of Config.Child ("sector-use") loop
---              declare
---                 Sector_Use : constant Concorde.Db.Sector_Use_Reference :=
---                                Concorde.Db.Sector_Use.Get_Reference_By_Tag
---                                  (Sector_Use_Config.Config_Name);
---              begin
---                 for I in 1 .. Sector_Use_Config.Get ("count") loop
---                    Next := Next + 1;
---                    exit when Next > Neighbours'Last;
---
---                    Concorde.Db.World_Sector.Update_World_Sector
---                      (Neighbours (Next))
---                        .Set_Sector_Use (Sector_Use)
---                        .Set_Faction (Faction)
---                        .Done;
---                    Initialize_Zone (Colony, Neighbours (Next),
---                                     Sector_Use_Config.Child ("zones"),
---                                     Sector_Size);
---                 end loop;
---              end;
---              exit when Next > Neighbours'Last;
---           end loop;
       end;
+
+      Ada.Text_IO.Put_Line ("creating economy network");
 
       for Zone of Concorde.Db.Zone.Scan_By_Tag loop
          if Sector_Size.Contains (Zone.Tag) then
-            Set_Override (Zone.Tag, Sector_Size.Element (Zone.Tag));
+            Set_Override
+              (Zone.Tag, 1000.0 * Sector_Size.Element (Zone.Tag));
          end if;
       end loop;
 

@@ -10,7 +10,7 @@ technology = 1
 worker-productivity = 1
 import-tariffs = 0.1
 state-health-service = 0.5
-state-pensions = 0.5
+state-pensions = 0.2
 state-schools = 0.5
 military-spending = 0.5
 research-spending = 0.2
@@ -41,6 +41,25 @@ manufacturing = 0.2
 service = 0.4
 knowledge = 0.2
 administration = 0.4
+plastic-share = 0.1
+basic-electronics-share = 0.1
+basic-electronics-stockpile = 1000
+basic-electronics-sell-stock = 1%
+silicon-stockpile = 1000
+silicon-min-stock = 2000
+hydrocarbon-stockpile = 2000
+hydrocarbon-sell-stock = 1%
+crystals-stockpile = 1000
+crystals-sell-stock = 1%
+plastic-stockpile = 200
+refined-crystals-stockpile = 200
+refined-crystals-sell-stock = 1%
+refined-crystals-share = 0.1
+food-stockpile = 10K
+food-min-stock = 100
+food-sell-stock = 1%
+
+character-count = 100
 
 ships = {
    scout = 2
@@ -49,7 +68,7 @@ ships = {
 }
 
 capital-sector = {
-   administration = 10 
+   administration = 10
    commercial = 100
    industrial = 100
    residential = 1000
@@ -67,12 +86,12 @@ military = {
 
 sector-use = {
    farmland = {
-      count = 1
-	  zones = { farm = 5K }
+      count = 4
+	  zones = { farm = 100 }
 	  }
    mine = {
-      count = 3
-	  zones = { mine = 5K }
+      count = 8
+	  zones = { mine = 100 }
       }
 }
 
