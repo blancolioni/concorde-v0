@@ -1,8 +1,7 @@
 with Ada.Characters.Handling;
 with Ada.Directories;
+with Ada.Numerics.Discrete_Random;
 with Ada.Text_IO;
-
-with WL.Random;
 
 with Tropos.Reader;
 
@@ -109,15 +108,27 @@ package body Concorde.Configure is
                          & "!@#$%^&*_-=+<>";
    begin
       if Concorde.Options.Generate_Root_Password then
-         WL.Random.Randomise;
-         return Password : String (1 .. 12) do
-            for Ch of Password loop
-               Ch := Password_Chars
-                 (WL.Random.Random_Number
-                    (Password_Chars'First, Password_Chars'Last));
-            end loop;
-            Ada.Text_IO.Put_Line ("root password: " & Password);
-         end return;
+         declare
+            package Random is
+              new Ada.Numerics.Discrete_Random (Natural);
+            Gen : Random.Generator;
+         begin
+            Random.Reset (Gen);
+
+            return Password : String (1 .. 12) do
+               for Ch of Password loop
+                  declare
+                     Index : constant Natural :=
+                               Password_Chars'First
+                                 + Random.Random (Gen)
+                     mod Password_Chars'Length;
+                  begin
+                     Ch := Password_Chars (Index);
+                  end;
+               end loop;
+               Ada.Text_IO.Put_Line ("root password: " & Password);
+            end return;
+         end;
       else
          return "root";
       end if;
