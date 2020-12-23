@@ -4,7 +4,7 @@ with Concorde.Markets;
 with Concorde.Money;
 with Concorde.Quantities;
 
-with Concorde.Db.Agent;
+with Concorde.Handles.Agent;
 
 package Concorde.Managers.Agents is
 
@@ -220,7 +220,7 @@ package Concorde.Managers.Agents is
 
    procedure Initialize_Agent_Manager
      (Manager           : in out Root_Agent_Manager_Type'Class;
-      Agent             : Concorde.Db.Agent.Agent_Type;
+      Agent             : Concorde.Handles.Agent.Agent_Type;
       Market            : Concorde.Markets.Concorde_Market;
       Planning_Cycle    : Positive);
 
@@ -233,9 +233,9 @@ private
    type Root_Agent_Manager_Type is
      abstract new Root_Manager_Type with
       record
-         Agent             : Concorde.Db.Agent_Reference;
-         Has_Stock         : Concorde.Db.Has_Stock_Reference;
-         Account           : Concorde.Db.Account_Reference;
+         Agent             : Concorde.Handles.Agent_Reference;
+         Has_Stock         : Concorde.Handles.Has_Stock_Reference;
+         Account           : Concorde.Handles.Account_Reference;
          Market            : Concorde.Markets.Concorde_Market;
          Planning_Cycle    : Positive;
          Update_Count      : Natural := 0;

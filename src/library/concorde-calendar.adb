@@ -1,4 +1,5 @@
-with Concorde.Db.Calendar;
+with Concorde.Db;
+with Concorde.Handles.Calendar;
 
 package body Concorde.Calendar is
 
@@ -47,8 +48,7 @@ package body Concorde.Calendar is
       Sub_Second  : Second_Duration := 0.0)
       return String;
 
-   Clock_Reference : Concorde.Db.Calendar_Reference :=
-     Concorde.Db.Null_Calendar_Reference;
+   Clock_Handle : Concorde.Handles.Calendar.Calendar_Handle;
 
    procedure Check_Clock;
 
@@ -62,7 +62,7 @@ package body Concorde.Calendar is
       Check_Clock;
       Current_Clock := Current_Clock + Seconds;
 
-      Concorde.Db.Calendar.Update_Calendar (Clock_Reference)
+      Clock_Handle.Update_Calendar
         .Set_Clock (Current_Clock)
         .Done;
    end Advance;
@@ -72,11 +72,10 @@ package body Concorde.Calendar is
    -----------------
 
    procedure Check_Clock is
-      use type Concorde.Db.Calendar_Reference;
    begin
-      if Clock_Reference = Concorde.Db.Null_Calendar_Reference then
-         Clock_Reference :=
-           Concorde.Db.Calendar.First_Reference_By_Top_Record
+      if not Clock_Handle.Has_Element then
+         Clock_Handle :=
+           Concorde.Handles.Calendar.First_By_Top_Record
              (Concorde.Db.R_Calendar);
       end if;
    end Check_Clock;
@@ -205,7 +204,7 @@ package body Concorde.Calendar is
    procedure Load_Clock is
    begin
       Check_Clock;
-      Current_Clock := Concorde.Db.Calendar.Get (Clock_Reference).Clock;
+      Current_Clock := Clock_Handle.Clock;
    end Load_Clock;
 
    ------------

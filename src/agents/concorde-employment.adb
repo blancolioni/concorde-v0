@@ -6,8 +6,8 @@ with Concorde.Updates.Events;
 with Concorde.Agents;
 with Concorde.Pops;
 
-with Concorde.Db.Employer;
-with Concorde.Db.Pop;
+with Concorde.Handles.Employer;
+with Concorde.Handles.Pop;
 
 package body Concorde.Employment is
 
@@ -21,8 +21,8 @@ package body Concorde.Employment is
 
    type Contract_Record is
       record
-         Employer : Concorde.Db.Agent_Reference;
-         Employee : Concorde.Db.Agent_Reference;
+         Employer : Concorde.Handles.Agent_Reference;
+         Employee : Concorde.Handles.Agent_Reference;
          Quantity : Concorde.Quantities.Quantity_Type;
          Salary   : Concorde.Money.Price_Type;
       end record;
@@ -33,8 +33,8 @@ package body Concorde.Employment is
    Current : Contract_Lists.List;
 
    procedure Execute
-     (Employer_Agent : Concorde.Db.Agent_Reference;
-      Employee_Agent : Concorde.Db.Agent_Reference;
+     (Employer_Agent : Concorde.Handles.Agent_Reference;
+      Employee_Agent : Concorde.Handles.Agent_Reference;
       Quantity       : Concorde.Quantities.Quantity_Type;
       Salary         : Concorde.Money.Price_Type);
 
@@ -61,8 +61,8 @@ package body Concorde.Employment is
    --------------------------------
 
    procedure Create_Employment_Contract
-     (Employer : Concorde.Db.Agent_Reference;
-      Employee : Concorde.Db.Agent_Reference;
+     (Employer : Concorde.Handles.Agent_Reference;
+      Employee : Concorde.Handles.Agent_Reference;
       Quantity : Concorde.Quantities.Quantity_Type;
       Salary   : Concorde.Money.Price_Type)
    is
@@ -87,22 +87,22 @@ package body Concorde.Employment is
    -------------
 
    procedure Execute
-     (Employer_Agent : Concorde.Db.Agent_Reference;
-      Employee_Agent : Concorde.Db.Agent_Reference;
+     (Employer_Agent : Concorde.Handles.Agent_Reference;
+      Employee_Agent : Concorde.Handles.Agent_Reference;
       Quantity       : Concorde.Quantities.Quantity_Type;
       Salary         : Concorde.Money.Price_Type)
    is
-      Employer : constant Concorde.Db.Employer_Reference :=
-                   Concorde.Db.Employer.Get_Employer (Employer_Agent)
+      Employer : constant Concorde.Handles.Employer_Reference :=
+                   Concorde.Handles.Employer.Get_Employer (Employer_Agent)
                    .Get_Employer_Reference;
-      Pop      : constant Concorde.Db.Pop.Pop_Type :=
-        Concorde.Db.Pop.Get_Pop (Employee_Agent);
+      Pop      : constant Concorde.Handles.Pop.Pop_Type :=
+        Concorde.Handles.Pop.Get_Pop (Employee_Agent);
    begin
 
-      if Concorde.Db.Pop.Is_Pop_Group_Employer (Pop.Pop_Group, Employer) then
+      if Concorde.Handles.Pop.Is_Pop_Group_Employer (Pop.Pop_Group, Employer) then
          declare
-            Employed : constant Concorde.Db.Pop.Pop_Type :=
-                         Concorde.Db.Pop.Get_By_Pop_Group_Employer
+            Employed : constant Concorde.Handles.Pop.Pop_Type :=
+                         Concorde.Handles.Pop.Get_By_Pop_Group_Employer
                            (Pop.Pop_Group, Employer);
          begin
             Concorde.Pops.Move_Pops (Pop, Employed, Quantity);
@@ -114,11 +114,11 @@ package body Concorde.Employment is
                & "; salary "
                & Concorde.Money.Show (Salary)
                & "; employer"
-               & Concorde.Db.To_String (Employer));
+               & Concorde.Handles.To_String (Employer));
          end;
       else
          declare
-            Employed : constant Concorde.Db.Pop.Pop_Type :=
+            Employed : constant Concorde.Handles.Pop.Pop_Type :=
                          Concorde.Pops.New_Empty_Pop
                            (Faction => Pop.Faction,
                             Group   => Pop.Pop_Group,
@@ -135,7 +135,7 @@ package body Concorde.Employment is
                & "; salary "
                & Concorde.Money.Show (Salary)
                & "; employer"
-               & Concorde.Db.To_String (Employer));
+               & Concorde.Handles.To_String (Employer));
          end;
       end if;
    end Execute;

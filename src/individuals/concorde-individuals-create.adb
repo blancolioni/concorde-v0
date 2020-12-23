@@ -6,6 +6,7 @@ with WL.Random.Weighted_Random_Choices;
 with WL.Random;
 with WL.String_Sets;
 
+with Concorde.Identifiers;
 with Concorde.Logging;
 with Concorde.Money;
 with Concorde.Random;
@@ -19,18 +20,17 @@ with Concorde.Handles.Advancement;
 with Concorde.Handles.Advancement_Table;
 with Concorde.Handles.Assignment;
 with Concorde.Handles.Career;
+with Concorde.Handles.Event;
 with Concorde.Handles.Individual;
+with Concorde.Handles.Ship;
 
-with Concorde.Db.Ability;
-with Concorde.Db.Ability_Score;
-with Concorde.Db.Account;
-with Concorde.Db.Advancement_Table;
-with Concorde.Db.Assignment;
-with Concorde.Db.Assignment_Rank;
-with Concorde.Db.Career_Mishap;
-with Concorde.Db.Colony;
-with Concorde.Db.Individual;
-with Concorde.Db.Individual_Career;
+with Concorde.Handles.Ability_Score;
+with Concorde.Handles.Account;
+with Concorde.Handles.Assignment_Rank;
+with Concorde.Handles.Career_Mishap;
+with Concorde.Handles.Individual_Career;
+
+with Concorde.Db;
 
 package body Concorde.Individuals.Create is
 
@@ -42,14 +42,14 @@ package body Concorde.Individuals.Create is
       + WL.Random.Random_Number (1, 6));
 
    procedure Run_Career
-     (Individual : Concorde.Db.Individual_Reference);
+     (Individual : Concorde.Handles.Individual.Individual_Class);
 
    --------------------
    -- New_Individual --
    --------------------
 
    procedure New_Individual
-     (Home       : Concorde.Db.Colony_Reference;
+     (Home       : Concorde.Handles.Colony.Colony_Class;
       Birth_Date : Concorde.Calendar.Time)
    is
 
@@ -62,16 +62,11 @@ package body Concorde.Individuals.Create is
                         else 1.0 - Base_Gender);
       Power        : Natural := 0;
 
-      Colony : constant Concorde.Db.Colony.Colony_Type :=
-                 Concorde.Db.Colony.Get (Home);
-      Account      : constant Concorde.Db.Account_Reference :=
-                       Concorde.Db.Account.Create
-                         (Concorde.Db.Null_Account_Reference,
-                          Start_Cash => Concorde.Money.Zero,
-                          Cash       => Concorde.Money.Zero,
-                          Earn       => Concorde.Money.Zero,
-                          Spend      => Concorde.Money.Zero);
-
+      Account      : constant Concorde.Handles.Account.Account_Handle :=
+                       Concorde.Agents.New_Account
+                         (Starting_Balance => Concorde.Money.Zero,
+                          Guarantor        =>
+                            Concorde.Handles.Account.Empty_Handle);
       function First_Name return String
       is (if Gender >= 0.0
           then Concorde.Random_Names.Random_Female_Name
@@ -80,15 +75,16 @@ package body Concorde.Individuals.Create is
       function Last_Name return String
       is (Concorde.Random_Names.Random_Last_Name);
 
-      Ref          : constant Concorde.Db.Individual_Reference :=
-                       Concorde.Db.Individual.Create
-                         (Account      => Account,
+      Ref          : constant Concorde.Handles.Individual.Individual_Class :=
+                       Concorde.Handles.Individual.Create
+                         (Identifier   => Concorde.Identifiers.Next_Identifier,
+                          Account      => Account,
                           Last_Earn    => Concorde.Money.Zero,
                           Last_Spend   => Concorde.Money.Zero,
                           Alive        => True,
-                          Faction      => Colony.Faction,
-                          World_Sector => Colony.Capital,
-                          Ship         => Concorde.Db.Null_Ship_Reference,
+                          Faction      => Home.Faction,
+                          World_Sector => Home.Capital,
+                          Ship         => Concorde.Handles.Ship.Empty_Handle,
                           Title        => "",
                           First_Name   => First_Name,
                           Last_Name    => Last_Name,
@@ -98,14 +94,14 @@ package body Concorde.Individuals.Create is
                           Death_Date   => Birth_Date);
    begin
       for Ability of
-        Concorde.Db.Ability.Scan_By_Tag
+        Concorde.Handles.Ability.Scan_By_Tag
       loop
          declare
             Score : constant Positive := Roll_2D6;
          begin
-            Concorde.Db.Ability_Score.Create
+            Concorde.Handles.Ability_Score.Create
               (Individual => Ref,
-               Ability    => Ability.Get_Ability_Reference,
+               Ability    => Ability,
                Score      => Score);
             Power := Power + Score;
          end;
@@ -126,13 +122,11 @@ package body Concorde.Individuals.Create is
    ----------------
 
    procedure Run_Career
-     (Individual : Concorde.Db.Individual_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class)
    is
       use Concorde.Calendar;
-      Handle         : constant Handles.Individual.Individual_Handle :=
-                         Concorde.Handles.Individual.Get (Individual);
       Year_18        : constant Year_Number :=
-                         Year (Handle.Birth_Date + Years (18));
+                         Year (Individual.Birth_Date + Years (18));
       Term           : constant Duration := Years (4);
       Current_Start  : Time := Time_Of (Year_18, 1, 1);
       Current_Finish : Time := Current_Start + Term;
@@ -161,46 +155,36 @@ package body Concorde.Individuals.Create is
          use type Concorde.Money.Money_Type;
       begin
          if Advance.Cash > Concorde.Money.Zero then
-            Log (Handle, "cash: " & Concorde.Money.Show (Advance.Cash));
+            Log (Individual, "cash: " & Concorde.Money.Show (Advance.Cash));
             Concorde.Agents.Add_Cash
-              (Account => Handle.Account.Reference_Account,
+              (Account => Individual.Account,
                Cash    => Advance.Cash,
                Tag     => "career-advance");
          end if;
 
          if Advance.Ability.Has_Element then
-            declare
-               Ability_Ref : constant Concorde.Db.Ability_Reference :=
-                               Advance.Ability.Reference_Ability;
-            begin
-               Log (Handle, Advance.Ability.Tag & " + 1");
-               Concorde.Db.Ability_Score.Update_Ability_Score
-                 (Concorde.Db.Ability_Score.Get_Reference_By_Ability_Score
-                    (Individual, Ability_Ref))
-                   .Set_Score (Ability_Score (Individual, Ability_Ref) + 1)
-                   .Done;
-            end;
+            Log (Individual, Advance.Ability.Tag & " + 1");
+            Concorde.Handles.Ability_Score.Update_Ability_Score
+              (Concorde.Handles.Ability_Score.Get_By_Ability_Score
+                 (Individual, Advance.Ability))
+                .Set_Score (Ability_Score (Individual, Advance.Ability) + 1)
+                  .Done;
          end if;
 
          if Advance.Skill.Has_Element then
-            declare
-               Skill_Ref : constant Concorde.Db.Skill_Reference :=
-                             Advance.Skill.Reference_Skill;
-            begin
-               if Advance.Skill_Level < 0 then
-                  Advance_Skill (Individual, Skill_Ref);
-               else
-                  if not Has_Skill (Individual, Skill_Ref) then
-                     Advance_Skill (Individual, Skill_Ref);
-                  end if;
-
-                  while Current_Level (Individual, Skill_Ref)
-                    < Advance.Skill_Level
-                  loop
-                     Advance_Skill (Individual, Skill_Ref);
-                  end loop;
+            if Advance.Skill_Level < 0 then
+               Advance_Skill (Individual, Advance.Skill);
+            else
+               if not Has_Skill (Individual, Advance.Skill) then
+                  Advance_Skill (Individual, Advance.Skill);
                end if;
-            end;
+
+               while Current_Level (Individual, Advance.Skill)
+                 < Advance.Skill_Level
+               loop
+                  Advance_Skill (Individual, Advance.Skill);
+               end loop;
+            end if;
          end if;
       end Apply_Advancement;
 
@@ -213,34 +197,35 @@ package body Concorde.Individuals.Create is
       is
          package Weighted_Assignment_Choice is
            new WL.Random.Weighted_Random_Choices
-             (Concorde.Db.Assignment_Reference);
+             (Concorde.Handles.Assignment.Assignment_Handle,
+              Concorde.Handles.Assignment."=");
 
 --           package Assignment_Lists is
 --             new Ada.Containers.Doubly_Linked_Lists
---               (Concorde.Db.Career_Reference,
---                Concorde.Db."=");
+--               (Concorde.Handles.Career_Reference,
+--                Concorde.Handles."=");
 
          Choices : Weighted_Assignment_Choice.Weighted_Choice_Set;
-         Default : Concorde.Db.Career_Reference :=
-                     Concorde.Db.Null_Career_Reference;
+         Default : Concorde.Handles.Career.Career_Handle :=
+                     Concorde.Handles.Career.Empty_Handle;
       begin
          for Assignment of
-           Concorde.Db.Assignment.Scan_By_Tag
+           Concorde.Handles.Assignment.Scan_By_Tag
          loop
             declare
                Career : constant Handles.Career.Career_Handle :=
-                          Handles.Career.Get (Assignment.Career);
+                          Assignment.Career.To_Career_Handle;
                Score  : Integer := 0;
 
                function Score_Check
-                 (Ability    : Concorde.Db.Ability_Reference;
+                 (Ability    : Concorde.Handles.Ability.Ability_Class;
                   Check      : Positive)
                   return Integer
                is (Ability_Modifier (Individual, Ability) - Check);
 
             begin
                if Career.Check = 0 then
-                  Default := Career.Reference_Career;
+                  Default := Career;
                elsif not Tried_Careers.Contains (Career.Tag) then
                   Score := Score
                     + 2 * Score_Check (Assignment.Survival_Ability,
@@ -251,7 +236,7 @@ package body Concorde.Individuals.Create is
 
                   if Score > 0 then
                      Choices.Insert
-                       (Assignment.Get_Assignment_Reference, Score);
+                       (Assignment.To_Assignment_Handle, Score);
                   end if;
                end if;
             end;
@@ -259,13 +244,13 @@ package body Concorde.Individuals.Create is
 
          if Choices.Is_Empty then
             for Assignment of
-              Concorde.Db.Assignment.Select_By_Career (Default)
+              Concorde.Handles.Assignment.Select_By_Career (Default)
             loop
                declare
                   Score  : Integer := 0;
 
                   function Score_Check
-                    (Ability    : Concorde.Db.Ability_Reference;
+                    (Ability    : Concorde.Handles.Ability.Ability_Class;
                      Check      : Positive)
                   return Integer
                   is (Ability_Modifier (Individual, Ability) - Check);
@@ -280,20 +265,20 @@ package body Concorde.Individuals.Create is
 
                   if Score > 0 then
                      Choices.Insert
-                       (Assignment.Get_Assignment_Reference, Score);
+                       (Assignment.To_Assignment_Handle, Score);
                   end if;
                end;
             end loop;
          end if;
 
          declare
-            Result : constant Concorde.Db.Assignment_Reference :=
+            Result : constant Concorde.Handles.Assignment.Assignment_Handle :=
                        (if Choices.Is_Empty
-                        then Concorde.Db.Assignment.First_Reference_By_Career
+                        then Concorde.Handles.Assignment.First_By_Career
                           (Default)
                         else Choices.Choose);
          begin
-            return Handles.Assignment.Get (Result);
+            return Result;
          end;
       end Choose_Assignment;
 
@@ -305,19 +290,20 @@ package body Concorde.Individuals.Create is
 
          package Event_Vectors is
            new Ada.Containers.Vectors
-             (Positive, Concorde.Db.Event_Reference, Concorde.Db."=");
+             (Positive, Concorde.Handles.Event.Event_Handle,
+              Concorde.Handles.Event."=");
          Mishaps : Event_Vectors.Vector;
       begin
-         for M of Concorde.Db.Career_Mishap.Select_By_Career
-           (Current_Assignment.Career.Reference_Career)
+         for M of Concorde.Handles.Career_Mishap.Select_By_Career
+           (Current_Assignment.Career)
          loop
-            Mishaps.Append (M.Event);
+            Mishaps.Append (M.Event.To_Event_Handle);
          end loop;
 
          declare
             Index : constant Positive :=
                       WL.Random.Random_Number (1, Mishaps.Last_Index);
-            Event : constant Concorde.Db.Event_Reference :=
+            Event : constant Concorde.Handles.Event.Event_Handle :=
                       Mishaps (Index);
          begin
             Concorde.Events.Execute_Event (Event, Individual);
@@ -327,8 +313,8 @@ package body Concorde.Individuals.Create is
 
    begin
 
-      Log (Handle, Ability_Summary (Individual));
-      Log (Handle, "start career on " & Image (Current_Start));
+      Log (Individual, Ability_Summary (Individual));
+      Log (Individual, "start career on " & Image (Current_Start));
 
       while Current_Start <= Clock loop
 
@@ -352,14 +338,13 @@ package body Concorde.Individuals.Create is
                                Concorde.Individuals.Check
                                  (Individual => Individual,
                                   Ability    =>
-                                    Assignment.Career.Qualification
-                                  .Reference_Ability,
+                                    Assignment.Career.Qualification,
                                   Difficulty =>
                                     Assignment.Career.Check + Career_Count);
                   begin
                      Tried_Careers.Include (Assignment.Career.Tag);
 
-                     Log (Handle,
+                     Log (Individual,
                           Assignment.Career.Tag
                           & "/"
                           & Assignment.Tag
@@ -379,10 +364,10 @@ package body Concorde.Individuals.Create is
 
             Concorde.Logging.Log
               (Actor    => "",
-               Location => Handle.World_Sector.World.Name,
+               Location => Individual.World_Sector.World.Name,
                Category => "career",
                Message  =>
-                 Handle.First_Name & " " & Handle.Last_Name
+                 Individual.First_Name & " " & Individual.Last_Name
                & " " & Concorde.Calendar.Image (Current_Start)
                & ": starts new career "
                & Current_Assignment.Career.Tag
@@ -392,98 +377,91 @@ package body Concorde.Individuals.Create is
          else
             Concorde.Logging.Log
               (Actor    => "",
-               Location => Handle.World_Sector.World.Name,
+               Location => Individual.World_Sector.World.Name,
                Category => "career",
                Message  =>
-                 Handle.First_Name & " " & Handle.Last_Name
+                 Individual.First_Name & " " & Individual.Last_Name
                & " " & Concorde.Calendar.Image (Current_Start)
                & ": continues career "
                & Current_Assignment.Tag
                & " at rank" & Current_Rank'Image);
          end if;
 
-         declare
-            Career_Ref : constant Concorde.Db.Career_Reference :=
-                           Current_Assignment.Career.Reference_Career;
-            Assignment_Ref : constant Concorde.Db.Assignment_Reference :=
-                               Current_Assignment.Reference_Assignment;
-         begin
-            Concorde.Db.Individual_Career.Create
-              (Individual  => Individual,
-               Career      => Career_Ref,
-               Assignment  => Assignment_Ref,
-               Rank        => Current_Rank,
-               Term_Start  => Current_Start,
-               Term_Finish => Current_Finish);
+         Concorde.Handles.Individual_Career.Create
+           (Individual  => Individual,
+            Career      => Current_Assignment.Career,
+            Assignment  => Current_Assignment,
+            Rank        => Current_Rank,
+            Term_Start  => Current_Start,
+            Term_Finish => Current_Finish);
 
-            if First_Career then
-               for Advance of
-                 Concorde.Db.Advancement_Table.Select_By_Advancement_Table
-                   (Career_Ref, Current_Assignment.Career.Basic_Training,
-                    Concorde.Db.Null_Assignment_Reference)
-               loop
-                  Advance_Skill (Individual, Advance.Skill);
-               end loop;
+         if First_Career then
+            for Advance of
+              Concorde.Handles.Advancement_Table.Select_By_Advancement_Table
+                (Current_Assignment.Career,
+                 Current_Assignment.Career.Basic_Training,
+                 Concorde.Handles.Assignment.Empty_Handle)
+            loop
+               Advance_Skill (Individual, Advance.Skill);
+            end loop;
 
-               First_Career := False;
+            First_Career := False;
 
-            elsif Choose_Career then
+         elsif Choose_Career then
+            declare
+               use Concorde.Handles.Advancement_Table;
+               Advance : constant Advancement_Table_Handle :=
+                           Get_By_Advancement_Entry
+                             (Current_Assignment.Career,
+                              Current_Assignment.Career.Basic_Training,
+                              Concorde.Handles.Assignment.Empty_Handle,
+                              Roll_1D6);
+            begin
+               Advance_Skill (Individual, Advance.Skill);
+            end;
+         else
+            declare
+               package Training_Vectors is
+                 new Ada.Containers.Vectors
+                   (Positive,
+                    Concorde.Db.Skill_Training_Type,
+                    Concorde.Db."=");
+               Vector : Training_Vectors.Vector;
+               Career : Concorde.Handles.Career.Career_Class renames
+                          Current_Assignment.Career;
+            begin
+               Vector.Append (Concorde.Db.Personal_Development);
+               Vector.Append (Concorde.Db.Service_Skills);
+               Vector.Append (Concorde.Db.Assignment_Training);
+               if Ability_Score (Individual,
+                                 Career.Advanced_Ability)
+                 >= Career.Advanced_Check
+               then
+                  Vector.Append (Concorde.Db.Advanced_Skills);
+               end if;
+
                declare
-                  use Concorde.Db.Advancement_Table;
-                  Advance : constant Advancement_Table_Type :=
-                              Get_By_Advancement_Entry
-                                (Career_Ref,
-                                 Current_Assignment.Career.Basic_Training,
-                                 Concorde.Db.Null_Assignment_Reference,
-                                 Roll_1D6);
+                  use Concorde.Db, Concorde.Handles.Advancement_Table;
+                  Choice : constant Positive :=
+                             WL.Random.Random_Number (1, Vector.Last_Index);
+                  Training : constant Concorde.Db.Skill_Training_Type :=
+                               Vector.Element (Choice);
+                  Roll     : constant Positive := Roll_1D6;
+                  Advance : constant Advancement_Table_Handle :=
+                                  Get_By_Advancement_Entry
+                                    (Career     => Current_Assignment.Career,
+                                     Table      => Training,
+                                     Assignment =>
+                                       (if Training = Assignment_Training
+                                        then Current_Assignment
+                                        else Concorde.Handles.Assignment
+                                        .Empty_Handle),
+                                     Dr         => Roll);
                begin
-                  Advance_Skill (Individual, Advance.Skill);
+                  Apply_Advancement (Advance);
                end;
-            else
-               declare
-                  package Training_Vectors is
-                    new Ada.Containers.Vectors
-                      (Positive, Concorde.Db.Skill_Training_Type,
-                       Concorde.Db."=");
-                  Vector : Training_Vectors.Vector;
-                  Career : Concorde.Handles.Career.Career_Class renames
-                             Current_Assignment.Career;
-               begin
-                  Vector.Append (Concorde.Db.Personal_Development);
-                  Vector.Append (Concorde.Db.Service_Skills);
-                  Vector.Append (Concorde.Db.Assignment_Training);
-                  if Ability_Score (Individual,
-                                    Career.Advanced_Ability.Reference_Ability)
-                    >= Career.Advanced_Check
-                  then
-                     Vector.Append (Concorde.Db.Advanced_Skills);
-                  end if;
-
-                  declare
-                     use Concorde.Db, Concorde.Db.Advancement_Table;
-                     Choice : constant Positive :=
-                                WL.Random.Random_Number (1, Vector.Last_Index);
-                     Training : constant Concorde.Db.Skill_Training_Type :=
-                                  Vector.Element (Choice);
-                     Roll     : constant Positive := Roll_1D6;
-                     Advance_Ref : constant Advancement_Table_Reference :=
-                                     Get_Reference_By_Advancement_Entry
-                                       (Career     => Career_Ref,
-                                        Table      => Training,
-                                        Assignment =>
-                                          (if Training = Assignment_Training
-                                           then Assignment_Ref
-                                           else Null_Assignment_Reference),
-                                        Dr         => Roll);
-                  begin
-                     Apply_Advancement
-                       (Concorde.Handles.Advancement_Table.Get
-                          (Advance_Ref));
-                  end;
-               end;
-            end if;
-
-         end;
+            end;
+         end if;
 
          Choose_Career := False;
 
@@ -496,12 +474,11 @@ package body Concorde.Individuals.Create is
                             Concorde.Individuals.Check
                               (Individual => Individual,
                                Ability    =>
-                                 Current_Assignment.Survival_Ability
-                               .Reference_Ability,
+                                 Current_Assignment.Survival_Ability,
                                Difficulty =>
                                  Current_Assignment.Survival_Check);
             begin
-               Log (Handle,
+               Log (Individual,
                     "checking survival ("
                     & Current_Assignment.Survival_Ability.Tag
                     & Current_Assignment.Survival_Check'Image
@@ -516,31 +493,29 @@ package body Concorde.Individuals.Create is
                                  Concorde.Individuals.Check
                                    (Individual => Individual,
                                     Ability    =>
-                                      Current_Assignment.Advance_Ability
-                                    .Reference_Ability,
+                                      Current_Assignment.Advance_Ability,
                                     Difficulty =>
                                       Current_Assignment.Advance_Check);
                   begin
-                     Log (Handle,
+                     Log (Individual,
                           "checking advancement ("
                           & Current_Assignment.Advance_Ability.Tag
                           & Current_Assignment.Advance_Check'Image
                           & "): "
                           & Concorde.Abilities.Show (Advance));
                      if Advance.Success then
-                        Log (Handle, "rank goes up");
+                        Log (Individual, "rank goes up");
                         Current_Rank := Current_Rank + 1;
 
                         declare
-                           use Concorde.Db.Assignment_Rank;
-                           Rank : constant Assignment_Rank_Type :=
+                           use Concorde.Handles.Assignment_Rank;
+                           Rank : constant Assignment_Rank_Handle :=
                                     Get_By_Assignment_Rank
-                                      (Current_Assignment.Reference_Assignment,
+                                      (Current_Assignment,
                                        Current_Rank);
                         begin
                            if Rank.Tag /= "" then
-                              Concorde.Db.Individual.Update_Individual
-                                (Individual)
+                              Individual.Update_Individual
                                 .Set_Title (Rank.Tag)
                                 .Done;
                            end if;
@@ -552,10 +527,10 @@ package body Concorde.Individuals.Create is
          end if;
       end loop;
 
-      Log (Handle,
+      Log (Individual,
            Ability_Summary (Individual)
            & ": age"
-           & Year_Number'Image (Year (Clock) - Year (Handle.Birth_Date)));
+           & Year_Number'Image (Year (Clock) - Year (Individual.Birth_Date)));
 
    end Run_Career;
 

@@ -1,16 +1,16 @@
 with Ada.Strings.Unbounded;
 
-with Concorde.Db.Star_System;
-with Concorde.Db.World;
+with Concorde.Handles.Star_System;
+with Concorde.Handles.World;
 
 package body Concorde.File_System.Universe is
 
-   use type Concorde.Db.Star_System_Reference;
+   use type Concorde.Handles.Star_System_Reference;
 
    type Star_System_Node_Id is
      new Node_Id_Interface with
       record
-         Ref : Concorde.Db.Star_System_Reference;
+         Ref : Concorde.Handles.Star_System_Reference;
       end record;
 
    overriding function Is_Empty
@@ -28,7 +28,7 @@ package body Concorde.File_System.Universe is
    type Star_System_Node_Record is
      new Leaf_Node with
       record
-         Ref : Concorde.Db.Star_System_Reference;
+         Ref : Concorde.Handles.Star_System_Reference;
       end record;
 
    overriding function Contents
@@ -89,7 +89,7 @@ package body Concorde.File_System.Universe is
       Result : Unbounded_String;
    begin
       for World of
-        Concorde.Db.World.Select_By_Star_System
+        Concorde.Handles.World.Select_By_Star_System
           (Node.Ref)
       loop
          Result := Result & World.Name & Character'Val (10);
@@ -136,7 +136,7 @@ package body Concorde.File_System.Universe is
    begin
       return Star_System_Node_Id'
         (Ref =>
-           Concorde.Db.Star_System.First_Reference_By_Name (Child));
+           Concorde.Handles.Star_System.First_By_Name (Child));
    end Get_Child;
 
    ---------------
@@ -150,8 +150,8 @@ package body Concorde.File_System.Universe is
    is
       pragma Unreferenced (Node);
    begin
-      return Concorde.Db.Star_System.First_Reference_By_Name (Name)
-        /= Concorde.Db.Null_Star_System_Reference;
+      return Concorde.Handles.Star_System.First_By_Name (Name)
+        /= Concorde.Handles.Null_Star_System_Reference;
    end Has_Child;
 
    --------------
@@ -163,7 +163,7 @@ package body Concorde.File_System.Universe is
       return Boolean
    is
    begin
-      return Id.Ref = Concorde.Db.Null_Star_System_Reference;
+      return Id.Ref = Concorde.Handles.Null_Star_System_Reference;
    end Is_Empty;
 
    ----------------------
@@ -178,7 +178,7 @@ package body Concorde.File_System.Universe is
    is
       pragma Unreferenced (Node);
    begin
-      for Star_System of Concorde.Db.Star_System.Scan_By_Name loop
+      for Star_System of Concorde.Handles.Star_System.Scan_By_Name loop
          Process (Star_System.Name,
                   Star_System_Node_Id'
                     (Ref => Star_System.Get_Star_System_Reference));

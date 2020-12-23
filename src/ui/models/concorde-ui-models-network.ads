@@ -1,11 +1,11 @@
 with Nazar.Models.Numeric;
 
-with Concorde.Db;
+with Concorde.Handles.Network;
 
 package Concorde.UI.Models.Network is
 
    function Network_Node_Model
-     (Network : Concorde.Db.Network_Reference;
+     (Network : Concorde.Handles.Network.Network_Class;
       Tag     : String)
      return Nazar.Models.Numeric.Nazar_Float_Model;
 

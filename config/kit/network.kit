@@ -4,7 +4,7 @@ package Network is
 
 type Node_Value_Type is (Rating, Setting, Money, Quantity);
 
-record Node is
+record Node : Has_Identifier is
    unique key Tag : String (64) is display;
    Content        : Node_Value_Type;
 end Node;
@@ -66,7 +66,7 @@ record Economic_Sector : Node is
    key Zone;
 end Economic_Sector;
 
-record Network;
+record Network : Has_Identifier;
 
 record Network_Value is
    key Network;

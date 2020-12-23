@@ -1,4 +1,4 @@
-with Concorde.Db.Pop;
+with Concorde.Handles.Pop;
 
 package body Concorde.Pops is
 
@@ -7,11 +7,11 @@ package body Concorde.Pops is
    -----------
 
    function Happy
-     (Pop : Concorde.Db.Pop_Reference)
+     (Pop : Concorde.Handles.Pop_Reference)
       return Non_Negative_Real
    is
    begin
-      return Concorde.Db.Pop.Get (Pop).Happy;
+      return Concorde.Handles.Pop.Get (Pop).Happy;
    end Happy;
 
    ------------
@@ -19,11 +19,11 @@ package body Concorde.Pops is
    ------------
 
    function Health
-     (Pop : Concorde.Db.Pop_Reference)
+     (Pop : Concorde.Handles.Pop_Reference)
       return Non_Negative_Real
    is
    begin
-      return Concorde.Db.Pop.Get (Pop).Health;
+      return Concorde.Handles.Pop.Get (Pop).Health;
    end Health;
 
    -----------
@@ -31,11 +31,11 @@ package body Concorde.Pops is
    -----------
 
    function Hours
-     (Pop : Concorde.Db.Pop_Reference)
+     (Pop : Concorde.Handles.Pop_Reference)
       return Non_Negative_Real
    is
    begin
-      return Concorde.Db.Pop.Get (Pop).Hours;
+      return Concorde.Handles.Pop.Get (Pop).Hours;
    end Hours;
 
 end Concorde.Pops;

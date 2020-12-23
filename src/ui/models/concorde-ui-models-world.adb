@@ -7,7 +7,7 @@ with WL.String_Maps;
 with Nazar.Colors;
 
 with Concorde.Elementary_Functions;
-with Concorde.Logging;
+--  with Concorde.Logging;
 with Concorde.Real_Images;
 with Concorde.Trigonometry;
 
@@ -17,8 +17,8 @@ with Concorde.Handles.Feature;
 with Concorde.Handles.Has_Color;
 with Concorde.Handles.Terrain;
 
-with Concorde.Db.Colony;
-with Concorde.Db.World_Sector;
+with Concorde.Handles.Colony;
+with Concorde.Handles.World_Sector;
 
 package body Concorde.UI.Models.World is
 
@@ -36,7 +36,7 @@ package body Concorde.UI.Models.World is
    type Sector_Model is
       record
          Owner      : Concorde.Handles.Faction.Faction_Handle;
-         Sector     : Concorde.Db.World_Sector_Reference;
+         Sector     : Concorde.Handles.World_Sector.World_Sector_Handle;
          Centre     : Concorde.Worlds.Sector_Vertex;
          Map_Centre : Map_Point;
          Boundary   : Vertex_Holders.Holder;
@@ -77,7 +77,8 @@ package body Concorde.UI.Models.World is
        Alpha => 1.0);
 
    function Image (X : Real) return String
-                   renames Concorde.Real_Images.Approximate_Image;
+                   renames Concorde.Real_Images.Approximate_Image
+     with Unreferenced;
 
    ----------------
    -- Draw_World --
@@ -93,10 +94,10 @@ package body Concorde.UI.Models.World is
                  Arctan (Centre.Y, Centre.X);
    begin
 
-      Concorde.Logging.Log
-        ("model", "world", "draw",
-         "long-0 = "
-         & Image (180.0 * Long_0 / Pi));
+      --  Concorde.Logging.Log
+      --    ("model", "world", "draw",
+      --     "long-0 = "
+      --     & Image (180.0 * Long_0 / Pi));
 
       for Fill in reverse Boolean loop
 
@@ -181,21 +182,21 @@ package body Concorde.UI.Models.World is
             Model.Line_To (To.X - AY, To.Y + AX);
 
             Model.Render;
-            Concorde.Logging.Log
-              ("model", "world", "draw",
-               "wind = "
-               & Image (180.0 * Sector.Wind / Pi)
-               & "; to ="
-               & Sector.Wind_To'Image
-               & "; line ("
-               & Image (Real (From.X))
-               & ","
-               & Image (Real (From.Y))
-               & ") -> ("
-               & Image (Real (To.X))
-               & ","
-               & Image (Real (To.Y))
-               & ")");
+            --  Concorde.Logging.Log
+            --    ("model", "world", "draw",
+            --     "wind = "
+            --     & Image (180.0 * Sector.Wind / Pi)
+            --     & "; to ="
+            --     & Sector.Wind_To'Image
+            --     & "; line ("
+            --     & Image (Real (From.X))
+            --     & ","
+            --     & Image (Real (From.Y))
+            --     & ") -> ("
+            --     & Image (Real (To.X))
+            --     & ","
+            --     & Image (Real (To.Y))
+            --     & ")");
          end;
       end loop;
 
@@ -272,17 +273,15 @@ package body Concorde.UI.Models.World is
       Result : World_Model_Type;
    begin
       for Sector of
-        Concorde.Db.World_Sector.Select_By_World (World.Reference_World)
+        Concorde.Handles.World_Sector.Select_By_World (World)
       loop
          declare
-            Ref : constant Concorde.Db.World_Sector_Reference :=
-                    Sector.Get_World_Sector_Reference;
-            Terrain : constant Concorde.Handles.Terrain.Terrain_Handle :=
-                        Concorde.Handles.Terrain.Get (Sector.Terrain);
-            Faction : constant Concorde.Handles.Faction.Faction_Handle :=
-                        Concorde.Handles.Faction.Get (Sector.Faction);
-            Feature : constant Concorde.Handles.Feature.Feature_Handle :=
-                        Concorde.Handles.Feature.Get (Sector.Feature);
+            Terrain : constant Concorde.Handles.Terrain.Terrain_Class :=
+                        Sector.Terrain;
+            Faction : constant Concorde.Handles.Faction.Faction_Class :=
+                        Sector.Faction;
+            Feature : constant Concorde.Handles.Feature.Feature_Class :=
+                        Sector.Feature;
             Color   : constant Nazar.Colors.Nazar_Color :=
                         (if Faction.Has_Element
                          then To_Nazar_Color (Faction)
@@ -292,18 +291,18 @@ package body Concorde.UI.Models.World is
          begin
             Result.Sectors.Append
               (Sector_Model'
-                 (Sector     => Ref,
-                  Owner      => Concorde.Handles.Faction.Get (Sector.Faction),
-                  Centre     => Concorde.Worlds.Get_Centre (Ref),
+                 (Sector     => Sector.To_World_Sector_Handle,
+                  Owner      => Sector.Faction.To_Faction_Handle,
+                  Centre     => Concorde.Worlds.Get_Centre (Sector),
                   Map_Centre => (0.0, 0.0),
                   Boundary   =>
                     Vertex_Holders.To_Holder
-                      (Concorde.Worlds.Get_Vertices (Ref)),
+                      (Concorde.Worlds.Get_Vertices (Sector)),
                   Color      => Color,
                   Wind       => Sector.Prevailing_Wind,
                   Wind_To    => 0));
             Result.Ref_Map.Insert
-              (Concorde.Db.To_String (Ref), Result.Sectors.Last_Index);
+              (Sector.Identifier, Result.Sectors.Last_Index);
          end;
       end loop;
 
@@ -311,8 +310,8 @@ package body Concorde.UI.Models.World is
          declare
             use Concorde.Trigonometry;
             Wind    : constant Angle := From_Degrees (Sector.Wind);
-            To      : Concorde.Db.World_Sector_Reference :=
-                        Concorde.Db.Null_World_Sector_Reference;
+            To      : Concorde.Handles.World_Sector.World_Sector_Handle :=
+                        Concorde.Handles.World_Sector.Empty_Handle;
             Closest : Angle := From_Radians (0.0);
             First   : Boolean := True;
          begin
@@ -333,15 +332,13 @@ package body Concorde.UI.Models.World is
                end;
             end loop;
             Sector.Wind_To :=
-              Result.Ref_Map.Element
-                (Concorde.Db.To_String (To));
+              Result.Ref_Map.Element (To.Identifier);
          end;
       end loop;
 
       declare
-         Colony : constant Concorde.Db.Colony.Colony_Type :=
-                    Concorde.Db.Colony.First_By_World
-                      (World.Reference_World);
+         Colony : constant Concorde.Handles.Colony.Colony_Class :=
+                    Concorde.Handles.Colony.First_By_World (World);
       begin
          Result.Draw_World
            (Centre =>

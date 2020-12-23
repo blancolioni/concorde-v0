@@ -4,63 +4,55 @@ with Ada.Strings.Unbounded;
 with Concorde.UI.Entities.Directories;
 with Concorde.UI.Entities.Generic_Database_Entity;
 
-with Concorde.Db.Faction;
+with Concorde.Handles.Faction;
+with Concorde.Handles.World;
+with Concorde.Handles.Owned_World;
+
 with Concorde.Db.World;
-with Concorde.Db.Owned_World;
 
 package body Concorde.UI.Entities.Home is
 
-   function Get_Reference
-     (World : Concorde.Db.World.World_Type)
-      return Concorde.Db.World_Reference
-   is (World.Get_World_Reference);
-
    function Get_Owned_World
-     (Faction : Concorde.Db.Faction_Reference;
+     (Faction : Concorde.Handles.Faction.Faction_Handle;
       Name    : String)
-      return Concorde.Db.World_Reference;
+      return Concorde.Handles.World.World_Handle;
 
    procedure Iterate_Owned_Worlds
-     (Faction : Concorde.Db.Faction_Reference;
+     (Faction : Concorde.Handles.Faction.Faction_Handle;
       Process : not null access
-        procedure (World : Concorde.Db.World.World_Interface'Class));
+        procedure (World : Concorde.Handles.World.World_Handle));
 
    function World_Contents
-     (World : Concorde.Db.World.World_Type)
+     (World : Concorde.Handles.World.World_Handle)
       return String;
 
    package World_Directory is
      new Concorde.UI.Entities.Generic_Database_Entity
-       (Container_Handle      => Concorde.Db.Faction_Reference,
-        Record_Reference      => Concorde.Db.World_Reference,
-        Get_Record            => Concorde.Db.World.Get,
-        Get_Reference         => Get_Reference,
-        Get_Reference_By_Name => Get_Owned_World,
-        Null_Record_Reference => Concorde.Db.Null_World_Reference,
-        Record_Interface      => Concorde.Db.World.World_Interface,
+       (Container_Handle      => Concorde.Handles.Faction.Faction_Handle,
+        Record_Handle         => Concorde.Handles.World.World_Handle,
+        Get_By_Name           => Get_Owned_World,
         Iterate               => Iterate_Owned_Worlds,
-        Contents              => World_Contents,
-        "="                   => Concorde.Db."=");
+        Contents              => World_Contents);
 
    ---------------------
    -- Get_Owned_World --
    ---------------------
 
    function Get_Owned_World
-     (Faction : Concorde.Db.Faction_Reference;
+     (Faction : Concorde.Handles.Faction.Faction_Handle;
       Name    : String)
-      return Concorde.Db.World_Reference
+      return Concorde.Handles.World.World_Handle
    is
-      use Concorde.Db;
-      Ref   : constant World_Reference :=
-                World.First_Reference_By_Name (Name);
+      World : constant Concorde.Handles.World.World_Handle :=
+                Concorde.Handles.World.First_By_Name (Name);
    begin
-      if Ref /= Null_World_Reference
-        and then Owned_World.Is_Owned_World (Faction, Ref)
+      if World.Has_Element
+        and then Concorde.Handles.Owned_World.Is_Owned_World
+          (Faction, World)
       then
-         return Ref;
+         return World;
       else
-         return Null_World_Reference;
+         return Concorde.Handles.World.Empty_Handle;
       end if;
    end Get_Owned_World;
 
@@ -73,7 +65,7 @@ package body Concorde.UI.Entities.Home is
       return Node : constant Entity_Reference :=
         Directories.Create_Directory_Node
       do
-         for Faction of Concorde.Db.Faction.Scan_By_Name loop
+         for Faction of Concorde.Handles.Faction.Scan_By_Name loop
             declare
                Faction_Home : constant Entity_Reference :=
                  Directories.Create_Directory_Node;
@@ -81,7 +73,7 @@ package body Concorde.UI.Entities.Home is
                Faction_Home.Update.Bind_Child
                  ("worlds",
                   World_Directory.Get_Container_Node
-                    (Faction.Get_Faction_Reference));
+                    (Concorde.Handles.Faction.Faction_Handle (Faction)));
                Node.Update.Bind_Child
                  (Faction.Name, Faction_Home);
             end;
@@ -94,13 +86,15 @@ package body Concorde.UI.Entities.Home is
    --------------------------
 
    procedure Iterate_Owned_Worlds
-     (Faction : Concorde.Db.Faction_Reference;
+     (Faction : Concorde.Handles.Faction.Faction_Handle;
       Process : not null access
-        procedure (World : Concorde.Db.World.World_Interface'Class))
+        procedure (World : Concorde.Handles.World.World_Handle))
    is
    begin
-      for Owned of Concorde.Db.Owned_World.Select_By_Faction (Faction) loop
-         Process (Concorde.Db.World.Get (Owned.World));
+      for Owned of
+        Concorde.Handles.Owned_World.Select_By_Faction (Faction)
+      loop
+         Process (Concorde.Handles.World.World_Handle (Owned.World));
       end loop;
    end Iterate_Owned_Worlds;
 
@@ -109,7 +103,7 @@ package body Concorde.UI.Entities.Home is
    --------------------
 
    function World_Contents
-     (World : Concorde.Db.World.World_Type)
+     (World : Concorde.Handles.World.World_Handle)
       return String
    is
       package String_Vectors is
@@ -129,7 +123,9 @@ package body Concorde.UI.Entities.Home is
       procedure Add (Field_Name : String) is
       begin
          Headings.Append (Field_Name);
-         Values.Append (World.Get (Field_Name));
+         Values.Append
+           (Concorde.Db.World.Get (World.Reference_World)
+                .Get (Field_Name));
       end Add;
 
       -------------

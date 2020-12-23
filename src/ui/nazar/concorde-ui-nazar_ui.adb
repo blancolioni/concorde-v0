@@ -15,15 +15,15 @@ with Concorde.UI.Models.World;
 
 with Concorde.Paths;
 
-with Concorde.Db.Commodity;
+with Concorde.Handles.Commodity;
 
-with Concorde.Db.Colony;
 with Concorde.Handles.Colony;
 
-with Concorde.Db.Faction;
 with Concorde.Handles.Faction;
 
-with Concorde.Db.Policy;
+with Concorde.Handles.Policy;
+
+with Concorde.Db;
 
 with Concorde.UI.Models.Current_Cash;
 with Concorde.UI.Models.Current_Date;
@@ -59,13 +59,11 @@ package body Concorde.UI.Nazar_UI is
           (Creator     => Creator,
            Config_Path => Concorde.Paths.Config_File ("ui/concorde.config"));
       Faction : constant Concorde.Handles.Faction.Faction_Handle :=
-                  Concorde.Handles.Faction.Get
-                    (Concorde.Db.Faction.First_Reference_By_Top_Record
-                       (Concorde.Db.R_Faction));
+                  Concorde.Handles.Faction.First_By_Top_Record
+                    (Concorde.Db.R_Faction);
       Colony  : constant Concorde.Handles.Colony.Colony_Handle :=
-        Concorde.Handles.Colony.Get
-          (Concorde.Db.Colony.First_Reference_By_World
-             (Faction.Capital_World.Reference_World));
+                  Concorde.Handles.Colony.First_By_World
+                    (Faction.Capital_World);
    begin
       Result.Top := Builder.Get_View ("Concorde");
       Result.Console.Start_Console
@@ -99,7 +97,7 @@ package body Concorde.UI.Nazar_UI is
 --        Builder.Get_View ("market").Set_Model
 --          (Concorde.UI.Models.Market.Market_Model
 --             (Concorde.Handles.Market.Get
---                  (Concorde.Db.Market.Get_Reference_By_World
+--                  (Concorde.Handles.Market.Get_By_World
 --                       (Faction.Capital_World.Reference_World))));
 
       if Builder.Has_View ("faction-colonies") then
@@ -127,38 +125,38 @@ package body Concorde.UI.Nazar_UI is
          Builder.Get_View ("food-market").Set_Model
            (Concorde.UI.Models.Commodities.Commodity_Market_Model
               (Commodity =>
-                   Concorde.Db.Commodity.Get_Reference_By_Tag ("food")));
+                   Concorde.Handles.Commodity.Get_By_Tag ("food")));
       end if;
 
       if Builder.Has_View ("silicon-market") then
          Builder.Get_View ("silicon-market").Set_Model
            (Concorde.UI.Models.Commodities.Commodity_Market_Model
               (Commodity =>
-                   Concorde.Db.Commodity.Get_Reference_By_Tag ("silicon")));
+                   Concorde.Handles.Commodity.Get_By_Tag ("silicon")));
       end if;
 
       if Builder.Has_View ("plastic-market") then
          Builder.Get_View ("plastic-market").Set_Model
            (Concorde.UI.Models.Commodities.Commodity_Market_Model
               (Commodity =>
-                   Concorde.Db.Commodity.Get_Reference_By_Tag ("plastic")));
+                   Concorde.Handles.Commodity.Get_By_Tag ("plastic")));
       end if;
 
       if Builder.Has_View ("basic-electronics-market") then
          Builder.Get_View ("basic-electronics-market").Set_Model
            (Concorde.UI.Models.Commodities.Commodity_Market_Model
               (Commodity =>
-                   Concorde.Db.Commodity.Get_Reference_By_Tag
+                   Concorde.Handles.Commodity.Get_By_Tag
                  ("basic-electronics")));
       end if;
 
       for Policy of
-        Concorde.Db.Policy.Scan_By_Tag
+        Concorde.Handles.Policy.Scan_By_Tag
       loop
          if Builder.Has_View (Policy.Tag) then
             Builder.Get_View (Policy.Tag).Set_Model
               (Concorde.UI.Models.Network.Network_Node_Model
-                 (Colony.Reference_Network, Policy.Tag));
+                 (Colony, Policy.Tag));
          end if;
       end loop;
 

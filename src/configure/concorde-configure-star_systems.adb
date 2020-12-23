@@ -14,11 +14,13 @@ with Concorde.Trigonometry;
 
 with Concorde.Solar_System;
 
-with Concorde.Db.Atmosphere;
-with Concorde.Db.Gas;
---  with Concorde.Db.Palette;
-with Concorde.Db.Star;
-with Concorde.Db.World;
+with Concorde.Handles.Atmosphere;
+with Concorde.Handles.Gas;
+--  with Concorde.Handles.Palette;
+with Concorde.Handles.Star;
+with Concorde.Handles.World;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Star_Systems is
 
@@ -74,7 +76,7 @@ package body Concorde.Configure.Star_Systems is
       return Unit_Real;
 
    function Get_Zone
-     (Star : Concorde.Db.Star.Star_Type;
+     (Star : Concorde.Handles.Star.Star_Class;
       AUs  : Non_Negative_Real)
       return Orbit_Zone;
 
@@ -106,7 +108,7 @@ package body Concorde.Configure.Star_Systems is
                   Value : Integer);
 
    procedure Generate_World
-     (Star  : Concorde.Db.Star.Star_Type;
+     (Star  : Concorde.Handles.Star.Star_Class;
       Index : Positive;
       Zone  : Planetary_Zone;
       Orbit : Non_Negative_Real);
@@ -527,10 +529,10 @@ package body Concorde.Configure.Star_Systems is
    --------------------------
 
    procedure Generate_Star_System
-     (Star_System : Concorde.Db.Star_System_Reference)
+     (Star_System : Concorde.Handles.Star_System.Star_System_Class)
    is
-      Star : constant Concorde.Db.Star.Star_Type :=
-               Concorde.Db.Star.First_By_Star_System (Star_System);
+      Star : constant Concorde.Handles.Star.Star_Handle :=
+               Concorde.Handles.Star.First_By_Star_System (Star_System);
       Planet_Count : constant Positive := TDR;
       Ds           : array (1 .. Planet_Count) of Non_Negative_Real;
    begin
@@ -605,7 +607,7 @@ package body Concorde.Configure.Star_Systems is
    --------------------
 
    procedure Generate_World
-     (Star  : Concorde.Db.Star.Star_Type;
+     (Star  : Concorde.Handles.Star.Star_Class;
       Index : Positive;
       Zone  : Planetary_Zone;
       Orbit : Non_Negative_Real)
@@ -919,10 +921,10 @@ package body Concorde.Configure.Star_Systems is
 
       declare
          use Concorde.Solar_System;
-         World : constant Concorde.Db.World_Reference :=
-           Concorde.Db.World.Create
+         World : constant Concorde.Handles.World.World_Handle :=
+           Concorde.Handles.World.Create
              (Star_System         => Star.Star_System,
-              Primary             => Star.Get_Star_System_Object_Reference,
+              Primary             => Star,
               Radius              => Radius * Earth_Radius,
               Density             => Density * Earth_Density,
               Rotation_Period     => Day * 3600.0,
@@ -931,9 +933,9 @@ package body Concorde.Configure.Star_Systems is
               Surface_Gravity     => Gravity * Earth_Gravity,
               Name                => Name,
 --                Palette             =>
---                  Concorde.Db.Palette.Get_Reference_By_Tag ("temperate"),
+--                  Concorde.Handles.Palette.Get_By_Tag ("temperate"),
               Seed                => WL.Random.Random_Number (1, Integer'Last),
-              Primary_Massive     => Star.Get_Massive_Object_Reference,
+              Primary_Massive     => Star,
               Semimajor_Axis      => Orbit * Earth_Orbit,
               Epoch               => Concorde.Calendar.To_Time
                 (Concorde.Random.Unit_Random
@@ -963,18 +965,17 @@ package body Concorde.Configure.Star_Systems is
          if Current_Pressure > 0.0 then
             for Item of Current_Atm.List loop
                declare
-                  use type Concorde.Db.Gas_Reference;
-                  Gas : constant Concorde.Db.Gas_Reference :=
-                    Concorde.Db.Gas.Get_Reference_By_Tag
+                  Gas : constant Concorde.Handles.Gas.Gas_Handle :=
+                    Concorde.Handles.Gas.Get_By_Tag
                       (Ada.Characters.Handling.To_Lower
                          (Item.Gas'Image));
                begin
-                  if Gas = Concorde.Db.Null_Gas_Reference then
+                  if not Gas.Has_Element then
                      raise Constraint_Error with
                        Item.Gas'Image & ": no such gas";
                   end if;
 
-                  Concorde.Db.Atmosphere.Create
+                  Concorde.Handles.Atmosphere.Create
                     (World      => World,
                      Gas        => Gas,
                      Percentage => Item.Partial);
@@ -989,7 +990,7 @@ package body Concorde.Configure.Star_Systems is
    --------------
 
    function Get_Zone
-     (Star : Concorde.Db.Star.Star_Type;
+     (Star : Concorde.Handles.Star.Star_Class;
       AUs  : Non_Negative_Real)
       return Orbit_Zone
    is

@@ -5,26 +5,27 @@ with WL.String_Sets;
 
 with Concorde.Calendar;
 with Concorde.Configure;
+with Concorde.Identifiers;
 with Concorde.Money;
 
 with Concorde.Agents;
 with Concorde.Star_Systems;
-with Concorde.Terrain;
 with Concorde.Worlds;
 
 with Concorde.Colonies.Create;
 
-with Concorde.Db.Account;
-with Concorde.Db.Company;
-with Concorde.Db.Deposit;
-with Concorde.Db.Faction;
-with Concorde.Db.Market;
-with Concorde.Db.Owned_World;
-with Concorde.Db.Script;
-with Concorde.Db.Script_Line;
-with Concorde.Db.Shareholder;
-with Concorde.Db.Star_System_Distance;
-with Concorde.Db.World_Sector;
+with Concorde.Handles.Account;
+with Concorde.Handles.Company;
+with Concorde.Handles.Deposit;
+with Concorde.Handles.Market;
+with Concorde.Handles.Owned_World;
+with Concorde.Handles.Script;
+with Concorde.Handles.Script_Line;
+with Concorde.Handles.Shareholder;
+with Concorde.Handles.Star_System;
+with Concorde.Handles.Star_System_Distance;
+with Concorde.Handles.World;
+with Concorde.Handles.World_Sector;
 
 package body Concorde.Factions.Create is
 
@@ -33,49 +34,47 @@ package body Concorde.Factions.Create is
    Faction_Company_Shares : constant := 1000;
 
    function Find_Homeworld
-     return Concorde.Db.World_Reference;
+     return Concorde.Handles.World.World_Class;
 
    function Find_Home_Sector
-     (World : Concorde.Db.World_Reference)
-      return Concorde.Db.World_Sector_Reference;
+     (World : Concorde.Handles.World.World_Class)
+      return Concorde.Handles.World_Sector.World_Sector_Class;
 
    --------------------
    -- Create_Faction --
    --------------------
 
    function Create_Faction
-     (User        : Concorde.Db.User_Reference;
+     (User        : Concorde.Handles.User.User_Class;
       Name        : String;
       Adjective   : String;
       Plural_Name : String;
       Color       : Concorde.Color.Concorde_Color;
       Setup       : Tropos.Configuration)
-      return Concorde.Db.Faction_Reference
+      return Concorde.Handles.Faction.Faction_Class
    is
-      use Concorde.Db;
-      Capital : constant Concorde.Db.World_Reference :=
+      Capital : constant Concorde.Handles.World.World_Class :=
                   Find_Homeworld;
    begin
-      if Capital = Null_World_Reference then
-         return Null_Faction_Reference;
+      if not Capital.Has_Element then
+         return Concorde.Handles.Faction.Empty_Handle;
       end if;
 
       declare
          Cash    : constant Concorde.Money.Money_Type :=
                      Concorde.Configure.Configure_Money
                        (Setup, "cash", 1000.0);
-         Account : constant Concorde.Db.Account_Reference :=
-                     Concorde.Db.Account.Create
-                       (Guarantor  => Concorde.Db.Null_Account_Reference,
-                        Start_Cash => Cash,
-                        Cash       => Cash,
-                        Earn       => Concorde.Money.Zero,
-                        Spend      => Concorde.Money.Zero);
-         Sector  : constant Concorde.Db.World_Sector_Reference :=
+         Account : constant Concorde.Handles.Account.Account_Handle :=
+                     Concorde.Agents.New_Account
+                       (Starting_Balance => Cash,
+                        Guarantor        =>
+                          Concorde.Handles.Account.Empty_Handle);
+         Sector  : constant Concorde.Handles.World_Sector.World_Sector_Class :=
            Find_Home_Sector (Capital);
-         Faction : constant Concorde.Db.Faction_Reference :=
-                     Concorde.Db.Faction.Create
-                       (Name          => Name,
+         Faction : constant Concorde.Handles.Faction.Faction_Handle :=
+                     Concorde.Handles.Faction.Create
+                       (Identifier    => Concorde.Identifiers.Next_Identifier,
+                        Name          => Name,
                         Adjective     =>
                           (if Adjective = "" then Name else Adjective),
                         Plural_Name   =>
@@ -92,27 +91,28 @@ package body Concorde.Factions.Create is
                         Green         => Color.Green,
                         Blue          => Color.Blue,
                         User          => User,
-                        Capital_System =>
-                          Concorde.Worlds.Star_System (Capital),
+                        Capital_System => Capital.Star_System,
                         Capital_World  => Capital);
-         Company    : constant Concorde.Db.Company_Reference :=
-           Concorde.Db.Company.Create
-             (Account      =>
-                Concorde.Agents.New_Account (Concorde.Money.Zero),
-              Last_Earn     => Concorde.Money.Zero,
-              Last_Spend    => Concorde.Money.Zero,
-              Name         => Name,
-              Active       => True,
-              Scheduled    => False,
-              Next_Event   => Concorde.Calendar.Clock,
-              Manager      => "faction-company",
-              Faction      => Faction,
-              Headquarters => Capital,
-              Shares       => Faction_Company_Shares,
-              Dividend     => 0.2);
+         Company    : constant Concorde.Handles.Company.Company_Handle :=
+           Concorde.Handles.Company.Create
+                          (Identifier   =>
+                                      Concorde.Identifiers.Next_Identifier,
+                           Account      =>
+                             Concorde.Agents.New_Account (Concorde.Money.Zero),
+                           Last_Earn     => Concorde.Money.Zero,
+                           Last_Spend    => Concorde.Money.Zero,
+                           Name          => Name,
+                           Active        => True,
+                           Scheduled     => False,
+                           Next_Event    => Concorde.Calendar.Clock,
+                           Manager       => "faction-company",
+                           Faction       => Faction,
+                           Headquarters  => Capital,
+                           Shares        => Faction_Company_Shares,
+                           Dividend      => 0.2);
          Remaining_Shares : constant Natural := Faction_Company_Shares;
-         Script           : constant Concorde.Db.Script_Reference :=
-           Concorde.Db.Script.Create ("rc", User);
+         Script           : constant Concorde.Handles.Script.Script_Handle :=
+                              Concorde.Handles.Script.Create ("rc", User);
          Line_Index       : Natural := 0;
 
       begin
@@ -123,9 +123,9 @@ package body Concorde.Factions.Create is
             Faction => Faction,
             Config  => Setup);
 
-         Concorde.Db.Shareholder.Create
+         Concorde.Handles.Shareholder.Create
            (Company => Company,
-            Agent   => Concorde.Db.Faction.Get (Faction).Get_Agent_Reference,
+            Agent   => Faction,
             Shares  => Remaining_Shares);
 
          if not Setup.Contains ("init-script") then
@@ -135,17 +135,17 @@ package body Concorde.Factions.Create is
 
          for Command of Setup.Child ("init-script") loop
             Line_Index := Line_Index + 1;
-            Concorde.Db.Script_Line.Create
+            Concorde.Handles.Script_Line.Create
               (Script => Script,
                Index  => Line_Index,
                Line   => Command.Config_Name);
          end loop;
 
-         Concorde.Db.Owned_World.Create
+         Concorde.Handles.Owned_World.Create
            (Faction => Faction,
             World   => Capital);
 
-         Concorde.Db.Market.Create
+         Concorde.Handles.Market.Create
            (World => Capital);
 
          return Faction;
@@ -157,11 +157,11 @@ package body Concorde.Factions.Create is
    ----------------------
 
    function Find_Home_Sector
-     (World : Concorde.Db.World_Reference)
-      return Concorde.Db.World_Sector_Reference
+     (World : Concorde.Handles.World.World_Class)
+      return Concorde.Handles.World_Sector.World_Sector_Class
    is
       function Score_Sector
-        (Sector : Concorde.Db.World_Sector.World_Sector_Type)
+        (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
          return Real;
 
       ------------------
@@ -169,34 +169,32 @@ package body Concorde.Factions.Create is
       ------------------
 
       function Score_Sector
-        (Sector : Concorde.Db.World_Sector.World_Sector_Type)
+        (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
          return Real
       is
          Score : Real := 0.0;
       begin
-         if Concorde.Terrain.Is_Water (Sector.Terrain) then
+         if Sector.Terrain.Is_Water then
             return Real'First;
          end if;
 
          declare
             Ns : constant Concorde.Worlds.World_Sector_Array :=
-                   Concorde.Worlds.Get_Neighbours
-                     (Sector.Get_World_Sector_Reference);
+                   Concorde.Worlds.Get_Neighbours (Sector);
          begin
             for N of Ns loop
                for Deposit of
-                 Concorde.Db.Deposit.Select_By_World_Sector (N)
+                 Concorde.Handles.Deposit.Select_By_World_Sector (N)
                loop
                   Score :=
                     Real'Max
                       (Score,
                          Deposit.Concentration / (1.0 + Deposit.Difficulty)
-                       * (1.0 - Concorde.Terrain.Hazard
-                         (Concorde.Worlds.Get_Terrain (N))));
+                       * (1.0 - Concorde.Worlds.Get_Terrain (N).Hazard));
                end loop;
             end loop;
 
-            return Score * (1.0 - Concorde.Terrain.Hazard (Sector.Terrain));
+            return Score * (1.0 - Sector.Terrain.Hazard);
          end;
       end Score_Sector;
 
@@ -209,19 +207,19 @@ package body Concorde.Factions.Create is
    --------------------
 
    function Find_Homeworld
-     return Concorde.Db.World_Reference
+     return Concorde.Handles.World.World_Class
    is
 
       package Star_System_Lists is
         new Ada.Containers.Doubly_Linked_Lists
-          (Concorde.Db.Star_System_Reference,
-           Concorde.Db."=");
+          (Concorde.Handles.Star_System.Star_System_Handle,
+           Concorde.Handles.Star_System."=");
 
       Queue : Star_System_Lists.List;
       Checked : WL.String_Sets.Set;
 
       function Check_World
-        (World : Concorde.Db.World_Reference)
+        (World : Concorde.Handles.World.World_Class)
          return Boolean;
 
       -----------------
@@ -229,28 +227,30 @@ package body Concorde.Factions.Create is
       -----------------
 
       function Check_World
-        (World : Concorde.Db.World_Reference)
+        (World : Concorde.Handles.World.World_Class)
          return Boolean
       is
       begin
-         return Concorde.Worlds.Habitability (World) > 0.7;
+         return World.Habitability > 0.7;
       end Check_World;
 
    begin
 
-      Queue.Append (Concorde.Star_Systems.First);
+      Queue.Append (Concorde.Star_Systems.First.To_Star_System_Handle);
       Checked.Include
-        (Concorde.Star_Systems.Name (Concorde.Star_Systems.First));
+        (Concorde.Star_Systems.First.Name);
 
       while not Queue.Is_Empty loop
          declare
             use Concorde.Star_Systems;
-            Star_System : constant Concorde.Db.Star_System_Reference :=
+            subtype Star_System_Handle is
+              Concorde.Handles.Star_System.Star_System_Handle;
+            Star_System : constant Star_System_Handle :=
                             Queue.First_Element;
          begin
             Queue.Delete_First;
 
-            if not Claimed (Star_System) then
+            if not Star_System.Claimed then
                declare
                   Selection : constant Concorde.Worlds.World_Selection :=
                                 Concorde.Star_Systems.Terrestrial_Worlds
@@ -268,24 +268,24 @@ package body Concorde.Factions.Create is
             end if;
 
             for Neighbour of
-              Db.Star_System_Distance
+              Concorde.Handles.Star_System_Distance
                 .Select_Star_System_Range_Bounded_By_Distance
                   (Star_System, 0.0, 99.0)
             loop
                declare
                   Neighbour_Name : constant String :=
-                                     Name (Neighbour.To);
+                                     Neighbour.To.Name;
                begin
                   if not Checked.Contains (Neighbour_Name) then
                      Checked.Include (Neighbour_Name);
-                     Queue.Append (Neighbour.To);
+                     Queue.Append (Neighbour.To.To_Star_System_Handle);
                   end if;
                end;
             end loop;
          end;
       end loop;
 
-      return Concorde.Db.Null_World_Reference;
+      return Concorde.Handles.World.Empty_Handle;
    end Find_Homeworld;
 
 end Concorde.Factions.Create;

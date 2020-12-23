@@ -1,10 +1,50 @@
 with Concorde.Behaviors;
+with Concorde.Primitives;
 with Concorde.Symbols;
 with Concorde.Values;
 
 with Concorde.Values.Vectors;
 
 package Concorde.Expressions is
+
+   type Compiler_Interface is interface;
+
+   procedure Push_Value
+     (Compiler : in out Compiler_Interface;
+      Value    : Real)
+   is abstract;
+
+   procedure Push_Node
+     (Compiler : in out Compiler_Interface;
+      Tag      : String)
+   is abstract;
+
+   procedure Push_Primitive
+     (Compiler  : in out Compiler_Interface;
+      Primitive : Concorde.Primitives.Primitive_Interface'Class)
+   is abstract;
+
+   procedure Push_Delay
+     (Compiler  : in out Compiler_Interface;
+      Value     : Real)
+   is abstract;
+
+   procedure Push_Smoothing
+     (Compiler  : in out Compiler_Interface;
+      Value     : Real)
+   is abstract;
+
+   procedure Pop_Delay
+     (Compiler  : in out Compiler_Interface)
+   is abstract;
+
+   procedure Pop_Smoothing
+     (Compiler  : in out Compiler_Interface)
+   is abstract;
+
+   procedure End_Of_Expression
+     (Compiler  : in out Compiler_Interface)
+   is abstract;
 
    type Expression_Context is private;
 
@@ -43,6 +83,11 @@ package Concorde.Expressions is
 
    function To_String (Expression : Root_Expression_Type) return String
                        is abstract;
+
+   procedure Compile
+     (Expression : Root_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class)
+   is abstract;
 
    type Expression_Type is access constant Root_Expression_Type'Class;
 

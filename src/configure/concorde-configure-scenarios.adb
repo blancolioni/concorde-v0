@@ -25,9 +25,13 @@ with Concorde.Configure.Tasks;
 
 with Concorde.Factions.Create;
 
-with Concorde.Db.Ability;
-with Concorde.Db.Scenario;
-with Concorde.Db.User;
+with Concorde.Handles.Ability;
+with Concorde.Handles.Faction;
+with Concorde.Handles.Scenario;
+with Concorde.Handles.Star_System;
+with Concorde.Handles.User;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Scenarios is
 
@@ -86,16 +90,15 @@ package body Concorde.Configure.Scenarios is
             & "faction: " & Config.Get ("name"));
 
          declare
-            use type Concorde.Db.Faction_Reference;
             Setup_Path : constant String :=
                            Scenario_File
                              (Scenario_Name, "factions",
                               (if Capital_System and then First
                                then "capital.faction"
                                else "default.faction"));
-            Faction : constant Concorde.Db.Faction_Reference :=
+            Faction : constant Concorde.Handles.Faction.Faction_Class :=
                            Concorde.Factions.Create.Create_Faction
-                             (User        => Concorde.Db.User.Create
+                             (User        => Concorde.Handles.User.Create
                                 (Login         => Config.Config_Name,
                                  Password      => "",
                                  Administrator => False),
@@ -110,7 +113,7 @@ package body Concorde.Configure.Scenarios is
                               Setup       =>
                                 Tropos.Reader.Read_Config (Setup_Path));
          begin
-            if Faction = Concorde.Db.Null_Faction_Reference then
+            if not Faction.Has_Element then
                Ada.Text_IO.Put_Line
                  (Ada.Text_IO.Standard_Error,
                   "unable to create faction " & Config.Get ("name"));
@@ -144,8 +147,8 @@ package body Concorde.Configure.Scenarios is
                                 & ".scenario"));
 
    begin
-      Concorde.Db.Scenario.Create
-        (Scenario_Name, True, Concorde.Db.Null_Star_System_Reference);
+      Concorde.Handles.Scenario.Create
+        (Scenario_Name, True, Concorde.Handles.Star_System.Empty_Handle);
 
       Concorde.Configure.Commodities.Configure_Commodities
         (Scenario_Name);
@@ -177,7 +180,7 @@ package body Concorde.Configure.Scenarios is
                               "cannot categorise: "
                             & Ability_Config.Config_Name));
          begin
-            Concorde.Db.Ability.Create (Ability_Config.Config_Name,
+            Concorde.Handles.Ability.Create (Ability_Config.Config_Name,
                                         Category);
          end;
       end loop;

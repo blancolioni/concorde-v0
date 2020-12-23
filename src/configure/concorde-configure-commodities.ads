@@ -1,6 +1,8 @@
 with Tropos;
 
-with Concorde.Db.Has_Stock;
+with Concorde.Handles.Constructed;
+with Concorde.Handles.Has_Stock;
+with Concorde.Handles.Supplied;
 
 package Concorde.Configure.Commodities is
 
@@ -8,22 +10,17 @@ package Concorde.Configure.Commodities is
      (Scenario_Name : String);
 
    procedure Configure_Stock
-     (Has_Stock : Concorde.Db.Has_Stock.Has_Stock_Type;
-      Config    : Tropos.Configuration;
-      Factor    : Non_Negative_Real := 1.0);
-
-   procedure Configure_Stock
-     (Has_Stock : Concorde.Db.Has_Stock_Reference;
+     (Has_Stock : Concorde.Handles.Has_Stock.Has_Stock_Class;
       Config    : Tropos.Configuration;
       Factor    : Non_Negative_Real := 1.0);
 
    procedure Configure_Constructed
-     (Constructed : Concorde.Db.Constructed_Reference;
+     (Constructed : Concorde.Handles.Constructed.Constructed_Class;
       Config      : Tropos.Configuration;
       Factor      : Non_Negative_Real := 1.0);
 
    procedure Configure_Supplied
-     (Supplied : Concorde.Db.Supplied_Reference;
+     (Supplied : Concorde.Handles.Supplied.Supplied_Class;
       Config    : Tropos.Configuration;
       Factor    : Non_Negative_Real := 1.0);
 

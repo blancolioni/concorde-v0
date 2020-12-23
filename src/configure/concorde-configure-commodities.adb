@@ -12,28 +12,31 @@ with Concorde.Commodities;
 with Concorde.Identifiers;
 with Concorde.Random;
 
-with Concorde.Db.Calculation;
-with Concorde.Db.Commodity;
-with Concorde.Db.Construction_Input;
-with Concorde.Db.Consumer_Commodity;
-with Concorde.Db.Derived_Metric;
-with Concorde.Db.Fuzzy_Set;
-with Concorde.Db.Input_Commodity;
-with Concorde.Db.Manufactured;
-with Concorde.Db.Metric;
-with Concorde.Db.Node;
-with Concorde.Db.Policy;
-with Concorde.Db.Resource;
-with Concorde.Db.Resource_Constraint;
-with Concorde.Db.Resource_Sphere;
-with Concorde.Db.Stock_Item;
-with Concorde.Db.Supply_Input;
+with Concorde.Handles.Calculation;
+with Concorde.Handles.Commodity;
+with Concorde.Handles.Construction_Input;
+with Concorde.Handles.Consumer_Commodity;
+with Concorde.Handles.Derived_Metric;
+with Concorde.Handles.Fuzzy_Set;
+with Concorde.Handles.Input_Commodity;
+with Concorde.Handles.Manufactured;
+with Concorde.Handles.Metric;
+with Concorde.Handles.Node;
+with Concorde.Handles.Policy;
+with Concorde.Handles.Resource;
+with Concorde.Handles.Resource_Constraint;
+with Concorde.Handles.Resource_Sphere;
+with Concorde.Handles.Stock_Item;
+with Concorde.Handles.Supply_Input;
+with Concorde.Handles.Technology;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Commodities is
 
    type Resource_Availability is
       record
-         Reference : Concorde.Db.Resource_Reference;
+         Resource  : Concorde.Handles.Resource.Resource_Handle;
          Frequency : Unit_Real;
       end record;
 
@@ -47,11 +50,11 @@ package body Concorde.Configure.Commodities is
      (Config         : Tropos.Configuration);
 
    procedure Create_Frequency_Constraint
-     (Resource : Concorde.Db.Resource_Reference;
+     (Resource : Concorde.Handles.Resource.Resource_Handle;
       Config   : Tropos.Configuration);
 
    procedure Create_Sphere_Constraint
-     (Resource : Concorde.Db.Resource_Reference;
+     (Resource : Concorde.Handles.Resource.Resource_Handle;
       Config   : Tropos.Configuration);
 
    procedure Configure_Non_Resources
@@ -91,8 +94,11 @@ package body Concorde.Configure.Commodities is
                              Uncommon  => (0.1, 0.01),
                              Rare      => (0.01, 0.001));
 
+   subtype Resource_Constraint_Handle is
+     Concorde.Handles.Resource_Constraint.Resource_Constraint_Handle;
+
    type Constraint_Application is access
-     procedure (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     procedure (Constraint : Resource_Constraint_Handle;
                 Config     : Tropos.Configuration);
 
    package Constraint_Argument_Maps is
@@ -103,27 +109,27 @@ package body Concorde.Configure.Commodities is
    procedure Initialize_Constraint_Arguments;
 
    procedure Constrain_Composition
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Resource_Constraint_Handle;
       Config     : Tropos.Configuration);
 
    procedure Constrain_Hydrosphere
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Resource_Constraint_Handle;
       Config     : Tropos.Configuration);
 
    procedure Constrain_Life
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Resource_Constraint_Handle;
       Config     : Tropos.Configuration);
 
    procedure Constrain_Minimum_Age
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Resource_Constraint_Handle;
       Config     : Tropos.Configuration);
 
    procedure Constrain_Mass
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Resource_Constraint_Handle;
       Config     : Tropos.Configuration);
 
    procedure Constrain_Zone
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Resource_Constraint_Handle;
       Config     : Tropos.Configuration);
 
    ---------------------
@@ -136,28 +142,28 @@ package body Concorde.Configure.Commodities is
       Content         : Concorde.Db.Node_Value_Type;
       Expr            : String)
    is
-      Metric  : constant Concorde.Db.Derived_Metric_Reference :=
-                  Concorde.Db.Derived_Metric.Create
-                    (Content     => Content,
-                     Tag         =>
-                       Commodity_Tag & "-" & Calculation_Tag,
-                     Calculation =>
-                       Concorde.Db.Null_Calculation_Reference);
+      Metric                                : constant Concorde.Handles
+        .Derived_Metric.Derived_Metric_Handle :=
+          Concorde.Handles.Derived_Metric.Create
+            (Identifier  => Concorde.Identifiers.Next_Identifier,
+             Content     => Content,
+             Tag         =>
+               Commodity_Tag & "-" & Calculation_Tag,
+             Calculation => Concorde.Handles.Calculation.Empty_Handle);
 
-      Node    : constant Concorde.Db.Node_Reference :=
-                  Concorde.Db.Derived_Metric.Get (Metric)
-                  .Get_Node_Reference;
+      Node    : constant Concorde.Handles.Node.Node_Handle :=
+                  Concorde.Handles.Node.Get (Metric.Reference_Node);
 
       Expression  : constant String :=
                       To_Single_Line (Expr);
 
-      Calculation : constant Concorde.Db.Calculation_Reference :=
-                      Concorde.Db.Calculation.Create
+      Calculation : constant Concorde.Handles.Calculation.Calculation_Handle :=
+                      Concorde.Handles.Calculation.Create
                         (Identifier => Identifiers.Next_Identifier,
                          Node       => Node,
                          Expression => Expression);
    begin
-      Concorde.Db.Derived_Metric.Update_Derived_Metric (Metric)
+      Concorde.Handles.Derived_Metric.Update_Derived_Metric (Metric)
         .Set_Calculation (Calculation)
         .Done;
    end Add_Calculation;
@@ -207,7 +213,7 @@ package body Concorde.Configure.Commodities is
       is
          Node_Tag : constant String := Commodity_Tag & "-" & Tag;
       begin
-         if not Concorde.Db.Node.Get_By_Tag (Node_Tag).Has_Element then
+         if not Concorde.Handles.Node.Get_By_Tag (Node_Tag).Has_Element then
             Add_Calculation
               (Commodity_Tag   => Commodity_Tag,
                Calculation_Tag => Tag,
@@ -332,10 +338,11 @@ package body Concorde.Configure.Commodities is
    ---------------------------
 
    procedure Configure_Constructed
-     (Constructed : Concorde.Db.Constructed_Reference;
+     (Constructed : Concorde.Handles.Constructed.Constructed_Class;
       Config      : Tropos.Configuration;
       Factor      : Non_Negative_Real := 1.0)
    is
+      use Concorde.Commodities;
       Stock_Config : constant Tropos.Configuration :=
                        (if Config.Contains ("build")
                         then Config.Child ("build")
@@ -344,7 +351,7 @@ package body Concorde.Configure.Commodities is
       for Item_Config of Stock_Config loop
          if Concorde.Commodities.Exists (Item_Config.Config_Name) then
             declare
-               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+               Commodity : constant Commodity_Class :=
                              Concorde.Commodities.Get
                                (Item_Config.Config_Name);
                Quantity  : constant Concorde.Quantities.Quantity_Type :=
@@ -353,7 +360,7 @@ package body Concorde.Configure.Commodities is
                                   (Real (Float'(Item_Config.Value))),
                                 Factor);
             begin
-               Concorde.Db.Construction_Input.Create
+               Concorde.Handles.Construction_Input.Create
                  (Constructed => Constructed,
                   Commodity   => Commodity,
                   Quantity    => Quantity);
@@ -382,8 +389,8 @@ package body Concorde.Configure.Commodities is
 
    begin
       for Item_Config of Commodity_Config loop
-         Concorde.Db.Manufactured.Create
-           (Enabled_By => Concorde.Db.Null_Technology_Reference,
+         Concorde.Handles.Manufactured.Create
+           (Enabled_By => Concorde.Handles.Technology.Empty_Handle,
             Tag        => Item_Config.Config_Name,
             Base_Price => Get (Item_Config, "base-price", 10.0),
             Mass       => Item_Config.Get ("mass", 1.0));
@@ -395,15 +402,17 @@ package body Concorde.Configure.Commodities is
 
       for Item_Config of Commodity_Config loop
          declare
-            Item : constant Concorde.Db.Manufactured_Reference :=
-                     Concorde.Db.Manufactured.Get_Reference_By_Tag
+            subtype Manufactured_Handle is
+              Concorde.Handles.Manufactured.Manufactured_Handle;
+            Item : constant Manufactured_Handle :=
+                     Concorde.Handles.Manufactured.Get_By_Tag
                        (Item_Config.Config_Name);
          begin
             for Input_Config of Item_Config.Child ("parts") loop
                declare
                   use Concorde.Commodities;
                   Tag      : constant String := Input_Config.Config_Name;
-                  Input    : constant Commodity_Reference :=
+                  Input    : constant Commodity_Class :=
                                (if Exists (Tag)
                                 then Get (Tag)
                                 else raise Constraint_Error with
@@ -413,7 +422,7 @@ package body Concorde.Configure.Commodities is
                                Concorde.Quantities.To_Quantity
                                  (Input_Config.Value);
                begin
-                  Concorde.Db.Input_Commodity.Create
+                  Concorde.Handles.Input_Commodity.Create
                     (Manufactured => Item,
                      Commodity    => Input,
                      Quantity     => Quantity);
@@ -424,12 +433,14 @@ package body Concorde.Configure.Commodities is
 
       for Item_Config of Commodity_Config loop
          declare
-            Item : constant Concorde.Db.Commodity_Reference :=
-                     Concorde.Db.Commodity.Get_Reference_By_Tag
+            subtype Commodity_Handle is
+              Concorde.Handles.Commodity.Commodity_Handle;
+            Item : constant Commodity_Handle :=
+                     Concorde.Handles.Commodity.Get_By_Tag
                        (Item_Config.Config_Name);
          begin
             if Item_Config.Contains ("per-pop") then
-               Concorde.Db.Consumer_Commodity.Create
+               Concorde.Handles.Consumer_Commodity.Create
                  (Commodity    => Item,
                   Pop_Per_Item =>
                     Concorde.Quantities.To_Quantity
@@ -454,8 +465,8 @@ package body Concorde.Configure.Commodities is
       is (Concorde.Money.To_Price
           (Real (Long_Float'(Config.Get (Name, Default)))));
 
-      Resource : constant Concorde.Db.Resource_Reference :=
-                   Concorde.Db.Resource.Create
+      Resource : constant Concorde.Handles.Resource.Resource_Handle :=
+                   Concorde.Handles.Resource.Create
                      (Mass            => 1.0,
                       Tag             => Config.Config_Name,
                       Base_Price      => Get ("base-price", 1.0),
@@ -464,9 +475,10 @@ package body Concorde.Configure.Commodities is
 
       Create_Standard_Nodes (Config.Config_Name);
 
-      Concorde.Db.Metric.Create
-        (Content => Concorde.Db.Quantity,
-         Tag     => Config.Config_Name & "-production");
+      Concorde.Handles.Metric.Create
+        (Identifier => Concorde.Identifiers.Next_Identifier,
+         Content    => Concorde.Db.Quantity,
+         Tag        => Config.Config_Name & "-production");
 
       Concorde.Configure.Metrics.Update_Metric
         (Config.Config_Name & "-demand", "0");
@@ -533,8 +545,8 @@ package body Concorde.Configure.Commodities is
                Index := Index + 1;
             end loop;
 
-            Concorde.Db.Resource_Sphere.Create
-              (Resource    => Available (Index).Reference,
+            Concorde.Handles.Resource_Sphere.Create
+              (Resource    => Available (Index).Resource,
                Centre_X    => X,
                Centre_Y    => Y,
                Centre_Z    => Z,
@@ -567,20 +579,7 @@ package body Concorde.Configure.Commodities is
    ---------------------
 
    procedure Configure_Stock
-     (Has_Stock : Concorde.Db.Has_Stock.Has_Stock_Type;
-      Config    : Tropos.Configuration;
-      Factor    : Non_Negative_Real := 1.0)
-   is
-   begin
-      Configure_Stock (Has_Stock.Get_Has_Stock_Reference, Config, Factor);
-   end Configure_Stock;
-
-   ---------------------
-   -- Configure_Stock --
-   ---------------------
-
-   procedure Configure_Stock
-     (Has_Stock : Concorde.Db.Has_Stock_Reference;
+     (Has_Stock : Concorde.Handles.Has_Stock.Has_Stock_Class;
       Config    : Tropos.Configuration;
       Factor    : Non_Negative_Real := 1.0)
    is
@@ -592,7 +591,7 @@ package body Concorde.Configure.Commodities is
       for Item_Config of Stock_Config loop
          if Concorde.Commodities.Exists (Item_Config.Config_Name) then
             declare
-               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+               Commodity : constant Concorde.Commodities.Commodity_Class :=
                              Concorde.Commodities.Get
                                (Item_Config.Config_Name);
                Quantity  : constant Concorde.Quantities.Quantity_Type :=
@@ -601,7 +600,7 @@ package body Concorde.Configure.Commodities is
                                   (Real (Float'(Item_Config.Value))),
                                 Factor);
             begin
-               Concorde.Db.Stock_Item.Create
+               Concorde.Handles.Stock_Item.Create
                  (Has_Stock => Has_Stock,
                   Commodity => Commodity,
                   Quantity  => Quantity);
@@ -619,7 +618,7 @@ package body Concorde.Configure.Commodities is
    ------------------------
 
    procedure Configure_Supplied
-     (Supplied  : Concorde.Db.Supplied_Reference;
+     (Supplied : Concorde.Handles.Supplied.Supplied_Class;
       Config    : Tropos.Configuration;
       Factor    : Non_Negative_Real := 1.0)
    is
@@ -631,7 +630,7 @@ package body Concorde.Configure.Commodities is
       for Item_Config of Stock_Config loop
          if Concorde.Commodities.Exists (Item_Config.Config_Name) then
             declare
-               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+               Commodity : constant Concorde.Commodities.Commodity_Class :=
                              Concorde.Commodities.Get
                                (Item_Config.Config_Name);
                Quantity  : constant Concorde.Quantities.Quantity_Type :=
@@ -640,7 +639,7 @@ package body Concorde.Configure.Commodities is
                                   (Real (Float'(Item_Config.Value))),
                                 Factor);
             begin
-               Concorde.Db.Supply_Input.Create
+               Concorde.Handles.Supply_Input.Create
                  (Supplied    => Supplied,
                   Commodity   => Commodity,
                   Quantity    => Quantity);
@@ -658,13 +657,15 @@ package body Concorde.Configure.Commodities is
    ---------------------------
 
    procedure Constrain_Composition
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
       Config     : Tropos.Configuration)
    is
    begin
-      Concorde.Db.Resource_Constraint.Update_Resource_Constraint (Constraint)
+      Constraint.Update_Resource_Constraint
         .Set_Composition_Constraint (True)
-        .Set_Composition (Concorde.Db.World_Composition'Value (Config.Value))
+        .Set_Composition
+          (Concorde.Db.World_Composition'Value (Config.Value))
           .Done;
    end Constrain_Composition;
 
@@ -673,11 +674,12 @@ package body Concorde.Configure.Commodities is
    ---------------------------
 
    procedure Constrain_Hydrosphere
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
       Config     : Tropos.Configuration)
    is
    begin
-      Concorde.Db.Resource_Constraint.Update_Resource_Constraint (Constraint)
+      Constraint.Update_Resource_Constraint
         .Set_Hydrosphere_Constraint (True)
         .Set_Min_Hydrosphere (Real (Long_Float'(Config.Value)))
         .Done;
@@ -688,11 +690,12 @@ package body Concorde.Configure.Commodities is
    --------------------
 
    procedure Constrain_Life
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
       Config     : Tropos.Configuration)
    is
    begin
-      Concorde.Db.Resource_Constraint.Update_Resource_Constraint (Constraint)
+      Constraint.Update_Resource_Constraint
         .Set_Life_Constraint (True)
         .Set_Min_Lifeforms (Config.Value)
         .Done;
@@ -703,7 +706,8 @@ package body Concorde.Configure.Commodities is
    --------------------
 
    procedure Constrain_Mass
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
       Config     : Tropos.Configuration)
    is
       type Mass_Constraint is (Small, Medium, Large);
@@ -724,15 +728,16 @@ package body Concorde.Configure.Commodities is
                            (if Config.Child_Count = 1
                             then Mass_Range (Constraint_Name)
                             else (Get (1), Get (2), Get (3), Get (4)));
-      Fuzzy_Ref        : constant Concorde.Db.Fuzzy_Set_Reference :=
-                           Concorde.Db.Fuzzy_Set.Create
+      Fuzzy_Ref         : constant Concorde.Handles.Fuzzy_Set
+        .Fuzzy_Set_Handle :=
+                           Concorde.Handles.Fuzzy_Set.Create
                              (Constraint_Range (1),
                               Constraint_Range (2),
                               Constraint_Range (3),
                               Constraint_Range (4));
 
    begin
-      Concorde.Db.Resource_Constraint.Update_Resource_Constraint (Constraint)
+      Constraint.Update_Resource_Constraint
         .Set_Mass_Constraint (True)
         .Set_Mass (Fuzzy_Ref)
         .Done;
@@ -743,11 +748,12 @@ package body Concorde.Configure.Commodities is
    ---------------------------
 
    procedure Constrain_Minimum_Age
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
       Config     : Tropos.Configuration)
    is
    begin
-      Concorde.Db.Resource_Constraint.Update_Resource_Constraint (Constraint)
+      Constraint.Update_Resource_Constraint
         .Set_Age_Constraint (True)
         .Set_Min_Age (Real (Long_Float'(Config.Value)))
         .Done;
@@ -758,11 +764,12 @@ package body Concorde.Configure.Commodities is
    --------------------
 
    procedure Constrain_Zone
-     (Constraint : Concorde.Db.Resource_Constraint_Reference;
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
       Config     : Tropos.Configuration)
    is
    begin
-      Concorde.Db.Resource_Constraint.Update_Resource_Constraint (Constraint)
+      Constraint.Update_Resource_Constraint
         .Set_Zone_Constraint (True)
         .Set_Zone (Concorde.Db.Stellar_Orbit_Zone'Value (Config.Value))
           .Done;
@@ -773,15 +780,16 @@ package body Concorde.Configure.Commodities is
    ---------------------------------
 
    procedure Create_Frequency_Constraint
-     (Resource : Concorde.Db.Resource_Reference;
+     (Resource : Concorde.Handles.Resource.Resource_Handle;
       Config   : Tropos.Configuration)
    is
       Freq_Name  : constant Frequency_Type :=
                      Frequency_Type'Value (Config.Config_Name);
       Freq       : constant Normal_Value :=
                      Standard_Frequencies (Freq_Name);
-      Constraint : constant Concorde.Db.Resource_Constraint_Reference :=
-                     Concorde.Db.Resource_Constraint.Create
+      Constraint : constant Concorde.Handles.Resource_Constraint
+        .Resource_Constraint_Handle :=
+                     Concorde.Handles.Resource_Constraint.Create
                        (Resource               => Resource,
                         Mass_Constraint        => False,
                         Zone_Constraint        => False,
@@ -791,7 +799,7 @@ package body Concorde.Configure.Commodities is
                         Composition_Constraint => False,
                         Sphere_Constraint      => False,
                         Mass                   =>
-                          Concorde.Db.Null_Fuzzy_Set_Reference,
+                          Concorde.Handles.Fuzzy_Set.Empty_Handle,
                         Zone                   =>
                           Concorde.Db.Black,
                         Composition            => Concorde.Db.Rock_Iron,
@@ -820,8 +828,7 @@ package body Concorde.Configure.Commodities is
          else
             raise Constraint_Error with
               "no such constraint argument " & Child_Config.Config_Name
-              & " in resource constraint for "
-              & Concorde.Db.Resource.Get (Resource).Tag;
+              & " in resource constraint for " & Resource.Tag;
          end if;
       end loop;
    end Create_Frequency_Constraint;
@@ -831,7 +838,7 @@ package body Concorde.Configure.Commodities is
    ------------------------------
 
    procedure Create_Sphere_Constraint
-     (Resource : Concorde.Db.Resource_Reference;
+     (Resource : Concorde.Handles.Resource.Resource_Handle;
       Config   : Tropos.Configuration)
    is
       function Get (Field : String;
@@ -842,7 +849,7 @@ package body Concorde.Configure.Commodities is
           else Real (Long_Float'(Config.Child (Field).Get (Index))));
 
    begin
-      Concorde.Db.Resource_Constraint.Create
+      Concorde.Handles.Resource_Constraint.Create
         (Resource               => Resource,
          Mass_Constraint        => False,
          Zone_Constraint        => False,
@@ -851,7 +858,7 @@ package body Concorde.Configure.Commodities is
          Hydrosphere_Constraint => False,
          Composition_Constraint => False,
          Sphere_Constraint      => True,
-         Mass                   => Concorde.Db.Null_Fuzzy_Set_Reference,
+         Mass                   => Concorde.Handles.Fuzzy_Set.Empty_Handle,
          Zone                   => Concorde.Db.Black,
          Composition            => Concorde.Db.Hydrogen,
          Min_Lifeforms          => 0,
@@ -879,9 +886,10 @@ package body Concorde.Configure.Commodities is
       is (Commodity_Tag & "-" & Suffix);
 
    begin
-      Concorde.Db.Metric.Create
-        (Content => Concorde.Db.Quantity,
-         Tag     => T ("stockpile"));
+      Concorde.Handles.Metric.Create
+        (Identifier => Concorde.Identifiers.Next_Identifier,
+         Content    => Concorde.Db.Quantity,
+         Tag        => T ("stockpile"));
 
       Add_Calculation
         (Commodity_Tag   => Commodity_Tag,
@@ -907,9 +915,10 @@ package body Concorde.Configure.Commodities is
         (T ("demand"),
          T ("bought"));
 
-      Concorde.Db.Metric.Create
-        (Content => Concorde.Db.Money,
-         Tag     => T ("base-price"));
+      Concorde.Handles.Metric.Create
+        (Identifier => Concorde.Identifiers.Next_Identifier,
+         Content    => Concorde.Db.Money,
+         Tag        => T ("base-price"));
 
       declare
          Revenue       : constant String :=
@@ -921,40 +930,46 @@ package body Concorde.Configure.Commodities is
                          & " * (1 + " & T ("price") & ")"
                          & " * " & T ("bought");
 
-         Revenue_Calc  : constant Concorde.Db.Calculation_Reference :=
-                           Concorde.Db.Calculation.Create
+         Revenue_Calc        : constant Concorde.Handles.Calculation
+           .Calculation_Handle :=
+                           Concorde.Handles.Calculation.Create
                              (Concorde.Identifiers.Next_Identifier,
-                              Concorde.Db.Null_Node_Reference,
+                              Concorde.Handles.Node.Empty_Handle,
                               Revenue);
-         Expense_Calc  : constant Concorde.Db.Calculation_Reference :=
-                           Concorde.Db.Calculation.Create
+         Expense_Calc        : constant Concorde.Handles.Calculation
+           .Calculation_Handle :=
+                           Concorde.Handles.Calculation.Create
                              (Concorde.Identifiers.Next_Identifier,
-                              Concorde.Db.Null_Node_Reference,
+                              Concorde.Handles.Node.Empty_Handle,
                               Expense);
-         Sell_Policy   : constant Concorde.Db.Policy_Reference :=
-                           Concorde.Db.Policy.Create
-                             (Content => Concorde.Db.Setting,
-                              Tag     => T ("sell-stock"),
-                              Expense =>
-                                Concorde.Db.Null_Calculation_Reference,
-                              Revenue => Revenue_Calc);
-         Min_Stockpile    : constant Concorde.Db.Policy_Reference :=
-                              Concorde.Db.Policy.Create
-                                (Content => Concorde.Db.Quantity,
-                                 Tag     => T ("min-stock"),
-                                 Expense => Expense_Calc,
-                                 Revenue =>
-                                   Concorde.Db.Null_Calculation_Reference);
+         Sell_Policy   : constant Concorde.Handles.Policy.Policy_Handle :=
+                           Concorde.Handles.Policy.Create
+                                   (Identifier =>
+                                      Concorde.Identifiers.Next_Identifier,
+                                    Content    => Concorde.Db.Setting,
+                                    Tag        => T ("sell-stock"),
+                                    Expense    =>
+                                      Concorde.Handles.Calculation
+                                    .Empty_Handle,
+                              Revenue    => Revenue_Calc);
+         Min_Stockpile    : constant Concorde.Handles.Policy.Policy_Handle :=
+                              Concorde.Handles.Policy.Create
+                                   (Identifier =>
+                                         Concorde.Identifiers.Next_Identifier,
+                                 Content    => Concorde.Db.Quantity,
+                                 Tag        => T ("min-stock"),
+                                 Expense    => Expense_Calc,
+                                 Revenue    =>
+                                   Concorde.Handles.Calculation.Empty_Handle);
       begin
-         Concorde.Db.Calculation.Update_Calculation
+         Concorde.Handles.Calculation.Update_Calculation
            (Revenue_Calc)
-           .Set_Node (Concorde.Db.Policy.Get (Sell_Policy).Get_Node_Reference)
-             .Done;
-         Concorde.Db.Calculation.Update_Calculation
+           .Set_Node (Sell_Policy)
+           .Done;
+         Concorde.Handles.Calculation.Update_Calculation
            (Expense_Calc)
-           .Set_Node
-             (Concorde.Db.Policy.Get (Min_Stockpile).Get_Node_Reference)
-               .Done;
+           .Set_Node (Min_Stockpile)
+           .Done;
       end;
    end Create_Standard_Nodes;
 

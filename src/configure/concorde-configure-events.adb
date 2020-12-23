@@ -2,18 +2,20 @@ with WL.String_Maps;
 
 with Tropos.Reader;
 
-with Concorde.Db.Ability;
-with Concorde.Db.Change_Ability;
-with Concorde.Db.Gain_Skill;
-with Concorde.Db.Child_Event;
-with Concorde.Db.Event;
-with Concorde.Db.Event_Choice;
-with Concorde.Db.Skill;
+with Concorde.Handles.Ability;
+with Concorde.Handles.Change_Ability;
+with Concorde.Handles.Gain_Skill;
+with Concorde.Handles.Child_Event;
+with Concorde.Handles.Event;
+with Concorde.Handles.Event_Choice;
+with Concorde.Handles.Skill;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Events is
 
    type Configure_Procedure is access
-     procedure (Choice : Concorde.Db.Event_Choice_Reference;
+     procedure (Choice : Concorde.Handles.Event_Choice.Event_Choice_Class;
                 Config : Tropos.Configuration);
 
    package Configure_Maps is
@@ -24,26 +26,26 @@ package body Concorde.Configure.Events is
    procedure Load_Configurers;
 
    procedure Configure_Effect
-     (Choice        : Concorde.Db.Event_Choice_Reference;
+     (Choice        : Concorde.Handles.Event_Choice.Event_Choice_Class;
       Effect_Config : Tropos.Configuration);
 
    procedure Configure_Event
      (Event_Config : Tropos.Configuration);
 
    procedure Configure_Ability_Change
-     (Choice : Concorde.Db.Event_Choice_Reference;
+     (Choice : Concorde.Handles.Event_Choice.Event_Choice_Class;
       Config : Tropos.Configuration);
 
    procedure Configure_Ability_Category_Change
-     (Choice : Concorde.Db.Event_Choice_Reference;
+     (Choice : Concorde.Handles.Event_Choice.Event_Choice_Class;
       Config : Tropos.Configuration);
 
    procedure Configure_Skill_Change
-     (Choice : Concorde.Db.Event_Choice_Reference;
+     (Choice : Concorde.Handles.Event_Choice.Event_Choice_Class;
       Config : Tropos.Configuration);
 
    procedure Configure_Child_Event
-     (Choice : Concorde.Db.Event_Choice_Reference;
+     (Choice : Concorde.Handles.Event_Choice.Event_Choice_Class;
       Config : Tropos.Configuration);
 
    procedure Get_Change_Range
@@ -56,7 +58,7 @@ package body Concorde.Configure.Events is
    ---------------------------------------
 
    procedure Configure_Ability_Category_Change
-     (Choice : Concorde.Db.Event_Choice_Reference;
+     (Choice : Concorde.Handles.Event_Choice.Event_Choice_Class;
       Config : Tropos.Configuration)
    is
       Tag : constant String := Config.Config_Name;
@@ -75,10 +77,10 @@ package body Concorde.Configure.Events is
       High  : Integer;
    begin
       Get_Change_Range (Value, Low, High);
-      Concorde.Db.Change_Ability.Create
+      Concorde.Handles.Change_Ability.Create
         (Event_Choice => Choice,
          Category     => Category,
-         Ability      => Concorde.Db.Null_Ability_Reference,
+         Ability      => Concorde.Handles.Ability.Empty_Handle,
          Low          => Low,
          High         => High);
    end Configure_Ability_Category_Change;
@@ -88,7 +90,7 @@ package body Concorde.Configure.Events is
    ------------------------------
 
    procedure Configure_Ability_Change
-     (Choice : Concorde.Db.Event_Choice_Reference;
+     (Choice : Concorde.Handles.Event_Choice.Event_Choice_Class;
       Config : Tropos.Configuration)
    is
       Value : constant String := Config.Value;
@@ -96,11 +98,11 @@ package body Concorde.Configure.Events is
       High  : Integer;
    begin
       Get_Change_Range (Value, Low, High);
-      Concorde.Db.Change_Ability.Create
+      Concorde.Handles.Change_Ability.Create
         (Event_Choice => Choice,
          Category     => Concorde.Db.Physical,
          Ability      =>
-           Concorde.Db.Ability.Get_Reference_By_Tag
+           Concorde.Handles.Ability.Get_By_Tag
              (Config.Config_Name),
          Low          => Low,
          High         => High);
@@ -111,11 +113,11 @@ package body Concorde.Configure.Events is
    ---------------------------
 
    procedure Configure_Child_Event
-     (Choice : Concorde.Db.Event_Choice_Reference;
+     (Choice : Concorde.Handles.Event_Choice.Event_Choice_Class;
       Config : Tropos.Configuration)
    is
    begin
-      Concorde.Db.Child_Event.Create
+      Concorde.Handles.Child_Event.Create
         (Event_Choice => Choice,
          Tag          => Config.Value,
          Redirect     => Config.Config_Name = "redirect");
@@ -126,7 +128,7 @@ package body Concorde.Configure.Events is
    ----------------------
 
    procedure Configure_Effect
-     (Choice        : Concorde.Db.Event_Choice_Reference;
+     (Choice        : Concorde.Handles.Event_Choice.Event_Choice_Class;
       Effect_Config : Tropos.Configuration)
    is
       Tag : constant String := Effect_Config.Config_Name;
@@ -146,8 +148,8 @@ package body Concorde.Configure.Events is
    procedure Configure_Event
      (Event_Config : Tropos.Configuration)
    is
-      Event : constant Concorde.Db.Event_Reference :=
-                Concorde.Db.Event.Create
+      Event : constant Concorde.Handles.Event.Event_Handle :=
+                Concorde.Handles.Event.Create
                   (Tag           => "evt-" & Event_Config.Config_Name,
                    Heading       =>
                      Event_Config.Get ("heading", Event_Config.Config_Name),
@@ -158,8 +160,9 @@ package body Concorde.Configure.Events is
    begin
       for Choice_Config of Event_Config.Child ("choices") loop
          declare
-            Choice : constant Concorde.Db.Event_Choice_Reference :=
-                       Concorde.Db.Event_Choice.Create
+            Choice               : constant Concorde.Handles.Event_Choice
+              .Event_Choice_Handle :=
+                       Concorde.Handles.Event_Choice.Create
                          (Event => Event,
                           Tag   => Choice_Config.Config_Name);
          begin
@@ -193,14 +196,14 @@ package body Concorde.Configure.Events is
    ----------------------------
 
    procedure Configure_Skill_Change
-     (Choice : Concorde.Db.Event_Choice_Reference;
+     (Choice : Concorde.Handles.Event_Choice.Event_Choice_Class;
       Config : Tropos.Configuration)
    is
    begin
-      Concorde.Db.Gain_Skill.Create
+      Concorde.Handles.Gain_Skill.Create
         (Event_Choice => Choice,
          Skill        =>
-           Concorde.Db.Skill.Get_Reference_By_Tag
+           Concorde.Handles.Skill.Get_By_Tag
              (Config.Config_Name),
          Level        => Config.Value);
    end Configure_Skill_Change;
@@ -232,7 +235,7 @@ package body Concorde.Configure.Events is
    procedure Load_Configurers is
    begin
       for Ability of
-        Concorde.Db.Ability.Scan_By_Tag
+        Concorde.Handles.Ability.Scan_By_Tag
       loop
          Configure_Table.Insert
            (Ability.Tag,
@@ -240,7 +243,7 @@ package body Concorde.Configure.Events is
       end loop;
 
       for Skill of
-        Concorde.Db.Skill.Scan_By_Tag
+        Concorde.Handles.Skill.Scan_By_Tag
       loop
          Configure_Table.Insert
            (Skill.Tag,

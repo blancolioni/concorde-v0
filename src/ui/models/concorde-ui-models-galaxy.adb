@@ -6,12 +6,9 @@ with WL.String_Maps;
 
 with Nazar.Colors;
 
-with Concorde.Db.Faction;
-with Concorde.Db.Star;
-with Concorde.Db.Star_System_Distance;
-
 with Concorde.Handles.Star;
-with Concorde.Handles.Star_System.Selections;
+with Concorde.Handles.Star_System;
+with Concorde.Handles.Star_System_Distance;
 
 package body Concorde.UI.Models.Galaxy is
 
@@ -132,24 +129,23 @@ package body Concorde.UI.Models.Galaxy is
       Ada.Text_IO.Flush;
 
       for Star_System of
-        Concorde.Handles.Star_System.Selections.Select_All
+        Concorde.Handles.Star_System.Scan_By_Top_Record
       loop
          declare
             Star  : constant Concorde.Handles.Star.Star_Handle :=
-                      Concorde.Handles.Star.Get
-                        (Concorde.Db.Star.First_Reference_By_Star_System
-                           (Star_System.Reference));
+                      Concorde.Handles.Star.First_By_Star_System
+                        (Star_System);
             Color : constant Nazar.Colors.Nazar_Color :=
                       (Nazar.Nazar_Unit_Float (Star.Red),
                        Nazar.Nazar_Unit_Float (Star.Green),
                        Nazar.Nazar_Unit_Float (Star.Blue),
                        1.0);
-            Capital : constant Concorde.Db.Faction_Reference :=
-                        Concorde.Db.Faction.First_Reference_By_Capital_System
-                          (Star_System.Reference);
+            Capital : constant Concorde.Handles.Faction.Faction_Handle :=
+                        Concorde.Handles.Faction.First_By_Capital_System
+                          (Star_System);
             Rec : constant System_Record := System_Record'
-              (Handle  => Star_System,
-               Capital => Concorde.Handles.Faction.Get (Capital),
+              (Handle  => Star_System.To_Star_System_Handle,
+               Capital => Capital,
                Color   => Color,
                X       => Nazar.Nazar_Float (Star_System.X),
                Y       => Nazar.Nazar_Float (Star_System.Y),
@@ -172,15 +168,15 @@ package body Concorde.UI.Models.Galaxy is
 
       for Star_System_Index in 1 .. Model.Systems.Last_Index loop
          for Nearby of
-           Concorde.Db.Star_System_Distance
+           Concorde.Handles.Star_System_Distance
              .Select_Star_System_Range_Bounded_By_Distance
-               (Model.Systems.Element (Star_System_Index).Handle.Reference,
+               (Model.Systems.Element (Star_System_Index).Handle,
                 0.0, 4.0)
          loop
             declare
                subtype Nazar_Float is Nazar.Nazar_Float;
-               To    : constant Handles.Star_System.Star_System_Handle :=
-                         Handles.Star_System.Get (Nearby.To);
+               To    : constant Handles.Star_System.Star_System_Class :=
+                         Nearby.To;
                D     : constant Non_Negative_Real :=
                          Nearby.Distance;
                Index : constant Positive := Index_Map.Element (To.Name);
@@ -190,7 +186,7 @@ package body Concorde.UI.Models.Galaxy is
             begin
                Model.Systems (Star_System_Index).Nearby.Append
                  (System_Distance_Record'
-                    (To       => To,
+                    (To       => To.To_Star_System_Handle,
                      Index    => Index,
                      Distance => D,
                      X        => X,

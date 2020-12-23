@@ -1,9 +1,10 @@
-with Concorde.Db;
+with Concorde.Handles.Event;
+with Concorde.Handles.Individual;
 
 package Concorde.Events is
 
    procedure Execute_Event
-     (Event  : Concorde.Db.Event_Reference;
-      Target : Concorde.Db.Individual_Reference);
+     (Event  : Concorde.Handles.Event.Event_Class;
+      Target : Concorde.Handles.Individual.Individual_Class);
 
 end Concorde.Events;

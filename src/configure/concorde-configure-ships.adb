@@ -1,30 +1,27 @@
 with Tropos.Reader;
 
-with Concorde.Db.Component;
+with Concorde.Handles.Component;
 
-with Concorde.Db.Hull_Armor;
-with Concorde.Db.Hull_Configuration;
-
-with Concorde.Db.Bridge;
-with Concorde.Db.Computer;
-with Concorde.Db.Engine;
-with Concorde.Db.Generator;
-with Concorde.Db.Jump_Drive;
-with Concorde.Db.Quarters;
-with Concorde.Db.Sensor;
-with Concorde.Db.Weapon_Mount;
-
-with Concorde.Db.Ship_Design;
-with Concorde.Db.Ship_Design_Module;
+with Concorde.Handles.Hull_Armor;
+with Concorde.Handles.Hull_Configuration;
 
 with Concorde.Handles.Bridge;
 with Concorde.Handles.Computer;
 with Concorde.Handles.Engine;
 with Concorde.Handles.Generator;
 with Concorde.Handles.Jump_Drive;
+with Concorde.Handles.Reinforcement;
 with Concorde.Handles.Quarters;
 with Concorde.Handles.Sensor;
+with Concorde.Handles.Stealth;
 with Concorde.Handles.Weapon_Mount;
+
+with Concorde.Handles.Ship_Design;
+with Concorde.Handles.Ship_Design_Module;
+
+with Concorde.Handles.Technology;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Ships is
 
@@ -86,9 +83,9 @@ package body Concorde.Configure.Ships is
       is (Get_Fraction (Config, Name));
 
    begin
-      Concorde.Db.Hull_Armor.Create
+      Concorde.Handles.Hull_Armor.Create
         (Tag           => Config.Config_Name,
-         Enabled_By    => Concorde.Db.Null_Technology_Reference,
+         Enabled_By    => Concorde.Handles.Technology.Empty_Handle,
          Tonnage       => Get ("tonnage"),
          Cost_Fraction => Get ("cost"),
          Max_Armor     => Config.Get ("max_armor"));
@@ -108,12 +105,12 @@ package body Concorde.Configure.Ships is
       Ship_Tons : constant Tropos.Configuration :=
                     Config.Child ("ship_tonnage");
    begin
-      Concorde.Db.Bridge.Create
+      Concorde.Handles.Bridge.Create
         (Minimum_Tonnage => Tonnage,
          Power_Per_Ton   => 0.0,
          Price_Per_Ton   => Concorde.Money.To_Price (Get ("price") / Tonnage),
          Tag             => Config.Config_Name,
-         Enabled_By      => Concorde.Db.Null_Technology_Reference,
+         Enabled_By      => Concorde.Handles.Technology.Empty_Handle,
          Tonnage         => Tonnage,
          Ship_Tons_Low   => Real (Long_Float'(Ship_Tons.Get (1))),
          Ship_Tons_High  => Real (Long_Float'(Ship_Tons.Get (2))));
@@ -129,12 +126,12 @@ package body Concorde.Configure.Ships is
       function Get (Name : String) return Real
       is (Get_Value (Config, Name));
    begin
-      Concorde.Db.Computer.Create
+      Concorde.Handles.Computer.Create
         (Minimum_Tonnage => 1.0,
          Power_Per_Ton   => 0.0,
          Price_Per_Ton   => Concorde.Money.To_Price (Get ("price")),
          Tag             => Config.Config_Name,
-         Enabled_By      => Concorde.Db.Null_Technology_Reference,
+         Enabled_By      => Concorde.Handles.Technology.Empty_Handle,
          Capacity        => Config.Get ("capacity"));
    end Configure_Computer;
 
@@ -149,11 +146,12 @@ package body Concorde.Configure.Ships is
       function Get (Name : String) return Real
       is (Get_Value (Config, Name));
 
-      Hull : constant Concorde.Db.Hull_Configuration_Reference :=
-               Concorde.Db.Hull_Configuration.Get_Reference_By_Tag
+      Hull                      : constant Concorde.Handles.Hull_Configuration
+        .Hull_Configuration_Class :=
+               Concorde.Handles.Hull_Configuration.Get_By_Tag
                  (Config.Get ("hull", "standard"));
-      Armor : constant Concorde.Db.Hull_Armor_Reference :=
-                Concorde.Db.Hull_Armor.Get_Reference_By_Tag
+      Armor : constant Concorde.Handles.Hull_Armor.Hull_Armor_Class :=
+                Concorde.Handles.Hull_Armor.Get_By_Tag
                   (Config.Get ("armor", ""));
 
       Tonnage : constant Non_Negative_Real := Get ("tonnage");
@@ -175,15 +173,16 @@ package body Concorde.Configure.Ships is
       Hard_Points : constant Natural :=
                       Natural (Real'Truncation (Tonnage / 100.0));
 
-      Design : constant Concorde.Db.Ship_Design_Reference :=
-                 Concorde.Db.Ship_Design.Create
+      Design : constant Concorde.Handles.Ship_Design.Ship_Design_Class :=
+                 Concorde.Handles.Ship_Design.Create
                    (Name               =>
                                  Config.Get ("name", Config.Config_Name),
                     Hull_Configuration => Hull,
                     Hull_Armor         => Armor,
-                    Stealth            => Concorde.Db.Null_Stealth_Reference,
+                    Stealth            =>
+                      Concorde.Handles.Stealth.Empty_Handle,
                     Reinforcement      =>
-                      Concorde.Db.Null_Reinforcement_Reference,
+                      Concorde.Handles.Reinforcement.Empty_Handle,
                     Tonnage            => Tonnage,
                     Hull_Points        => Hull_Points,
                     Fuel_Tank          => Fuel_Tank,
@@ -201,13 +200,13 @@ package body Concorde.Configure.Ships is
         (Config : Tropos.Configuration);
 
       procedure Configure_Engine_Design
-        (Engine : Concorde.Db.Engine_Reference);
+        (Engine : Concorde.Handles.Engine.Engine_Class);
 
       procedure Configure_Generator_Design
         (Gen_Config : Tropos.Configuration);
 
       procedure Configure_Jump_Design
-        (Jump_Drive : Concorde.Db.Jump_Drive_Reference);
+        (Jump_Drive : Concorde.Handles.Jump_Drive.Jump_Drive_Class);
 
       procedure Configure_Quarters_Design
         (Config : Tropos.Configuration);
@@ -226,13 +225,12 @@ package body Concorde.Configure.Ships is
         (Config : Tropos.Configuration)
       is
          Handle : constant Concorde.Handles.Bridge.Bridge_Handle :=
-                    Concorde.Handles.Bridge.Get
-                      (Concorde.Db.Bridge.Get_Reference_By_Tag
-                         (Config.Get ("type")));
+                    Concorde.Handles.Bridge.Get_By_Tag
+                      (Config.Get ("type"));
       begin
-         Concorde.Db.Ship_Design_Module.Create
+         Concorde.Handles.Ship_Design_Module.Create
            (Ship_Design => Design,
-            Component   => Handle.Reference_Component,
+            Component   => Handle,
             Tonnage     => Handle.Tonnage,
             Concealed   => False);
       end Configure_Bridge_Design;
@@ -245,13 +243,12 @@ package body Concorde.Configure.Ships is
         (Config : Tropos.Configuration)
       is
          Handle : constant Concorde.Handles.Computer.Computer_Handle :=
-                    Concorde.Handles.Computer.Get
-                      (Concorde.Db.Computer.Get_Reference_By_Tag
-                         (Config.Get ("type")));
+                    Concorde.Handles.Computer.Get_By_Tag
+                      (Config.Get ("type"));
       begin
-         Concorde.Db.Ship_Design_Module.Create
+         Concorde.Handles.Ship_Design_Module.Create
            (Ship_Design => Design,
-            Component   => Handle.Reference_Component,
+            Component   => Handle,
             Tonnage     => 1.0,
             Concealed   => False);
       end Configure_Computer_Design;
@@ -261,18 +258,16 @@ package body Concorde.Configure.Ships is
       -----------------------------
 
       procedure Configure_Engine_Design
-        (Engine : Concorde.Db.Engine_Reference)
+        (Engine : Concorde.Handles.Engine.Engine_Class)
       is
-         Handle : constant Concorde.Handles.Engine.Engine_Handle :=
-                    Concorde.Handles.Engine.Get (Engine);
       begin
-         Concorde.Db.Ship_Design_Module.Create
+         Concorde.Handles.Ship_Design_Module.Create
            (Ship_Design => Design,
-            Component   => Handle.Reference_Component,
+            Component   => Engine,
             Tonnage     =>
               Non_Negative_Real'Max
-                (Tonnage * Handle.Hull_Fraction,
-                 Handle.Minimum_Tonnage),
+                (Tonnage * Engine.Hull_Fraction,
+                 Engine.Minimum_Tonnage),
             Concealed   => False);
       end Configure_Engine_Design;
 
@@ -284,16 +279,15 @@ package body Concorde.Configure.Ships is
         (Gen_Config : Tropos.Configuration)
       is
          Handle : constant Concorde.Handles.Generator.Generator_Handle :=
-                    Concorde.Handles.Generator.Get
-                      (Concorde.Db.Generator.Get_Reference_By_Tag
-                         (Gen_Config.Get ("type")));
+                    Concorde.Handles.Generator.Get_By_Tag
+                      (Gen_Config.Get ("type"));
       begin
          pragma Assert (Handle.Has_Element,
                         "no such generator: "
                         & Gen_Config.Get ("type"));
-         Concorde.Db.Ship_Design_Module.Create
+         Concorde.Handles.Ship_Design_Module.Create
            (Ship_Design => Design,
-            Component   => Handle.Reference_Component,
+            Component   => Handle,
             Tonnage     => Get_Value (Gen_Config, "tonnage"),
             Concealed   => False);
       end Configure_Generator_Design;
@@ -303,18 +297,16 @@ package body Concorde.Configure.Ships is
       ---------------------------
 
       procedure Configure_Jump_Design
-        (Jump_Drive : Concorde.Db.Jump_Drive_Reference)
+        (Jump_Drive : Concorde.Handles.Jump_Drive.Jump_Drive_Class)
       is
-         Handle : constant Concorde.Handles.Jump_Drive.Jump_Drive_Handle :=
-                    Concorde.Handles.Jump_Drive.Get (Jump_Drive);
       begin
-         Concorde.Db.Ship_Design_Module.Create
+         Concorde.Handles.Ship_Design_Module.Create
            (Ship_Design => Design,
-            Component   => Handle.Reference_Component,
+            Component   => Jump_Drive,
             Tonnage     =>
               Non_Negative_Real'Max
-                (Tonnage * Handle.Hull_Fraction,
-                 Handle.Minimum_Tonnage),
+                (Tonnage * Jump_Drive.Hull_Fraction,
+                 Jump_Drive.Minimum_Tonnage),
             Concealed   => False);
       end Configure_Jump_Design;
 
@@ -326,18 +318,17 @@ package body Concorde.Configure.Ships is
         (Config : Tropos.Configuration)
       is
          Handle : constant Concorde.Handles.Quarters.Quarters_Handle :=
-                    Concorde.Handles.Quarters.Get
-                      (Concorde.Db.Quarters.Get_Reference_By_Tag
-                         (Config.Config_Name));
+                    Concorde.Handles.Quarters.Get_By_Tag
+                      (Config.Config_Name);
          Count  : constant Positive :=
                     (if Config.Child_Count = 0
                      then 1
                      else Config.Value);
       begin
          for I in 1 .. Count loop
-            Concorde.Db.Ship_Design_Module.Create
+            Concorde.Handles.Ship_Design_Module.Create
               (Ship_Design => Design,
-               Component   => Handle.Reference_Component,
+               Component   => Handle,
                Tonnage     => Handle.Tonnage,
                Concealed   => False);
          end loop;
@@ -351,13 +342,12 @@ package body Concorde.Configure.Ships is
         (Config : Tropos.Configuration)
       is
          Handle : constant Concorde.Handles.Sensor.Sensor_Handle :=
-                    Concorde.Handles.Sensor.Get
-                      (Concorde.Db.Sensor.Get_Reference_By_Tag
-                         (Config.Get ("type", "basic")));
+                    Concorde.Handles.Sensor.Get_By_Tag
+                      (Config.Get ("type", "basic"));
       begin
-         Concorde.Db.Ship_Design_Module.Create
+         Concorde.Handles.Ship_Design_Module.Create
            (Ship_Design => Design,
-            Component   => Handle.Reference_Component,
+            Component   => Handle,
             Tonnage     => Handle.Tonnage,
             Concealed   => False);
       end Configure_Sensor_Design;
@@ -370,25 +360,24 @@ package body Concorde.Configure.Ships is
         (Config : Tropos.Configuration)
       is
          Handle : constant Concorde.Handles.Weapon_Mount.Weapon_Mount_Handle :=
-                    Concorde.Handles.Weapon_Mount.Get
-                      (Concorde.Db.Weapon_Mount.Get_Reference_By_Tag
-                         (Config.Config_Name));
+                    Concorde.Handles.Weapon_Mount.Get_By_Tag
+                      (Config.Config_Name);
       begin
          pragma Assert (Handle.Has_Element);
-         Concorde.Db.Ship_Design_Module.Create
+         Concorde.Handles.Ship_Design_Module.Create
            (Ship_Design => Design,
-            Component   => Handle.Reference_Component,
+            Component   => Handle,
             Tonnage     => Handle.Tonnage,
             Concealed   => Config.Get ("concealed"));
       end Configure_Weapon_Mount_Design;
 
    begin
       Configure_Engine_Design
-        (Concorde.Db.Engine.Get_Reference_By_Tag (Config.Get ("engine")));
+        (Concorde.Handles.Engine.Get_By_Tag (Config.Get ("engine")));
 
       if Config.Contains ("jump") then
          Configure_Jump_Design
-           (Concorde.Db.Jump_Drive.Get_Reference_By_Tag
+           (Concorde.Handles.Jump_Drive.Get_By_Tag
               (Config.Get ("jump")));
       end if;
 
@@ -413,30 +402,29 @@ package body Concorde.Configure.Ships is
          Jump_Power   : Non_Negative_Real := 0.0;
       begin
          for Module of
-           Concorde.Db.Ship_Design_Module.Select_By_Ship_Design
+           Concorde.Handles.Ship_Design_Module.Select_By_Ship_Design
              (Design)
          loop
             Space := Space - Module.Tonnage;
 
             declare
                use Concorde.Db;
-               Component : constant Concorde.Db.Component.Component_Type :=
-                             Concorde.Db.Component.Get (Module.Component);
             begin
-               if Component.Top_Record = R_Engine then
+               if Module.Component.Top_Record = R_Engine then
                   declare
-                     Engine : constant Concorde.Db.Engine.Engine_Type :=
-                                Concorde.Db.Engine.Get_Engine
-                                  (Component.Get_Component_Reference);
+                     Engine : constant Concorde.Handles.Engine.Engine_Class :=
+                                Concorde.Handles.Engine.Get_From_Component
+                                  (Module.Component);
                   begin
                      Engine_Power := Engine_Power
                        + Engine.Power_Per_Ton * Module.Tonnage;
                   end;
-               elsif Component.Top_Record = R_Jump_Drive then
+               elsif Module.Component.Top_Record = R_Jump_Drive then
                   declare
-                     Jump : constant Concorde.Db.Jump_Drive.Jump_Drive_Type :=
-                                Concorde.Db.Jump_Drive.Get_Jump_Drive
-                                  (Component.Get_Component_Reference);
+                     Jump               : constant Concorde.Handles.Jump_Drive
+                       .Jump_Drive_Handle :=
+                         Concorde.Handles.Jump_Drive.Get_From_Component
+                           (Module.Component);
                   begin
                      Jump_Power := Jump_Power
                        + Jump.Power_Per_Ton * Module.Tonnage;
@@ -445,7 +433,7 @@ package body Concorde.Configure.Ships is
             end;
          end loop;
 
-         Concorde.Db.Ship_Design.Update_Ship_Design (Design)
+         Concorde.Handles.Ship_Design.Update_Ship_Design (Design)
            .Set_Cargo_Space (Space)
            .Set_Basic_Power (Basic_Power)
            .Set_Engine_Power (Engine_Power)
@@ -466,12 +454,12 @@ package body Concorde.Configure.Ships is
       is (Get_Fraction (Config, Name));
 
    begin
-      Concorde.Db.Engine.Create
+      Concorde.Handles.Engine.Create
         (Minimum_Tonnage => Get_Value (Config, "minimum_size"),
          Power_Per_Ton   => Get ("power_per_ton"),
          Price_Per_Ton   => Concorde.Money.To_Price (Get ("cost")),
          Tag             => Config.Config_Name,
-         Enabled_By      => Concorde.Db.Null_Technology_Reference,
+         Enabled_By      => Concorde.Handles.Technology.Empty_Handle,
          Hull_Fraction   => Get ("hull"),
          Impulse         => Get ("impulse"));
    end Configure_Engine;
@@ -487,12 +475,12 @@ package body Concorde.Configure.Ships is
       is (Get_Value (Config, Name));
 
    begin
-      Concorde.Db.Generator.Create
+      Concorde.Handles.Generator.Create
         (Minimum_Tonnage => Get_Value (Config, "minimum_size"),
          Fuel_Per_Ton    => Get ("fuel_per_ton_per_day"),
          Price_Per_Ton   => Concorde.Money.To_Price (Get ("price_per_ton")),
          Tag             => Config.Config_Name,
-         Enabled_By      => Concorde.Db.Null_Technology_Reference,
+         Enabled_By      => Concorde.Handles.Technology.Empty_Handle,
          Power_Per_Ton   => Get ("power_per_ton"));
    end Configure_Generator;
 
@@ -508,7 +496,7 @@ package body Concorde.Configure.Ships is
       is (Get_Fraction (Config, Name));
 
    begin
-      Concorde.Db.Hull_Configuration.Create
+      Concorde.Handles.Hull_Configuration.Create
         (Tag           => Config.Config_Name,
          Streamlining  => Get ("streamlining"),
          Hull_Points   => Get ("hull_points"),
@@ -528,12 +516,12 @@ package body Concorde.Configure.Ships is
       is (Get_Fraction (Config, Name));
 
    begin
-      Concorde.Db.Jump_Drive.Create
+      Concorde.Handles.Jump_Drive.Create
         (Minimum_Tonnage => Get_Value (Config, "minimum_size"),
          Power_Per_Ton   => Get ("power_per_ton"),
          Price_Per_Ton   => Concorde.Money.To_Price (Get ("cost")),
          Tag             => Config.Config_Name,
-         Enabled_By      => Concorde.Db.Null_Technology_Reference,
+         Enabled_By      => Concorde.Handles.Technology.Empty_Handle,
          Hull_Fraction   => Get ("hull"),
          Jump            => Get ("jump"));
    end Configure_Jump_Drive;
@@ -550,12 +538,12 @@ package body Concorde.Configure.Ships is
 
       Tonnage : constant Non_Negative_Real := Get ("tonnage");
    begin
-      Concorde.Db.Quarters.Create
+      Concorde.Handles.Quarters.Create
         (Power_Per_Ton      => Get ("power_per_ton"),
          Minimum_Tonnage    => Tonnage,
          Price_Per_Ton      => Concorde.Money.To_Price (Get ("price_per_ton")),
          Tag                => Config.Config_Name,
-         Enabled_By         => Concorde.Db.Null_Technology_Reference,
+         Enabled_By         => Concorde.Handles.Technology.Empty_Handle,
          Tonnage            => Tonnage,
          Comfort_Level      => Config.Get ("comfort"),
          Standard_Occupants => Config.Get ("occupancy"),
@@ -574,13 +562,13 @@ package body Concorde.Configure.Ships is
 
       Tonnage : constant Non_Negative_Real := Get ("tonnage");
    begin
-      Concorde.Db.Sensor.Create
+      Concorde.Handles.Sensor.Create
         (Minimum_Tonnage => Get_Value (Config, "minimum_size"),
          Power_Per_Ton   => Get ("power") / Real'Max (Tonnage, 1.0),
          Price_Per_Ton   => Concorde.Money.To_Price (Get ("price")
            / Real'Max (Tonnage, 1.0)),
          Tag             => Config.Config_Name,
-         Enabled_By      => Concorde.Db.Null_Technology_Reference,
+         Enabled_By      => Concorde.Handles.Technology.Empty_Handle,
          Tonnage         => Tonnage,
          Modifier        => Config.Get ("modifier"));
    end Configure_Sensor;
@@ -650,9 +638,9 @@ package body Concorde.Configure.Ships is
           (Config.Get (Name)));
 
    begin
-      Concorde.Db.Weapon_Mount.Create
+      Concorde.Handles.Weapon_Mount.Create
         (Tag             => Config.Config_Name,
-         Enabled_By      => Concorde.Db.Null_Technology_Reference,
+         Enabled_By      => Concorde.Handles.Technology.Empty_Handle,
          Power_Per_Ton   => Get ("power"),
          Minimum_Tonnage => Get ("tonnage"),
          Price_Per_Ton   => Get ("price"),

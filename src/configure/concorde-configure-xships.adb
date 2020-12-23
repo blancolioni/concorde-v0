@@ -8,15 +8,15 @@ with Concorde.Solar_System;
 
 with Concorde.Ships;
 
-with Concorde.Db.Commodity;
-with Concorde.Db.Container_Component;
-with Concorde.Db.Drive_Component;
-with Concorde.Db.Power_Component;
+with Concorde.Handles.Commodity;
+with Concorde.Handles.Container_Component;
+with Concorde.Handles.Drive_Component;
+with Concorde.Handles.Power_Component;
 
-with Concorde.Db.Attachment;
-with Concorde.Db.Ship_Component;
-with Concorde.Db.Ship_Design;
-with Concorde.Db.Ship_Module_Design;
+with Concorde.Handles.Attachment;
+with Concorde.Handles.Ship_Component;
+with Concorde.Handles.Ship_Design;
+with Concorde.Handles.Ship_Module_Design;
 
 package body Concorde.Configure.Ships is
 
@@ -98,7 +98,7 @@ package body Concorde.Configure.Ships is
 
          Ada.Text_IO.Put_Line ("configure: " & Component_Config.Config_Name);
 
-         Concorde.Db.Container_Component.Create
+         Concorde.Handles.Container_Component.Create
            (Idle_Power          => Idle_Power,
             Max_Power           => Max_Power,
             Linear_Accel_Limit  => Linear_Accel_Limit,
@@ -112,7 +112,7 @@ package body Concorde.Configure.Ships is
             Heat_Sink           => Heat_Sink,
             Explosion_Power     => Explosion_Power,
             Tag                 => Tag,
-            Enabled_By          => Concorde.Db.Null_Technology_Reference,
+            Enabled_By          => Concorde.Handles.Null_Technology_Reference,
             Available           => True,
             Initial_Price       => Concorde.Money.Zero,
             Mass                => Mass,
@@ -134,7 +134,7 @@ package body Concorde.Configure.Ships is
 
          Ada.Text_IO.Put_Line ("configure: " & Component_Config.Config_Name);
 
-         Concorde.Db.Drive_Component.Create
+         Concorde.Handles.Drive_Component.Create
            (Idle_Power          => Idle_Power,
             Max_Power           => Max_Power,
             Linear_Accel_Limit  => Linear_Accel_Limit,
@@ -148,7 +148,7 @@ package body Concorde.Configure.Ships is
             Heat_Sink           => Heat_Sink,
             Explosion_Power     => Explosion_Power,
             Tag                 => Tag,
-            Enabled_By          => Concorde.Db.Null_Technology_Reference,
+            Enabled_By          => Concorde.Handles.Null_Technology_Reference,
             Available           => True,
             Initial_Price       => Concorde.Money.Zero,
             Mass                => Mass,
@@ -162,23 +162,23 @@ package body Concorde.Configure.Ships is
             Minimum_Thrust      => Get ("thrust", "minimum"),
             Maximum_Thrust      => Get ("thrust", "maximum"),
             Fuel                =>
-              Concorde.Db.Commodity.Get_Reference_By_Tag
+              Concorde.Handles.Commodity.Get_By_Tag
                 (Component_Config.Get ("fuel", "")),
             Oxidiser            =>
-              Concorde.Db.Commodity.Get_Reference_By_Tag
+              Concorde.Handles.Commodity.Get_By_Tag
                 (Component_Config.Get ("oxidiser", "")),
             Max_Fuel_Burn       => Get ("max_fuel_burn"),
             Max_Oxidiser_Burn   => Get ("max_oxidiser_burn"),
             Fuel_Propellant     => Component_Config.Get ("propellent-fuel"),
             Propellent          =>
-              Concorde.Db.Commodity.Get_Reference_By_Tag
+              Concorde.Handles.Commodity.Get_By_Tag
                 (Component_Config.Get ("propellent", "")),
             Exhaust_Velocity    => Get ("ve"));
       elsif Component_Config.Get ("class", "") = "power" then
 
          Ada.Text_IO.Put_Line ("configure: " & Component_Config.Config_Name);
 
-         Concorde.Db.Power_Component.Create
+         Concorde.Handles.Power_Component.Create
            (Idle_Power          => Idle_Power,
             Max_Power           => Max_Power,
             Linear_Accel_Limit  => Linear_Accel_Limit,
@@ -192,7 +192,7 @@ package body Concorde.Configure.Ships is
             Heat_Sink           => Heat_Sink,
             Explosion_Power     => Explosion_Power,
             Tag                 => Tag,
-            Enabled_By          => Concorde.Db.Null_Technology_Reference,
+            Enabled_By          => Concorde.Handles.Null_Technology_Reference,
             Available           => True,
             Initial_Price       => Concorde.Money.Zero,
             Mass                => Mass,
@@ -207,12 +207,12 @@ package body Concorde.Configure.Ships is
       end if;
 
       declare
-         Component : constant Concorde.Db.Ship_Component_Reference :=
-                       Concorde.Db.Ship_Component.Get_Reference_By_Tag
+         Component : constant Concorde.Handles.Ship_Component_Reference :=
+                       Concorde.Handles.Ship_Component.Get_By_Tag
                          (Component_Config.Config_Name);
       begin
          for Attach_Config of Component_Config.Child ("attachments") loop
-            Concorde.Db.Attachment.Create
+            Concorde.Handles.Attachment.Create
               (Ship_Component => Component,
                Name           => Attach_Config.Config_Name,
                X              => Attach_Config.Get (1),
@@ -230,8 +230,8 @@ package body Concorde.Configure.Ships is
    procedure Configure_Design
      (Design_Config : Tropos.Configuration)
    is
-      Design : constant Concorde.Db.Ship_Design_Reference :=
-                 Concorde.Db.Ship_Design.Create
+      Design : constant Concorde.Handles.Ship_Design_Reference :=
+                 Concorde.Handles.Ship_Design.Create
                    (Name      => Design_Config.Config_Name,
                     Hold_Size => Concorde.Quantities.Zero,
                     Default_Manager =>
@@ -240,8 +240,8 @@ package body Concorde.Configure.Ships is
       for Component_Config of Design_Config.Child ("components") loop
          declare
             use Concorde.Db;
-            Component : constant Concorde.Db.Ship_Component_Reference :=
-                          Concorde.Db.Ship_Component.Get_Reference_By_Tag
+            Component : constant Concorde.Handles.Ship_Component_Reference :=
+                          Concorde.Handles.Ship_Component.Get_By_Tag
                             (Component_Config.Config_Name);
             Count     : constant Positive :=
                           (if Component_Config.Child_Count = 1
@@ -256,7 +256,7 @@ package body Concorde.Configure.Ships is
                   & Component_Config.Config_Name);
             else
                for I in 1 .. Count loop
-                  Concorde.Db.Ship_Module_Design.Create
+                  Concorde.Handles.Ship_Module_Design.Create
                     (Ship_Design    => Design,
                      Ship_Component => Component);
                end loop;

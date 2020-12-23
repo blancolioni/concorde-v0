@@ -9,24 +9,26 @@ with Concorde.Random;
 --  with Concorde.Real_Images;
 with Concorde.Solar_System;
 
-with Concorde.Db.Deposit;
-with Concorde.Db.Fuzzy_Set;
-with Concorde.Db.Gas;
-with Concorde.Db.Resource;
-with Concorde.Db.Resource_Constraint;
-with Concorde.Db.Resource_Sphere;
-with Concorde.Db.Star_System;
-with Concorde.Db.World_Sector;
+with Concorde.Handles.Deposit;
+with Concorde.Handles.Fuzzy_Set;
+with Concorde.Handles.Gas;
+with Concorde.Handles.Resource_Constraint;
+with Concorde.Handles.Resource_Sphere;
+with Concorde.Handles.Star_System;
+with Concorde.Handles.World_Sector;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Resources is
 
    package Resource_Choices is
      new WL.Random.Weighted_Random_Choices
-       (Element_Type => Concorde.Db.Resource_Reference);
+       (Element_Type => Concorde.Handles.Resource.Resource_Handle,
+        "="          => Concorde.Handles.Resource."=");
 
    function Create_Score
-     (World     : Concorde.Db.World.World_Type;
-      Resource  : Concorde.Db.Resource_Reference;
+     (World     : Concorde.Handles.World.World_Class;
+      Resource  : Concorde.Handles.Resource.Resource_Class;
       Generator : Random_Deposit_Generator)
       return Natural;
 
@@ -75,7 +77,7 @@ package body Concorde.Configure.Resources is
             Max_IPP_PPM  : constant Non_Negative_Real := Get ("max_ipp_ppm");
 
          begin
-            Concorde.Db.Gas.Create
+            Concorde.Handles.Gas.Create
               (Tag              =>
                  Ada.Characters.Handling.To_Lower (Cfg.Config_Name),
                Formula          => Formula,
@@ -99,7 +101,7 @@ package body Concorde.Configure.Resources is
    ---------------------
 
    procedure Create_Deposits
-     (World     : Concorde.Db.World.World_Type;
+     (World     : Concorde.Handles.World.World_Class;
       Generator : Random_Deposit_Generator)
    is
       use Concorde.Elementary_Functions;
@@ -111,8 +113,8 @@ package body Concorde.Configure.Resources is
       Deposit_Count         : Positive;
       package Sector_Vectors is
         new Ada.Containers.Vectors
-          (Positive, Concorde.Db.World_Sector_Reference,
-           Concorde.Db."=");
+          (Positive, Concorde.Handles.World_Sector.World_Sector_Handle,
+           Concorde.Handles.World_Sector."=");
 
       Sector_Refs           : Sector_Vectors.Vector;
 
@@ -121,24 +123,25 @@ package body Concorde.Configure.Resources is
    begin
 
       for Resource of
-        Concorde.Db.Resource.Scan_By_Tag
+        Concorde.Handles.Resource.Scan_By_Tag
       loop
          declare
             Score : constant Natural :=
                       Create_Score
                         (World    => World,
-                         Resource => Resource.Get_Resource_Reference,
+                         Resource => Resource,
                          Generator => Generator);
          begin
-            Resource_Choice.Insert (Resource.Get_Resource_Reference, Score);
+            Resource_Choice.Insert
+              (Resource.To_Resource_Handle, Score);
          end;
       end loop;
 
       for World_Sector of
-        Concorde.Db.World_Sector.Select_By_World
-          (World.Get_World_Reference)
+        Concorde.Handles.World_Sector.Select_By_World
+          (World)
       loop
-         Sector_Refs.Append (World_Sector.Get_World_Sector_Reference);
+         Sector_Refs.Append (World_Sector.To_World_Sector_Handle);
       end loop;
 
       Deposit_Count :=
@@ -147,7 +150,7 @@ package body Concorde.Configure.Resources is
 
       while Concentration > Initial_Concentration / 20.0 loop
          declare
-            Resource : constant Concorde.Db.Resource_Reference :=
+            Resource : constant Concorde.Handles.Resource.Resource_Handle :=
                          Resource_Choice.Choose;
             Sector_Index : constant Natural :=
                              (if Sector_Refs.Is_Empty
@@ -160,11 +163,11 @@ package body Concorde.Configure.Resources is
                                 + 1.0)
                                 * Concentration);
          begin
-            Concorde.Db.Deposit.Create
-              (World         => World.Get_World_Reference,
+            Concorde.Handles.Deposit.Create
+              (World         => World,
                World_Sector  =>
                  (if Sector_Refs.Is_Empty
-                  then Concorde.Db.Null_World_Sector_Reference
+                  then Concorde.Handles.World_Sector.Empty_Handle
                   else Sector_Refs.Element (Sector_Index)),
                Resource      => Resource,
                Concentration => This_Conc,
@@ -196,10 +199,9 @@ package body Concorde.Configure.Resources is
    is
       Gen : Random_Deposit_Generator;
    begin
-      for Sphere of Concorde.Db.Resource_Sphere.Scan_By_Top_Record loop
+      for Sphere of Concorde.Handles.Resource_Sphere.Scan_By_Top_Record loop
          declare
             use Concorde.Elementary_Functions;
-            use type Concorde.Db.Resource_Reference;
             Distance : constant Non_Negative_Real :=
               Sqrt ((X - Sphere.Centre_X) ** 2
                     + (Y - Sphere.Centre_Y) ** 2
@@ -213,7 +215,7 @@ package body Concorde.Configure.Resources is
 
          begin
             for Item of Gen.Resources loop
-               if Item.Reference = Sphere.Resource then
+               if Item.Resource.Tag = Sphere.Resource.Tag then
                   Item.Strength := Item.Strength + Strength;
                   Found := True;
                   exit;
@@ -221,7 +223,8 @@ package body Concorde.Configure.Resources is
             end loop;
 
             if not Found then
-               Gen.Resources.Append ((Sphere.Resource, Strength));
+               Gen.Resources.Append
+                 ((Sphere.Resource.To_Resource_Handle, Strength));
             end if;
 
             Gen.Total_Strength := Gen.Total_Strength + Strength;
@@ -241,7 +244,7 @@ package body Concorde.Configure.Resources is
    is
    begin
       for Constraint of
-        Concorde.Db.Resource_Constraint.Select_By_Sphere_Constraint (True)
+        Concorde.Handles.Resource_Constraint.Select_By_Sphere_Constraint (True)
       loop
          declare
             RX     : constant Real := Constraint.Sphere_Rx * R_X;
@@ -276,7 +279,7 @@ package body Concorde.Configure.Resources is
                begin
 
                   if R > 0.0 and then S > 0.0 then
-                     Concorde.Db.Resource_Sphere.Create
+                     Concorde.Handles.Resource_Sphere.Create
                        (Resource    => Constraint.Resource,
                         Centre_X    => X,
                         Centre_Y    => Y,
@@ -296,8 +299,8 @@ package body Concorde.Configure.Resources is
    ------------------
 
    function Create_Score
-     (World     : Concorde.Db.World.World_Type;
-      Resource  : Concorde.Db.Resource_Reference;
+     (World     : Concorde.Handles.World.World_Class;
+      Resource  : Concorde.Handles.Resource.Resource_Class;
       Generator : Random_Deposit_Generator)
       return Natural
    is
@@ -319,7 +322,8 @@ package body Concorde.Configure.Resources is
       Total_Weight    : Non_Negative_Real := 0.0;
 
       function Check
-        (Constraint : Concorde.Db.Resource_Constraint.Resource_Constraint_Type)
+        (Constraint : Concorde.Handles.Resource_Constraint
+         .Resource_Constraint_Class)
          return Boolean;
 
       -----------
@@ -327,7 +331,8 @@ package body Concorde.Configure.Resources is
       -----------
 
       function Check
-        (Constraint : Concorde.Db.Resource_Constraint.Resource_Constraint_Type)
+        (Constraint : Concorde.Handles.Resource_Constraint
+         .Resource_Constraint_Class)
          return Boolean
       is
          use type Concorde.Db.Stellar_Orbit_Zone;
@@ -375,12 +380,12 @@ package body Concorde.Configure.Resources is
       -------------------
 
       function Score_Spheres return Constraint_Record is
-         System : constant Concorde.Db.Star_System.Star_System_Type :=
-                    Concorde.Db.Star_System.Get (World.Star_System);
+         System : constant Concorde.Handles.Star_System.Star_System_Class :=
+                    World.Star_System;
          Mean   : Non_Negative_Real := 0.0;
       begin
          for Resource_Sphere of
-           Concorde.Db.Resource_Sphere.Select_By_Resource (Resource)
+           Concorde.Handles.Resource_Sphere.Select_By_Resource (Resource)
          loop
             declare
                use Concorde.Elementary_Functions;
@@ -390,7 +395,7 @@ package body Concorde.Configure.Resources is
                            + (System.Z - Resource_Sphere.Centre_Z) ** 2);
             begin
 --                 Ada.Text_IO.Put_Line
---                   (Concorde.Db.Resource.Get (Resource).Tag
+--                   (Concorde.Handles.Resource.Get (Resource).Tag
 --                    & ": sphere at ("
 --                    & Image (Resource_Sphere.Centre_X)
 --                    & "," & Image (Resource_Sphere.Centre_Y)
@@ -417,7 +422,7 @@ package body Concorde.Configure.Resources is
    begin
 
       for Constraint of
-        Concorde.Db.Resource_Constraint.Select_By_Resource (Resource)
+        Concorde.Handles.Resource_Constraint.Select_By_Resource (Resource)
       loop
          if Constraint.Sphere_Constraint then
             declare
@@ -434,8 +439,8 @@ package body Concorde.Configure.Resources is
                   M_E : constant Non_Negative_Real :=
                           World.Mass
                             / Concorde.Solar_System.Earth_Mass;
-                  Fuzzy_Set : constant Concorde.Db.Fuzzy_Set.Fuzzy_Set_Type :=
-                                Concorde.Db.Fuzzy_Set.Get (Constraint.Mass);
+                  Fuzzy_Set : constant Handles.Fuzzy_Set.Fuzzy_Set_Class :=
+                                Constraint.Mass;
                   Weight : constant Unit_Real :=
                              Sample
                                (Fuzzy_Set.Max_Zero, Fuzzy_Set.Min_One,
@@ -471,7 +476,7 @@ package body Concorde.Configure.Resources is
 
 --           if Score > 0.0 then
 --              Ada.Text_IO.Put_Line
---                (World.Name & ": " & Concorde.Db.Resource.Get (Resource).Tag
+--          (World.Name & ": " & Concorde.Handles.Resource.Get (Resource).Tag
 --                 & ": " & Concorde.Real_Images.Approximate_Image (Score));
 --           end if;
 

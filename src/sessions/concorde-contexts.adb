@@ -1,4 +1,4 @@
-with Concorde.Db.User;
+with Concorde.Handles.User;
 
 package body Concorde.Contexts is
 
@@ -348,7 +348,7 @@ package body Concorde.Contexts is
       return String
    is
    begin
-      return Concorde.Db.User.Get (Context.User).Login;
+      return Concorde.Handles.User.Get (Context.User).Login;
    end User_Name;
 
    -----------

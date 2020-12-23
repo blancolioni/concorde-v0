@@ -64,7 +64,7 @@ private
    protected type Session_Data is
 
       procedure Create_Client
-        (User           : Concorde.Db.User_Reference;
+        (User           : Concorde.Handles.User_Reference;
          Context        : Concorde.Contexts.Context_Type;
          Model_Name     : String;
          Model_Argument : String;
@@ -106,8 +106,8 @@ private
    type Root_Concorde_Session is
      new Concorde.UI.State_Interface with
       record
-         User            : Concorde.Db.User_Reference :=
-           Concorde.Db.Null_User_Reference;
+         User            : Concorde.Handles.User_Reference :=
+           Concorde.Handles.Null_User_Reference;
          Default_Context : Concorde.Contexts.Context_Type;
          Data            : Session_Data_Access;
       end record;

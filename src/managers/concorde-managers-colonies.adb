@@ -1,7 +1,6 @@
 with Ada.Containers.Doubly_Linked_Lists;
 
 with Concorde.Colonies;
-with Concorde.Worlds;
 
 with Concorde.Logging;
 with Concorde.Money;
@@ -10,43 +9,66 @@ with Concorde.Random;
 with Concorde.Real_Images;
 
 with Concorde.Network;
+with Concorde.Nodes;
 
-with Concorde.Db.Colony;
-with Concorde.Db.Colony_Policy;
-with Concorde.Db.Colony_Price;
-with Concorde.Db.Colony_Zone;
-with Concorde.Db.Commodity;
-with Concorde.Db.Deposit;
-with Concorde.Db.Network_Value;
-with Concorde.Db.Node;
-with Concorde.Db.Policy;
-with Concorde.Db.Pop;
-with Concorde.Db.Pop_Group;
-with Concorde.Db.Pop_Group_Demand;
-with Concorde.Db.Pop_Group_Member;
-with Concorde.Db.Resource;
-with Concorde.Db.Wealth_Group;
-with Concorde.Db.Zone;
+with Concorde.Handles.Colony;
+with Concorde.Handles.Colony_Policy;
+with Concorde.Handles.Colony_Price;
+with Concorde.Handles.Colony_Zone;
+with Concorde.Handles.Commodity;
+with Concorde.Handles.Deposit;
+with Concorde.Handles.Network_Value;
+with Concorde.Handles.Node;
+with Concorde.Handles.Policy;
+with Concorde.Handles.Pop;
+with Concorde.Handles.Pop_Group;
+with Concorde.Handles.Pop_Group_Demand;
+with Concorde.Handles.Pop_Group_Member;
+with Concorde.Handles.Resource;
+with Concorde.Handles.Wealth_Group;
+with Concorde.Handles.World_Sector;
+with Concorde.Handles.Zone;
 
 package body Concorde.Managers.Colonies is
 
    type Pop_Group_Values is
       record
-         Group       : Concorde.Db.Pop_Group_Reference;
-         Income      : Concorde.Db.Network_Value_Reference;
-         Tax_Rate    : Concorde.Db.Network_Value_Reference;
-         Tax_Evasion : Concorde.Db.Network_Value_Reference;
-         Happiness   : Concorde.Db.Network_Value_Reference;
+         Group       : Concorde.Handles.Pop_Group.Pop_Group_Handle;
+         Income      : Concorde.Handles.Network_Value.Network_Value_Handle;
+         Tax_Rate    : Concorde.Handles.Network_Value.Network_Value_Handle;
+         Tax_Evasion : Concorde.Handles.Network_Value.Network_Value_Handle;
+         Happiness   : Concorde.Handles.Network_Value.Network_Value_Handle;
       end record;
 
    package Pop_Group_Value_Lists is
      new Ada.Containers.Doubly_Linked_Lists (Pop_Group_Values);
 
+   type Pop_Cache_Entry is
+      record
+         Handle : Concorde.Nodes.Value_Handle;
+         Group  : Concorde.Handles.Pop_Group.Pop_Group_Handle;
+      end record;
+
+   package Pop_Cache_Maps is
+     new WL.String_Maps (Pop_Cache_Entry);
+
+   type Commodity_Cache_Entry is
+      record
+         Handle : Concorde.Nodes.Value_Handle;
+         Ref    : Concorde.Handles.Commodity.Commodity_Handle;
+      end record;
+
+   package Commodity_Cache_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Commodity_Cache_Entry);
+
    type Root_Colony_Manager_Type is
      new Root_Manager_Type with
       record
-         Colony      : Concorde.Db.Colony_Reference;
+         Colony      : Concorde.Handles.Colony.Colony_Handle;
          Group_Nodes : Pop_Group_Value_Lists.List;
+         Network     : Concorde.Network.Network_Handle;
+         Pop_Cache   : Pop_Cache_Maps.Map;
+         Commodities : Commodity_Cache_Lists.List;
       end record;
 
    overriding function Identifier
@@ -67,10 +89,10 @@ package body Concorde.Managers.Colonies is
    overriding procedure Activate
      (Manager : not null access Root_Colony_Manager_Type)
    is
-      Colony : constant Concorde.Db.Colony.Colony_Type :=
-                 Concorde.Db.Colony.Get (Manager.Colony);
-      Network : constant Concorde.Db.Network_Reference :=
-                  Colony.Get_Network_Reference;
+      Colony : constant Concorde.Handles.Colony.Colony_Handle :=
+                 Manager.Colony;
+      Network : constant Concorde.Network.Network_Handle :=
+                  Manager.Network;
 
       procedure Update_Colony_Prices;
 
@@ -86,19 +108,16 @@ package body Concorde.Managers.Colonies is
 
       procedure Update_Colony_Prices is
       begin
-         for Colony_Price of
-           Concorde.Db.Colony_Price.Select_By_Colony (Manager.Colony)
-         loop
+         for Item of Manager.Commodities loop
             declare
-               Tag : constant String :=
-                       Concorde.Db.Commodity.Get (Colony_Price.Commodity).Tag
-                     & "-base-price";
                Price : constant Real :=
-                         Concorde.Money.To_Real (Colony_Price.Price);
+                         Concorde.Money.To_Real
+                           (Concorde.Handles.Colony_Price
+                            .Get_By_Commodity_Price
+                              (Manager.Colony, Item.Ref)
+                            .Price);
             begin
-               Concorde.Network.Set_New_Value
-                 (Network, Tag, Price);
-               Concorde.Network.Commit_New_Value (Network, Tag);
+               Concorde.Nodes.Update_Value (Item.Handle, Price);
             end;
          end loop;
       end Update_Colony_Prices;
@@ -114,25 +133,27 @@ package body Concorde.Managers.Colonies is
 
          Mined_Resource : Resource_Mining_Maps.Map;
 
-         Mine : constant Concorde.Db.Zone_Reference :=
-                  Concorde.Db.Zone.Get_Reference_By_Tag ("mine");
+         Mine : constant Concorde.Handles.Zone.Zone_Handle :=
+                  Concorde.Handles.Zone.Get_By_Tag ("mine");
       begin
 
          for Colony_Zone of
-           Concorde.Db.Colony_Zone.Select_By_Colony_Zone
+           Concorde.Handles.Colony_Zone.Select_By_Colony_Zone
              (Colony => Manager.Colony,
               Zone   => Mine)
          loop
             declare
-               Sector  : constant Concorde.Db.World_Sector_Reference :=
-                           Colony_Zone.World_Sector;
-               Deposit : constant Concorde.Db.Deposit.Deposit_Type :=
-                           Concorde.Db.Deposit.Get_By_World_Sector (Sector);
+               Sector  : constant Concorde.Handles.World_Sector
+                 .World_Sector_Class :=
+                   Colony_Zone.World_Sector;
+               Deposit : constant Concorde.Handles.Deposit.Deposit_Handle :=
+                                       Concorde.Handles.Deposit
+                                         .Get_By_World_Sector (Sector);
             begin
                if Deposit.Has_Element then
                   declare
                      Tag : constant String :=
-                             Concorde.Db.Resource.Get (Deposit.Resource).Tag;
+                             Deposit.Resource.Tag;
                      Concentration : constant Real :=
                                        Deposit.Concentration;
                      Available     : constant Real :=
@@ -163,7 +184,7 @@ package body Concorde.Managers.Colonies is
 
                         Concorde.Logging.Log
                           (Actor    => "mine",
-                           Location => Concorde.Worlds.Name (Colony.World),
+                           Location => Colony.World.Name,
                            Category => Tag,
                            Message  =>
                              "available "
@@ -179,8 +200,7 @@ package body Concorde.Managers.Colonies is
                            & Image (Remaining)
                            & " new concentration "
                            & Image (New_Conc * 100.0) & "%");
-                        Concorde.Db.Deposit.Update_Deposit
-                          (Deposit.Get_Deposit_Reference)
+                        Deposit.Update_Deposit
                           .Set_Concentration (New_Conc)
                           .Set_Difficulty (1.0 - New_Conc)
                           .Set_Available
@@ -198,9 +218,11 @@ package body Concorde.Managers.Colonies is
                        Resource_Mining_Maps.Key (Position) & "-production";
                Quantity : constant Real :=
                             Resource_Mining_Maps.Element (Position);
+               Handle   : constant Concorde.Nodes.Value_Handle :=
+                            Concorde.Network.Get_Handle
+                              (Manager.Network, Tag);
             begin
-               Concorde.Network.Set_New_Value (Network, Tag, Quantity);
-               Concorde.Network.Commit_New_Value (Network, Tag);
+               Concorde.Nodes.Update_Value (Handle, Quantity);
             end;
          end loop;
 
@@ -218,11 +240,11 @@ package body Concorde.Managers.Colonies is
          Remaining_Map : Real_Maps.Map;
 
          function Remaining
-           (Commodity : Concorde.Db.Commodity_Reference)
+           (Commodity : Concorde.Handles.Commodity.Commodity_Class)
             return Non_Negative_Real;
 
          procedure Receive
-           (Commodity : Concorde.Db.Commodity_Reference;
+           (Commodity : Concorde.Handles.Commodity.Commodity_Class;
             Quantity  : Real);
 
          -------------
@@ -230,11 +252,10 @@ package body Concorde.Managers.Colonies is
          -------------
 
          procedure Receive
-           (Commodity : Concorde.Db.Commodity_Reference;
+           (Commodity : Concorde.Handles.Commodity.Commodity_Class;
             Quantity  : Real)
          is
-            Tag : constant String :=
-                    Concorde.Db.Commodity.Get (Commodity).Tag;
+            Tag : constant String := Commodity.Tag;
          begin
             pragma Assert (Remaining_Map.Contains (Tag),
                            "remaining map did not contain " & Tag);
@@ -246,42 +267,43 @@ package body Concorde.Managers.Colonies is
          ---------------
 
          function Remaining
-           (Commodity : Concorde.Db.Commodity_Reference)
+           (Commodity : Concorde.Handles.Commodity.Commodity_Class)
             return Non_Negative_Real
          is
-            Tag : constant String := Concorde.Db.Commodity.Get (Commodity).Tag;
+            Tag : constant String := Commodity.Tag;
          begin
             if not Remaining_Map.Contains (Tag) then
                Remaining_Map.Insert
                  (Tag,
                   Concorde.Network.Current_Value
-                    (Network, Tag & "-supply"));
+                    (Manager.Network, Tag & "-supply"));
             end if;
             return Remaining_Map.Element (Tag);
          end Remaining;
 
       begin
          for Pop_Group of
-           Concorde.Db.Wealth_Group.Scan_By_Priority
+           Concorde.Handles.Wealth_Group.Scan_By_Priority
          loop
 
             for Pop_Group_Demand of
-              Concorde.Db.Pop_Group_Demand.Select_By_Pop_Group
-                (Pop_Group.Get_Pop_Group_Reference)
+              Concorde.Handles.Pop_Group_Demand.Select_By_Pop_Group
+                (Pop_Group)
             loop
                declare
-                  Commodity : constant Concorde.Db.Commodity_Reference :=
+                  Commodity        : constant Concorde.Handles.Commodity
+                    .Commodity_Class :=
                                  Pop_Group_Demand.Commodity;
                   Demand_Tag : constant String :=
                                  Pop_Group.Tag
                                  & "-"
-                                 & Concorde.Db.Commodity.Get (Commodity).Tag
-                               & "-"
+                                 & Commodity.Tag
+                                 & "-"
                                  & "demand";
                   Receive_Tag : constant String :=
                                   Pop_Group.Tag
                                   & "-"
-                                  & Concorde.Db.Commodity.Get (Commodity).Tag
+                                  & Commodity.Tag
                                   & "-"
                                   & "recv";
 
@@ -292,10 +314,14 @@ package body Concorde.Managers.Colonies is
                                  Remaining (Commodity);
                   Received   : constant Real := Real'Min (Supply, Demand);
                begin
-                  Concorde.Network.Set_New_Value
+                  Concorde.Logging.Log
+                    ("pop-demand",
+                     "demand=" & Image (Demand)
+                     & "; supply=" & Image (Supply)
+                     & "; received=" & Image (Received));
+
+                  Concorde.Network.Update_Value
                     (Network, Receive_Tag, Received);
-                  Concorde.Network.Commit_New_Value
-                    (Network, Receive_Tag);
                   Receive (Commodity, Received);
                end;
             end loop;
@@ -314,7 +340,7 @@ package body Concorde.Managers.Colonies is
          Group_Size : Pop_Group_Maps.Map;
 
          procedure Add_Pop
-           (Group : Concorde.Db.Pop_Group_Reference;
+           (Group : Concorde.Handles.Pop_Group.Pop_Group_Class;
             Size  : Non_Negative_Real);
 
          -------------
@@ -322,11 +348,10 @@ package body Concorde.Managers.Colonies is
          -------------
 
          procedure Add_Pop
-           (Group : Concorde.Db.Pop_Group_Reference;
+           (Group : Concorde.Handles.Pop_Group.Pop_Group_Class;
             Size  : Non_Negative_Real)
          is
-            Tag : constant String :=
-                    Concorde.Db.Pop_Group.Get (Group).Tag;
+            Tag : constant String := Group.Tag;
          begin
             if not Group_Size.Contains (Tag) then
                Group_Size.Insert (Tag, 0.0);
@@ -335,39 +360,44 @@ package body Concorde.Managers.Colonies is
          end Add_Pop;
 
       begin
-         for Pop_Group of Concorde.Db.Pop_Group.Scan_By_Tag loop
+
+         for Pop_Group of Concorde.Handles.Pop_Group.Scan_By_Tag loop
             Group_Size.Insert (Pop_Group.Tag, 0.0);
          end loop;
 
-         for Pop of Concorde.Db.Pop.Select_By_Colony (Manager.Colony) loop
+         for Pop of Concorde.Handles.Pop.Select_By_Colony (Manager.Colony) loop
             for Group of
-              Concorde.Db.Pop_Group_Member.Select_By_Pop
-                (Pop.Get_Pop_Reference)
+              Concorde.Handles.Pop_Group_Member.Select_By_Pop
+                (Pop)
             loop
                Add_Pop (Group.Pop_Group, Pop.Size);
             end loop;
          end loop;
 
-         for Pop_Group of Concorde.Db.Pop_Group.Scan_By_Tag loop
-            Concorde.Network.Set_New_Value
-              (Colony.Get_Network_Reference, Pop_Group.Tag & "-population",
-               Group_Size (Pop_Group.Tag));
-            Concorde.Network.Commit_New_Value
-              (Colony.Get_Network_Reference, Pop_Group.Tag & "-population");
-            Concorde.Logging.Log
-              (Actor    => Pop_Group.Tag,
-               Location => Concorde.Worlds.Name (Colony.World),
-               Category => "size",
-               Message  =>
-                 Natural'Image
-                   (Natural (Group_Size.Element (Pop_Group.Tag))));
+         for Cache_Entry of Manager.Pop_Cache loop
+            declare
+               Tag : constant String :=
+                       Cache_Entry.Group.Tag;
+               Size : constant Non_Negative_Real :=
+                        Group_Size.Element (Tag);
+            begin
+               Concorde.Nodes.Update_Value
+                 (Node      => Cache_Entry.Handle,
+                  New_Value => Size);
+
+               Concorde.Logging.Log
+                 (Actor    => Tag,
+                  Location => Colony.World.Name,
+                  Category => "size",
+                  Message  => Image (Size));
+            end;
          end loop;
 
       end Update_Population_Sizes;
 
    begin
       Concorde.Logging.Log
-        (Actor    => Concorde.Worlds.Name (Colony.World),
+        (Actor    => Colony.World.Name,
          Location => "colony",
          Category => "managed",
          Message  => "activating");
@@ -380,42 +410,42 @@ package body Concorde.Managers.Colonies is
 
       Update_Mining_Production;
 
-      Concorde.Network.Update (Colony.Get_Network_Reference);
+      Concorde.Network.Update_Network (Manager.Network);
 
       for Policy of
-        Concorde.Db.Policy.Scan_By_Tag
+        Concorde.Handles.Policy.Scan_By_Tag
       loop
-         Concorde.Db.Colony_Policy.Update_Colony_Policy
-           (Concorde.Db.Colony_Policy.Get_Reference_By_Colony_Policy
-              (Manager.Colony, Policy.Get_Policy_Reference))
+         Concorde.Handles.Colony_Policy.Update_Colony_Policy
+           (Concorde.Handles.Colony_Policy.Get_By_Colony_Policy
+              (Manager.Colony, Policy))
            .Set_Revenue (Concorde.Money.Zero)
            .Set_Expense (Concorde.Money.Zero)
            .Done;
       end loop;
 
-      for Pop of Concorde.Db.Pop.Select_By_Colony (Manager.Colony) loop
+      for Pop of Concorde.Handles.Pop.Select_By_Colony (Manager.Colony) loop
          Concorde.Colonies.Daily_Tax_Revenue
-           (Manager.Colony, Pop.Get_Pop_Reference);
+           (Manager.Colony, Pop);
       end loop;
 
       for Policy of
-        Concorde.Db.Policy.Scan_By_Tag
+        Concorde.Handles.Policy.Scan_By_Tag
       loop
          Concorde.Colonies.Execute_Daily_Policy
            (Colony => Manager.Colony,
-            Policy => Policy.Get_Policy_Reference);
+            Policy => Policy);
       end loop;
 
       declare
          Birth_Rate : constant Unit_Real :=
                         Concorde.Network.Current_Value
-                          (Colony.Get_Network_Reference, "birth-rate");
+                          (Network, "birth-rate");
          Death_Rate : constant Unit_Real :=
                         Concorde.Network.Current_Value
-                          (Colony.Get_Network_Reference, "death-rate");
+                          (Network, "death-rate");
       begin
          for Pop of
-           Concorde.Db.Pop.Select_By_Colony (Manager.Colony)
+           Concorde.Handles.Pop.Select_By_Colony (Manager.Colony)
          loop
             declare
                Births : constant Non_Negative_Real :=
@@ -425,7 +455,7 @@ package body Concorde.Managers.Colonies is
                New_Size : constant Non_Negative_Real :=
                             Real'Max (Pop.Size + Births - Deaths, 0.0);
             begin
-               Concorde.Db.Pop.Update_Pop (Pop.Get_Pop_Reference)
+               Concorde.Handles.Pop.Update_Pop (Pop)
                  .Set_Size (New_Size)
                  .Done;
             end;
@@ -441,21 +471,25 @@ package body Concorde.Managers.Colonies is
    ----------------------------
 
    function Create_Default_Manager
-     (Managed : Concorde.Db.Managed_Reference) return Manager_Type
+     (Managed : Concorde.Handles.Managed.Managed_Class) return Manager_Type
    is
       use Concorde.Calendar;
-      Colony  : constant Concorde.Db.Colony.Colony_Type :=
-                  Concorde.Db.Colony.Get_Colony (Managed);
+      Colony  : constant Concorde.Handles.Colony.Colony_Handle :=
+                  Concorde.Handles.Colony.Get_From_Managed (Managed);
       Manager : Root_Colony_Manager_Type :=
                   Root_Colony_Manager_Type'
-                    (Managed         => Managed,
+                    (Managed         => Managed_Holders.To_Holder (Managed),
                      Is_Active       => True,
                      Has_Next_Update => True,
                      Next_Update     =>
                        Concorde.Calendar.Clock
                      + Concorde.Calendar.Days (Concorde.Random.Unit_Random),
-                     Colony          => Colony.Get_Colony_Reference,
-                     Group_Nodes     => Pop_Group_Value_Lists.Empty_List);
+                     Colony          => Colony,
+                     Network         =>
+                       Concorde.Network.Get_Network_Handle (Colony),
+                     Group_Nodes     => Pop_Group_Value_Lists.Empty_List,
+                     Pop_Cache       => Pop_Cache_Maps.Empty_Map,
+                     Commodities     => Commodity_Cache_Lists.Empty_List);
 
       procedure Add_Group
         (Name : String);
@@ -469,7 +503,7 @@ package body Concorde.Managers.Colonies is
       is
          function Get
            (Suffix : String)
-            return Concorde.Db.Network_Value_Reference;
+            return Concorde.Handles.Network_Value.Network_Value_Handle;
 
          ---------
          -- Get --
@@ -477,35 +511,58 @@ package body Concorde.Managers.Colonies is
 
          function Get
            (Suffix : String)
-            return Concorde.Db.Network_Value_Reference
+            return Concorde.Handles.Network_Value.Network_Value_Handle
          is
-            use type Concorde.Db.Node_Reference;
             Tag : constant String :=
                     Name & (if Suffix = "" then "" else "-" & Suffix);
-            Node : constant Concorde.Db.Node_Reference :=
-                     Concorde.Db.Node.Get_Reference_By_Tag (Tag);
+            Node : constant Concorde.Handles.Node.Node_Handle :=
+                     Concorde.Handles.Node.Get_By_Tag (Tag);
          begin
-            pragma Assert (Node /= Concorde.Db.Null_Node_Reference);
-            return Concorde.Db.Network_Value.Get_Reference_By_Network_Value
-              (Colony.Get_Network_Reference, Node);
+            pragma Assert (Node.Has_Element);
+            return Concorde.Handles.Network_Value.Get_By_Network_Value
+              (Colony, Node);
          end Get;
 
          Group : constant Pop_Group_Values := Pop_Group_Values'
-           (Group       => Concorde.Db.Pop_Group.Get_Reference_By_Tag (Name),
+           (Group       => Concorde.Handles.Pop_Group.Get_By_Tag (Name),
             Income      => Get ("income"),
             Tax_Rate    => Get ("income-tax-rate"),
             Tax_Evasion => Get ("tax-evasion"),
             Happiness   => Get (""));
+
+         Node_Handle  : constant Concorde.Nodes.Node_Handle :=
+                          Concorde.Nodes.Get_Handle
+                            (Concorde.Handles.Node.Get_By_Tag
+                               (Name & "-population"));
+         Value_Handle : constant Concorde.Nodes.Value_Handle :=
+                          Concorde.Network.Get_Handle
+                            (Network => Manager.Network,
+                             Node    => Node_Handle);
       begin
          Manager.Group_Nodes.Append (Group);
+         Manager.Pop_Cache.Insert
+           (Name, (Handle => Value_Handle, Group => Group.Group));
       end Add_Group;
 
    begin
       for Group of
-        Concorde.Db.Wealth_Group.Scan_By_Tag
+        Concorde.Handles.Wealth_Group.Scan_By_Tag
       loop
          Add_Group (Group.Tag);
       end loop;
+
+      for Commodity of Concorde.Handles.Commodity.Scan_By_Tag loop
+         declare
+            Tag : constant String := Commodity.Tag & "-base-price";
+         begin
+            Manager.Commodities.Append
+              (Commodity_Cache_Entry'
+                 (Handle => Concorde.Network.Get_Handle (Manager.Network, Tag),
+                  Ref    =>
+                    Concorde.Handles.Commodity.Commodity_Handle (Commodity)));
+         end;
+      end loop;
+
       return new Root_Colony_Manager_Type'(Manager);
    end Create_Default_Manager;
 

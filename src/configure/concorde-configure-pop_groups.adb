@@ -2,14 +2,16 @@ with Concorde.Identifiers;
 
 with Concorde.Configure.Metrics;
 
-with Concorde.Db.Commodity;
-with Concorde.Db.Effect;
-with Concorde.Db.Group_Influence;
-with Concorde.Db.Metric;
-with Concorde.Db.Node;
-with Concorde.Db.Pop_Group;
-with Concorde.Db.Pop_Group_Demand;
-with Concorde.Db.Wealth_Group;
+with Concorde.Handles.Commodity;
+with Concorde.Handles.Effect;
+with Concorde.Handles.Group_Influence;
+with Concorde.Handles.Metric;
+with Concorde.Handles.Node;
+with Concorde.Handles.Pop_Group;
+with Concorde.Handles.Pop_Group_Demand;
+with Concorde.Handles.Wealth_Group;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Pop_Groups is
 
@@ -32,19 +34,18 @@ package body Concorde.Configure.Pop_Groups is
    procedure Configure_Influence
      (Config : Tropos.Configuration)
    is
-      From : constant Concorde.Db.Pop_Group_Reference :=
-               Concorde.Db.Pop_Group.Get_Reference_By_Tag
-                 (Config.Config_Name);
+      use Concorde.Handles.Pop_Group;
+      From : constant Pop_Group_Handle :=
+               Get_By_Tag (Config.Config_Name);
    begin
       for Infl_Config of Config.Child ("influences") loop
          declare
-            use Concorde.Db;
-            To : constant Pop_Group_Reference :=
-                   Pop_Group.Get_Reference_By_Tag (Infl_Config.Config_Name);
+            To : constant Pop_Group_Handle :=
+                   Get_By_Tag (Infl_Config.Config_Name);
             Value : constant Real :=
                       Real (Float'(Infl_Config.Value));
          begin
-            Concorde.Db.Group_Influence.Create
+            Concorde.Handles.Group_Influence.Create
               (From, To, Value);
          end;
       end loop;
@@ -74,9 +75,10 @@ package body Concorde.Configure.Pop_Groups is
                  Config.Config_Name
                  & (if Suffix = "" then "" else "-" & Suffix);
       begin
-         Concorde.Db.Metric.Create
-           (Content => Value,
-            Tag     => Tag);
+         Concorde.Handles.Metric.Create
+           (Content    => Value,
+            Identifier => Concorde.Identifiers.Next_Identifier,
+            Tag        => Tag);
       end Metric;
 
       Is_Wealth_Group : constant Boolean :=
@@ -87,12 +89,12 @@ package body Concorde.Configure.Pop_Groups is
    begin
 
       if Is_Wealth_Group then
-         Concorde.Db.Wealth_Group.Create
+         Concorde.Handles.Wealth_Group.Create
            (Proportion => Proportion,
             Priority   => Config.Get ("priority", Natural'Last),
             Tag        => Config.Config_Name);
       else
-         Concorde.Db.Pop_Group.Create
+         Concorde.Handles.Pop_Group.Create
            (Tag        => Config.Config_Name,
             Proportion => Proportion);
       end if;
@@ -113,11 +115,11 @@ package body Concorde.Configure.Pop_Groups is
             Commodity_Tag => Demand_Config.Config_Name,
             Expression    => Demand_Config.Value);
 
-         Concorde.Db.Pop_Group_Demand.Create
+         Concorde.Handles.Pop_Group_Demand.Create
            (Pop_Group =>
-              Concorde.Db.Pop_Group.Get_Reference_By_Tag (Config.Config_Name),
+              Concorde.Handles.Pop_Group.Get_By_Tag (Config.Config_Name),
             Commodity =>
-              Concorde.Db.Commodity.Get_Reference_By_Tag
+              Concorde.Handles.Commodity.Get_By_Tag
                 (Demand_Config.Config_Name));
 
          Metric
@@ -132,14 +134,14 @@ package body Concorde.Configure.Pop_Groups is
                            Config.Config_Name & "-"
                            & Demand_Config.Config_Name & "-recv";
          begin
-            Concorde.Db.Effect.Create
+            Concorde.Handles.Effect.Create
               (Identifier => Identifiers.Next_Identifier,
                Expression =>
                  "1 - " & Demand_Tag & " / max 0.1 " & Receive_Tag,
                Node       =>
-                 Concorde.Db.Node.Get_Reference_By_Tag (Receive_Tag),
+                 Concorde.Handles.Node.Get_By_Tag (Receive_Tag),
                To         =>
-                 Concorde.Db.Node.Get_Reference_By_Tag (Config.Config_Name));
+                 Concorde.Handles.Node.Get_By_Tag (Config.Config_Name));
          end;
       end loop;
 

@@ -1,3 +1,5 @@
+with Concorde.Handles.Has_Color;
+
 package Concorde.Color is
 
    type Concorde_Color is
@@ -21,5 +23,10 @@ package Concorde.Color is
       Alpha   : Unit_Real := 1.0)
       return String
    is (To_Html_String ((R, G, B, Alpha)));
+
+   function Get_Color
+     (Has_Color : Concorde.Handles.Has_Color.Has_Color_Class)
+      return Concorde_Color
+     is (Has_Color.Red, Has_Color.Green, Has_Color.Blue, 1.0);
 
 end Concorde.Color;

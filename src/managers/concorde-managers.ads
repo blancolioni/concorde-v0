@@ -1,9 +1,10 @@
+private with Ada.Containers.Indefinite_Holders;
 private with WL.String_Maps;
 
 with Concorde.Calendar;
 with Concorde.Updates;
 
-with Concorde.Db.Managed;
+with Concorde.Handles.Managed;
 
 package Concorde.Managers is
 
@@ -29,15 +30,19 @@ package Concorde.Managers is
    type Manager_Type is access all Root_Manager_Type'Class;
 
    type Constructor_Function is access
-     function (Managed : Concorde.Db.Managed_Reference)
+     function (Managed : Concorde.Handles.Managed.Managed_Class)
                return Manager_Type;
 
 private
 
+   package Managed_Holders is
+     new Ada.Containers.Indefinite_Holders
+       (Concorde.Handles.Managed.Managed_Class,
+        Concorde.Handles.Managed."=");
+
    type Root_Manager_Type is abstract tagged
       record
-         Managed         : Concorde.Db.Managed_Reference :=
-                             Concorde.Db.Null_Managed_Reference;
+         Managed         : Managed_Holders.Holder;
          Is_Active       : Boolean := False;
          Has_Next_Update : Boolean := False;
          Next_Update     : Concorde.Calendar.Time;
@@ -63,8 +68,8 @@ private
      (Update : Manager_Update);
 
    function Managed_Key
-     (Managed : Concorde.Db.Managed.Managed_Type)
+     (Managed : Concorde.Handles.Managed.Managed_Class)
       return String
-   is (Managed.Manager & Managed.Identity);
+   is (Managed.Manager & Managed.Identifier);
 
 end Concorde.Managers;

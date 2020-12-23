@@ -2,41 +2,41 @@ with Concorde.Configure.Worlds;
 
 with Concorde.Elementary_Functions;
 
-with Concorde.Db.Deposit;
-with Concorde.Db.Generation;
-with Concorde.Db.Market;
-with Concorde.Db.Sector_Neighbour;
-with Concorde.Db.Sector_Vertex;
-with Concorde.Db.World;
+with Concorde.Handles.Deposit;
+with Concorde.Handles.Generation;
+with Concorde.Handles.Sector_Neighbour;
+with Concorde.Handles.Sector_Vertex;
+
+with Concorde.Db;
 
 package body Concorde.Worlds is
 
    package World_Sector_Lists is
      new Ada.Containers.Doubly_Linked_Lists
-       (Concorde.Db.World_Sector_Reference,
-        Concorde.Db."=");
+       (Concorde.Handles.World_Sector.World_Sector_Handle,
+        Concorde.Handles.World_Sector."=");
 
    procedure Check_Surface
-     (World : Concorde.Db.World_Reference);
+     (World : Concorde.Handles.World.World_Class);
 
    -----------------
    -- Best_Sector --
    -----------------
 
    function Best_Sector
-     (World : Concorde.Db.World_Reference;
+     (World : World_Class;
       Score : not null access
-        function (Sector : Concorde.Db.World_Sector.World_Sector_Type)
+        function (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Real)
-      return Concorde.Db.World_Sector_Reference
+      return Concorde.Handles.World_Sector.World_Sector_Class
    is
-      Best_Reference : Concorde.Db.World_Sector_Reference :=
-                         Concorde.Db.Null_World_Sector_Reference;
+      Best_Handle : Concorde.Handles.World_Sector.World_Sector_Handle :=
+                      Concorde.Handles.World_Sector.Empty_Handle;
       Best_Score     : Real := Real'First;
    begin
       Check_Surface (World);
       for Sector of
-        Concorde.Db.World_Sector.Select_By_World
+        Concorde.Handles.World_Sector.Select_By_World
           (World)
       loop
          declare
@@ -45,11 +45,11 @@ package body Concorde.Worlds is
          begin
             if This_Score > Best_Score then
                Best_Score := This_Score;
-               Best_Reference := Sector.Get_World_Sector_Reference;
+               Best_Handle := Sector.To_World_Sector_Handle;
             end if;
          end;
       end loop;
-      return Best_Reference;
+      return Best_Handle;
    end Best_Sector;
 
    -------------------
@@ -57,23 +57,19 @@ package body Concorde.Worlds is
    -------------------
 
    procedure Check_Surface
-     (World : Concorde.Db.World_Reference)
+     (World : Concorde.Handles.World.World_Class)
    is
-      Is_Gen : constant Concorde.Db.Is_Generated_Reference :=
-                 Concorde.Db.World.Get (World).Get_Is_Generated_Reference;
-      Gen    : constant Concorde.Db.Generation.Generation_Type :=
-                 Concorde.Db.Generation.Get_By_Is_Generated
-                   (Is_Gen);
+      Gen    : constant Concorde.Handles.Generation.Generation_Handle :=
+                 Concorde.Handles.Generation.Get_By_Is_Generated (World);
    begin
       if not Gen.Has_Element or else not Gen.Ready then
          Concorde.Configure.Worlds.Generate_Surface (World);
          if Gen.Has_Element then
-            Concorde.Db.Generation.Update_Generation
-              (Gen.Get_Generation_Reference)
+            Gen.Update_Generation
               .Set_Ready (True)
               .Done;
          else
-            Concorde.Db.Generation.Create (Is_Gen, True);
+            Concorde.Handles.Generation.Create (World, True);
          end if;
       end if;
    end Check_Surface;
@@ -83,14 +79,17 @@ package body Concorde.Worlds is
    -------------------
 
    procedure Circular_Scan
-     (Start : Concorde.Db.World_Sector_Reference;
+     (Start : Concorde.Handles.World_Sector.World_Sector_Class;
       Process : not null access
-        function (Sector : Concorde.Db.World_Sector_Reference)
+        function (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Boolean)
    is
+      subtype World_Sector_Handle is
+        Concorde.Handles.World_Sector.World_Sector_Handle;
       package Sector_Lists is
         new Ada.Containers.Doubly_Linked_Lists
-          (Concorde.Db.World_Sector_Reference, Concorde.Db."=");
+          (World_Sector_Handle,
+           Concorde.Handles.World_Sector."=");
 
       Visited : Sector_Lists.List;
       Queued  : Sector_Lists.List;
@@ -101,7 +100,7 @@ package body Concorde.Worlds is
 
       while not Queued.Is_Empty loop
          declare
-            Current : constant Concorde.Db.World_Sector_Reference :=
+            Current : constant World_Sector_Handle :=
                         Queued.First_Element;
          begin
             Queued.Delete_First;
@@ -131,18 +130,6 @@ package body Concorde.Worlds is
       Selection.List.Clear;
    end Clear;
 
-   -------------
-   -- Climate --
-   -------------
-
-   function Climate
-     (World : Concorde.Db.World_Reference)
-      return Concorde.Db.World_Climate
-   is
-   begin
-      return Concorde.Db.World.Get (World).Climate;
-   end Climate;
-
    ------------
    -- Filter --
    ------------
@@ -150,7 +137,7 @@ package body Concorde.Worlds is
    procedure Filter
      (Selection : in out World_Selection'Class;
       Test      : not null access
-        function (World : Concorde.Db.World_Reference)
+        function (World : World_Class)
       return Boolean)
    is
       New_List : World_Lists.List;
@@ -173,22 +160,22 @@ package body Concorde.Worlds is
    -----------------
 
    function Find_Sector
-     (World : Concorde.Db.World_Reference;
-      Test  : not null access
-        function (Sector : Concorde.Db.World_Sector.World_Sector_Type)
+     (World : World_Class;
+      Test : not null access
+        function (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Boolean)
-      return Concorde.Db.World_Sector_Reference
+      return Concorde.Handles.World_Sector.World_Sector_Class
    is
    begin
       for Sector of
-        Concorde.Db.World_Sector.Select_By_World
+        Concorde.Handles.World_Sector.Select_By_World
           (World)
       loop
          if Test (Sector) then
-            return Sector.Get_World_Sector_Reference;
+            return Sector;
          end if;
       end loop;
-      return Concorde.Db.Null_World_Sector_Reference;
+      return Concorde.Handles.World_Sector.Empty_Handle;
    end Find_Sector;
 
    -----------------
@@ -196,7 +183,7 @@ package body Concorde.Worlds is
    -----------------
 
    function Get_Bearing
-     (From, To : Concorde.Db.World_Sector_Reference)
+     (From, To : Concorde.Handles.World_Sector.World_Sector_Class)
       return Concorde.Trigonometry.Angle
    is
       use Concorde.Spheres;
@@ -211,14 +198,12 @@ package body Concorde.Worlds is
    ----------------
 
    function Get_Centre
-     (Sector : Concorde.Db.World_Sector_Reference)
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Sector_Vertex
    is
-      Rec : constant Concorde.Db.World_Sector.World_Sector_Type :=
-              Concorde.Db.World_Sector.Get (Sector);
    begin
       return Sector_Vertex'
-        (Rec.X, Rec.Y, Rec.Z);
+        (Sector.X, Sector.Y, Sector.Z);
    end Get_Centre;
 
    ----------------
@@ -226,11 +211,11 @@ package body Concorde.Worlds is
    ----------------
 
    function Get_Centre
-     (Sector : Concorde.Db.World_Sector_Reference)
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Sector_Position
    is
       use Concorde.Elementary_Functions;
-      Vertex : constant Sector_Vertex := Get_Centre (Sector);
+      Vertex : constant Sector_Vertex := (Sector.X, Sector.Y, Sector.Z);
    begin
       return Sector_Position'
         (Latitude  => Arcsin (Vertex.Z),
@@ -242,7 +227,7 @@ package body Concorde.Worlds is
    ------------------
 
    function Get_Distance
-     (From, To : Concorde.Db.World_Sector_Reference)
+     (From, To : Concorde.Handles.World_Sector.World_Sector_Class)
       return Non_Negative_Real
    is
       use Concorde.Elementary_Functions;
@@ -254,8 +239,7 @@ package body Concorde.Worlds is
                 + (P1.Y - P2.Y) ** 2
                 + (P1.Z - P2.Z) ** 2);
       A  : constant Real := 2.0 * Arcsin (D / 2.0);
-      R  : constant Non_Negative_Real :=
-             Concorde.Db.World.Get (Get_World (From)).Radius;
+      R  : constant Non_Negative_Real := From.World.Radius;
    begin
       return A * R;
    end Get_Distance;
@@ -265,28 +249,21 @@ package body Concorde.Worlds is
    --------------------
 
    function Get_Neighbours
-     (Sector : Concorde.Db.World_Sector_Reference)
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return World_Sector_Array
    is
       Result : World_Sector_Array (1 .. 20);
       Count  : Natural := 0;
    begin
       for Neighbour of
-        Concorde.Db.Sector_Neighbour.Select_By_Sector
-          (Concorde.Db.World_Sector.Get (Sector).Get_Sector_Reference)
+        Concorde.Handles.Sector_Neighbour.Select_By_Sector
+          (Sector)
       loop
          Count := Count + 1;
-         declare
-            Neighbour_Ref : constant Db.Sector_Reference :=
-                              Neighbour.Neighbour;
-            Neighbour_Sec : constant Db.World_Sector.World_Sector_Type :=
-                              Db.World_Sector.Get_World_Sector
-                                (Neighbour_Ref);
-            World_Sec_Ref : constant Db.World_Sector_Reference :=
-                              Neighbour_Sec.Get_World_Sector_Reference;
-         begin
-            Result (Count) := World_Sec_Ref;
-         end;
+         Result (Count) :=
+           Concorde.Handles.World_Sector.Get_From_Sector
+             (Neighbour.Neighbour)
+           .To_World_Sector_Handle;
       end loop;
       return Result (1 .. Count);
    end Get_Neighbours;
@@ -296,11 +273,11 @@ package body Concorde.Worlds is
    ---------------
 
    function Get_Owner
-     (Sector : Concorde.Db.World_Sector_Reference)
-      return Concorde.Db.Faction_Reference
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Concorde.Handles.Faction.Faction_Class
    is
    begin
-      return Concorde.Db.World_Sector.Get (Sector).Faction;
+      return Sector.Faction;
    end Get_Owner;
 
    -----------------
@@ -308,11 +285,11 @@ package body Concorde.Worlds is
    -----------------
 
    function Get_Terrain
-     (Sector : Concorde.Db.World_Sector_Reference)
-      return Concorde.Db.Terrain_Reference
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Concorde.Handles.Terrain.Terrain_Class
    is
    begin
-      return Concorde.Db.World_Sector.Get (Sector).Terrain;
+      return Sector.Terrain;
    end Get_Terrain;
 
    ------------------
@@ -320,15 +297,14 @@ package body Concorde.Worlds is
    ------------------
 
    function Get_Vertices
-     (Sector : Concorde.Db.World_Sector_Reference)
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Sector_Vertex_Array
    is
       Count  : Natural := 0;
       Result : Sector_Vertex_Array (1 .. 10);
    begin
       for Vertex of
-        Concorde.Db.Sector_Vertex.Select_By_Sector
-          (Concorde.Db.World_Sector.Get (Sector).Get_Sector_Reference)
+        Concorde.Handles.Sector_Vertex.Select_By_Sector (Sector)
       loop
          Count := Count + 1;
          Result (Count) := (Vertex.X, Vertex.Y, Vertex.Z);
@@ -341,11 +317,11 @@ package body Concorde.Worlds is
    ---------------
 
    function Get_World
-     (Sector : Concorde.Db.World_Sector_Reference)
-      return Concorde.Db.World_Reference
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return World_Class
    is
    begin
-      return Concorde.Db.World_Sector.Get (Sector).World;
+      return Sector.World;
    end Get_World;
 
    ----------------
@@ -366,28 +342,16 @@ package body Concorde.Worlds is
       end return;
    end Get_Worlds;
 
-   ------------------
-   -- Habitability --
-   ------------------
-
-   function Habitability
-     (World : Concorde.Db.World_Reference)
-      return Unit_Real
-   is
-   begin
-      return Concorde.Db.World.Get (World).Habitability;
-   end Habitability;
-
    ------------
    -- Insert --
    ------------
 
    procedure Insert
      (Selection : in out World_Selection'Class;
-      World     : Concorde.Db.World_Reference)
+      World     : World_Class)
    is
    begin
-      Selection.List.Append (World);
+      Selection.List.Append (World.To_World_Handle);
    end Insert;
 
    --------------
@@ -404,78 +368,29 @@ package body Concorde.Worlds is
    --------------------
 
    function Is_Terrestrial
-     (World : Concorde.Db.World_Reference)
+     (World : World_Class)
       return Boolean
    is
       use all type Concorde.Db.World_Composition;
    begin
-      return Concorde.Db.World.Get (World).Composition in
-        Ice .. Rock_Iron;
+      return World.Composition in Ice .. Rock_Iron;
    end Is_Terrestrial;
-
-   ------------
-   -- Market --
-   ------------
-
-   function Market
-     (World : Concorde.Db.World_Reference)
-      return Concorde.Db.Market_Reference
-   is
-   begin
-      return Concorde.Db.Market.Get_By_World (World).Get_Market_Reference;
-   end Market;
-
-   ----------
-   -- Mass --
-   ----------
-
-   function Mass
-     (World : Concorde.Db.World_Reference)
-      return Non_Negative_Real
-   is
-   begin
-      return Concorde.Db.World.Get (World).Mass;
-   end Mass;
-
-   ----------
-   -- Name --
-   ----------
-
-   function Name
-     (World : Concorde.Db.World_Reference)
-      return String
-   is
-   begin
-      return Concorde.Db.World.Get (World).Name;
-   end Name;
-
-   ------------
-   -- Radius --
-   ------------
-
-   function Radius
-     (World : Concorde.Db.World_Reference)
-      return Non_Negative_Real
-   is
-   begin
-      return Concorde.Db.World.Get (World).Radius;
-   end Radius;
 
    --------------------
    -- Scan_Resources --
    --------------------
 
    procedure Scan_Resources
-     (Sector  : Concorde.Db.World_Sector_Reference;
+     (Sector  : Concorde.Handles.World_Sector.World_Sector_Class;
       Process : not null access
-        procedure (Resource : Concorde.Db.Resource_Reference;
+        procedure (Resource : Concorde.Handles.Resource.Resource_Class;
                    Concentration : Unit_Real;
                    Difficulty    : Unit_Real;
                    Available     : Concorde.Quantities.Quantity_Type))
    is
    begin
       for Deposit of
-        Concorde.Db.Deposit.Select_By_World_Sector
+        Concorde.Handles.Deposit.Select_By_World_Sector
           (Sector)
       loop
          Process (Deposit.Resource, Deposit.Concentration,
@@ -488,15 +403,15 @@ package body Concorde.Worlds is
    ------------------
 
    procedure Scan_Surface
-     (World   : Concorde.Db.World_Reference;
+     (World : World_Class;
       Process : not null access
-        procedure (Sector : Concorde.Db.World_Sector_Reference))
+        procedure (Sector : Concorde.Handles.World_Sector.World_Sector_Class))
    is
       List : World_Sector_Lists.List;
    begin
       Check_Surface (World);
-      for Sector of Concorde.Db.World_Sector.Select_By_World (World) loop
-         List.Append (Sector.Get_World_Sector_Reference);
+      for Sector of Concorde.Handles.World_Sector.Select_By_World (World) loop
+         List.Append (Sector.To_World_Sector_Handle);
       end loop;
 
       for Sector of List loop
@@ -510,25 +425,13 @@ package body Concorde.Worlds is
    ---------------
 
    procedure Set_Owner
-     (Sector  : Concorde.Db.World_Sector_Reference;
-      Faction : Concorde.Db.Faction_Reference)
+     (Sector  : Concorde.Handles.World_Sector.World_Sector_Class;
+      Faction : Concorde.Handles.Faction.Faction_Handle)
    is
    begin
-      Concorde.Db.World_Sector.Update_World_Sector (Sector)
+      Sector.Update_World_Sector
         .Set_Faction (Faction)
         .Done;
    end Set_Owner;
-
-   -----------------
-   -- Star_System --
-   -----------------
-
-   function Star_System
-     (World : Concorde.Db.World_Reference)
-      return Concorde.Db.Star_System_Reference
-   is
-   begin
-      return Concorde.Db.World.Get (World).Star_System;
-   end Star_System;
 
 end Concorde.Worlds;

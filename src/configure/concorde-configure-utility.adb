@@ -1,8 +1,8 @@
 with Tropos.Reader;
 
-with Concorde.Db.Commodity;
-with Concorde.Db.Utility_Class;
-with Concorde.Db.Utility_Function;
+with Concorde.Handles.Commodity;
+with Concorde.Handles.Utility_Class;
+with Concorde.Handles.Utility_Function;
 
 package body Concorde.Configure.Utility is
 
@@ -33,9 +33,10 @@ package body Concorde.Configure.Utility is
    procedure Configure_Utility_Class
      (Utility_Class_Config : Tropos.Configuration)
    is
-      Reference : constant Concorde.Db.Utility_Class_Reference :=
-                    Concorde.Db.Utility_Class.Create
-                      (Utility_Class_Config.Config_Name);
+      Reference             : constant Concorde.Handles.Utility_Class
+        .Utility_Class_Handle :=
+          Concorde.Handles.Utility_Class.Create
+            (Utility_Class_Config.Config_Name);
    begin
       for Function_Config of Utility_Class_Config loop
          declare
@@ -47,10 +48,10 @@ package body Concorde.Configure.Utility is
                 then Real (Float'(Function_Config.Get (Index + 1)))
                 else 0.0);
          begin
-            Concorde.Db.Utility_Function.Create
+            Concorde.Handles.Utility_Function.Create
               (Tag           => Tag,
                Commodity     =>
-                 Concorde.Db.Commodity.Get_Reference_By_Tag
+                 Concorde.Handles.Commodity.Get_By_Tag
                    (Function_Config.Config_Name),
                Utility_Class => Reference,
                A1            => Arg (1),

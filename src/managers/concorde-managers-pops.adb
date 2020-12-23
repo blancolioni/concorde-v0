@@ -19,15 +19,15 @@ with Concorde.Real_Images;
 
 with Concorde.Weighted_Random_Choices;
 
-with Concorde.Db.Production;
-with Concorde.Db.Input_Item;
-with Concorde.Db.Output_Item;
+with Concorde.Handles.Production;
+with Concorde.Handles.Input_Item;
+with Concorde.Handles.Output_Item;
 
-with Concorde.Db.Market;
-with Concorde.Db.Pop;
-with Concorde.Db.Utility_Function;
-with Concorde.Db.World_Sector;
-with Concorde.Db.Zone;
+with Concorde.Handles.Market;
+with Concorde.Handles.Pop;
+with Concorde.Handles.Utility_Function;
+with Concorde.Handles.World_Sector;
+with Concorde.Handles.Zone;
 
 package body Concorde.Managers.Pops is
 
@@ -51,14 +51,14 @@ package body Concorde.Managers.Pops is
    type Root_Pop_Manager_Type is
      new Concorde.Managers.Agents.Root_Agent_Manager_Type with
       record
-         Pop           : Concorde.Db.Pop_Reference;
-         Production    : Concorde.Db.Production_Reference;
-         Employer      : Concorde.Db.Employer_Reference;
-         Utility_Class : Concorde.Db.Utility_Class_Reference;
+         Pop           : Concorde.Handles.Pop_Reference;
+         Production    : Concorde.Handles.Production_Reference;
+         Employer      : Concorde.Handles.Employer_Reference;
+         Utility_Class : Concorde.Handles.Utility_Class_Reference;
          Size          : Concorde.Quantities.Quantity_Type;
          Utility_Fns   : Utility_Maps.Map;
-         Sector        : Concorde.Db.World_Sector_Reference;
-         World         : Concorde.Db.World_Reference;
+         Sector        : Concorde.Handles.World_Sector_Reference;
+         World         : Concorde.Handles.World_Reference;
          Current_Bids  : Bid_Vectors.Vector;
       end record;
 
@@ -89,7 +89,7 @@ package body Concorde.Managers.Pops is
       return Concorde.Money.Money_Type;
 
    function Create_Utility_Function
-     (Rec : Concorde.Db.Utility_Function.Utility_Function_Type)
+     (Rec : Concorde.Handles.Utility_Function.Utility_Function_Type)
       return Concorde.Utility.Utility_Function;
 
    procedure Choose_Production
@@ -105,9 +105,9 @@ package body Concorde.Managers.Pops is
 
       type Production_Record is
          record
-            Production : Concorde.Db.Production_Reference;
-            Sector     : Concorde.Db.World_Sector_Reference;
-            Sector_Use : Concorde.Db.Sector_Use_Reference;
+            Production : Concorde.Handles.Production_Reference;
+            Sector     : Concorde.Handles.World_Sector_Reference;
+            Sector_Use : Concorde.Handles.Sector_Use_Reference;
             Zone       : Concorde.Commodities.Commodity_Reference;
             Skill      : Concorde.Quantities.Quantity_Type;
             Size       : Non_Negative_Real;
@@ -122,13 +122,13 @@ package body Concorde.Managers.Pops is
       Choice : Production_Choices.Weighted_Choice_Set;
 
       procedure Add_Choice
-        (Production : Concorde.Db.Production_Reference;
+        (Production : Concorde.Handles.Production_Reference;
          Skill      : Concorde.Commodities.Commodity_Reference);
 
       function Score_World_Sector_Production
-        (World_Sector : Concorde.Db.World_Sector_Reference;
-         Production   : Concorde.Db.Production_Reference;
-         Sector_Use   : Concorde.Db.Sector_Use_Reference;
+        (World_Sector : Concorde.Handles.World_Sector_Reference;
+         Production   : Concorde.Handles.Production_Reference;
+         Sector_Use   : Concorde.Handles.Sector_Use_Reference;
          Zone         : Concorde.Commodities.Commodity_Reference)
         return Natural;
 
@@ -137,18 +137,18 @@ package body Concorde.Managers.Pops is
       ----------------
 
       procedure Add_Choice
-        (Production : Concorde.Db.Production_Reference;
+        (Production : Concorde.Handles.Production_Reference;
          Skill      : Concorde.Commodities.Commodity_Reference)
       is
-         Zone           : constant Concorde.Db.Zone_Reference :=
-           Concorde.Db.Production.Get (Production).Zone;
-         Sector_Use     : constant Concorde.Db.Sector_Use_Reference :=
-           Concorde.Db.Zone.Get (Zone).Sector_Use;
+         Zone           : constant Concorde.Handles.Zone_Reference :=
+           Concorde.Handles.Production.Get (Production).Zone;
+         Sector_Use     : constant Concorde.Handles.Sector_Use_Reference :=
+           Concorde.Handles.Zone.Get (Zone).Sector_Use;
          Zone_Commodity : constant Concorde.Commodities.Commodity_Reference :=
            Concorde.Commodities.Get_Commodity (Zone);
       begin
          for World_Sector of
-           Concorde.Db.World_Sector.Select_By_World_Sector_Use
+           Concorde.Handles.World_Sector.Select_By_World_Sector_Use
              (Manager.World, Sector_Use)
          loop
             declare
@@ -170,7 +170,7 @@ package body Concorde.Managers.Pops is
                           Skill      =>
                             Manager.Stock_Quantity (Skill),
                           Size       =>
-                            Concorde.Db.Production.Get (Production).Size),
+                            Concorde.Handles.Production.Get (Production).Size),
                      Score => Score);
                end if;
             end;
@@ -182,9 +182,9 @@ package body Concorde.Managers.Pops is
       -----------------------------------
 
       function Score_World_Sector_Production
-        (World_Sector   : Concorde.Db.World_Sector_Reference;
-         Production     : Concorde.Db.Production_Reference;
-         Sector_Use     : Concorde.Db.Sector_Use_Reference;
+        (World_Sector   : Concorde.Handles.World_Sector_Reference;
+         Production     : Concorde.Handles.Production_Reference;
+         Sector_Use     : Concorde.Handles.Sector_Use_Reference;
          Zone           : Concorde.Commodities.Commodity_Reference)
          return Natural
       is
@@ -213,7 +213,7 @@ package body Concorde.Managers.Pops is
       for Commodity of Skills loop
          if Manager.Has_Stock (Commodity) then
             for Input_Item of
-              Concorde.Db.Input_Item.Select_By_Commodity
+              Concorde.Handles.Input_Item.Select_By_Commodity
                 (Concorde.Commodities.To_Database_Reference (Commodity))
             loop
                Add_Choice (Input_Item.Production, Commodity);
@@ -228,9 +228,9 @@ package body Concorde.Managers.Pops is
             use Concorde.Quantities;
             Production_Choice : constant Production_Record :=
               Choice.Choose;
-            Production : constant Concorde.Db.Production_Reference :=
+            Production : constant Concorde.Handles.Production_Reference :=
               Production_Choice.Production;
-            Sector            : constant Concorde.Db.World_Sector_Reference :=
+            Sector            : constant Concorde.Handles.World_Sector_Reference :=
               Production_Choice.Sector;
             Title             : constant Commodities.Commodity_Reference :=
               Concorde.Commodities.Title_Commodity
@@ -244,7 +244,7 @@ package body Concorde.Managers.Pops is
             Remaining         : Quantity_Type := Quantity;
          begin
 
-            Concorde.Db.Pop.Update_Pop (Manager.Pop)
+            Concorde.Handles.Pop.Update_Pop (Manager.Pop)
               .Set_World_Sector (Sector)
               .Set_Production (Production)
               .Done;
@@ -272,7 +272,7 @@ package body Concorde.Managers.Pops is
 
             Manager.Log
               ("production: "
-               & Concorde.Db.Production.Get (Production).Tag);
+               & Concorde.Handles.Production.Get (Production).Tag);
          end;
       end if;
 
@@ -315,11 +315,11 @@ package body Concorde.Managers.Pops is
    ----------------------------
 
    function Create_Default_Manager
-     (Managed : Concorde.Db.Managed_Reference)
+     (Managed : Concorde.Handles.Managed.Managed_Class)
       return Manager_Type
    is
-      Pop     : constant Concorde.Db.Pop.Pop_Type :=
-        Concorde.Db.Pop.Get_Pop (Managed);
+      Pop     : constant Concorde.Handles.Pop.Pop_Type :=
+        Concorde.Handles.Pop.Get_Pop (Managed);
       Manager : Root_Pop_Manager_Type :=
         Root_Pop_Manager_Type'
           (Concorde.Managers.Agents.Root_Agent_Manager_Type with
@@ -334,7 +334,7 @@ package body Concorde.Managers.Pops is
            Utility_Fns   => <>);
    begin
       for Utility_Fn of
-        Concorde.Db.Utility_Function.Select_By_Utility_Class
+        Concorde.Handles.Utility_Function.Select_By_Utility_Class
           (Pop.Utility_Class)
       loop
          Manager.Utility_Fns.Insert
@@ -345,7 +345,7 @@ package body Concorde.Managers.Pops is
       Manager.Initialize_Agent_Manager
         (Agent             => Pop,
          Market            =>
-           Concorde.Db.Market.Get_Reference_By_World (Pop.World),
+           Concorde.Handles.Market.Get_By_World (Pop.World),
          Planning_Cycle    => 10);
       return new Root_Pop_Manager_Type'(Manager);
    end Create_Default_Manager;
@@ -670,7 +670,7 @@ package body Concorde.Managers.Pops is
    -----------------------------
 
    function Create_Utility_Function
-     (Rec : Concorde.Db.Utility_Function.Utility_Function_Type)
+     (Rec : Concorde.Handles.Utility_Function.Utility_Function_Type)
       return Concorde.Utility.Utility_Function
    is
    begin
@@ -951,7 +951,7 @@ package body Concorde.Managers.Pops is
             Health := Real'Min (Health, H);
          end loop;
 
-         Concorde.Db.Pop.Update_Pop (Manager.Pop)
+         Concorde.Handles.Pop.Update_Pop (Manager.Pop)
            .Set_Happy (Current_Happy * 0.9 + Happy)
            .Set_Health (Current_Health * 0.95 + Health * 0.5)
            .Set_Hours (Current_Hours * 0.5 + Hours * 5.0)
@@ -1077,8 +1077,8 @@ package body Concorde.Managers.Pops is
       -------------------
 
       function Zone_Capacity return Non_Negative_Real is
-         Production : constant Concorde.Db.Production.Production_Type :=
-           Concorde.Db.Production.Get (Manager.Production);
+         Production : constant Concorde.Handles.Production.Production_Type :=
+           Concorde.Handles.Production.Get (Manager.Production);
          Title      : constant Concorde.Commodities.Commodity_Reference :=
            Concorde.Commodities.Title_Commodity
              (Manager.Sector, Commodities.Get_Commodity (Production.Zone));
@@ -1096,8 +1096,8 @@ package body Concorde.Managers.Pops is
 
       function Zone_Cost return Concorde.Money.Money_Type is
          use Concorde.Money, Concorde.Quantities;
-         Production : constant Concorde.Db.Production.Production_Type :=
-           Concorde.Db.Production.Get (Manager.Production);
+         Production : constant Concorde.Handles.Production.Production_Type :=
+           Concorde.Handles.Production.Get (Manager.Production);
          Zone       : constant Concorde.Commodities.Commodity_Reference :=
            Concorde.Commodities.Get_Commodity (Production.Zone);
          Title      : constant Concorde.Commodities.Commodity_Reference :=
@@ -1148,7 +1148,7 @@ package body Concorde.Managers.Pops is
       Max_Capacity := Zone_Capacity;
 
       for Input_Item of
-        Concorde.Db.Input_Item.Select_By_Production (Manager.Production)
+        Concorde.Handles.Input_Item.Select_By_Production (Manager.Production)
       loop
          if Concorde.Commodities.Is_Skill
            (Concorde.Commodities.Get_Commodity (Input_Item.Commodity))
@@ -1166,8 +1166,8 @@ package body Concorde.Managers.Pops is
       end loop;
 
       if Max_Capacity = 0.0 then
-         Manager.Production := Concorde.Db.Null_Production_Reference;
-         Concorde.Db.Pop.Update_Pop (Manager.Pop)
+         Manager.Production := Concorde.Handles.Null_Production_Reference;
+         Concorde.Handles.Pop.Update_Pop (Manager.Pop)
            .Set_Production (Manager.Production)
            .Done;
          return;
@@ -1182,7 +1182,7 @@ package body Concorde.Managers.Pops is
          Total_Cost     : Money_Type    := Zero;
       begin
          for Input_Item of
-           Concorde.Db.Input_Item.Select_By_Production (Manager.Production)
+           Concorde.Handles.Input_Item.Select_By_Production (Manager.Production)
          loop
             declare
                This_Capacity : constant Non_Negative_Real :=
@@ -1289,7 +1289,7 @@ package body Concorde.Managers.Pops is
       end loop;
 
       for Input_Item of
-        Concorde.Db.Input_Item.Select_By_Production (Manager.Production)
+        Concorde.Handles.Input_Item.Select_By_Production (Manager.Production)
       loop
          declare
             This_Capacity : constant Non_Negative_Real :=
@@ -1311,7 +1311,7 @@ package body Concorde.Managers.Pops is
         ("production cost: location " & Concorde.Money.Show (Production_Cost));
 
       for Input_Item of
-        Concorde.Db.Input_Item.Select_By_Production (Manager.Production)
+        Concorde.Handles.Input_Item.Select_By_Production (Manager.Production)
       loop
          declare
             use Concorde.Commodities;
@@ -1343,7 +1343,7 @@ package body Concorde.Managers.Pops is
                     Real'Max (0.0, (1.0 + Factor) * Max_Capacity);
       begin
          for Out_Item of
-           Concorde.Db.Output_Item.Select_By_Production
+           Concorde.Handles.Output_Item.Select_By_Production
              (Manager.Production)
          loop
             declare
@@ -1476,7 +1476,7 @@ package body Concorde.Managers.Pops is
       return String
    is
    begin
-      return "pop" & Concorde.Db.To_String (Manager.Pop) & " manager";
+      return "pop" & Concorde.Handles.To_String (Manager.Pop) & " manager";
    end Identifier;
 
 end Concorde.Managers.Pops;

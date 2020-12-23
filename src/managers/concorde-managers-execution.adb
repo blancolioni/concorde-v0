@@ -1,10 +1,12 @@
-with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Text_IO;
 
 with Concorde.Random;
 with Concorde.Updates.Events;
 
-with Concorde.Db.Managed;
+with Concorde.Handles.Managed;
+
+with Concorde.Db;
 
 package body Concorde.Managers.Execution is
 
@@ -15,12 +17,12 @@ package body Concorde.Managers.Execution is
      (Update : Check_Manager_Update);
 
    package Managed_Reference_Lists is
-     new Ada.Containers.Doubly_Linked_Lists
-       (Concorde.Db.Managed_Reference,
-        Concorde.Db."=");
+     new Ada.Containers.Indefinite_Doubly_Linked_Lists
+       (Concorde.Handles.Managed.Managed_Class,
+        Concorde.Handles.Managed."=");
 
    function Get_Manager_Name
-     (Managed : Concorde.Db.Managed_Reference)
+     (Managed : Concorde.Handles.Managed.Managed_Class)
       return String;
 
    --------------
@@ -33,10 +35,10 @@ package body Concorde.Managers.Execution is
       List : Managed_Reference_Lists.List;
    begin
       for Managed of
-        Concorde.Db.Managed.Select_By_Active_Scheduled (True, False)
+        Concorde.Handles.Managed.Select_By_Active_Scheduled (True, False)
       loop
          if Register.Contains (Managed.Manager) then
-            List.Append (Managed.Get_Managed_Reference);
+            List.Append (Managed);
          end if;
       end loop;
 
@@ -54,13 +56,11 @@ package body Concorde.Managers.Execution is
    ----------------------
 
    function Get_Manager_Name
-     (Managed : Concorde.Db.Managed_Reference)
+     (Managed : Concorde.Handles.Managed.Managed_Class)
       return String
    is
-      Rec : constant Concorde.Db.Managed.Managed_Type :=
-              Concorde.Db.Managed.Get (Managed);
    begin
-      return Rec.Manager;
+      return Managed.Manager;
    end Get_Manager_Name;
 
    -------------------
@@ -70,9 +70,9 @@ package body Concorde.Managers.Execution is
    procedure Load_Managers is
       List : Managed_Reference_Lists.List;
    begin
-      for Managed of Concorde.Db.Managed.Scan_By_Top_Record loop
+      for Managed of Concorde.Handles.Managed.Scan_By_Top_Record loop
          if Register.Contains (Managed.Manager) then
-            List.Append (Managed.Get_Managed_Reference);
+            List.Append (Managed);
          end if;
       end loop;
 
@@ -95,54 +95,42 @@ package body Concorde.Managers.Execution is
    -------------------
 
    procedure Start_Manager
-     (Managed : Concorde.Db.Managed_Reference)
+     (Managed : Concorde.Handles.Managed.Managed_Class)
    is
-      Key  : constant String := Concorde.Db.To_String (Managed);
+      Key  : constant String := Managed.Identifier;
       Name : constant String := Get_Manager_Name (Managed);
       Manager : constant Manager_Type :=
                   Register.Element (Name) (Managed);
 
    begin
       if Manager /= null then
-         declare
-            Rec : constant Concorde.Db.Managed.Managed_Type :=
-                    Concorde.Db.Managed.Get (Managed);
-         begin
-            Manager.Is_Active := Rec.Active;
-            Manager.Managed := Rec.Get_Managed_Reference;
-            Active_Map.Insert (Key, Manager);
-            if Rec.Active then
-               declare
-                  Update : constant Manager_Update :=
-                             (Manager => Manager);
-               begin
-                  Concorde.Updates.Events.Update_At
-                    (Clock  => Rec.Next_Event,
-                     Update => Update);
-               end;
-            end if;
+         Manager.Is_Active := Managed.Active;
+         Manager.Managed := Managed_Holders.To_Holder (Managed);
+         Active_Map.Insert (Key, Manager);
+         if Manager.Is_Active then
+            declare
+               Update : constant Manager_Update :=
+                          (Manager => Manager);
+            begin
+               Concorde.Updates.Events.Update_At
+                 (Clock  => Managed.Next_Event,
+                  Update => Update);
+            end;
+         end if;
 
-            Concorde.Db.Managed.Update_Managed (Managed)
-              .Set_Scheduled (Rec.Active)
-              .Done;
-         end;
+         Managed.Update_Managed.Set_Scheduled (Manager.Is_Active).Done;
       else
-         declare
-            Rec : constant Concorde.Db.Managed.Managed_Type :=
-                    Concorde.Db.Managed.Get (Managed);
-         begin
-            Ada.Text_IO.Put_Line
-              (Ada.Text_IO.Standard_Error,
-               "cannot create manager '"
-               & Rec.Manager
-               & "' for "
-               & Concorde.Db.Record_Type'Image
-                 (Rec.Top_Record));
-            Concorde.Db.Managed.Update_Managed (Managed)
-              .Set_Active (False)
-              .Set_Scheduled (False)
-              .Done;
-         end;
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            "cannot create manager '"
+            & Name
+            & "' for "
+            & Concorde.Db.Record_Type'Image
+              (Managed.Top_Record));
+         Concorde.Handles.Managed.Update_Managed (Managed)
+           .Set_Active (False)
+           .Set_Scheduled (False)
+           .Done;
       end if;
    end Start_Manager;
 

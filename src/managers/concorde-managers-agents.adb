@@ -6,10 +6,10 @@ with Concorde.Agents;
 with Concorde.Random;
 with Concorde.Stock;
 
-with Concorde.Db.Account;
-with Concorde.Db.Lease_Contract;
-with Concorde.Db.Market_Offer;
-with Concorde.Db.Stock_Item;
+with Concorde.Handles.Account;
+with Concorde.Handles.Lease_Contract;
+with Concorde.Handles.Market_Offer;
+with Concorde.Handles.Stock_Item;
 
 package body Concorde.Managers.Agents is
 
@@ -82,7 +82,7 @@ package body Concorde.Managers.Agents is
       use type Concorde.Quantities.Quantity_Type;
    begin
       return Concorde.Markets.Historical_Offer_Quantity
-        (Manager.Market, Commodity, Concorde.Db.Ask,
+        (Manager.Market, Commodity, Concorde.Handles.Ask,
          Concorde.Calendar.Days (10))
         > Concorde.Quantities.Zero;
    end Available;
@@ -112,7 +112,7 @@ package body Concorde.Managers.Agents is
          Agent     => Manager.Agent,
          Has_Stock => Manager.Has_Stock,
          Account   => Manager.Account,
-         Offer     => Concorde.Db.Ask,
+         Offer     => Concorde.Handles.Ask,
          Commodity => Commodity,
          Quantity  => Quantity,
          Price     => Price);
@@ -143,7 +143,7 @@ package body Concorde.Managers.Agents is
          Agent     => Manager.Agent,
          Has_Stock => Manager.Has_Stock,
          Account   => Manager.Account,
-         Offer     => Concorde.Db.Bid,
+         Offer     => Concorde.Handles.Bid,
          Commodity => Commodity,
          Quantity  => Quantity,
          Price     => Price);
@@ -162,7 +162,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Current_Price
-        (Manager.Market, Commodity, Concorde.Db.Ask, Quantity);
+        (Manager.Market, Commodity, Concorde.Handles.Ask, Quantity);
    end Current_Ask_Price;
 
    --------------------------
@@ -176,7 +176,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Current_Quantity
-        (Manager.Market, Commodity, Concorde.Db.Ask);
+        (Manager.Market, Commodity, Concorde.Handles.Ask);
    end Current_Ask_Quantity;
 
    --------------------------
@@ -191,7 +191,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Current_Quantity
-        (Manager.Market, Commodity, Concorde.Db.Ask, Bid_Total);
+        (Manager.Market, Commodity, Concorde.Handles.Ask, Bid_Total);
    end Current_Ask_Quantity;
 
    -----------------------
@@ -206,7 +206,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Current_Price
-        (Manager.Market, Commodity, Concorde.Db.Bid, Quantity);
+        (Manager.Market, Commodity, Concorde.Handles.Bid, Quantity);
    end Current_Bid_Price;
 
    --------------------------
@@ -220,7 +220,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Current_Quantity
-        (Manager.Market, Commodity, Concorde.Db.Bid);
+        (Manager.Market, Commodity, Concorde.Handles.Bid);
    end Current_Bid_Quantity;
 
    --------------------------
@@ -235,7 +235,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Current_Quantity
-        (Manager.Market, Commodity, Concorde.Db.Bid, Ask_Total);
+        (Manager.Market, Commodity, Concorde.Handles.Bid, Ask_Total);
    end Current_Bid_Quantity;
 
    ----------------------
@@ -250,7 +250,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Current_Value
-        (Manager.Market, Commodity, Concorde.Db.Ask, Quantity);
+        (Manager.Market, Commodity, Concorde.Handles.Ask, Quantity);
    end Current_Buy_Cost;
 
    ------------------
@@ -277,7 +277,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Current_Value
-        (Manager.Market, Commodity, Concorde.Db.Bid, Quantity);
+        (Manager.Market, Commodity, Concorde.Handles.Bid, Quantity);
    end Current_Sell_Earn;
 
    ----------
@@ -323,7 +323,7 @@ package body Concorde.Managers.Agents is
       return Concorde.Markets.Historical_Offer_Quantity
         (Market    => Manager.Market,
          Commodity => Commodity,
-         Offer     => Concorde.Db.Bid,
+         Offer     => Concorde.Handles.Bid,
          Since     => Since);
    end Historical_Demand;
 
@@ -342,7 +342,7 @@ package body Concorde.Managers.Agents is
       return Concorde.Markets.Historical_Offer_Quantity
         (Market    => Manager.Market,
          Commodity => Commodity,
-         Offer     => Concorde.Db.Bid,
+         Offer     => Concorde.Handles.Bid,
          Price     => Min_Price,
          Since     => Since);
    end Historical_Demand;
@@ -375,7 +375,7 @@ package body Concorde.Managers.Agents is
       return Concorde.Markets.Historical_Offer_Quantity
         (Market    => Manager.Market,
          Commodity => Commodity,
-         Offer     => Concorde.Db.Ask,
+         Offer     => Concorde.Handles.Ask,
          Since     => Since);
    end Historical_Supply;
 
@@ -394,7 +394,7 @@ package body Concorde.Managers.Agents is
       return Concorde.Markets.Historical_Offer_Quantity
         (Market    => Manager.Market,
          Commodity => Commodity,
-         Offer     => Concorde.Db.Ask,
+         Offer     => Concorde.Handles.Ask,
          Price     => Max_Price,
          Since     => Since);
    end Historical_Supply;
@@ -405,7 +405,7 @@ package body Concorde.Managers.Agents is
 
    procedure Initialize_Agent_Manager
      (Manager           : in out Root_Agent_Manager_Type'Class;
-      Agent             : Concorde.Db.Agent.Agent_Type;
+      Agent             : Concorde.Handles.Agent.Agent_Type;
       Market            : Concorde.Markets.Concorde_Market;
       Planning_Cycle    : Positive)
    is
@@ -465,26 +465,26 @@ package body Concorde.Managers.Agents is
       use type Concorde.Calendar.Time;
    begin
       for Contract of
-        Concorde.Db.Lease_Contract.Select_By_Tenant (Manager.Agent)
+        Concorde.Handles.Lease_Contract.Select_By_Tenant (Manager.Agent)
       loop
          if Contract.Expires > Concorde.Calendar.Clock then
             Manager.Log ("pay " & Concorde.Money.Show (Contract.Daily_Rent)
                          & " to Agent"
-                         & Concorde.Db.To_String (Contract.Owner)
+                         & Concorde.Handles.To_String (Contract.Owner)
                          & " for "
                          & Concorde.Commodities.Local_Name
                            (Concorde.Commodities.Get_Commodity
                               (Contract.Commodity)));
             Manager.Spend (Contract.Daily_Rent, "rent");
             Concorde.Agents.Add_Cash
-              (Concorde.Db.Agent.Get (Contract.Owner), Contract.Daily_Rent,
+              (Concorde.Handles.Agent.Get (Contract.Owner), Contract.Daily_Rent,
                "rent");
          end if;
       end loop;
       Manager.Last_Earn :=
-        Concorde.Db.Account.Get (Manager.Account).Earn;
+        Concorde.Handles.Account.Get (Manager.Account).Earn;
       Manager.Last_Spend :=
-        Concorde.Db.Account.Get (Manager.Account).Spend;
+        Concorde.Handles.Account.Get (Manager.Account).Spend;
       Manager.Reset_Cashflow;
       Manager.Log ("last period earned "
                    & Concorde.Money.Show (Manager.Last_Earn)
@@ -512,7 +512,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Previous_Agent_Offer
-        (Manager.Market, Manager.Agent, Commodity, Concorde.Db.Ask);
+        (Manager.Market, Manager.Agent, Commodity, Concorde.Handles.Ask);
    end Previous_Ask;
 
    ------------------------
@@ -526,7 +526,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Previous_Agent_Offer_Price
-        (Manager.Market, Manager.Agent, Commodity, Concorde.Db.Ask);
+        (Manager.Market, Manager.Agent, Commodity, Concorde.Handles.Ask);
    end Previous_Ask_Price;
 
    ------------------
@@ -540,7 +540,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Previous_Agent_Offer
-        (Manager.Market, Manager.Agent, Commodity, Concorde.Db.Ask);
+        (Manager.Market, Manager.Agent, Commodity, Concorde.Handles.Ask);
    end Previous_Bid;
 
    -------------------
@@ -554,7 +554,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Remaining_Agent_Offer
-        (Manager.Market, Manager.Agent, Commodity, Concorde.Db.Ask);
+        (Manager.Market, Manager.Agent, Commodity, Concorde.Handles.Ask);
    end Remaining_Ask;
 
    -------------------
@@ -568,7 +568,7 @@ package body Concorde.Managers.Agents is
    is
    begin
       return Concorde.Markets.Remaining_Agent_Offer
-        (Manager.Market, Manager.Agent, Commodity, Concorde.Db.Ask);
+        (Manager.Market, Manager.Agent, Commodity, Concorde.Handles.Ask);
    end Remaining_Bid;
 
    ------------------
@@ -580,21 +580,21 @@ package body Concorde.Managers.Agents is
       Commodity : Concorde.Commodities.Commodity_Reference;
       Quantity  : Concorde.Quantities.Quantity_Type)
    is
-      use type Concorde.Db.Offer_Type;
-      Ask : constant Concorde.Db.Market_Offer.Market_Offer_Type :=
-        Concorde.Db.Market_Offer.Get_By_Market_Offer
+      use type Concorde.Handles.Offer_Type;
+      Ask : constant Concorde.Handles.Market_Offer.Market_Offer_Type :=
+        Concorde.Handles.Market_Offer.Get_By_Market_Offer
           (Market    => Manager.Market,
            Agent     => Manager.Agent,
            Commodity => Commodities.To_Database_Reference (Commodity));
    begin
       if Ask.Has_Element
-        and then Ask.Offer = Concorde.Db.Ask
+        and then Ask.Offer = Concorde.Handles.Ask
       then
          declare
             use Concorde.Quantities;
             Ask_Quantity : constant Quantity_Type := Ask.Quantity;
          begin
-            Concorde.Db.Market_Offer.Update_Market_Offer
+            Concorde.Handles.Market_Offer.Update_Market_Offer
               (Ask.Get_Market_Offer_Reference)
               .Set_Quantity (Ask_Quantity - Min (Quantity, Ask_Quantity))
                 .Done;
@@ -613,11 +613,11 @@ package body Concorde.Managers.Agents is
      (Manager : Root_Agent_Manager_Type'Class)
    is
    begin
-      Concorde.Db.Agent.Update_Agent (Manager.Agent)
+      Concorde.Handles.Agent.Update_Agent (Manager.Agent)
         .Set_Last_Earn (Manager.Last_Earn)
         .Set_Last_Spend (Manager.Last_Spend)
         .Done;
-      Concorde.Db.Account.Update_Account (Manager.Account)
+      Concorde.Handles.Account.Update_Account (Manager.Account)
         .Set_Earn (Concorde.Money.Zero)
         .Set_Spend (Concorde.Money.Zero)
         .Done;
@@ -638,7 +638,7 @@ package body Concorde.Managers.Agents is
 
       type Stock_Item_Record is
          record
-            Commodity : Concorde.Db.Commodity_Reference;
+            Commodity : Concorde.Handles.Commodity.Commodity_Class;
             Quantity  : Concorde.Quantities.Quantity_Type;
             Value     : Concorde.Money.Money_Type;
          end record;
@@ -650,7 +650,7 @@ package body Concorde.Managers.Agents is
 
    begin
       for Stock_Item of
-        Concorde.Db.Stock_Item.Select_By_Has_Stock
+        Concorde.Handles.Stock_Item.Select_By_Has_Stock
           (Manager.Has_Stock)
       loop
          if Stock_Item.Quantity > Zero then

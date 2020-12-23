@@ -9,6 +9,7 @@ package Concorde.Server is
    procedure Add_Faction;
 
    procedure Start;
+   procedure Stop;
 
    function Start_Time
      return Ada.Calendar.Time;

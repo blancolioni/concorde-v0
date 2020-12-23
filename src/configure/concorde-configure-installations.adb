@@ -6,8 +6,8 @@ with Concorde.Agents;
 with Concorde.Facilities;
 with Concorde.Worlds;
 
-with Concorde.Db.Faction;
-with Concorde.Db.Installation;
+with Concorde.Handles.Faction;
+with Concorde.Handles.Installation;
 
 package body Concorde.Configure.Installations is
 
@@ -16,18 +16,18 @@ package body Concorde.Configure.Installations is
    ----------------------------
 
    procedure Configure_Installation
-     (Owner  : Concorde.Db.Faction_Reference;
-      Sector : Concorde.Db.World_Sector_Reference;
+     (Owner  : Concorde.Handles.Faction.Faction_Handle;
+      Sector : Concorde.Handles.World_Sector_Reference;
       Config : Tropos.Configuration)
    is
       Cash : constant Concorde.Money.Money_Type :=
                Concorde.Money.To_Money
                  (Real (Float'(Config.Get ("cash"))));
-      Account : constant Concorde.Db.Account_Reference :=
+      Account : constant Concorde.Handles.Account_Reference :=
         Concorde.Agents.New_Account
-          (Cash, Concorde.Db.Faction.Get (Owner).Account);
-      Ref : constant Concorde.Db.Installation_Reference :=
-              Concorde.Db.Installation.Create
+          (Cash, Concorde.Handles.Faction.Get (Owner).Account);
+      Ref : constant Concorde.Handles.Installation_Reference :=
+              Concorde.Handles.Installation.Create
                 (Transported_Size => 1000.0,
                  Active           => True,
                  Scheduled        => False,
@@ -37,7 +37,7 @@ package body Concorde.Configure.Installations is
                  Last_Earn        => Concorde.Money.Zero,
                  Last_Spend       => Concorde.Money.Zero,
                  Account          => Account,
-                 Production       => Concorde.Db.Null_Production_Reference,
+                 Production       => Concorde.Handles.Null_Production_Reference,
                  Capacity         => Concorde.Quantities.To_Quantity (1.0e6),
                  Faction          => Owner,
                  World            => Concorde.Worlds.Get_World (Sector),
@@ -46,7 +46,7 @@ package body Concorde.Configure.Installations is
                    Concorde.Facilities.Get (Config.Config_Name));
    begin
       Concorde.Configure.Commodities.Configure_Stock
-        (Has_Stock => Concorde.Db.Installation.Get (Ref),
+        (Has_Stock => Concorde.Handles.Installation.Get (Ref),
          Config    => Config);
    end Configure_Installation;
 

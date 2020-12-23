@@ -1,11 +1,11 @@
-with Concorde.Db.Property;
-with Concorde.Db.Property_Entry;
+with Concorde.Handles.Property;
+with Concorde.Handles.Property_Entry;
 
 package body Concorde.Properties is
 
    package Property_Reference_Maps is
      new WL.String_Maps
-       (Concorde.Db.Property_Reference, Concorde.Db."=");
+       (Concorde.Handles.Property_Reference, Concorde.Handles."=");
 
    Map : Property_Reference_Maps.Map;
 
@@ -15,7 +15,7 @@ package body Concorde.Properties is
 
    procedure Create_List
      (List : in out Property_List;
-      Ref  : Concorde.Db.Has_Properties_Reference)
+      Ref  : Concorde.Handles.Has_Properties_Reference)
    is
    begin
       List.Has_Properties := Ref;
@@ -51,11 +51,11 @@ package body Concorde.Properties is
          return Property_Maps.Element (Position);
       else
          declare
-            Property_Ref         : constant Concorde.Db.Property_Reference :=
+            Property_Ref         : constant Concorde.Handles.Property_Reference :=
               Get_Reference (String (Property));
-            Prop_Entry           : constant Concorde.Db.Property_Entry
+            Prop_Entry           : constant Concorde.Handles.Property_Entry
               .Property_Entry_Type :=
-                Concorde.Db.Property_Entry.Get_By_Property_Entry
+                Concorde.Handles.Property_Entry.Get_By_Property_Entry
                   (List.Has_Properties, Property_Ref);
             New_Entry            : constant Property_List_Entry :=
               (if Prop_Entry.Has_Element
@@ -74,7 +74,7 @@ package body Concorde.Properties is
 
    function Get_Reference
      (Name : String)
-      return Concorde.Db.Property_Reference
+      return Concorde.Handles.Property_Reference
    is
       Position : constant Property_Reference_Maps.Cursor := Map.Find (Name);
    begin
@@ -82,14 +82,14 @@ package body Concorde.Properties is
          return Property_Reference_Maps.Element (Position);
       else
          declare
-            use type Concorde.Db.Property_Reference;
-            Reference : constant Concorde.Db.Property_Reference :=
-                          Concorde.Db.Property.Get_Reference_By_Tag (Name);
+            use type Concorde.Handles.Property_Reference;
+            Reference : constant Concorde.Handles.Property_Reference :=
+                          Concorde.Handles.Property.Get_By_Tag (Name);
          begin
-            if Reference /= Concorde.Db.Null_Property_Reference then
+            if Reference /= Concorde.Handles.Null_Property_Reference then
                return Reference;
             else
-               return Concorde.Db.Property.Create (Name);
+               return Concorde.Handles.Property.Create (Name);
             end if;
          end;
       end if;

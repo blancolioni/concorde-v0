@@ -3,11 +3,8 @@ with Ada.Strings.Unbounded;
 
 with Concorde.Logging;
 
-with Concorde.Db.Ability;
-with Concorde.Db.Ability_Score;
-with Concorde.Db.Individual;
-with Concorde.Db.Skill;
-with Concorde.Db.Skill_Level;
+with Concorde.Handles.Ability_Score;
+with Concorde.Handles.Skill_Level;
 
 package body Concorde.Individuals is
 
@@ -16,11 +13,12 @@ package body Concorde.Individuals is
    -------------------
 
    function Ability_Score
-     (Individual : Concorde.Db.Individual_Reference;
-      Ability    : Concorde.Db.Ability_Reference) return Natural
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Ability    : Concorde.Handles.Ability.Ability_Class)
+      return Natural
    is
    begin
-      return Concorde.Db.Ability_Score.Get_By_Ability_Score
+      return Concorde.Handles.Ability_Score.Get_By_Ability_Score
         (Individual, Ability)
         .Score;
    end Ability_Score;
@@ -30,18 +28,19 @@ package body Concorde.Individuals is
    ---------------------
 
    function Ability_Summary
-     (Individual : Concorde.Db.Individual_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class)
       return String
    is
       use Ada.Strings.Unbounded;
       Result : Unbounded_String;
    begin
-      for Ability of Concorde.Db.Ability.Scan_By_Top_Record loop
+      for Ability of Concorde.Handles.Ability.Scan_By_Top_Record loop
          declare
             use Ada.Strings, Ada.Strings.Fixed;
-            Score : constant Concorde.Db.Ability_Score.Ability_Score_Type :=
-                      Concorde.Db.Ability_Score.Get_By_Ability_Score
-                        (Individual, Ability.Get_Ability_Reference);
+            use Concorde.Handles.Ability_Score;
+            Score : constant Ability_Score_Handle :=
+                      Get_By_Ability_Score
+                        (Individual, Ability);
          begin
             Result := Result
               & (if Result = Null_Unbounded_String then "[" else ",")
@@ -56,71 +55,75 @@ package body Concorde.Individuals is
    -------------------
 
    procedure Advance_Skill
-     (Individual : Concorde.Db.Individual_Reference;
-      Skill      : Concorde.Db.Skill_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Skill      : Concorde.Handles.Skill.Skill_Class)
    is
    begin
       if not Has_Skill (Individual, Skill) then
-         Log (Concorde.Handles.Individual.Get (Individual),
+         Log (Individual,
               "gains "
-              & Concorde.Db.Skill.Get (Skill).Tag
+              & Skill.Tag
               & " at level 0");
 
-         Concorde.Db.Skill_Level.Create
+         Concorde.Handles.Skill_Level.Create
            (Individual => Individual,
             Skill      => Skill,
             Level      => 0);
       else
          declare
-            use Concorde.Db.Skill_Level;
-            Skill_Level : constant Concorde.Db.Skill_Level_Reference :=
-                            Get_Reference_By_Skill_Level
+            use Concorde.Handles.Skill_Level;
+            Skill_Level : constant Skill_Level_Handle :=
+                            Get_By_Skill_Level
                               (Individual, Skill);
          begin
-            Update_Skill_Level (Skill_Level)
+            Skill_Level.Update_Skill_Level
               .Set_Level (Current_Level (Individual, Skill) + 1)
               .Done;
          end;
 
-         Log (Concorde.Handles.Individual.Get (Individual),
+         Log (Individual,
               "raises "
-              & Concorde.Db.Skill.Get (Skill).Tag
+              & Skill.Tag
               & " to level"
               & Natural'Image (Current_Level (Individual, Skill)));
       end if;
    end Advance_Skill;
 
+   -------------------
+   -- Advance_Skill --
+   -------------------
+
    procedure Advance_Skill
-     (Individual : Concorde.Db.Individual_Reference;
-      Skill      : Concorde.Db.Skill_Reference;
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Skill      : Concorde.Handles.Skill.Skill_Class;
       Level      : Natural)
    is
    begin
       if not Has_Skill (Individual, Skill) then
-         Log (Concorde.Handles.Individual.Get (Individual),
+         Log (Individual,
               "gains "
-              & Concorde.Db.Skill.Get (Skill).Tag
+              & Skill.Tag
               & " at level" & Level'Image);
 
-         Concorde.Db.Skill_Level.Create
+         Concorde.Handles.Skill_Level.Create
            (Individual => Individual,
             Skill      => Skill,
             Level      => Level);
       elsif Current_Level (Individual, Skill) < Level then
          declare
-            use Concorde.Db.Skill_Level;
-            Skill_Level : constant Concorde.Db.Skill_Level_Reference :=
-                            Get_Reference_By_Skill_Level
+            use Concorde.Handles.Skill_Level;
+            Skill_Level : constant Skill_Level_Handle :=
+                            Get_By_Skill_Level
                               (Individual, Skill);
          begin
-            Update_Skill_Level (Skill_Level)
+            Skill_Level.Update_Skill_Level
               .Set_Level (Level)
               .Done;
          end;
 
-         Log (Concorde.Handles.Individual.Get (Individual),
+         Log (Individual,
               "raises "
-              & Concorde.Db.Skill.Get (Skill).Tag
+              & Skill.Tag
               & " to level"
               & Level'Image);
       end if;
@@ -131,12 +134,12 @@ package body Concorde.Individuals is
    -------------------
 
    function Current_Level
-     (Individual : Concorde.Db.Individual_Reference;
-      Skill      : Concorde.Db.Skill_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Skill      : Concorde.Handles.Skill.Skill_Class)
       return Natural
    is
    begin
-      return Concorde.Db.Skill_Level.Get_By_Skill_Level
+      return Concorde.Handles.Skill_Level.Get_By_Skill_Level
         (Individual, Skill)
         .Level;
    end Current_Level;
@@ -146,12 +149,12 @@ package body Concorde.Individuals is
    ---------------
 
    function Has_Skill
-     (Individual : Concorde.Db.Individual_Reference;
-      Skill      : Concorde.Db.Skill_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Skill      : Concorde.Handles.Skill.Skill_Class)
       return Boolean
    is
    begin
-      return Concorde.Db.Skill_Level.Get_By_Skill_Level
+      return Concorde.Handles.Skill_Level.Get_By_Skill_Level
         (Individual, Skill)
         .Has_Element;
    end Has_Skill;
@@ -161,12 +164,11 @@ package body Concorde.Individuals is
    ---------
 
    procedure Log
-     (Individual : Concorde.Handles.Individual.Individual_Handle;
+     (Individual : Concorde.Handles.Individual.Individual_Class;
       Message    : String)
    is
       Title : constant String :=
-                Concorde.Db.Individual.Get (Individual.Reference_Individual)
-                .Title;
+                Individual.Title;
    begin
       Concorde.Logging.Log
         (Actor    =>

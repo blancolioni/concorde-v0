@@ -6,54 +6,53 @@ with Concorde.Logging;
 
 with Concorde.Individuals;
 
-with Concorde.Handles.Event;
+with Concorde.Handles.Ability;
+with Concorde.Handles.Ability_Score;
+with Concorde.Handles.Change_Ability;
+with Concorde.Handles.Child_Event;
+with Concorde.Handles.Event_Choice;
+with Concorde.Handles.Event_Effect;
+with Concorde.Handles.Gain_Skill;
+with Concorde.Handles.Skill;
 
-with Concorde.Db.Ability;
-with Concorde.Db.Ability_Score;
-with Concorde.Db.Change_Ability;
-with Concorde.Db.Child_Event;
-with Concorde.Db.Event;
-with Concorde.Db.Event_Choice;
-with Concorde.Db.Event_Effect;
-with Concorde.Db.Gain_Skill;
-with Concorde.Db.Individual;
-with Concorde.Db.Skill;
+with Concorde.Db;
 
 package body Concorde.Events is
 
    package Choice_Vectors is
      new Ada.Containers.Vectors
-       (Positive, Concorde.Db.Event_Choice_Reference, Concorde.Db."=");
+       (Positive, Concorde.Handles.Event_Choice.Event_Choice_Handle,
+        Concorde.Handles.Event_Choice."=");
 
    procedure Log
-     (Event   : Concorde.Db.Event_Reference;
-      Target  : Concorde.Db.Individual_Reference;
+     (Event   : Concorde.Handles.Event.Event_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class;
       Message : String);
 
    procedure Log
-     (Effect  : Concorde.Db.Event_Effect_Reference;
-      Target  : Concorde.Db.Individual_Reference;
+     (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class;
       Message : String);
 
    procedure Execute_Effect
-     (Effect  : Concorde.Db.Event_Effect.Event_Effect_Type;
-      Target  : Concorde.Db.Individual_Reference);
+     (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class);
 
    type Effect_Handler is access
-     procedure (Effect : Concorde.Db.Event_Effect_Reference;
-                Target : Concorde.Db.Individual_Reference);
+     procedure (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+                Target  : Concorde.Handles.Individual.Individual_Class);
 
    procedure Handle_Child_Event
-     (Effect : Concorde.Db.Event_Effect_Reference;
-      Target : Concorde.Db.Individual_Reference);
+     (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class);
 
    procedure Handle_Change_Ability
-     (Effect : Concorde.Db.Event_Effect_Reference;
-      Target : Concorde.Db.Individual_Reference);
+     (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class);
 
    procedure Handle_Gain_Skill
-     (Effect : Concorde.Db.Event_Effect_Reference;
-      Target : Concorde.Db.Individual_Reference);
+     (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class);
 
    Effect_Handlers : constant array (Concorde.Db.Record_Type) of Effect_Handler
      := (Concorde.Db.R_Child_Event    => Handle_Child_Event'Access,
@@ -66,8 +65,8 @@ package body Concorde.Events is
    --------------------
 
    procedure Execute_Effect
-     (Effect  : Concorde.Db.Event_Effect.Event_Effect_Type;
-      Target  : Concorde.Db.Individual_Reference)
+     (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class)
    is
       Handler : constant Effect_Handler := Effect_Handlers (Effect.Top_Record);
    begin
@@ -76,7 +75,7 @@ package body Concorde.Events is
            "no handler for effect " & Effect.Top_Record'Image;
       end if;
 
-      Handler (Effect.Get_Event_Effect_Reference, Target);
+      Handler (Effect, Target);
    end Execute_Effect;
 
    -------------------
@@ -84,20 +83,18 @@ package body Concorde.Events is
    -------------------
 
    procedure Execute_Event
-     (Event  : Concorde.Db.Event_Reference;
-      Target : Concorde.Db.Individual_Reference)
+     (Event  : Concorde.Handles.Event.Event_Class;
+      Target : Concorde.Handles.Individual.Individual_Class)
    is
       Choices : Choice_Vectors.Vector;
-      Handle  : constant Concorde.Handles.Event.Event_Handle :=
-                  Concorde.Handles.Event.Get (Event);
    begin
 
       Log (Event, Target, "executing");
 
       for Choice of
-        Concorde.Db.Event_Choice.Select_By_Event (Event)
+        Concorde.Handles.Event_Choice.Select_By_Event (Event)
       loop
-         Choices.Append (Choice.Get_Event_Choice_Reference);
+         Choices.Append (Choice.To_Event_Choice_Handle);
       end loop;
 
       if Choices.Is_Empty then
@@ -105,12 +102,12 @@ package body Concorde.Events is
       else
          declare
             Chosen : constant Positive :=
-                       (if Handle.Random_Choice
+                       (if Event.Random_Choice
                         then WL.Random.Random_Number (1, Choices.Last_Index)
                         else WL.Random.Random_Number (1, Choices.Last_Index));
          begin
             for Effect of
-              Concorde.Db.Event_Effect.Select_By_Event_Choice
+              Concorde.Handles.Event_Effect.Select_By_Event_Choice
                 (Choices (Chosen))
             loop
                Execute_Effect (Effect, Target);
@@ -124,26 +121,25 @@ package body Concorde.Events is
    ---------------------------
 
    procedure Handle_Change_Ability
-     (Effect : Concorde.Db.Event_Effect_Reference;
-      Target : Concorde.Db.Individual_Reference)
+     (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class)
    is
-      use Concorde.Db;
-      Change : constant Concorde.Db.Change_Ability.Change_Ability_Type :=
-                 Concorde.Db.Change_Ability.Get_Change_Ability (Effect);
-      Ability : Ability_Reference := Change.Ability;
+      Change : constant Handles.Change_Ability.Change_Ability_Handle :=
+                 Handles.Change_Ability.Get_From_Event_Effect (Effect);
+      Ability : Concorde.Handles.Ability.Ability_Handle :=
+                  Change.Ability.To_Ability_Handle;
    begin
-      if Ability = Null_Ability_Reference then
+      if not Ability.Has_Element then
          declare
             Highest : Natural := 0;
          begin
-            for A of Concorde.Db.Ability.Select_By_Category
+            for A of Concorde.Handles.Ability.Select_By_Category
               (Change.Category)
             loop
-               if Concorde.Individuals.Ability_Score
-                 (Target, A.Get_Ability_Reference)
+               if Concorde.Individuals.Ability_Score (Target, A)
                  > Highest
                then
-                  Ability := A.Get_Ability_Reference;
+                  Ability := A.To_Ability_Handle;
                   Highest := Concorde.Individuals.Ability_Score
                     (Target, Ability);
                end if;
@@ -163,10 +159,10 @@ package body Concorde.Events is
                        Integer'Max (0, Current + Score_Change);
       begin
          Log (Effect, Target,
-              Concorde.Db.Ability.Get (Ability).Tag
+              Ability.Tag
               & " changed from" & Current'Image & " to" & New_Score'Image);
-         Concorde.Db.Ability_Score.Update_Ability_Score
-           (Concorde.Db.Ability_Score.Get_Reference_By_Ability_Score
+         Concorde.Handles.Ability_Score.Update_Ability_Score
+           (Concorde.Handles.Ability_Score.Get_By_Ability_Score
               (Target, Ability))
              .Set_Score (New_Score)
              .Done;
@@ -178,13 +174,13 @@ package body Concorde.Events is
    ------------------------
 
    procedure Handle_Child_Event
-     (Effect : Concorde.Db.Event_Effect_Reference;
-      Target : Concorde.Db.Individual_Reference)
+     (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class)
    is
-      Child : constant Concorde.Db.Child_Event.Child_Event_Type :=
-                Concorde.Db.Child_Event.Get_Child_Event (Effect);
-      Event : constant Concorde.Db.Event_Reference :=
-                Concorde.Db.Event.Get_Reference_By_Tag (Child.Tag);
+      Child : constant Concorde.Handles.Child_Event.Child_Event_Handle :=
+                Concorde.Handles.Child_Event.Get_From_Event_Effect (Effect);
+      Event : constant Concorde.Handles.Event.Event_Handle :=
+                Concorde.Handles.Event.Get_By_Tag (Child.Tag);
    begin
       Log (Event, Target, "executing child event");
       Execute_Event (Event, Target);
@@ -195,16 +191,15 @@ package body Concorde.Events is
    -----------------------
 
    procedure Handle_Gain_Skill
-     (Effect : Concorde.Db.Event_Effect_Reference;
-      Target : Concorde.Db.Individual_Reference)
+     (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class)
    is
-      use Concorde.Db;
-      Change : constant Concorde.Db.Gain_Skill.Gain_Skill_Type :=
-                 Concorde.Db.Gain_Skill.Get_Gain_Skill (Effect);
-      Skill  : constant Skill_Reference := Change.Skill;
+      Change : constant Concorde.Handles.Gain_Skill.Gain_Skill_Handle :=
+                 Concorde.Handles.Gain_Skill.Get_From_Event_Effect (Effect);
+      Skill  : constant Concorde.Handles.Skill.Skill_Class := Change.Skill;
    begin
       Log (Effect, Target,
-           Concorde.Db.Skill.Get (Skill).Tag & Change.Level'Image);
+           Skill.Tag & Change.Level'Image);
       Concorde.Individuals.Advance_Skill
         (Individual => Target,
          Skill      => Skill,
@@ -216,15 +211,15 @@ package body Concorde.Events is
    ---------
 
    procedure Log
-     (Event   : Concorde.Db.Event_Reference;
-      Target  : Concorde.Db.Individual_Reference;
+     (Event   : Concorde.Handles.Event.Event_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class;
       Message : String)
    is
    begin
       Concorde.Logging.Log
-        (Concorde.Db.Individual.Get (Target).First_Name,
+        (Target.First_Name,
          "",
-         Concorde.Db.Event.Get (Event).Tag,
+         Event.Tag,
          Message);
    end Log;
 
@@ -233,14 +228,14 @@ package body Concorde.Events is
    ---------
 
    procedure Log
-     (Effect  : Concorde.Db.Event_Effect_Reference;
-      Target  : Concorde.Db.Individual_Reference;
+     (Effect  : Concorde.Handles.Event_Effect.Event_Effect_Class;
+      Target  : Concorde.Handles.Individual.Individual_Class;
       Message : String)
    is
       pragma Unreferenced (Effect);
    begin
       Concorde.Logging.Log
-        (Concorde.Db.Individual.Get (Target).First_Name,
+        (Target.First_Name,
          "",
          "effect",
          Message);

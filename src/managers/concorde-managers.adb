@@ -19,7 +19,7 @@ package body Concorde.Managers is
          Concorde.Updates.Events.Update_At
            (Clock  => Update.Manager.Next_Update,
             Update => Update);
-         Concorde.Db.Managed.Update_Managed (Update.Manager.Managed)
+         Update.Manager.Managed.Element.Update_Managed
            .Set_Next_Event (Update.Manager.Next_Update)
            .Set_Active (True)
            .Done;
@@ -29,7 +29,7 @@ package body Concorde.Managers is
             Location => "",
             Category => "",
             Message  => "deactivating");
-         Concorde.Db.Managed.Update_Managed (Update.Manager.Managed)
+         Update.Manager.Managed.Element.Update_Managed
            .Set_Active (False)
            .Done;
       end if;

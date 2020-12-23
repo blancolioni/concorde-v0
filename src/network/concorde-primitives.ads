@@ -4,6 +4,8 @@ with Concorde.Values.Vectors;
 
 package Concorde.Primitives is
 
+   type Operator_Type is ('+', '-', '*', '/', '^');
+
    type Primitive_Interface is interface;
 
    function Evaluate
@@ -12,20 +14,29 @@ package Concorde.Primitives is
       return Concorde.Values.Value_Interface'Class
       is abstract;
 
-   function Minimum_Argument_Count
+   function Argument_Count
      (Primitive : Primitive_Interface)
       return Natural
       is abstract;
 
-   function Maximum_Argument_Count
+   function Name
      (Primitive : Primitive_Interface)
-      return Natural
+      return String
       is abstract;
 
    function Evaluate
      (Name        : String;
       Arguments   : Concorde.Values.Vectors.Vector)
       return Concorde.Values.Value_Interface'Class;
+
+   function Is_Primitive
+     (Name        : String)
+      return Boolean;
+
+   function Get_Primitive
+     (Name        : String)
+      return Primitive_Interface'Class
+     with Pre => Is_Primitive (Name);
 
 private
 
@@ -43,19 +54,24 @@ private
       Arguments   : Concorde.Values.Vectors.Vector)
       return Concorde.Values.Value_Interface'Class;
 
-   overriding function Minimum_Argument_Count
+   overriding function Argument_Count
      (Primitive : Binary_Primitive)
       return Natural
    is (2);
-
-   overriding function Maximum_Argument_Count
-     (Primitive : Binary_Primitive)
-      return Natural
-      is (2);
 
    package Primitive_Maps is
      new WL.String_Maps (Primitive_Interface'Class);
 
    Map : Primitive_Maps.Map;
+
+   function Is_Primitive
+     (Name        : String)
+      return Boolean
+   is (Map.Contains (Name));
+
+   function Get_Primitive
+     (Name        : String)
+      return Primitive_Interface'Class
+   is (Map.Element (Name));
 
 end Concorde.Primitives;

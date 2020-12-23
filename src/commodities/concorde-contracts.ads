@@ -21,12 +21,12 @@ package Concorde.Contracts is
 
    procedure Create_Agreement
      (Contract : Contract_Type;
-      Supplier : Concorde.Db.Agent_Reference;
-      User     : Concorde.Db.Agent_Reference);
+      Supplier : Concorde.Handles.Agent_Reference;
+      User     : Concorde.Handles.Agent_Reference);
 
 private
 
    type Contract_Type is
-     new Concorde.Db.Contract_Reference;
+     new Concorde.Handles.Contract_Reference;
 
 end Concorde.Contracts;

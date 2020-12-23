@@ -1,8 +1,8 @@
 with Tropos.Reader;
 
-with Concorde.Db.Climate;
-with Concorde.Db.Climate_Terrain;
-with Concorde.Db.Terrain;
+with Concorde.Handles.Climate;
+with Concorde.Handles.Climate_Terrain;
+with Concorde.Handles.Terrain;
 
 package body Concorde.Configure.Climates is
 
@@ -22,11 +22,11 @@ package body Concorde.Configure.Climates is
                          ("default-terrain",
                           "missing default terrain");
       Default_Terrain : constant Terrain_Reference :=
-                          Concorde.Db.Terrain.Get_Reference_By_Tag
+                          Concorde.Handles.Terrain.Get_By_Tag
                             (Default_Name);
       Habitability    : constant Natural := Config.Get ("habitability", 999);
-      Climate         : constant Concorde.Db.Climate_Reference :=
-                          Concorde.Db.Climate.Create
+      Climate         : constant Concorde.Handles.Climate_Reference :=
+                          Concorde.Handles.Climate.Create
                             (Tag             => Config.Config_Name,
                              Habitability    => Real (Habitability) / 100.0,
                              Default_Terrain => Default_Terrain);
@@ -43,7 +43,7 @@ package body Concorde.Configure.Climates is
             Tag     : constant String :=
                         Terrain_Config.Config_Name;
             Terrain : constant Terrain_Reference :=
-                        Concorde.Db.Terrain.Get_Reference_By_Tag (Tag);
+                        Concorde.Handles.Terrain.Get_By_Tag (Tag);
          begin
             if Terrain = Null_Terrain_Reference then
                raise Constraint_Error with
@@ -52,7 +52,7 @@ package body Concorde.Configure.Climates is
                  & Tag;
             end if;
 
-            Concorde.Db.Climate_Terrain.Create
+            Concorde.Handles.Climate_Terrain.Create
               (Climate => Climate,
                Terrain => Terrain,
                Chance  => Real_Value (Terrain_Config) / 100.0);

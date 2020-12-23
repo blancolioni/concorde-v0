@@ -18,18 +18,18 @@ package body Concorde.Primitives is
          Primitive : constant Primitive_Interface'Class :=
                        Map.Element (Name);
       begin
-         if Arguments.Last_Index < Primitive.Minimum_Argument_Count then
+         if Arguments.Last_Index < Primitive.Argument_Count then
             raise Constraint_Error with
               "too few arguments to " & Name & "; expected"
-              & Primitive.Minimum_Argument_Count'Image
+              & Primitive.Argument_Count'Image
               & " but found"
               & Arguments.Last_Index'Image;
          end if;
 
-         if Arguments.Last_Index > Primitive.Maximum_Argument_Count then
+         if Arguments.Last_Index > Primitive.Argument_Count then
             raise Constraint_Error with
               "too many arguments to " & Name & "; expected"
-              & Primitive.Maximum_Argument_Count'Image
+              & Primitive.Argument_Count'Image
               & " but found"
               & Arguments.Last_Index'Image;
          end if;

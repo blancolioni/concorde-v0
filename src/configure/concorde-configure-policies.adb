@@ -3,10 +3,12 @@ with Ada.Exceptions;
 with Tropos.Reader;
 with Concorde.Identifiers;
 
-with Concorde.Db.Calculation;
-with Concorde.Db.Effect;
-with Concorde.Db.Node;
-with Concorde.Db.Policy;
+with Concorde.Handles.Calculation;
+with Concorde.Handles.Effect;
+with Concorde.Handles.Node;
+with Concorde.Handles.Policy;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Policies is
 
@@ -42,32 +44,30 @@ package body Concorde.Configure.Policies is
       Revenue_Expr : constant String :=
                        Policy_Config.Get ("revenue", "");
 
-      Ref : constant Concorde.Db.Policy_Reference :=
-              Concorde.Db.Policy.Create
-                (Tag      => Policy_Config.Config_Name,
-                 Content  => Content,
-                 Expense  => Concorde.Db.Null_Calculation_Reference,
-                 Revenue  => Concorde.Db.Null_Calculation_Reference);
-      Node_Ref : constant Concorde.Db.Node_Reference :=
-                   Concorde.Db.Policy.Get (Ref).Get_Node_Reference;
-
-      Expense : constant Concorde.Db.Calculation_Reference :=
+      Policy : constant Concorde.Handles.Policy.Policy_Handle :=
+                 Concorde.Handles.Policy.Create
+                   (Tag        => Policy_Config.Config_Name,
+                    Identifier => Concorde.Identifiers.Next_Identifier,
+                    Content    => Content,
+                    Expense    => Concorde.Handles.Calculation.Empty_Handle,
+                    Revenue    => Concorde.Handles.Calculation.Empty_Handle);
+      Expense : constant Concorde.Handles.Calculation.Calculation_Handle :=
                   (if Expense_Expr = ""
-                   then Concorde.Db.Null_Calculation_Reference
-                   else Concorde.Db.Calculation.Create
+                   then Concorde.Handles.Calculation.Empty_Handle
+                   else Concorde.Handles.Calculation.Create
                      (Identifier => Concorde.Identifiers.Next_Identifier,
-                      Node       => Node_Ref,
+                      Node       => Policy,
                       Expression => Expense_Expr));
-      Revenue : constant Concorde.Db.Calculation_Reference :=
+      Revenue : constant Concorde.Handles.Calculation.Calculation_Handle :=
                   (if Revenue_Expr = ""
-                   then Concorde.Db.Null_Calculation_Reference
-                   else Concorde.Db.Calculation.Create
+                   then Concorde.Handles.Calculation.Empty_Handle
+                   else Concorde.Handles.Calculation.Create
                      (Identifier => Concorde.Identifiers.Next_Identifier,
-                      Node       => Node_Ref,
+                      Node       => Policy,
                       Expression => Revenue_Expr));
    begin
 
-      Concorde.Db.Policy.Update_Policy (Ref)
+      Policy.Update_Policy
         .Set_Expense (Expense)
         .Set_Revenue (Revenue)
         .Done;
@@ -75,22 +75,27 @@ package body Concorde.Configure.Policies is
       for Effect_Config of Policy_Config.Child ("effect") loop
 
          declare
-            use Concorde.Db;
-            To             : constant Concorde.Db.Node_Reference :=
-                               Concorde.Db.Node.Get_Reference_By_Tag
+            To             : constant Concorde.Handles.Node.Node_Class :=
+                               Concorde.Handles.Node.Get_By_Tag
                                  (Effect_Config.Config_Name);
          begin
-            if To = Null_Node_Reference then
+            if not To.Has_Element then
                raise Constraint_Error with
                  "in configuration for policy "
                  & Policy_Config.Config_Name
                  & " effects: no such node: "
                  & Effect_Config.Config_Name;
             end if;
-            Concorde.Db.Effect.Create
+
+            Concorde.Handles.Calculation.Create
+              (Identifier => Concorde.Identifiers.Next_Identifier,
+               Node       => To,
+               Expression => Effect_Config.Value);
+
+            Concorde.Handles.Effect.Create
               (Identifier => Identifiers.Next_Identifier,
                Expression => Effect_Config.Value,
-               Node       => Node_Ref,
+               Node       => Policy,
                To         => To);
          end;
       end loop;

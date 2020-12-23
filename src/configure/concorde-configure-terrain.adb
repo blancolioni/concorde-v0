@@ -4,10 +4,12 @@ with Tropos.Reader;
 
 with Concorde.Color;
 
-with Concorde.Db.Climate_Terrain;
-with Concorde.Db.Elevation;
-with Concorde.Db.Feature;
-with Concorde.Db.Terrain;
+with Concorde.Handles.Climate_Terrain;
+with Concorde.Handles.Elevation;
+with Concorde.Handles.Feature;
+with Concorde.Handles.Terrain;
+
+with Concorde.Db;
 
 with Concorde.Paths;
 
@@ -40,13 +42,13 @@ package body Concorde.Configure.Terrain is
    begin
       for Terrain_Config of Config.Child ("terrain") loop
          declare
-            Terrain : constant Concorde.Db.Terrain_Reference :=
-                        Concorde.Db.Terrain.Get_Reference_By_Tag
+            Terrain : constant Concorde.Handles.Terrain.Terrain_Handle :=
+                        Concorde.Handles.Terrain.Get_By_Tag
                           (Terrain_Config.Config_Name);
             Frequency : constant Real := Terrain_Config.Value;
          begin
             Next := Next + 1;
-            Concorde.Db.Climate_Terrain.Create
+            Concorde.Handles.Climate_Terrain.Create
               (Climate   => Climate,
                Terrain   => Terrain,
                Sequence  => Next,
@@ -68,14 +70,14 @@ package body Concorde.Configure.Terrain is
       Image             : WL.Images.Image_Type;
       Water_Color       : Concorde.Color.Concorde_Color;
    begin
-      for Terrain of Concorde.Db.Terrain.Scan_By_Tag loop
+      for Terrain of Concorde.Handles.Terrain.Scan_By_Tag loop
          if Terrain.Is_Water then
             Water_Color := (Terrain.Red, Terrain.Green, Terrain.Blue, 1.0);
          end if;
       end loop;
 
       for I in Min_Height .. 0 loop
-         Concorde.Db.Elevation.Create
+         Concorde.Handles.Elevation.Create
            (Red     => Water_Color.Red,
             Green   => Water_Color.Green,
             Blue    => Water_Color.Blue,
@@ -89,7 +91,7 @@ package body Concorde.Configure.Terrain is
             Color : constant WL.Images.Image_Color :=
               Image.Color (X, 1);
          begin
-            Concorde.Db.Elevation.Create
+            Concorde.Handles.Elevation.Create
               (Red     => Real (Color.Red) / 255.0,
                Green   => Real (Color.Green) / 255.0,
                Blue    => Real (Color.Blue) / 255.0,
@@ -109,7 +111,7 @@ package body Concorde.Configure.Terrain is
         Concorde.Color.From_String
           (Config.Get ("color", "#000"));
    begin
-      Concorde.Db.Feature.Create
+      Concorde.Handles.Feature.Create
         (Tag    => Config.Config_Name,
          Red      => Color.Red,
          Green    => Color.Green,
@@ -155,7 +157,7 @@ package body Concorde.Configure.Terrain is
    begin
       Min_Height := Integer'Min (Min_Height, Min);
       Max_Height := Integer'Max (Max_Height, Max);
-      Concorde.Db.Terrain.Create
+      Concorde.Handles.Terrain.Create
         (Tag      => Config.Config_Name,
          Red      => Color.Red,
          Green    => Color.Green,

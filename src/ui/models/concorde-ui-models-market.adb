@@ -12,7 +12,7 @@ with Concorde.Quantities;
 
 with Concorde.Updates.Events;
 
-with Concorde.Db.Commodity;
+with Concorde.Handles.Commodity;
 with Concorde.Handles.Commodity;
 
 package body Concorde.UI.Models.Market is
@@ -43,7 +43,7 @@ package body Concorde.UI.Models.Market is
    type Market_Model_Record is
      new Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record with
       record
-         Market : Concorde.Db.Market_Reference;
+         Market : Concorde.Handles.Market_Reference;
          State  : Commodity_Vectors.Vector;
       end record;
 
@@ -149,11 +149,11 @@ package body Concorde.UI.Models.Market is
    begin
       Model.State.Clear;
       for Commodity of
-        Concorde.Db.Commodity.Scan_By_Tag
+        Concorde.Handles.Commodity.Scan_By_Tag
       loop
          declare
             use Concorde.Money, Concorde.Quantities;
-            Ref : constant Concorde.Db.Commodity_Reference :=
+            Ref : constant Concorde.Handles.Commodity.Commodity_Class :=
                     Commodity.Get_Commodity_Reference;
             Info : constant Commodity_Record :=
                      Commodity_Record'
@@ -162,12 +162,12 @@ package body Concorde.UI.Models.Market is
                           Concorde.Markets.Historical_Offer_Quantity
                             (Model.Market,
                              Concorde.Commodities.Get_Commodity (Ref),
-                             Concorde.Db.Bid, Concorde.Calendar.Days (1)),
+                             Concorde.Handles.Bid, Concorde.Calendar.Days (1)),
                         Supply     =>
                           Concorde.Markets.Historical_Offer_Quantity
                             (Model.Market,
                              Concorde.Commodities.Get_Commodity (Ref),
-                             Concorde.Db.Ask, Concorde.Calendar.Days (1)),
+                             Concorde.Handles.Ask, Concorde.Calendar.Days (1)),
                         Last_Price =>
                           Concorde.Markets.Historical_Mean_Price
                             (Model.Market,

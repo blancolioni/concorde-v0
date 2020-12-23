@@ -13,8 +13,8 @@ with Concorde.Paths;
 
 with Concorde.Calendar;
 
-with Concorde.Db.User;
-with Concorde.Db.Calendar;
+with Concorde.Handles.User;
+with Concorde.Handles.Calendar;
 
 package body Concorde.Configure is
 
@@ -129,8 +129,8 @@ package body Concorde.Configure is
 
    procedure Initialize_Database is
    begin
-      Concorde.Db.User.Create ("root", Initial_Root_Password, True);
-      Concorde.Db.Calendar.Create
+      Concorde.Handles.User.Create ("root", Initial_Root_Password, True);
+      Concorde.Handles.Calendar.Create
         (Clock => Concorde.Calendar.Clock);
       Concorde.Configure.Resources.Configure_Atmosphere_Components
         (Tropos.Reader.Read_Config

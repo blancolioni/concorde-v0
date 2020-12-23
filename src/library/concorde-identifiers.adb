@@ -1,17 +1,17 @@
-with Concorde.Db.Next_Identifier;
+with Concorde.Handles.Next_Identifier;
+
+with Concorde.Db;
 
 package body Concorde.Identifiers is
 
-   Template : constant Object_Identifier := "0AA00AA0";
+   Template : constant Object_Identifier := "0AA00AA00AA0";
 
    protected Identifier_Source is
 
       procedure Next_Identifier (Id : out Object_Identifier);
 
    private
-      Current : Concorde.Db.Next_Identifier_Reference :=
-        Concorde.Db.Null_Next_Identifier_Reference;
-
+      Current : Handles.Next_Identifier.Next_Identifier_Handle;
    end Identifier_Source;
 
    -----------------------
@@ -47,30 +47,29 @@ package body Concorde.Identifiers is
             end if;
          end Inc;
 
-         use Concorde.Db;
          Next_Id : Object_Identifier;
 
       begin
-         if Current = Null_Next_Identifier_Reference then
+         if not Current.Has_Element then
             Current :=
-              Concorde.Db.Next_Identifier.First_Reference_By_Top_Record
+              Concorde.Handles.Next_Identifier.First_By_Top_Record
                 (Concorde.Db.R_Next_Identifier);
          end if;
 
-         if Current = Null_Next_Identifier_Reference then
+         if not Current.Has_Element then
             Current :=
-              Concorde.Db.Next_Identifier.Create
+              Concorde.Handles.Next_Identifier.Create
                 (Template);
          end if;
 
-         Next_Id := Concorde.Db.Next_Identifier.Get (Current).Next;
+         Next_Id := Current.Next;
          Id := Next_Id;
 
          for Ch of reverse Next_Id loop
             exit when not Inc (Ch);
          end loop;
 
-         Concorde.Db.Next_Identifier.Update_Next_Identifier (Current)
+         Current.Update_Next_Identifier
            .Set_Next (Next_Id)
            .Done;
 

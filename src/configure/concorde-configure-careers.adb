@@ -2,16 +2,18 @@ with Ada.Text_IO;
 
 with Tropos.Reader;
 
-with Concorde.Db.Ability;
-with Concorde.Db.Advancement;
-with Concorde.Db.Advancement_Table;
-with Concorde.Db.Assignment;
-with Concorde.Db.Assignment_Rank;
-with Concorde.Db.Career;
-with Concorde.Db.Career_Benefit;
-with Concorde.Db.Career_Mishap;
-with Concorde.Db.Event;
-with Concorde.Db.Skill;
+with Concorde.Handles.Ability;
+with Concorde.Handles.Advancement;
+with Concorde.Handles.Advancement_Table;
+with Concorde.Handles.Assignment;
+with Concorde.Handles.Assignment_Rank;
+with Concorde.Handles.Career;
+with Concorde.Handles.Career_Benefit;
+with Concorde.Handles.Career_Mishap;
+with Concorde.Handles.Event;
+with Concorde.Handles.Skill;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Careers is
 
@@ -19,30 +21,30 @@ package body Concorde.Configure.Careers is
      (Career_Config : Tropos.Configuration);
 
    procedure Configure_Assignment
-     (Career            : Concorde.Db.Career_Reference;
+     (Career            : Concorde.Handles.Career.Career_Class;
       Assignment_Config : Tropos.Configuration);
 
    procedure Get_Ability_Score
      (Config  : Tropos.Configuration;
-      Ability : out Concorde.Db.Ability_Reference;
+      Ability : out Concorde.Handles.Ability.Ability_Handle;
       Score   : out Natural);
 
    procedure Configure_Advancement
-     (Advancement : Concorde.Db.Advancement_Reference;
+     (Advancement : Concorde.Handles.Advancement.Advancement_Class;
       Config      : Tropos.Configuration);
 
    procedure Configure_Benefits
-     (Career : Concorde.Db.Career_Reference;
+     (Career : Concorde.Handles.Career.Career_Class;
       Config : Tropos.Configuration);
 
    procedure Configure_Advancement_Table
-     (Career       : Concorde.Db.Career_Reference;
-      Assignment   : Concorde.Db.Assignment_Reference;
+     (Career       : Concorde.Handles.Career.Career_Class;
+      Assignment   : Concorde.Handles.Assignment.Assignment_Class;
       Training     : Concorde.Db.Skill_Training_Type;
       Table_Config : Tropos.Configuration);
 
    procedure Configure_Rank_Table
-     (Assignment   : Concorde.Db.Assignment_Reference;
+     (Assignment   : Concorde.Handles.Assignment.Assignment_Class;
       Table_Config : Tropos.Configuration);
 
    function Get_Skill_Training
@@ -66,31 +68,32 @@ package body Concorde.Configure.Careers is
    ---------------------------
 
    procedure Configure_Advancement
-     (Advancement : Concorde.Db.Advancement_Reference;
+     (Advancement : Concorde.Handles.Advancement.Advancement_Class;
       Config      : Tropos.Configuration)
    is
-      use Concorde.Db;
+      use Concorde.Handles.Ability;
+      use Concorde.Handles.Skill;
       Advance_Cash : Concorde.Money.Money_Type := Concorde.Money.Zero;
-      Advance_Ability : Ability_Reference := Null_Ability_Reference;
-      Advance_Skill   : Skill_Reference := Null_Skill_Reference;
+      Advance_Ability : Ability_Handle := Empty_Handle;
+      Advance_Skill   : Skill_Handle := Empty_Handle;
       Advance_Level   : Integer := -1;
    begin
       for Item_Config of Config loop
          declare
             Tag : constant String := Item_Config.Config_Name;
             Cash : constant Boolean := Tag = "cash";
-            Ability : constant Ability_Reference :=
-                        Concorde.Db.Ability.Get_Reference_By_Tag (Tag);
-            Skill   : constant Skill_Reference :=
-                        Concorde.Db.Skill.Get_Reference_By_Tag (Tag);
+            Ability : constant Ability_Handle :=
+                        Concorde.Handles.Ability.Get_By_Tag (Tag);
+            Skill   : constant Skill_Handle :=
+                        Concorde.Handles.Skill.Get_By_Tag (Tag);
          begin
             if Cash then
                Advance_Cash :=
                  Concorde.Money.To_Money
                    (Real (Long_Float'(Item_Config.Value)));
-            elsif Ability /= Null_Ability_Reference then
+            elsif Ability.Has_Element then
                Advance_Ability := Ability;
-            elsif Skill /= Null_Skill_Reference then
+            elsif Skill.Has_Element then
                Advance_Skill := Skill;
                Advance_Level :=
                  (if Item_Config.Child_Count = 0
@@ -100,7 +103,7 @@ package body Concorde.Configure.Careers is
          end;
       end loop;
 
-      Concorde.Db.Advancement.Update_Advancement (Advancement)
+      Concorde.Handles.Advancement.Update_Advancement (Advancement)
         .Set_Cash (Advance_Cash)
         .Set_Ability (Advance_Ability)
         .Set_Skill (Advance_Skill)
@@ -114,8 +117,8 @@ package body Concorde.Configure.Careers is
    ---------------------------------
 
    procedure Configure_Advancement_Table
-     (Career       : Concorde.Db.Career_Reference;
-      Assignment   : Concorde.Db.Assignment_Reference;
+     (Career       : Concorde.Handles.Career.Career_Class;
+      Assignment   : Concorde.Handles.Assignment.Assignment_Class;
       Training     : Concorde.Db.Skill_Training_Type;
       Table_Config : Tropos.Configuration)
    is
@@ -123,21 +126,19 @@ package body Concorde.Configure.Careers is
    begin
       for Config of Table_Config loop
          declare
-            Row : constant Concorde.Db.Advancement_Table_Reference :=
-                    Concorde.Db.Advancement_Table.Create
-                      (Ability     => Concorde.Db.Null_Ability_Reference,
+            Row : constant Concorde.Handles.Advancement_Table
+              .Advancement_Table_Handle :=
+                    Concorde.Handles.Advancement_Table.Create
+                      (Ability     => Concorde.Handles.Ability.Empty_Handle,
                        Cash        => Concorde.Money.Zero,
-                       Skill       => Concorde.Db.Null_Skill_Reference,
+                       Skill       => Concorde.Handles.Skill.Empty_Handle,
                        Skill_Level => -1,
                        Table       => Training,
                        Career      => Career,
                        Assignment  => Assignment,
                        Dr          => DR);
          begin
-            Configure_Advancement
-              (Concorde.Db.Advancement_Table.Get (Row)
-               .Get_Advancement_Reference,
-               Config);
+            Configure_Advancement (Row, Config);
             DR := DR + 1;
          end;
       end loop;
@@ -148,12 +149,12 @@ package body Concorde.Configure.Careers is
    --------------------------
 
    procedure Configure_Assignment
-     (Career            : Concorde.Db.Career_Reference;
+     (Career            : Concorde.Handles.Career.Career_Class;
       Assignment_Config : Tropos.Configuration)
    is
-      Survival_Ability : Concorde.Db.Ability_Reference;
+      Survival_Ability : Concorde.Handles.Ability.Ability_Handle;
       Survival_Check   : Natural;
-      Advance_Ability  : Concorde.Db.Ability_Reference;
+      Advance_Ability  : Concorde.Handles.Ability.Ability_Handle;
       Advance_Check    : Natural;
 
    begin
@@ -167,8 +168,8 @@ package body Concorde.Configure.Careers is
          Advance_Ability, Advance_Check);
 
       declare
-         Assignment : constant Concorde.Db.Assignment_Reference :=
-                        Concorde.Db.Assignment.Create
+         Assignment : constant Concorde.Handles.Assignment.Assignment_Handle :=
+                        Concorde.Handles.Assignment.Create
                           (Tag              => Assignment_Config.Config_Name,
                            Career           => Career,
                            Survival_Ability => Survival_Ability,
@@ -193,25 +194,26 @@ package body Concorde.Configure.Careers is
    ------------------------
 
    procedure Configure_Benefits
-     (Career : Concorde.Db.Career_Reference;
+     (Career : Concorde.Handles.Career.Career_Class;
       Config : Tropos.Configuration)
    is
       Benefit_Index : Positive := 1;
    begin
       for Item_Config of Config loop
          declare
-            Benefit : constant Concorde.Db.Career_Benefit_Reference :=
-                        Concorde.Db.Career_Benefit.Create
-                          (Ability     => Concorde.Db.Null_Ability_Reference,
-                           Skill       => Concorde.Db.Null_Skill_Reference,
+            Benefit : constant Concorde.Handles.Career_Benefit
+              .Career_Benefit_Handle :=
+                        Concorde.Handles.Career_Benefit.Create
+                  (Ability     =>
+                         Concorde.Handles.Ability.Empty_Handle,
+                           Skill       => Concorde.Handles.Skill.Empty_Handle,
                            Skill_Level => -1,
                            Career      => Career,
                            Index       => Benefit_Index,
                            Cash        => Concorde.Money.Zero);
          begin
             Configure_Advancement
-              (Concorde.Db.Career_Benefit.Get (Benefit)
-               .Get_Advancement_Reference,
+              (Benefit,
                Item_Config);
             Benefit_Index := Benefit_Index + 1;
          end;
@@ -225,9 +227,9 @@ package body Concorde.Configure.Careers is
    procedure Configure_Career
      (Career_Config : Tropos.Configuration)
    is
-      Qualification    : Concorde.Db.Ability_Reference;
+      Qualification    : Concorde.Handles.Ability.Ability_Handle;
       Score            : Natural;
-      Advanced_Ability : Concorde.Db.Ability_Reference;
+      Advanced_Ability : Concorde.Handles.Ability.Ability_Handle;
       Advanced_Check   : Natural;
    begin
       Get_Ability_Score
@@ -238,8 +240,8 @@ package body Concorde.Configure.Careers is
          Advanced_Ability, Advanced_Check);
 
       declare
-         Career : constant Concorde.Db.Career_Reference :=
-                    Concorde.Db.Career.Create
+         Career : constant Concorde.Handles.Career.Career_Class :=
+                    Concorde.Handles.Career.Create
                       (Tag              => Career_Config.Config_Name,
                        Qualification    => Qualification,
                        Check            => Score,
@@ -265,7 +267,7 @@ package body Concorde.Configure.Careers is
                               (Advancement_Config.Config_Name);
             begin
                Configure_Advancement_Table
-                 (Career, Concorde.Db.Null_Assignment_Reference, Training,
+                 (Career, Concorde.Handles.Assignment.Empty_Handle, Training,
                   Advancement_Config);
             end;
          end loop;
@@ -276,16 +278,16 @@ package body Concorde.Configure.Careers is
 
          for Mishap_Config of Career_Config.Child ("mishaps") loop
             declare
-               use Concorde.Db;
-               Event : constant Event_Reference :=
-                         Concorde.Db.Event.Get_Reference_By_Tag
+               use Concorde.Handles.Event;
+               Event : constant Event_Handle :=
+                         Concorde.Handles.Event.Get_By_Tag
                            (Mishap_Config.Value);
             begin
-               if Event = Null_Event_Reference then
+               if not Event.Has_Element then
                   Ada.Text_IO.Put_Line
                     ("undefined event: " & Mishap_Config.Value);
                else
-                  Concorde.Db.Career_Mishap.Create
+                  Concorde.Handles.Career_Mishap.Create
                     (Career => Career,
                      Event  => Event);
                end if;
@@ -316,26 +318,26 @@ package body Concorde.Configure.Careers is
    --------------------------
 
    procedure Configure_Rank_Table
-     (Assignment   : Concorde.Db.Assignment_Reference;
+     (Assignment   : Concorde.Handles.Assignment.Assignment_Class;
       Table_Config : Tropos.Configuration)
    is
       Rank : Natural := 0;
    begin
       for Rank_Config of Table_Config loop
          declare
-            Row : constant Concorde.Db.Assignment_Rank_Reference :=
-                    Concorde.Db.Assignment_Rank.Create
+            Row : constant Concorde.Handles.Assignment_Rank
+              .Assignment_Rank_Handle :=
+                    Concorde.Handles.Assignment_Rank.Create
                       (Assignment  => Assignment,
-                       Ability     => Concorde.Db.Null_Ability_Reference,
+                       Ability     => Concorde.Handles.Ability.Empty_Handle,
                        Cash        => Concorde.Money.Zero,
-                       Skill       => Concorde.Db.Null_Skill_Reference,
+                       Skill       => Concorde.Handles.Skill.Empty_Handle,
                        Skill_Level => -1,
                        Tag         => Rank_Config.Config_Name,
                        Rank_Index  => Rank);
          begin
             Configure_Advancement
-              (Concorde.Db.Assignment_Rank.Get (Row)
-               .Get_Advancement_Reference,
+              (Row,
                Rank_Config);
             Rank := Rank + 1;
          end;
@@ -348,16 +350,16 @@ package body Concorde.Configure.Careers is
 
    procedure Get_Ability_Score
      (Config  : Tropos.Configuration;
-      Ability : out Concorde.Db.Ability_Reference;
+      Ability : out Concorde.Handles.Ability.Ability_Handle;
       Score   : out Natural)
    is
    begin
       if Config.Child_Count = 0 then
-         Ability := Concorde.Db.Null_Ability_Reference;
+         Ability := Concorde.Handles.Ability.Empty_Handle;
          Score := 0;
       elsif Config.Contains ("ability") then
          Ability :=
-           Concorde.Db.Ability.Get_Reference_By_Tag
+           Concorde.Handles.Ability.Get_By_Tag
              (Config.Get ("ability"));
          Score := Config.Get ("score", 99);
       else
@@ -366,7 +368,7 @@ package body Concorde.Configure.Careers is
                       Config.Child (1);
          begin
             Ability :=
-              Concorde.Db.Ability.Get_Reference_By_Tag
+              Concorde.Handles.Ability.Get_By_Tag
                 (Child.Config_Name);
             Score := Child.Value;
          end;

@@ -28,7 +28,7 @@ with Concorde.UI.Models.Console;
 with Concorde.UI.Models.Galaxy;
 
 with Concorde.Handles.Faction;
-with Concorde.Db.Faction;
+with Concorde.Handles.Faction;
 
 with Concorde.Options;
 with Concorde.Paths;
@@ -143,9 +143,9 @@ package body Concorde.UI.Gtk_UI is
          Galaxy_Model       : constant Nazar.Models.Draw.Nazar_Draw_Model :=
                                 Concorde.UI.Models.Galaxy.Galaxy_Model
                                   (Concorde.Handles.Faction.Get
-                                     (Concorde.Db.Faction
-                                      .First_Reference_By_Top_Record
-                                        (Concorde.Db.R_Faction)));
+                                     (Concorde.Handles.Faction
+                                      .First_By_Top_Record
+                                        (Concorde.Handles.R_Faction)));
 
          Galaxy_Controller  : Nazar.Controllers.Draw
            .Nazar_Draw_Controller_Record;

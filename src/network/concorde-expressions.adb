@@ -3,7 +3,7 @@ with Ada.Containers.Indefinite_Holders;
 with Concorde.Elementary_Functions;
 with Concorde.Real_Images;
 
-with Concorde.Primitives;
+with Concorde.Primitives.Operators;
 
 package body Concorde.Expressions is
 
@@ -21,6 +21,10 @@ package body Concorde.Expressions is
       return Expression_Context
    is (With_Delay (Current, Expression.Period));
 
+   overriding procedure Compile
+     (Expression : Delay_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class);
+
    type Smooth_Expression_Type is
      new Context_Expression_Type with null record;
 
@@ -34,6 +38,10 @@ package body Concorde.Expressions is
       Current    : Expression_Context)
       return Expression_Context
    is (With_Smoothing (Current, Expression.Period));
+
+   overriding procedure Compile
+     (Expression : Smooth_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class);
 
    function New_Expression
      (From : Root_Expression_Type'Class)
@@ -74,6 +82,10 @@ package body Concorde.Expressions is
       New_Value      : String)
       return Expression_Type;
 
+   overriding procedure Compile
+     (Expression : Value_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class);
+
    package Behavior_Holders is
      new Ada.Containers.Indefinite_Holders
        (Concorde.Behaviors.Behavior_Type'Class, Concorde.Behaviors."=");
@@ -111,6 +123,11 @@ package body Concorde.Expressions is
       New_Value      : String)
       return Expression_Type;
 
+   overriding procedure Compile
+     (Expression : Behavior_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class)
+   is null;
+
    type Identifier_Expression_Type is
      new Root_Expression_Type with
       record
@@ -145,12 +162,14 @@ package body Concorde.Expressions is
       New_Value      : String)
       return Expression_Type;
 
-   type Operator_Type is ('+', '-', '*', '/', '^');
+   overriding procedure Compile
+     (Expression : Identifier_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class);
 
    type Operator_Expression_Type is
      new Root_Expression_Type with
       record
-         Operator : Operator_Type;
+         Operator : Concorde.Primitives.Operator_Type;
          Left     : Expression_Type;
          Right    : Expression_Type;
       end record;
@@ -181,6 +200,10 @@ package body Concorde.Expressions is
       Original_Value : String;
       New_Value      : String)
       return Expression_Type;
+
+   overriding procedure Compile
+     (Expression : Operator_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class);
 
    type Application_Expression_Type is
      new Root_Expression_Type with
@@ -223,6 +246,10 @@ package body Concorde.Expressions is
       return Expression_Type
    is (Apply (Expression.Left.Replace (Original_Value, New_Value),
               Expression.Right.Replace (Original_Value, New_Value)));
+
+   overriding procedure Compile
+     (Expression : Application_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class);
 
    function "*" (Left, Right : Expression_Type) return Expression_Type
    is (New_Expression
@@ -386,6 +413,92 @@ package body Concorde.Expressions is
         (Behavior_Expression_Type'
            (Behavior => Behavior_Holders.To_Holder (Behavior)));
    end Behavior_Expression;
+
+   -------------
+   -- Compile --
+   -------------
+
+   overriding procedure Compile
+     (Expression : Application_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class)
+   is
+   begin
+      Expression.Right.Compile (Compiler);
+      Expression.Left.Compile (Compiler);
+   end Compile;
+
+   -------------
+   -- Compile --
+   -------------
+
+   overriding procedure Compile
+     (Expression : Delay_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class)
+   is
+   begin
+      Compiler.Push_Delay (Expression.Period);
+      Expression.Inner.Compile (Compiler);
+      Compiler.Pop_Delay;
+   end Compile;
+
+   -------------
+   -- Compile --
+   -------------
+
+   overriding procedure Compile
+     (Expression : Identifier_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class)
+   is
+      Name : constant String :=
+               Concorde.Symbols.Get_Name (Expression.Symbol);
+   begin
+      if Concorde.Primitives.Is_Primitive (Name) then
+         Compiler.Push_Primitive (Concorde.Primitives.Get_Primitive (Name));
+      else
+         Compiler.Push_Node (Name);
+      end if;
+   end Compile;
+
+   -------------
+   -- Compile --
+   -------------
+
+   overriding procedure Compile
+     (Expression : Operator_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class)
+   is
+   begin
+      Expression.Left.Compile (Compiler);
+      Expression.Right.Compile (Compiler);
+      Compiler.Push_Primitive
+        (Concorde.Primitives.Operators.Operator (Expression.Operator));
+   end Compile;
+
+   -------------
+   -- Compile --
+   -------------
+
+   overriding procedure Compile
+     (Expression : Smooth_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class)
+   is
+   begin
+      Compiler.Push_Smoothing (Expression.Period);
+      Expression.Inner.Compile (Compiler);
+      Compiler.Pop_Smoothing;
+   end Compile;
+
+   -------------
+   -- Compile --
+   -------------
+
+   overriding procedure Compile
+     (Expression : Value_Expression_Type;
+      Compiler   : in out Compiler_Interface'Class)
+   is
+   begin
+      Compiler.Push_Value (Expression.Value.Element.To_Real);
+   end Compile;
 
    ----------------------
    -- Delay_Expression --

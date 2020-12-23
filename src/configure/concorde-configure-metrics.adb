@@ -7,9 +7,10 @@ with Tropos.Reader;
 
 with Concorde.Identifiers;
 
-with Concorde.Db.Calculation;
-with Concorde.Db.Derived_Metric;
-with Concorde.Db.Metric;
+with Concorde.Handles.Calculation;
+with Concorde.Handles.Derived_Metric;
+with Concorde.Handles.Metric;
+with Concorde.Handles.Node;
 
 package body Concorde.Configure.Metrics is
 
@@ -30,20 +31,21 @@ package body Concorde.Configure.Metrics is
       Content    : Concorde.Db.Node_Value_Type;
       Expression : String)
    is
-      Calculation : constant Concorde.Db.Calculation_Reference :=
-                      Concorde.Db.Calculation.Create
+      Calculation : constant Concorde.Handles.Calculation.Calculation_Handle :=
+                      Concorde.Handles.Calculation.Create
                         (Identifier => Concorde.Identifiers.Next_Identifier,
-                         Node       => Concorde.Db.Null_Node_Reference,
+                         Node       => Concorde.Handles.Node.Empty_Handle,
                          Expression => Expression);
-      Metric      : constant Concorde.Db.Derived_Metric_Reference :=
-                      Concorde.Db.Derived_Metric.Create
+      Metric                 : constant Concorde.Handles.Derived_Metric
+        .Derived_Metric_Handle :=
+                      Concorde.Handles.Derived_Metric.Create
                         (Content     => Content,
+                         Identifier  => Concorde.Identifiers.Next_Identifier,
                          Tag         => Tag,
                          Calculation => Calculation);
    begin
-      Concorde.Db.Calculation.Update_Calculation (Calculation)
-        .Set_Node (Concorde.Db.Derived_Metric.Get (Metric)
-                   .Get_Node_Reference)
+      Calculation.Update_Calculation
+        .Set_Node (Metric)
         .Done;
    end Add_Calculation;
 
@@ -60,18 +62,21 @@ package body Concorde.Configure.Metrics is
                                File_Name      => "metrics.config"));
    begin
       for Rating_Config of Metrics_Config.Child ("rating") loop
-         Concorde.Db.Metric.Create
+         Concorde.Handles.Metric.Create
            (Tag     => Rating_Config.Config_Name,
+            Identifier => Concorde.Identifiers.Next_Identifier,
             Content => Concorde.Db.Rating);
       end loop;
       for Quantity_Config of Metrics_Config.Child ("quantity") loop
-         Concorde.Db.Metric.Create
+         Concorde.Handles.Metric.Create
            (Tag     => Quantity_Config.Config_Name,
+            Identifier => Concorde.Identifiers.Next_Identifier,
             Content => Concorde.Db.Quantity);
       end loop;
       for Group_Config of Metrics_Config.Child ("group") loop
-         Concorde.Db.Metric.Create
+         Concorde.Handles.Metric.Create
            (Tag     => Group_Config.Config_Name,
+            Identifier => Concorde.Identifiers.Next_Identifier,
             Content => Concorde.Db.Rating);
       end loop;
    end Configure_Metrics;

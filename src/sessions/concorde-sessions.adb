@@ -10,8 +10,8 @@ with Concorde.File_System.Root;
 
 with Concorde.UI.Models.Loader;
 
-with Concorde.Db.Faction;
-with Concorde.Db.User;
+with Concorde.Handles.Faction;
+with Concorde.Handles.User;
 
 package body Concorde.Sessions is
 
@@ -35,7 +35,7 @@ package body Concorde.Sessions is
       -------------------
 
       procedure Create_Client
-        (User           : Concorde.Db.User_Reference;
+        (User           : Concorde.Handles.User_Reference;
          Context        : Concorde.Contexts.Context_Type;
          Model_Name     : String;
          Model_Argument : String;
@@ -313,7 +313,7 @@ package body Concorde.Sessions is
       return Boolean
    is
    begin
-      return Concorde.Db.User.Get (Session.User).Administrator;
+      return Concorde.Handles.User.Get (Session.User).Administrator;
    end Is_Administrator;
 
    -------------------------------
@@ -323,8 +323,8 @@ package body Concorde.Sessions is
    function New_Administrator_Session
      return Concorde.UI.State_Interface'Class
    is
-      User : constant Concorde.Db.User.User_Type :=
-        Concorde.Db.User.Get_By_Login ("root");
+      User : constant Concorde.Handles.User.User_Type :=
+        Concorde.Handles.User.Get_By_Login ("root");
    begin
       return New_Session (User.Login, User.Password);
    end New_Administrator_Session;
@@ -357,8 +357,8 @@ package body Concorde.Sessions is
       Password  : String)
       return Concorde.UI.State_Interface'Class
    is
-      User : constant Concorde.Db.User.User_Type :=
-        Concorde.Db.User.Get_By_Login (User_Name);
+      User : constant Concorde.Handles.User.User_Type :=
+        Concorde.Handles.User.Get_By_Login (User_Name);
    begin
       return Session : Root_Concorde_Session do
          if User.Has_Element
@@ -367,8 +367,8 @@ package body Concorde.Sessions is
             Session.User := User.Get_User_Reference;
 
             declare
-               Faction : constant Concorde.Db.Faction.Faction_Type :=
-                 Concorde.Db.Faction.First_By_User
+               Faction : constant Concorde.Handles.Faction.Faction_Type :=
+                 Concorde.Handles.Faction.First_By_User
                    (User.Get_User_Reference);
                Home    : constant String :=
                  (if Faction.Has_Element
@@ -388,7 +388,7 @@ package body Concorde.Sessions is
                   Session.Data.Set_Environment_Value
                     ("DASHBOARD", Default_Dashboard);
                else
-                  Session.User := Concorde.Db.Null_User_Reference;
+                  Session.User := Concorde.Handles.Null_User_Reference;
                end if;
             end;
          end if;
@@ -421,7 +421,7 @@ package body Concorde.Sessions is
       return String
    is
    begin
-      return Concorde.Db.User.Get (Session.User).Login;
+      return Concorde.Handles.User.Get (Session.User).Login;
    end User_Name;
 
    -----------
@@ -432,9 +432,9 @@ package body Concorde.Sessions is
      (Session   : Root_Concorde_Session)
       return Boolean
    is
-      use type Concorde.Db.User_Reference;
+      use type Concorde.Handles.User_Reference;
    begin
-      return Session.User /= Concorde.Db.Null_User_Reference;
+      return Session.User /= Concorde.Handles.Null_User_Reference;
    end Valid;
 
 end Concorde.Sessions;

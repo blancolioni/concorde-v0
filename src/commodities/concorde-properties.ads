@@ -12,7 +12,7 @@ package Concorde.Properties is
 
    procedure Create_List
      (List : in out Property_List;
-      Ref  : Concorde.Db.Has_Properties_Reference);
+      Ref  : Concorde.Handles.Has_Properties_Reference);
 
    function Has_Property
      (List     : in out Property_List;
@@ -26,7 +26,7 @@ package Concorde.Properties is
 
    function Get_Reference
      (Name : String)
-      return Concorde.Db.Property_Reference;
+      return Concorde.Handles.Property_Reference;
 
 private
 
@@ -41,7 +41,7 @@ private
 
    type Property_List is tagged
       record
-         Has_Properties : Concorde.Db.Has_Properties_Reference;
+         Has_Properties : Concorde.Handles.Has_Properties_Reference;
          Map            : Property_Maps.Map;
       end record;
 

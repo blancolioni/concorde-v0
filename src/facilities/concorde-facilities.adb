@@ -1,13 +1,13 @@
 with WL.String_Maps;
 
-with Concorde.Db.Facility;
-with Concorde.Db.Facility_Class;
+with Concorde.Handles.Facility;
+with Concorde.Handles.Facility_Class;
 
 package body Concorde.Facilities is
 
    package Facility_Class_Maps is
      new WL.String_Maps
-       (Concorde.Db.Facility_Class_Reference, Concorde.Db."=");
+       (Concorde.Handles.Facility_Class_Reference, Concorde.Handles."=");
 
    Map : Facility_Class_Maps.Map;
 
@@ -17,7 +17,7 @@ package body Concorde.Facilities is
 
    function Facility_Class
      (Name : String)
-      return Concorde.Db.Facility_Class_Reference
+      return Concorde.Handles.Facility_Class_Reference
    is
       Position : constant Facility_Class_Maps.Cursor := Map.Find (Name);
    begin
@@ -25,15 +25,15 @@ package body Concorde.Facilities is
          return Facility_Class_Maps.Element (Position);
       else
          declare
-            use type Concorde.Db.Facility_Class_Reference;
-            Reference : constant Concorde.Db.Facility_Class_Reference :=
-                          Concorde.Db.Facility_Class.Get_Reference_By_Tag
+            use type Concorde.Handles.Facility_Class_Reference;
+            Reference : constant Concorde.Handles.Facility_Class_Reference :=
+                          Concorde.Handles.Facility_Class.Get_By_Tag
                             (Name);
          begin
-            if Reference /= Concorde.Db.Null_Facility_Class_Reference then
+            if Reference /= Concorde.Handles.Null_Facility_Class_Reference then
                return Reference;
             else
-               return Concorde.Db.Facility_Class.Create (Name);
+               return Concorde.Handles.Facility_Class.Create (Name);
             end if;
          end;
       end if;
@@ -45,10 +45,10 @@ package body Concorde.Facilities is
 
    function Get
      (Tag : String)
-      return Concorde.Db.Facility_Reference
+      return Concorde.Handles.Facility_Reference
    is
    begin
-      return Concorde.Db.Facility.Get_Reference_By_Tag (Tag);
+      return Concorde.Handles.Facility.Get_By_Tag (Tag);
    end Get;
 
 end Concorde.Facilities;

@@ -2,8 +2,9 @@ with Tropos.Reader;
 
 with Concorde.Configure.Commodities;
 
-with Concorde.Db.Movement;
-with Concorde.Db.Unit;
+with Concorde.Handles.Movement;
+with Concorde.Handles.Technology;
+with Concorde.Handles.Unit;
 
 package body Concorde.Configure.Units is
 
@@ -12,7 +13,7 @@ package body Concorde.Configure.Units is
 
    function Get_Movement
      (Tag : String)
-      return Concorde.Db.Movement_Reference;
+      return Concorde.Handles.Movement.Movement_Handle;
 
    --------------------
    -- Configure_Unit --
@@ -24,10 +25,10 @@ package body Concorde.Configure.Units is
       function Get (Name : String) return Real
       is (Real (Float'(Unit_Config.Get (Name, 0.0))));
 
-      Unit : constant Concorde.Db.Unit_Reference :=
-        Concorde.Db.Unit.Create
+      Unit : constant Concorde.Handles.Unit.Unit_Handle :=
+        Concorde.Handles.Unit.Create
           (Tag        => Unit_Config.Config_Name,
-           Enabled_By => Concorde.Db.Null_Technology_Reference,
+           Enabled_By => Concorde.Handles.Technology.Empty_Handle,
            Movement   =>
              Get_Movement (Unit_Config.Get ("movement-type")),
            Base_Speed => Get ("movement-speed"),
@@ -37,15 +38,11 @@ package body Concorde.Configure.Units is
            Recon      => Get ("recon"),
            Camoflage  => Get ("camoflage"));
 
-      Constructed : constant Concorde.Db.Constructed_Reference :=
-        Concorde.Db.Unit.Get (Unit).Get_Constructed_Reference;
-      Supplied    : constant Concorde.Db.Supplied_Reference :=
-        Concorde.Db.Unit.Get (Unit).Get_Supplied_Reference;
    begin
       Concorde.Configure.Commodities.Configure_Constructed
-        (Constructed, Unit_Config);
+        (Unit, Unit_Config);
       Concorde.Configure.Commodities.Configure_Supplied
-        (Supplied, Unit_Config);
+        (Unit, Unit_Config);
    end Configure_Unit;
 
    ---------------------
@@ -69,16 +66,15 @@ package body Concorde.Configure.Units is
 
    function Get_Movement
      (Tag : String)
-      return Concorde.Db.Movement_Reference
+      return Concorde.Handles.Movement.Movement_Handle
    is
-      use Concorde.Db;
-      Ref : constant Movement_Reference :=
-        Movement.Get_Reference_By_Tag (Tag);
+      Movement : constant Concorde.Handles.Movement.Movement_Handle :=
+                   Concorde.Handles.Movement.Get_By_Tag (Tag);
    begin
-      if Ref = Null_Movement_Reference then
-         return Movement.Create (Tag);
+      if not Movement.Has_Element then
+         return Concorde.Handles.Movement.Create (Tag);
       else
-         return Ref;
+         return Movement;
       end if;
    end Get_Movement;
 

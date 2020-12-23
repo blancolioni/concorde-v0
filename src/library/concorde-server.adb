@@ -16,12 +16,13 @@ with Concorde.Random_Names;
 
 with Concorde.Color;
 with Concorde.Factions.Create;
+with Concorde.Managers.Execution;
 with Concorde.Network;
 
 with Concorde.Db.Database;
 
-with Concorde.Db.Faction;
-with Concorde.Db.User;
+with Concorde.Handles.Faction;
+with Concorde.Handles.User;
 
 package body Concorde.Server is
 
@@ -32,6 +33,10 @@ package body Concorde.Server is
      (Argument_Name  : String;
       Argument_Value : String)
       return Boolean;
+
+   -----------------
+   -- Add_Faction --
+   -----------------
 
    procedure Add_Faction is
       Database_Open : Boolean := False;
@@ -48,9 +53,8 @@ package body Concorde.Server is
       Database_Open := True;
 
       declare
-         use Concorde.Db;
-         User           : constant Concorde.Db.User_Reference :=
-           Concorde.Db.User.Get_Reference_By_Login
+         User           : constant Concorde.Handles.User.User_Class :=
+           Concorde.Handles.User.Get_By_Login
              (Login => Concorde.Options.Account_Name);
          Scenario_Name  : constant String :=
            (if Concorde.Options.Scenario = ""
@@ -66,8 +70,8 @@ package body Concorde.Server is
            Concorde.Options.Faction_Color;
          Faction_Setup  : constant String :=
            Concorde.Options.Faction_Setup_Path;
-         Faction        : constant Concorde.Db.Faction_Reference :=
-           Concorde.Db.Faction.First_Reference_By_Name
+         Faction        : constant Concorde.Handles.Faction.Faction_Class :=
+           Concorde.Handles.Faction.First_By_Name
              (Name => Faction_Name);
          Setup_Path     : constant String :=
            Concorde.Configure.Scenario_File
@@ -79,7 +83,7 @@ package body Concorde.Server is
                  else Faction_Setup)
               & ".faction");
       begin
-         if User = Null_User_Reference then
+         if not User.Has_Element then
             Ada.Text_IO.Put_Line
               (Ada.Text_IO.Standard_Error,
                Concorde.Options.Account_Name
@@ -88,7 +92,7 @@ package body Concorde.Server is
             return;
          end if;
 
-         if Faction /= Null_Faction_Reference then
+         if Faction.Has_Element then
             Ada.Text_IO.Put_Line
               (Ada.Text_IO.Standard_Error,
                Faction_Name
@@ -120,7 +124,7 @@ package body Concorde.Server is
                   Green => Concorde.Random.Unit_Random,
                   Blue  => Concorde.Random.Unit_Random,
                   Alpha => 1.0));
-            New_Faction : constant Faction_Reference :=
+            New_Faction : constant Concorde.Handles.Faction.Faction_Class :=
               Concorde.Factions.Create.Create_Faction
                 (User        => User,
                  Name        => Faction_Name,
@@ -130,7 +134,7 @@ package body Concorde.Server is
                  Setup       =>
                    Tropos.Reader.Read_Config (Setup_Path));
          begin
-            if New_Faction = Null_Faction_Reference then
+            if not New_Faction.Has_Element then
                Ada.Text_IO.Put_Line
                  (Ada.Text_IO.Standard_Error,
                   "Failed to create faction");
@@ -244,6 +248,7 @@ package body Concorde.Server is
    procedure Start is
    begin
       Concorde.Network.Load_Network;
+      Concorde.Managers.Execution.Load_Managers;
    end Start;
 
    ----------------
@@ -254,5 +259,14 @@ package body Concorde.Server is
    begin
       return Server_Start_Time;
    end Start_Time;
+
+   ----------
+   -- Stop --
+   ----------
+
+   procedure Stop is
+   begin
+      Concorde.Network.Save_Network;
+   end Stop;
 
 end Concorde.Server;

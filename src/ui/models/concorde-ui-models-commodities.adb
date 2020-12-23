@@ -10,16 +10,13 @@ with Concorde.Real_Images;
 
 with Concorde.Updates.Events;
 
-with Concorde.Db.Commodity;
-
-with Concorde.Db.Colony;
 with Concorde.Handles.Colony;
 
 with Concorde.Handles.World;
 
-with Concorde.Db.Colony_Price;
-with Concorde.Db.Network_Value;
-with Concorde.Db.Node;
+with Concorde.Handles.Colony_Price;
+with Concorde.Handles.Network_Value;
+with Concorde.Handles.Node;
 
 package body Concorde.UI.Models.Commodities is
 
@@ -30,11 +27,11 @@ package body Concorde.UI.Models.Commodities is
       record
          World      : Concorde.Handles.World.World_Handle;
          Colony     : Concorde.Handles.Colony.Colony_Handle;
-         Demand     : Concorde.Db.Network_Value_Reference;
-         Supply     : Concorde.Db.Network_Value_Reference;
-         Share      : Concorde.Db.Network_Value_Reference;
-         Pressure   : Concorde.Db.Network_Value_Reference;
-         Price      : Concorde.Db.Network_Value_Reference;
+         Demand     : Concorde.Handles.Network_Value.Network_Value_Handle;
+         Supply     : Concorde.Handles.Network_Value.Network_Value_Handle;
+         Share      : Concorde.Handles.Network_Value.Network_Value_Handle;
+         Pressure   : Concorde.Handles.Network_Value.Network_Value_Handle;
+         Price      : Concorde.Handles.Network_Value.Network_Value_Handle;
       end record;
 
    Column_Type_Array : constant array (Table_Column)
@@ -53,7 +50,7 @@ package body Concorde.UI.Models.Commodities is
    type Model_Record is
      new Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record with
       record
-         Commodity : Concorde.Db.Commodity_Reference;
+         Commodity : Concorde.Handles.Commodity.Commodity_Handle;
          State     : Row_Vectors.Vector;
       end record;
 
@@ -126,12 +123,12 @@ package body Concorde.UI.Models.Commodities is
    ----------------------------
 
    function Commodity_Market_Model
-     (Commodity : Concorde.Db.Commodity_Reference)
+     (Commodity : Concorde.Handles.Commodity.Commodity_Class)
       return Nazar.Models.Table.Nazar_Table_Model
    is
       Model : constant Model_Access := new Model_Record'
         (Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record with
-         Commodity => Commodity,
+         Commodity => Commodity.To_Commodity_Handle,
          State  => <>);
    begin
       Model.Load;
@@ -154,8 +151,10 @@ package body Concorde.UI.Models.Commodities is
       Col   : constant Table_Column :=
                 Table_Column'Val (Column - 1);
 
-      function Get_Value (V : Concorde.Db.Network_Value_Reference) return Real
-      is (Concorde.Db.Network_Value.Get (V).Current_Value);
+      function Get_Value
+        (V : Concorde.Handles.Network_Value.Network_Value_Class)
+         return Real
+      is (V.Current_Value);
 
       function Quantity (X : Real) return String
       is (Concorde.Quantities.Show (Concorde.Quantities.To_Quantity (X)));
@@ -175,8 +174,8 @@ package body Concorde.UI.Models.Commodities is
       function Price return String
       is (Concorde.Money.Show
           (Concorde.Money.Adjust_Price
-           (Concorde.Db.Colony_Price.Get_By_Commodity_Price
-            (Info.Colony.Reference_Colony, Model.Commodity)
+           (Concorde.Handles.Colony_Price.Get_By_Commodity_Price
+            (Info.Colony, Model.Commodity)
             .Price,
             1.0 + Get_Value (Info.Price))));
 
@@ -201,40 +200,41 @@ package body Concorde.UI.Models.Commodities is
    is
 
       Tag : constant String :=
-              Concorde.Db.Commodity.Get (Model.Commodity).Tag;
+              Model.Commodity.Tag;
 
-      procedure Add (Colony : Concorde.Db.Colony.Colony_Type);
+      procedure Add (Colony : Concorde.Handles.Colony.Colony_Class);
 
       ---------
       -- Add --
       ---------
 
-      procedure Add (Colony : Concorde.Db.Colony.Colony_Type) is
+      procedure Add (Colony : Concorde.Handles.Colony.Colony_Class) is
+
+         use Concorde.Handles.Network_Value;
 
          function Net (Suffix : String)
-                       return Concorde.Db.Network_Value_Reference
-         is (Concorde.Db.Network_Value.Get_Reference_By_Network_Value
-             (Colony.Get_Network_Reference,
-              Concorde.Db.Node.Get_Reference_By_Tag
+                       return Network_Value_Handle
+         is (Get_By_Network_Value
+             (Colony,
+              Concorde.Handles.Node.Get_By_Tag
                 (Tag & "-" & Suffix)));
 
-         Demand   : constant Concorde.Db.Network_Value_Reference :=
+         Demand   : constant Network_Value_Handle :=
                       Net ("demand");
-         Supply   : constant Concorde.Db.Network_Value_Reference :=
+         Supply   : constant Network_Value_Handle :=
                       Net ("supply");
-         Share    : constant Concorde.Db.Network_Value_Reference :=
+         Share    : constant Network_Value_Handle :=
                       Net ("share");
-         Pressure : constant Concorde.Db.Network_Value_Reference :=
+         Pressure : constant Network_Value_Handle :=
                       Net ("p-prod");
-         Price    : constant Concorde.Db.Network_Value_Reference :=
+         Price    : constant Network_Value_Handle :=
                       Net ("price");
 
       begin
          Model.State.Append
            (Row_Record'
-              (World    => Concorde.Handles.World.Get (Colony.World),
-               Colony   => Concorde.Handles.Colony.Get
-                 (Colony.Get_Colony_Reference),
+              (World    => Colony.World.To_World_Handle,
+               Colony   => Colony.To_Colony_Handle,
                Demand    => Demand,
                Supply    => Supply,
                Share     => Share,
@@ -245,7 +245,7 @@ package body Concorde.UI.Models.Commodities is
    begin
       Model.State.Clear;
       for Colony of
-        Concorde.Db.Colony.Scan_By_Top_Record
+        Concorde.Handles.Colony.Scan_By_Top_Record
       loop
          Add (Colony);
       end loop;

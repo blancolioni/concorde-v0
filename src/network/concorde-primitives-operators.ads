@@ -1,5 +1,7 @@
 package Concorde.Primitives.Operators is
 
+   function Operator (Op : Operator_Type) return Primitive_Interface'Class;
+
    function Max return Primitive_Interface'Class;
    function Min return Primitive_Interface'Class;
 

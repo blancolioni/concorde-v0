@@ -1,30 +1,30 @@
 with Concorde.Abilities;
 
+with Concorde.Handles.Ability;
 with Concorde.Handles.Individual;
-
-with Concorde.Db;
+with Concorde.Handles.Skill;
 
 package Concorde.Individuals is
 
    function Ability_Summary
-     (Individual : Concorde.Db.Individual_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class)
       return String;
 
    function Ability_Score
-     (Individual : Concorde.Db.Individual_Reference;
-      Ability    : Concorde.Db.Ability_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Ability    : Concorde.Handles.Ability.Ability_Class)
       return Natural;
 
    function Ability_Modifier
-     (Individual : Concorde.Db.Individual_Reference;
-      Ability    : Concorde.Db.Ability_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Ability    : Concorde.Handles.Ability.Ability_Class)
       return Integer
    is (Concorde.Abilities.Check_Modifier
        (Ability_Score (Individual, Ability)));
 
    function Check
-     (Individual : Concorde.Db.Individual_Reference;
-      Ability    : Concorde.Db.Ability_Reference;
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Ability    : Concorde.Handles.Ability.Ability_Class;
       Difficulty : Positive)
       return Concorde.Abilities.Check_Result
    is (Concorde.Abilities.Check_Ability
@@ -32,29 +32,29 @@ package Concorde.Individuals is
           Difficulty => Difficulty));
 
    procedure Advance_Skill
-     (Individual : Concorde.Db.Individual_Reference;
-      Skill      : Concorde.Db.Skill_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Skill      : Concorde.Handles.Skill.Skill_Class)
      with Post => Has_Skill (Individual, Skill);
 
    procedure Advance_Skill
-     (Individual : Concorde.Db.Individual_Reference;
-      Skill      : Concorde.Db.Skill_Reference;
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Skill      : Concorde.Handles.Skill.Skill_Class;
       Level      : Natural)
      with Post => Has_Skill (Individual, Skill);
 
    function Has_Skill
-     (Individual : Concorde.Db.Individual_Reference;
-      Skill      : Concorde.Db.Skill_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Skill      : Concorde.Handles.Skill.Skill_Class)
       return Boolean;
 
    function Current_Level
-     (Individual : Concorde.Db.Individual_Reference;
-      Skill      : Concorde.Db.Skill_Reference)
+     (Individual : Concorde.Handles.Individual.Individual_Class;
+      Skill      : Concorde.Handles.Skill.Skill_Class)
       return Natural
      with Pre => Has_Skill (Individual, Skill);
 
    procedure Log
-     (Individual : Concorde.Handles.Individual.Individual_Handle;
+     (Individual : Concorde.Handles.Individual.Individual_Class;
       Message    : String);
 
 end Concorde.Individuals;

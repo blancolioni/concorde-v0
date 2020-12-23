@@ -1,9 +1,7 @@
-with Concorde.Db;
-
 package Concorde.Managers.Execution is
 
    procedure Start_Manager
-     (Managed : Concorde.Db.Managed_Reference);
+     (Managed : Concorde.Handles.Managed.Managed_Class);
 
    procedure Load_Managers;
 

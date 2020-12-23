@@ -8,12 +8,11 @@ with Concorde.Quantities;
 with Concorde.Real_Images;
 
 with Concorde.Network;
+with Concorde.Nodes;
 
 with Concorde.Updates.Events;
 
-with Concorde.Db.Pop_Group;
-
-with Concorde.Db.Node;
+with Concorde.Handles.Pop_Group;
 
 package body Concorde.UI.Models.Colonies.Pop_Groups is
 
@@ -22,10 +21,10 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
 
    type Pop_Group_Record is
       record
-         Pop_Group       : Concorde.Db.Pop_Group_Reference;
-         Size_Node       : Concorde.Db.Node_Reference;
-         Income_Node     : Concorde.Db.Node_Reference;
-         Happiness_Node  : Concorde.Db.Node_Reference;
+         Pop_Group       : Concorde.Handles.Pop_Group.Pop_Group_Handle;
+         Size_Node       : Concorde.Nodes.Value_Handle;
+         Income_Node     : Concorde.Nodes.Value_Handle;
+         Happiness_Node  : Concorde.Nodes.Value_Handle;
       end record;
 
    Column_Type_Array : constant array (Pop_Group_Table_Column)
@@ -40,7 +39,7 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
      new Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record with
       record
          Colony          : Concorde.Handles.Colony.Colony_Handle;
-         Network         : Concorde.Db.Network_Reference;
+         Network         : Concorde.Network.Network_Handle;
          State           : Pop_Group_Vectors.Vector;
       end record;
 
@@ -116,21 +115,18 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
       Info  : Pop_Group_Record renames Model.State (Row);
       Value : constant String :=
                 (case Pop_Group_Table_Column'Val (Column - 1) is
-                    when Name =>
-                      Concorde.Db.Pop_Group.Get (Info.Pop_Group).Tag,
+                    when Name => Info.Pop_Group.Tag,
                     when Size =>
                       Concorde.Quantities.Show
                        (Concorde.Quantities.To_Quantity
-                      (Concorde.Network.Current_Value
-                         (Model.Network, Info.Size_Node))),
+                      (Concorde.Nodes.Current_Value (Info.Size_Node))),
                     when Income =>
                       Concorde.Real_Images.Approximate_Image
-                   (Concorde.Network.Current_Value
-                      (Model.Network, Info.Income_Node) * 100.0),
+                   (Concorde.Nodes.Current_Value (Info.Income_Node) * 100.0),
                     when Happiness =>
                       Concorde.Real_Images.Approximate_Image
-                   (Concorde.Network.Current_Value
-                      (Model.Network, Info.Happiness_Node) * 100.0));
+                   (Concorde.Nodes.Current_Value (Info.Happiness_Node)
+                    * 100.0));
    begin
       return Nazar.Values.To_Value (Value);
    end Element;
@@ -145,20 +141,20 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
    begin
       Model.State.Clear;
       for Pop_Group of
-        Concorde.Db.Pop_Group.Scan_By_Tag
+        Concorde.Handles.Pop_Group.Scan_By_Tag
       loop
          declare
             Tag : constant String := Pop_Group.Tag;
 
             function Node_Reference
               (Name : String)
-               return Concorde.Db.Node_Reference
-            is (Concorde.Db.Node.Get_Reference_By_Tag (Name));
+               return Concorde.Nodes.Value_Handle
+            is (Concorde.Network.Get_Handle
+                (Model.Network, Name));
 
             Info : constant Pop_Group_Record :=
                      Pop_Group_Record'
-                       (Pop_Group      =>
-                          Pop_Group.Get_Pop_Group_Reference,
+                       (Pop_Group      => Pop_Group.To_Pop_Group_Handle,
                         Size_Node      =>
                           Node_Reference (Tag & "-population"),
                         Income_Node    =>
@@ -181,7 +177,8 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
    is
       Result : constant Pop_Group_Model_Access := new Pop_Group_Model_Record'
         (Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record with
-         Colony => Colony, Network => Colony.Network_Handle.Reference_Network,
+         Colony  => Colony,
+         Network => Concorde.Network.Get_Network_Handle (Colony),
          State  => <>);
    begin
       Result.Load;

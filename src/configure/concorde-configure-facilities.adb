@@ -2,7 +2,7 @@ with Tropos.Reader;
 
 with Concorde.Facilities;
 
-with Concorde.Db.Facility;
+with Concorde.Handles.Facility;
 
 package body Concorde.Configure.Facilities is
 
@@ -35,7 +35,7 @@ package body Concorde.Configure.Facilities is
      (Facility_Config : Tropos.Configuration)
    is
    begin
-      Concorde.Db.Facility.Create
+      Concorde.Handles.Facility.Create
         (Tag            => Facility_Config.Config_Name,
          Facility_Class =>
            Concorde.Facilities.Facility_Class

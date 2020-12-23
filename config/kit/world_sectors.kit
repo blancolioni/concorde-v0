@@ -1,12 +1,13 @@
 with Commodities;
 with Factions;
+with Identifiers;
 with Network;
 with Resources;
 with Worlds;
 
 package World_Sectors is
 
-	record World_Sector : Sector is
+	record World_Sector : Sector, Has_Identifier is
 	   key Faction;
 	   key World;
 	   Terrain;

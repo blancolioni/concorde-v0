@@ -4,9 +4,9 @@ with Ada.Text_IO;
 
 with WL.String_Maps;
 
-with Concorde.Db.Faction;
-with Concorde.Db.Star;
-with Concorde.Db.Star_System_Distance;
+with Concorde.Handles.Faction;
+with Concorde.Handles.Star;
+with Concorde.Handles.Star_System_Distance;
 
 with Concorde.Handles.Star;
 with Concorde.Handles.Star_System.Selections;
@@ -119,18 +119,18 @@ package body Concorde.UI.Views.Galaxy is
            Concorde.Handles.Star_System.Selections.Select_All
          loop
             declare
-               use type Concorde.Db.Faction_Reference;
+               use type Concorde.Handles.Faction.Faction_Handle;
                Star  : constant Concorde.Handles.Star.Star_Handle :=
                  Concorde.Handles.Star.Get
-                   (Concorde.Db.Star.First_Reference_By_Star_System
+                   (Concorde.Handles.Star.First_By_Star_System
                       (Star_System.Reference));
                Color : constant Concorde.Color.Concorde_Color :=
                  (Star.Red,
                   Star.Green,
                   Star.Blue,
                   1.0);
-               Capital : constant Concorde.Db.Faction_Reference :=
-                 Concorde.Db.Faction.First_Reference_By_Capital_System
+               Capital : constant Concorde.Handles.Faction.Faction_Handle :=
+                 Concorde.Handles.Faction.First_By_Capital_System
                    (Star_System.Reference);
                Rec : constant System_Record := System_Record'
                  (Handle  => Star_System,
@@ -163,7 +163,7 @@ package body Concorde.UI.Views.Galaxy is
 
          for Star_System_Index in 1 .. View.Systems.Last_Index loop
             for Nearby of
-              Concorde.Db.Star_System_Distance
+              Concorde.Handles.Star_System_Distance
                 .Select_Star_System_Range_Bounded_By_Distance
                   (View.Systems.Element (Star_System_Index).Handle.Reference,
                    0.0, 8.0)

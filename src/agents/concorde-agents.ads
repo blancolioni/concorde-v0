@@ -1,45 +1,42 @@
 with Concorde.Money;
 
-with Concorde.Db.Agent;
+with Concorde.Handles.Account;
+with Concorde.Handles.Agent;
 
 package Concorde.Agents is
 
    function Cash
-     (Account : Concorde.Db.Account_Reference)
-      return Concorde.Money.Money_Type;
-
-   function Cash
-     (Agent : Concorde.Db.Agent.Agent_Type)
+     (Agent : Concorde.Handles.Agent.Agent_Class)
       return Concorde.Money.Money_Type;
 
    procedure Add_Cash
-     (Agent : Concorde.Db.Agent.Agent_Type;
+     (Agent : Concorde.Handles.Agent.Agent_Class;
       Cash  : Concorde.Money.Money_Type;
       Tag   : String);
 
    procedure Add_Cash
-     (Account : Concorde.Db.Account_Reference;
+     (Account : Concorde.Handles.Account.Account_Class;
       Cash    : Concorde.Money.Money_Type;
       Tag     : String);
 
    procedure Remove_Cash
-     (Agent : Concorde.Db.Agent.Agent_Type;
+     (Agent : Concorde.Handles.Agent.Agent_Class;
       Cash  : Concorde.Money.Money_Type;
       Tag   : String);
 
    procedure Remove_Cash
-     (Account : Concorde.Db.Account_Reference;
+     (Account : Concorde.Handles.Account.Account_Class;
       Cash    : Concorde.Money.Money_Type;
       Tag     : String);
 
    function New_Account
      (Starting_Balance : Concorde.Money.Money_Type;
-      Guarantor        : Concorde.Db.Account_Reference :=
-        Concorde.Db.Null_Account_Reference)
-      return Concorde.Db.Account_Reference;
+      Guarantor        : Concorde.Handles.Account.Account_Class :=
+        Concorde.Handles.Account.Empty_Handle)
+      return Concorde.Handles.Account.Account_Handle;
 
    procedure Log_Agent
-     (Agent   : Concorde.Db.Agent_Reference;
+     (Agent   : Concorde.Handles.Agent.Agent_Class;
       Message : String);
 
 end Concorde.Agents;

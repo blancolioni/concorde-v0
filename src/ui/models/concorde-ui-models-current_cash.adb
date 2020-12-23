@@ -1,6 +1,6 @@
 with Nazar.Logging;
 
-with Concorde.Db.Account;
+with Concorde.Handles.Account;
 
 with Concorde.Calendar;
 with Concorde.Money;
@@ -34,10 +34,8 @@ package body Concorde.UI.Models.Current_Cash is
      (Model : Current_Cash_Model_Record)
       return String
    is
-      Account : constant Concorde.Db.Account.Account_Type :=
-        Concorde.Db.Account.Get (Model.Faction.Account.Reference_Account);
       Cash    : constant Concorde.Money.Money_Type :=
-        Account.Cash;
+        Model.Faction.Account.Cash;
    begin
       Nazar.Logging.Log
         (Model, Concorde.Money.Show (Cash));

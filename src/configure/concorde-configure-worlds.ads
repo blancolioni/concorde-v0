@@ -1,8 +1,8 @@
-with Concorde.Db;
+with Concorde.Handles.World;
 
 package Concorde.Configure.Worlds is
 
    procedure Generate_Surface
-     (World : Concorde.Db.World_Reference);
+     (World : Concorde.Handles.World.World_Class);
 
 end Concorde.Configure.Worlds;

@@ -2,7 +2,8 @@ private with Ada.Containers.Vectors;
 
 with Tropos;
 
-with Concorde.Db.World;
+with Concorde.Handles.Resource;
+with Concorde.Handles.World;
 
 package Concorde.Configure.Resources is
 
@@ -20,14 +21,14 @@ package Concorde.Configure.Resources is
       R_X, R_Y, R_Z : Non_Negative_Real);
 
    procedure Create_Deposits
-     (World     : Concorde.Db.World.World_Type;
+     (World     : Concorde.Handles.World.World_Class;
       Generator : Random_Deposit_Generator);
 
 private
 
    type Resource_Record is
       record
-         Reference : Concorde.Db.Resource_Reference;
+         Resource  : Concorde.Handles.Resource.Resource_Handle;
          Strength  : Non_Negative_Real;
       end record;
 

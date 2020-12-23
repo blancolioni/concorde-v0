@@ -3,13 +3,13 @@ package body Concorde.UI.Entities.Generic_Database_Entity is
    type Table_Record_Node_Reference is
      new Nazar.Interfaces.Hierarchy.Node_Reference_Interface with
       record
-         Ref : Record_Reference := Null_Record_Reference;
+         Rec : Record_Handle;
       end record;
 
    overriding function Is_Empty
      (Item : Table_Record_Node_Reference)
       return Boolean
-   is (Item.Ref = Null_Record_Reference);
+   is (not Item.Rec.Has_Element);
 
    overriding function Get
      (Id : Table_Record_Node_Reference)
@@ -23,7 +23,7 @@ package body Concorde.UI.Entities.Generic_Database_Entity is
    type Table_Record_Node is
      new Leaf_Node with
       record
-         Ref : Record_Reference;
+         Rec : Record_Handle;
       end record;
 
    overriding function Contents
@@ -100,10 +100,8 @@ package body Concorde.UI.Entities.Generic_Database_Entity is
    --------------
 
    overriding function Contents (Node : Table_Record_Node) return String is
-      Rec : constant Record_Interface'Class :=
-        Get_Record (Node.Ref);
    begin
-      return Contents (Rec);
+      return Contents (Node.Rec);
    end Contents;
 
    ------------------
@@ -129,7 +127,7 @@ package body Concorde.UI.Entities.Generic_Database_Entity is
    is
    begin
       return Table_Record_Node'
-        (Ref => Id.Ref);
+        (Rec => Id.Rec);
    end Get;
 
    ---------
@@ -156,7 +154,7 @@ package body Concorde.UI.Entities.Generic_Database_Entity is
    is
    begin
       return Table_Record_Node_Reference'
-        (Ref => Get_Reference_By_Name (Node.Handle, Name));
+        (Rec => Get_By_Name (Node.Handle, Name));
    end Get_Child;
 
    ------------------------
@@ -177,11 +175,11 @@ package body Concorde.UI.Entities.Generic_Database_Entity is
    ------------------------
 
    function Get_Record_Node
-     (Reference : Record_Reference)
+     (Reference : Record_Handle)
       return Entity_Reference
    is
    begin
-      return Table_Record_Node_Reference'(Ref => Reference);
+      return Table_Record_Node_Reference'(Rec => Reference);
    end Get_Record_Node;
 
    ---------------
@@ -194,8 +192,7 @@ package body Concorde.UI.Entities.Generic_Database_Entity is
       return Boolean
    is
    begin
-      return Get_Reference_By_Name (Node.Handle, Name)
-        /= Null_Record_Reference;
+      return Get_By_Name (Node.Handle, Name).Has_Element;
    end Has_Child;
 
    ----------------------
@@ -208,17 +205,17 @@ package body Concorde.UI.Entities.Generic_Database_Entity is
         procedure (Name : String;
                    Child : Entity_Reference))
    is
-      procedure Internal_Process (Item : Record_Interface'Class);
+      procedure Internal_Process (Item : Record_Handle);
 
       ----------------------
       -- Internal_Process --
       ----------------------
 
-      procedure Internal_Process (Item : Record_Interface'Class) is
+      procedure Internal_Process (Item : Record_Handle) is
       begin
          Process (Item.Name,
                   Table_Record_Node_Reference'
-                    (Ref => Get_Reference (Item)));
+                    (Rec => Item));
       end Internal_Process;
 
    begin

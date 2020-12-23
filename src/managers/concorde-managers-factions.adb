@@ -5,24 +5,24 @@ with Concorde.Money;
 with Concorde.Agents;
 with Concorde.Managers.Agents;
 
-with Concorde.Db.Agent;
-with Concorde.Db.Company;
-with Concorde.Db.Faction;
-with Concorde.Db.Market;
-with Concorde.Db.Shareholder;
+with Concorde.Handles.Agent;
+with Concorde.Handles.Company;
+with Concorde.Handles.Faction;
+with Concorde.Handles.Market;
+with Concorde.Handles.Shareholder;
 
 package body Concorde.Managers.Factions is
 
    type Root_Faction_Manager is
      new Concorde.Managers.Agents.Root_Agent_Manager_Type with
       record
-         Faction : Concorde.Db.Faction_Reference;
+         Faction : Concorde.Handles.Faction.Faction_Handle;
       end record;
 
    overriding function Identifier
      (Manager : Root_Faction_Manager)
       return String
-   is ("faction" & Concorde.Db.To_String (Manager.Faction) & " manager");
+   is ("faction" & Concorde.Handles.To_String (Manager.Faction) & " manager");
 
    overriding procedure Create_Planning
      (Manager : in out Root_Faction_Manager)
@@ -42,15 +42,15 @@ package body Concorde.Managers.Factions is
    type Faction_Company_Manager is
      new Concorde.Managers.Agents.Root_Agent_Manager_Type with
       record
-         Faction : Concorde.Db.Faction_Reference;
-         Company : Concorde.Db.Company_Reference;
+         Faction : Concorde.Handles.Faction.Faction_Handle;
+         Company : Concorde.Handles.Company_Reference;
       end record;
 
    overriding function Identifier
      (Manager : Faction_Company_Manager)
       return String
    is ("faction company"
-       & Concorde.Db.To_String (Manager.Company) & " manager");
+       & Concorde.Handles.To_String (Manager.Company) & " manager");
 
    overriding procedure On_Activation_Begin
      (Manager : in out Faction_Company_Manager);
@@ -155,17 +155,17 @@ package body Concorde.Managers.Factions is
    ----------------------------
 
    function Create_Default_Manager
-     (Managed : Concorde.Db.Managed_Reference) return Manager_Type
+     (Managed : Concorde.Handles.Managed.Managed_Class) return Manager_Type
    is
       Manager : Root_Faction_Manager;
-      Faction : constant Concorde.Db.Faction.Faction_Type :=
-        Concorde.Db.Faction.Get_Faction (Managed);
+      Faction : constant Concorde.Handles.Faction.Faction_Type :=
+        Concorde.Handles.Faction.Get_Faction (Managed);
    begin
       Manager.Faction := Faction.Get_Faction_Reference;
       Manager.Initialize_Agent_Manager
         (Agent          => Faction,
          Market         =>
-           Concorde.Db.Market.Get_Reference_By_World
+           Concorde.Handles.Market.Get_By_World
              (Faction.Capital_World),
          Planning_Cycle => 10);
       Manager.Create_Bids;
@@ -177,19 +177,19 @@ package body Concorde.Managers.Factions is
    ------------------------------------
 
    function Create_Faction_Company_Manager
-     (Managed : Concorde.Db.Managed_Reference)
+     (Managed : Concorde.Handles.Managed.Managed_Class)
       return Manager_Type
    is
       Manager : Faction_Company_Manager;
-      Company : constant Concorde.Db.Company.Company_Type :=
-        Concorde.Db.Company.Get_Company (Managed);
+      Company : constant Concorde.Handles.Company.Company_Type :=
+        Concorde.Handles.Company.Get_Company (Managed);
    begin
       Manager.Company := Company.Get_Company_Reference;
       Manager.Faction := Company.Faction;
       Manager.Initialize_Agent_Manager
         (Agent          => Company,
          Market         =>
-           Concorde.Db.Market.Get_Reference_By_World
+           Concorde.Handles.Market.Get_By_World
              (Company.Headquarters),
          Planning_Cycle => 10);
       Manager.Create_Bids;
@@ -211,19 +211,19 @@ package body Concorde.Managers.Factions is
          Profit   : constant Money_Type :=
            Manager.Last_Earn - Manager.Last_Spend;
          Rate     : constant Unit_Real :=
-           Concorde.Db.Company.Get (Manager.Company).Dividend;
+           Concorde.Handles.Company.Get (Manager.Company).Dividend;
          Dividend : constant Money_Type :=
            (if Profit > Zero
             then Adjust (Profit, Rate)
             else Zero);
          Shares   : constant Natural :=
-           Concorde.Db.Company.Get (Manager.Company).Shares;
+           Concorde.Handles.Company.Get (Manager.Company).Shares;
       begin
          if Dividend > Zero then
             Manager.Log ("dividend: " & Show (Dividend));
 
             for Shareholder of
-              Concorde.Db.Shareholder.Select_By_Company
+              Concorde.Handles.Shareholder.Select_By_Company
                 (Manager.Company)
             loop
                declare
@@ -235,10 +235,10 @@ package body Concorde.Managers.Factions is
                begin
                   Manager.Log ("pay " & Show (Payment)
                                & " to Agent"
-                               & Concorde.Db.To_String (Shareholder.Agent));
+                               & Concorde.Handles.To_String (Shareholder.Agent));
 
                   Concorde.Agents.Add_Cash
-                    (Concorde.Db.Agent.Get
+                    (Concorde.Handles.Agent.Get
                        (Shareholder.Agent).Account,
                      Payment, "dividend");
                end;

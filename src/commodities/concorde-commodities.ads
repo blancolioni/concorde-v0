@@ -2,70 +2,72 @@ private with WL.String_Maps;
 
 with Concorde.Quantities;
 
-with Concorde.Db;
+with Concorde.Handles.Commodity;
+with Concorde.Handles.Has_Stock;
+with Concorde.Handles.Resource;
 
 package Concorde.Commodities is
 
-   subtype Commodity_Reference is Concorde.Db.Commodity_Reference;
+   subtype Commodity_Class is Concorde.Handles.Commodity.Commodity_Class;
+   subtype Commodity_Handle is Concorde.Handles.Commodity.Commodity_Handle;
 
-   type Array_Of_Commodities is
-     array (Positive range <>) of Concorde.Db.Commodity_Reference;
+   type Array_Of_Commodities is array (Positive range <>) of Commodity_Handle;
 
    function Exists (Tag : String) return Boolean;
-   function Get (Tag : String) return Commodity_Reference
+   function Get (Tag : String) return Commodity_Class
      with Pre => Exists (Tag);
 
    function Is_Resource
-     (Commodity : Commodity_Reference)
+     (Commodity : Commodity_Class)
       return Boolean;
 
    function To_Resource
-     (Commodity : Commodity_Reference)
-      return Concorde.Db.Resource_Reference;
+     (Commodity : Commodity_Class)
+      return Concorde.Handles.Resource.Resource_Handle;
 
    function Is_Manufactured
-     (Commodity : Commodity_Reference)
+     (Commodity : Commodity_Class)
       return Boolean;
 
    procedure Scan_Ingredients
-     (Commodity : Commodity_Reference;
+     (Commodity : Commodity_Class;
       Process   : not null access
-        procedure (Ingredient : Commodity_Reference;
+        procedure (Ingredient : Commodity_Class;
                    Quantity   : Concorde.Quantities.Quantity_Type));
 
-   function Raw_Resources return Commodity_Reference;
+   function Raw_Resources return Commodity_Class;
 
    function Current_Quantity
-     (Of_Stock  : Concorde.Db.Has_Stock_Reference;
-      Commodity : Concorde.Db.Commodity_Reference)
+     (Of_Stock  : Concorde.Handles.Has_Stock.Has_Stock_Class;
+      Commodity : Concorde.Handles.Commodity.Commodity_Class)
       return Concorde.Quantities.Quantity_Type;
 
    procedure Add_Stock
-     (To        : Concorde.Db.Has_Stock_Reference;
-      Commodity : Concorde.Db.Commodity_Reference;
+     (To        : Concorde.Handles.Has_Stock.Has_Stock_Class;
+      Commodity : Concorde.Handles.Commodity.Commodity_Class;
       Quantity  : Concorde.Quantities.Quantity_Type);
 
    procedure Remove_Stock
-     (From      : Concorde.Db.Has_Stock_Reference;
-      Commodity : Concorde.Db.Commodity_Reference;
+     (From      : Concorde.Handles.Has_Stock.Has_Stock_Class;
+      Commodity : Concorde.Handles.Commodity.Commodity_Class;
       Quantity  : Concorde.Quantities.Quantity_Type);
 
    type Stock_Type is private;
 
    function Current_Quantity
      (Of_Stock  : Stock_Type;
-      Commodity : Concorde.Db.Commodity_Reference)
+      Commodity : Concorde.Handles.Commodity.Commodity_Class)
       return Concorde.Quantities.Quantity_Type;
 
    procedure Add_Stock
      (To        : in out Stock_Type;
-      Commodity : Concorde.Db.Commodity_Reference;
+      Commodity : Concorde.Handles.Commodity.Commodity_Class;
       Quantity  : Concorde.Quantities.Quantity_Type);
 
    procedure Scan
      (Stock : Stock_Type;
       Process : not null access
-        procedure (Commodity : Concorde.Db.Commodity_Reference;
+        procedure (Commodity : Concorde.Handles.Commodity.Commodity_Class;
                    Quantity  : Concorde.Quantities.Quantity_Type));
 
 private

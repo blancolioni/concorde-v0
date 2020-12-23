@@ -2,17 +2,18 @@ with Tropos;
 
 with Concorde.Color;
 
-with Concorde.Db;
+with Concorde.Handles.Faction;
+with Concorde.Handles.User;
 
 package Concorde.Factions.Create is
 
    function Create_Faction
-     (User        : Concorde.Db.User_Reference;
+     (User        : Concorde.Handles.User.User_Class;
       Name        : String;
       Adjective   : String;
       Plural_Name : String;
       Color       : Concorde.Color.Concorde_Color;
       Setup       : Tropos.Configuration)
-      return Concorde.Db.Faction_Reference;
+      return Concorde.Handles.Faction.Faction_Class;
 
 end Concorde.Factions.Create;

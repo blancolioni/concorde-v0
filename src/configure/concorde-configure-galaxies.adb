@@ -20,10 +20,13 @@ with Concorde.Stars.Tables;
 
 with Concorde.Configure.Resources;
 
-with Concorde.Db.Scenario;
-with Concorde.Db.Star_System;
-with Concorde.Db.Star_System_Distance;
-with Concorde.Db.Star;
+with Concorde.Handles.Massive_Object;
+with Concorde.Handles.Scenario;
+with Concorde.Handles.Star_System;
+with Concorde.Handles.Star_System_Distance;
+with Concorde.Handles.Star;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Galaxies is
 
@@ -51,21 +54,19 @@ package body Concorde.Configure.Galaxies is
    --------------------------------
 
    procedure Calculate_System_Distances is
-      use type Concorde.Db.Star_System_Reference;
+      use type Concorde.Handles.Star_System.Star_System_Class;
    begin
       Ada.Text_IO.Put_Line ("Calculating distances between star systems ...");
 
-      for From of Concorde.Db.Star_System.Scan_By_Top_Record loop
-         for To of Concorde.Db.Star_System.Scan_By_Top_Record loop
-            if From.Get_Star_System_Reference
-              /= To.Get_Star_System_Reference
-            then
+      for From of Concorde.Handles.Star_System.Scan_By_Top_Record loop
+         for To of Concorde.Handles.Star_System.Scan_By_Top_Record loop
+            if From /= To then
                declare
                   use Concorde.Elementary_Functions;
                begin
-                  Concorde.Db.Star_System_Distance.Create
-                    (Star_System => From.Get_Star_System_Reference,
-                     To          => To.Get_Star_System_Reference,
+                  Concorde.Handles.Star_System_Distance.Create
+                    (Star_System => From,
+                     To          => To,
                      Distance    =>
                        Sqrt ((To.X - From.X) ** 2 +
                          (To.Y - From.Y) ** 2 +
@@ -144,7 +145,7 @@ package body Concorde.Configure.Galaxies is
       type Generated_Star_Record is
          record
             X, Y, Z   : Real;
-            Reference : Concorde.Db.Star_System_Reference;
+            Reference : Concorde.Handles.Star_System.Star_System_Handle;
             Nearest   : Star_Distance_Lists.List;
          end record;
 
@@ -298,6 +299,8 @@ package body Concorde.Configure.Galaxies is
       for I in 1 .. Number_Of_Systems loop
 
          declare
+            subtype Star_System_Handle is
+              Concorde.Handles.Star_System.Star_System_Handle;
             Gen          : constant Generated_Star_Record :=
                              Vector.Element (I);
             System_Name  : constant String := Create_System_Name;
@@ -305,8 +308,8 @@ package body Concorde.Configure.Galaxies is
                              Random_Star_Mass;
             Mass         : constant Non_Negative_Real :=
                              Solar_Masses * Concorde.Solar_System.Solar_Mass;
-            Star_System  : constant Concorde.Db.Star_System_Reference :=
-                             Concorde.Db.Star_System.Create
+            Star_System  : constant Star_System_Handle :=
+                             Concorde.Handles.Star_System.Create
                                (Name    => System_Name,
                                 X       => Gen.X,
                                 Y       => Gen.Y,
@@ -322,8 +325,7 @@ package body Concorde.Configure.Galaxies is
             Vector (I).Reference := Star_System;
 
             if I = 1 then
-               Concorde.Db.Scenario.Update_Scenario
-                 (Concorde.Db.Scenario.Get_Reference_By_Active (True))
+               Concorde.Handles.Scenario.Get_By_Active (True).Update_Scenario
                  .Set_Central_System (Star_System)
                  .Done;
             end if;
@@ -348,18 +350,18 @@ package body Concorde.Configure.Galaxies is
                           1.0e10
                             * Solar_Masses
                             / Luminosity;
-               Star : constant Concorde.Db.Star_Reference :=
-                        Concorde.Db.Star.Create
+               Star : constant Concorde.Handles.Star.Star_Handle :=
+                        Concorde.Handles.Star.Create
                           (Star_System           => Star_System,
                            Primary               =>
-                             Concorde.Db.Null_Star_System_Object_Reference,
+                             Concorde.Handles.Star.Empty_Handle,
                            Mass                  => Mass,
                            Identifier            =>
                              Concorde.Identifiers.Next_Identifier,
                            Radius                => Radius,
                            Density               => Mass / Volume,
                            Primary_Massive       =>
-                             Concorde.Db.Null_Massive_Object_Reference,
+                             Concorde.Handles.Massive_Object.Empty_Handle,
                            Epoch                 => Concorde.Calendar.Clock,
                            Period                => 0.0,
                            Semimajor_Axis        => 0.0,
@@ -382,7 +384,7 @@ package body Concorde.Configure.Galaxies is
                                (Luminosity));
 --                            (Star_System           => Star_System,
 --                             Primary               =>
---                               Concorde.Db.Null_Star_System_Object_Reference,
+--                        Concorde.Handles.Null_Star_System_Object_Reference,
 --                             Mass                  => Mass,
 --                             Radius                => Radius,
 --                             Density               => Mass / Volume,
@@ -413,7 +415,7 @@ package body Concorde.Configure.Galaxies is
 --                                 (Luminosity));
             begin
                if False then
-                  Ada.Text_IO.Put (Concorde.Stars.Name (Star));
+                  Ada.Text_IO.Put (Star.Name);
                   Ada.Text_IO.Set_Col (30);
                   Ada.Text_IO.Put (Concorde.Stars.Spectral_Type (Star));
                   Ada.Text_IO.Set_Col (35);
@@ -435,7 +437,7 @@ package body Concorde.Configure.Galaxies is
                Count := Count + 1;
                exit when Count > Stored_Nearest_Count;
 
-               Concorde.Db.Star_System_Distance.Create
+               Concorde.Handles.Star_System_Distance.Create
                  (Star_System => Vector.Element (I).Reference,
                   To          => Vector.Element (Nearest.To).Reference,
                   Distance    =>

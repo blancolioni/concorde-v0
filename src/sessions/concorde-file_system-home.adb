@@ -3,47 +3,47 @@ with Ada.Strings.Unbounded;
 
 with Concorde.File_System.Db_FS;
 
-with Concorde.Db.Faction;
-with Concorde.Db.World;
+with Concorde.Handles.Faction;
+with Concorde.Handles.World;
 
 package body Concorde.File_System.Home is
 
    function Get_Reference
-     (World : Concorde.Db.World.World_Type)
-      return Concorde.Db.World_Reference
+     (World : Concorde.Handles.World.World_Type)
+      return Concorde.Handles.World_Reference
    is (World.Get_World_Reference);
 
    function Get_Owned_World
-     (Faction : Concorde.Db.Faction_Reference;
+     (Faction : Concorde.Handles.Faction.Faction_Handle;
       Name    : String)
-      return Concorde.Db.World_Reference;
+      return Concorde.Handles.World_Reference;
 
    procedure Iterate_Owned_Worlds
-     (Faction : Concorde.Db.Faction_Reference;
+     (Faction : Concorde.Handles.Faction.Faction_Handle;
       Process : not null access
-        procedure (World : Concorde.Db.World.World_Interface'Class));
+        procedure (World : Concorde.Handles.World.World_Interface'Class));
 
    function World_Contents
-     (World : Concorde.Db.World.World_Type)
+     (World : Concorde.Handles.World.World_Type)
       return String;
 
    package World_Directory is
      new Concorde.File_System.Db_FS
-       (Container_Handle      => Concorde.Db.Faction_Reference,
-        Record_Reference      => Concorde.Db.World_Reference,
-        Get_Record            => Concorde.Db.World.Get,
+       (Container_Handle      => Concorde.Handles.Faction.Faction_Handle,
+        Record_Reference      => Concorde.Handles.World_Reference,
+        Get_Record            => Concorde.Handles.World.Get,
         Get_Reference         => Get_Reference,
         Get_Reference_By_Name => Get_Owned_World,
-        Null_Record_Reference => Concorde.Db.Null_World_Reference,
-        Record_Interface      => Concorde.Db.World.World_Interface,
+        Null_Record_Reference => Concorde.Handles.Null_World_Reference,
+        Record_Interface      => Concorde.Handles.World.World_Interface,
         Iterate               => Iterate_Owned_Worlds,
         Contents              => World_Contents,
-        "="                   => Concorde.Db."=");
+        "="                   => Concorde.Handles."=");
 
    type Faction_Node_Id is
      new Node_Id_Interface with
       record
-         Ref : Concorde.Db.Faction_Reference;
+         Ref : Concorde.Handles.Faction.Faction_Handle;
       end record;
 
    overriding function Is_Empty
@@ -61,7 +61,7 @@ package body Concorde.File_System.Home is
    type Faction_Node_Record is
      new Branch_Node with
       record
-         Ref : Concorde.Db.Faction_Reference;
+         Ref : Concorde.Handles.Faction.Faction_Handle;
       end record;
 
    overriding function Has_Child
@@ -197,7 +197,7 @@ package body Concorde.File_System.Home is
    begin
       return Faction_Node_Id'
         (Ref =>
-           Concorde.Db.Faction.First_Reference_By_Name (Child));
+           Concorde.Handles.Faction.First_By_Name (Child));
    end Get_Child;
 
    ---------------
@@ -219,15 +219,15 @@ package body Concorde.File_System.Home is
    ---------------------
 
    function Get_Owned_World
-     (Faction : Concorde.Db.Faction_Reference;
+     (Faction : Concorde.Handles.Faction.Faction_Handle;
       Name    : String)
-      return Concorde.Db.World_Reference
+      return Concorde.Handles.World_Reference
    is
       use Concorde.Db;
       Owner   : constant Owner_Reference :=
-        Concorde.Db.Faction.Get (Faction).Get_Owner_Reference;
-      World   : constant Concorde.Db.World.World_Type :=
-        Concorde.Db.World.First_By_Name (Name);
+        Concorde.Handles.Faction.Get (Faction).Get_Owner_Reference;
+      World   : constant Concorde.Handles.World.World_Type :=
+        Concorde.Handles.World.First_By_Name (Name);
    begin
       if World.Owner = Owner then
          return World.Get_World_Reference;
@@ -246,10 +246,10 @@ package body Concorde.File_System.Home is
       return Boolean
    is
       pragma Unreferenced (Node);
-      use type Concorde.Db.Faction_Reference;
+      use type Concorde.Handles.Faction.Faction_Handle;
    begin
-      return Concorde.Db.Faction.First_Reference_By_Name (Name)
-        /= Concorde.Db.Null_Faction_Reference;
+      return Concorde.Handles.Faction.First_By_Name (Name)
+        /= Concorde.Handles.Null_Faction_Reference;
    end Has_Child;
 
    ---------------
@@ -283,9 +283,9 @@ package body Concorde.File_System.Home is
      (Id : Faction_Node_Id)
       return Boolean
    is
-      use type Concorde.Db.Faction_Reference;
+      use type Concorde.Handles.Faction.Faction_Handle;
    begin
-      return Id.Ref = Concorde.Db.Null_Faction_Reference;
+      return Id.Ref = Concorde.Handles.Null_Faction_Reference;
    end Is_Empty;
 
    ----------------------
@@ -300,7 +300,7 @@ package body Concorde.File_System.Home is
    is
       pragma Unreferenced (Node);
    begin
-      for Faction of Concorde.Db.Faction.Scan_By_Name loop
+      for Faction of Concorde.Handles.Faction.Scan_By_Name loop
          Process (Faction.Name,
                   Faction_Node_Id'
                     (Ref => Faction.Get_Faction_Reference));
@@ -326,13 +326,13 @@ package body Concorde.File_System.Home is
    --------------------------
 
    procedure Iterate_Owned_Worlds
-     (Faction : Concorde.Db.Faction_Reference;
+     (Faction : Concorde.Handles.Faction.Faction_Handle;
       Process : not null access
-        procedure (World : Concorde.Db.World.World_Interface'Class))
+        procedure (World : Concorde.Handles.World.World_Interface'Class))
    is
    begin
-      for World of Concorde.Db.World.Select_By_Owner
-        (Concorde.Db.Faction.Get (Faction).Get_Owner_Reference)
+      for World of Concorde.Handles.World.Select_By_Owner
+        (Concorde.Handles.Faction.Get (Faction).Get_Owner_Reference)
       loop
          Process (World);
       end loop;
@@ -357,7 +357,7 @@ package body Concorde.File_System.Home is
    --------------------
 
    function World_Contents
-     (World : Concorde.Db.World.World_Type)
+     (World : Concorde.Handles.World.World_Type)
       return String
    is
       package String_Vectors is

@@ -8,9 +8,9 @@ with Concorde.Money;
 with Concorde.Real_Images;
 with Concorde.Updates.Events;
 
-with Concorde.Db.Colony_Policy;
-with Concorde.Db.Network_Value;
-with Concorde.Db.Policy;
+with Concorde.Handles.Colony_Policy;
+with Concorde.Handles.Network_Value;
+with Concorde.Handles.Policy;
 
 package body Concorde.UI.Models.Colonies.Policies is
 
@@ -20,7 +20,7 @@ package body Concorde.UI.Models.Colonies.Policies is
    type Policy_Record is
       record
          Is_Total : Boolean;
-         Policy   : Concorde.Db.Colony_Policy_Reference;
+         Policy   : Concorde.Handles.Colony_Policy.Colony_Policy_Handle;
       end record;
 
    Column_Type_Array : constant array (Policy_Table_Column)
@@ -129,19 +129,16 @@ package body Concorde.UI.Models.Colonies.Policies is
 
       else
          declare
-            use Concorde.Db.Colony_Policy;
-            use Concorde.Db.Network_Value;
-            use Concorde.Db.Policy;
-            Colony_Policy : constant Colony_Policy_Type := Get (Info.Policy);
-            Policy        : constant Policy_Type := Get (Colony_Policy.Policy);
-            Value_Node    : constant Network_Value_Type :=
-                              Get (Colony_Policy.Setting);
+            use Concorde.Handles.Colony_Policy;
+            use Concorde.Handles.Network_Value;
+            use Concorde.Handles.Policy;
+            Colony_Policy : constant Colony_Policy_Class := Info.Policy;
             Value : constant String :=
                       (case Col is
-                          when Name     => Policy.Tag,
+                          when Name     => Colony_Policy.Policy.Tag,
                           when Setting  =>
                             Concorde.Real_Images.Approximate_Image
-                         (Value_Node.Current_Value * 100.0),
+                         (Colony_Policy.Setting.Current_Value * 100.0),
                           when Income   =>
                             Concorde.Money.Show (Colony_Policy.Revenue),
                           when Expenses =>
@@ -165,17 +162,16 @@ package body Concorde.UI.Models.Colonies.Policies is
    begin
       Model.State.Clear;
       for Policy of
-        Concorde.Db.Policy.Scan_By_Tag
+        Concorde.Handles.Policy.Scan_By_Tag
       loop
          declare
-            use Concorde.Db.Colony_Policy;
-            Item : constant Colony_Policy_Type :=
+            use Concorde.Handles.Colony_Policy;
+            Item : constant Colony_Policy_Handle :=
                      Get_By_Colony_Policy
-                       (Model.Colony.Reference_Colony,
-                        Policy.Get_Policy_Reference);
+                       (Model.Colony, Policy);
             Info : constant Policy_Record :=
                      Policy_Record'
-                       (Policy   => Item.Get_Colony_Policy_Reference,
+                       (Policy   => Item,
                         Is_Total => False);
          begin
             Model.State.Append (Info);
@@ -185,7 +181,7 @@ package body Concorde.UI.Models.Colonies.Policies is
       end loop;
       Model.State.Append
         (Policy_Record'
-           (Policy => Concorde.Db.Null_Colony_Policy_Reference,
+           (Policy => Concorde.Handles.Colony_Policy.Empty_Handle,
             Is_Total => True));
       Model.Total_Income := Total_Income;
       Model.Total_Expense := Total_Expenses;

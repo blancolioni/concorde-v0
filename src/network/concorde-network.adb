@@ -1,623 +1,491 @@
-with Ada.Characters.Handling;
-with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Exceptions;
 with Ada.Text_IO;
 
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
+with Ada.Containers.Vectors;
+
+with WL.Processes;
 with WL.String_Maps;
+with WL.String_Sets;
 
 with Concorde.Calendar;
-with Concorde.Identifiers;
-with Concorde.Real_Images;
-
+with Concorde.Evaluator;
 with Concorde.Expressions;
+with Concorde.Logging;
 with Concorde.Parser;
-with Concorde.Symbols;
-with Concorde.Values;
-
 with Concorde.Primitives.Loader;
+with Concorde.Real_Images;
+with Concorde.Symbols;
 
-with Concorde.Db.Calculation;
-with Concorde.Db.Derived_Metric;
-with Concorde.Db.Effect;
-with Concorde.Db.Node;
-with Concorde.Db.Network_Value;
-with Concorde.Db.Historical_Value;
+with Concorde.Handles.Derived_Metric;
+with Concorde.Handles.Effect;
+with Concorde.Handles.Historical_Value;
+with Concorde.Handles.Node;
+with Concorde.Handles.Network_Value;
 
 package body Concorde.Network is
 
-   type Cached_Expression_Record is
+   package Calculation_Maps is
+     new WL.String_Maps (Concorde.Evaluator.Evaluation_Handle,
+                         Concorde.Evaluator."=");
+
+   Calculation_Map : Calculation_Maps.Map;
+
+   type Calculation_Item is
       record
-         Expression : Concorde.Expressions.Expression_Type;
+         Node  : Concorde.Nodes.Node_Handle;
+         Eval  : Concorde.Evaluator.Evaluation_Handle;
       end record;
 
-   package Cached_Expression_Maps is
-     new WL.String_Maps (Cached_Expression_Record);
+   package Calculation_Item_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Calculation_Item);
 
-   Expression_Cache : Cached_Expression_Maps.Map;
+   package Calculation_Layer_Lists is
+     new Ada.Containers.Doubly_Linked_Lists
+       (Calculation_Item_Lists.List, Calculation_Item_Lists."=");
 
-   function Image (X : Real) return String
-                   renames Concorde.Real_Images.Approximate_Image
-     with Unreferenced;
+   package Node_Lists is
+     new Ada.Containers.Doubly_Linked_Lists
+       (Concorde.Nodes.Node_Handle, Concorde.Nodes."=");
 
-   type Network_Environment is
-     new Concorde.Values.Environment_Interface with
+   Metric_Nodes  : Calculation_Item_Lists.List;
+   Initial_Nodes : Node_Lists.List;
+   All_Nodes     : Node_Lists.List;
+   Layer_Nodes   : Calculation_Layer_Lists.List;
+
+   type Network_Record is
       record
-         Network : Concorde.Db.Network_Reference;
-         X       : Concorde.Db.Node_Reference :=
-                     Concorde.Db.Null_Node_Reference;
+         Network   : Concorde.Handles.Network.Network_Handle;
+         Container : Concorde.Nodes.Value_Container;
       end record;
 
-   overriding function Get
-     (Environment    : Network_Environment;
-      Symbol         : Concorde.Symbols.Symbol_Id;
-      With_Delay     : Real := 0.0;
-      With_Smoothing : Real := 0.0)
-      return Concorde.Values.Value_Interface'Class;
+   package Network_Vectors is
+     new Ada.Containers.Vectors (Network_Handle, Network_Record);
 
-   function Save_History (Node : Concorde.Db.Node.Node_Type) return Boolean
-   is (Node.Content in Concorde.Db.Rating | Concorde.Db.Setting);
-
-   type Observer_Access is access all Node_Observer'Class;
-
-   package Observer_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Observer_Access);
-
-   function Observer_Key
-     (Network : Concorde.Db.Network_Reference;
-      Node    : Concorde.Db.Node_Reference)
-      return String
-   is (Concorde.Db.To_String (Network) & Concorde.Db.To_String (Node));
-
-   package Observer_Maps is
-     new WL.String_Maps (Observer_Lists.List, Observer_Lists."=");
-
-   Observer_Map : Observer_Maps.Map;
-
-   ------------------
-   -- Add_Observer --
-   ------------------
-
-   procedure Add_Observer
-     (Network    : Concorde.Db.Network_Reference;
-      Node       : Concorde.Db.Node_Reference;
-      Observer   : not null access Node_Observer'Class)
-   is
-      Key : constant String := Observer_Key (Network, Node);
-   begin
-      if not Observer_Map.Contains (Key) then
-         Observer_Map.Insert (Key, Observer_Lists.Empty_List);
-      end if;
-      Observer_Map (Key).Append (Observer_Access (Observer));
-   end Add_Observer;
-
-   ----------------------
-   -- Commit_New_Value --
-   ----------------------
-
-   procedure Commit_New_Value
-     (Network    : Concorde.Db.Network_Reference;
-      Tag        : String)
-   is
-      Definition    : constant Concorde.Db.Node.Node_Type :=
-                        Concorde.Db.Node.Get_By_Tag (Tag);
-      Node          : constant Concorde.Db.Node_Reference :=
-                        Definition.Get_Node_Reference;
-      Node_Value    : constant Concorde.Db.Network_Value.Network_Value_Type :=
-                        Concorde.Db.Network_Value.Get_By_Network_Value
-                          (Network, Node);
-      New_History   : Boolean := True;
-   begin
-      if Node_Value.Current_Value /= Node_Value.New_Value then
-         if True or else Save_History (Definition) then
-            declare
-               use Concorde.Calendar;
-               use Concorde.Db.Historical_Value;
-               Previous : constant Historical_Value_Type :=
-                            First_By_Previous_Historical_Value
-                              (Network, Node, True);
-            begin
-               if Previous.Has_Element then
-                  if Previous.From < Concorde.Calendar.Clock then
-                     Update_Historical_Value
-                       (Previous.Get_Historical_Value_Reference)
-                       .Set_To (Concorde.Calendar.Clock)
-                       .Set_Is_Previous (False)
-                       .Set_Next (Node_Value.New_Value)
-                       .Done;
-                  else
-                     Update_Historical_Value
-                       (Previous.Get_Historical_Value_Reference)
-                       .Set_Value (Node_Value.New_Value)
-                       .Done;
-                     New_History := False;
-                  end if;
-               end if;
-            end;
-
-            if New_History then
-               Concorde.Db.Historical_Value.Create
-                 (Network     => Network,
-                  Node        => Node,
-                  Is_Previous => True,
-                  From        => Concorde.Calendar.Clock,
-                  To          => Concorde.Calendar.Clock,
-                  Next        => 0.0,
-                  Value       => Node_Value.New_Value);
-            end if;
-         end if;
-
-         Concorde.Db.Network_Value.Update_Network_Value
-           (Node_Value.Get_Network_Value_Reference)
-           .Set_Current_Value (Node_Value.New_Value)
-           .Done;
-
-      end if;
-   end Commit_New_Value;
+   Vector : Network_Vectors.Vector;
 
    ----------------------------
    -- Create_Initial_Network --
    ----------------------------
 
    procedure Create_Initial_Network
-     (Network       : Concorde.Db.Network_Reference;
+     (Network       : Concorde.Handles.Network.Network_Class;
       Initial_Value : not null access function (Tag : String) return Real)
    is
    begin
-      for Node of Concorde.Db.Node.Scan_By_Tag loop
+      for Node of Concorde.Handles.Node.Scan_By_Tag loop
          declare
             Value : constant Real := Initial_Value (Node.Tag);
          begin
-            Concorde.Db.Network_Value.Create
+            Concorde.Handles.Network_Value.Create
               (Network       => Network,
-               Node          => Node.Get_Node_Reference,
+               Node          => Node,
                Active        => True,
                Current_Value => Value,
                New_Value     => Value);
 
-            if True or else Save_History (Node) then
-               Concorde.Db.Historical_Value.Create
-                 (Network     => Network,
-                  Node        => Node.Get_Node_Reference,
-                  Is_Previous => True,
-                  From        => Concorde.Calendar.Zero_Time,
-                  To          => Concorde.Calendar.Clock,
-                  Next        => Value,
-                  Value       => Value);
-            end if;
+            Concorde.Handles.Historical_Value.Create
+              (Network     => Network,
+               Node        => Node,
+               Is_Previous => True,
+               From        => Concorde.Calendar.Zero_Time,
+               To          => Concorde.Calendar.Clock,
+               Next        => Value,
+               Value       => Value);
          end;
       end loop;
    end Create_Initial_Network;
-
-   -------------------
-   -- Current_Value --
-   -------------------
-
-   function Current_Value
-     (Network : Concorde.Db.Network_Reference;
-      Tag     : String)
-      return Real
-   is
-      Definition    : constant Concorde.Db.Node.Node_Type :=
-                        Concorde.Db.Node.Get_By_Tag (Tag);
-   begin
-      if not Definition.Has_Element then
-         raise Constraint_Error with
-           "no such node: " & Tag;
-      end if;
-
-      return Current_Value (Network, Definition.Get_Node_Reference);
-
-   end Current_Value;
-
-   -------------------
-   -- Current_Value --
-   -------------------
-
-   function Current_Value
-     (Network : Concorde.Db.Network_Reference;
-      Node    : Concorde.Db.Node_Reference)
-      return Real
-   is
-      Definition    : constant Concorde.Db.Node.Node_Type :=
-                        Concorde.Db.Node.Get (Node);
-      Node_Value    : constant Concorde.Db.Network_Value.Network_Value_Type :=
-                        Concorde.Db.Network_Value.Get_By_Network_Value
-                          (Network, Node);
-   begin
-      case Definition.Content is
-         when Concorde.Db.Rating =>
-            return Signed_Unit_Clamp (Node_Value.Current_Value);
-         when Concorde.Db.Setting =>
-            return Unit_Clamp (Node_Value.Current_Value);
-         when Concorde.Db.Quantity | Concorde.Db.Money =>
-            return Node_Value.Current_Value;
-      end case;
-   end Current_Value;
 
    --------------
    -- Evaluate --
    --------------
 
    function Evaluate
-     (Network     : Concorde.Db.Network_Reference;
-      Calculation : Concorde.Db.Calculation_Reference)
+     (Network     : Concorde.Handles.Network.Network_Class;
+      Calculation : Concorde.Handles.Calculation.Calculation_Class)
       return Real
    is
-      Rec : constant Concorde.Db.Calculation.Calculation_Type :=
-              Concorde.Db.Calculation.Get (Calculation);
-      Env : constant Network_Environment :=
-              Network_Environment'
-                (Network => Network,
-                 X       => Rec.Node);
-      Id  : constant Concorde.Identifiers.Object_Identifier :=
-              Rec.Identifier;
-      Expr : constant Concorde.Expressions.Expression_Type :=
-               (if Expression_Cache.Contains (Id)
-                then Expression_Cache.Element (Id).Expression
-                else raise Constraint_Error with
-                  "calculation not loaded: [" & Id & "]");
+      use Calculation_Maps;
+      Id       : constant String := Calculation.Identifier;
+      Position : Cursor := Calculation_Map.Find (Id);
    begin
-      return Result : constant Real :=
-        Expr.Evaluate (Env, Concorde.Expressions.Default_Context).To_Real;
-   exception
-      when E : others =>
-         Ada.Text_IO.Put_Line
-           (Ada.Text_IO.Standard_Error,
-            "unable to evaluate: " & Expr.To_String
-            & ": " & Ada.Exceptions.Exception_Message (E));
-
-         raise Constraint_Error
-           with Ada.Exceptions.Exception_Message (E);
-
-   end Evaluate;
-
-   ---------
-   -- Get --
-   ---------
-
-   overriding function Get
-     (Environment    : Network_Environment;
-      Symbol         : Concorde.Symbols.Symbol_Id;
-      With_Delay     : Real := 0.0;
-      With_Smoothing : Real := 0.0)
-      return Concorde.Values.Value_Interface'Class
-   is
-      use type Concorde.Db.Node_Reference;
-      Name : constant String :=
-               Ada.Characters.Handling.To_Lower
-                 (Concorde.Symbols.Get_Name (Symbol));
-      Node : constant Concorde.Db.Node_Reference :=
-               (if Name = "x"
-                then Environment.X
-                else Concorde.Db.Node.Get_Reference_By_Tag (Name));
-      X    : constant Real :=
-               (if Node = Concorde.Db.Null_Node_Reference
-                then (raise Constraint_Error with
-                    "get: no such node: " & Name)
-                else Inertial_Value
-                  (Environment.Network, Node, With_Delay, With_Smoothing));
-   begin
-      return Concorde.Values.Constant_Value (X);
-   end Get;
-
-   --------------------
-   -- Inertial_Value --
-   --------------------
-
-   function Inertial_Value
-     (Network : Concorde.Db.Network_Reference;
-      Tag     : String;
-      Inertia   : Non_Negative_Real;
-      Smoothing : Non_Negative_Real)
-      return Real
-   is
-   begin
-      return Inertial_Value
-        (Network   => Network,
-         Node      => Concorde.Db.Node.Get_Reference_By_Tag (Tag),
-         Inertia   => Inertia,
-         Smoothing => Smoothing);
-   end Inertial_Value;
-
-   --------------------
-   -- Inertial_Value --
-   --------------------
-
-   function Inertial_Value
-     (Network   : Concorde.Db.Network_Reference;
-      Node      : Concorde.Db.Node_Reference;
-      Inertia   : Non_Negative_Real;
-      Smoothing : Non_Negative_Real)
-      return Real
-   is
-   begin
-
-      if Inertia = 0.0 and then Smoothing = 0.0 then
-
---           Log ("current-value "
---                & Concorde.Db.Node.Get (Node).Tag
---                & " = "
---                & Image (Current_Value (Network, Node)));
-
-         return Current_Value (Network, Node);
+      if not Has_Element (Position) then
+         declare
+            Handle : constant Concorde.Evaluator.Evaluation_Handle :=
+                       Concorde.Evaluator.Compile
+                         (Concorde.Parser.Parse_Expression
+                            (Calculation.Expression));
+            Inserted : Boolean;
+         begin
+            Calculation_Map.Insert
+              (Id, Handle, Position, Inserted);
+            pragma Assert (Inserted);
+         end;
       end if;
 
-      declare
-         use Concorde.Calendar;
-         DT     : constant Duration := Days (Inertia);
-         DS     : constant Duration := Days (Smoothing);
-         DH     : Duration := 0.0;
-         Now    : constant Time := Clock;
-         Start  : constant Time := Now - DT - DS;
-         Finish : constant Time := Now - DT;
-         Total  : Real := 0.0;
-      begin
---           Log ("scanning history from "
---                & Image (Concorde.Calendar.Start)
---                & " to "
---                & Image (Finish));
+      pragma Assert (Calculation_Map.Contains (Id));
 
-         for History of
-           Concorde.Db.Historical_Value
-             .Select_Historical_Value_From_Bounded_By_From
-               (Network, Node, Concorde.Calendar.Start, Finish)
-         loop
-            if not History.Is_Previous and then History.To > Start then
-               declare
-                  Min : constant Time :=
-                          (if History.From > Start
-                           then History.From
-                           else Start);
-                  Max : constant Time :=
-                          (if History.To < Finish
-                           then History.To
-                           else Finish);
-                  Min_Scale : constant Real :=
-                                Real (Min - History.From)
-                                / Real (History.To - History.From);
-                  Max_Scale : constant Real :=
-                                Real (Max - History.From)
-                                / Real (History.To - History.From);
-                  Change    : constant Real :=
-                                History.Next - History.Value;
-                  Min_Value : constant Real :=
-                                History.Value
-                                  + Min_Scale * Change;
-                  Max_Value : constant Real :=
-                                History.Value
-                                  + Max_Scale * Change;
-                  Value     : constant Real :=
-                                (if DS = 0.0
-                                 then Min_Value
-                                 else Real (Max - Min) * Min_Value
-                                 + 0.5 * Real (Max - Min)
-                                 * (Max_Value - Min_Value));
-               begin
-                  if DS = 0.0 then
-                     return Value;
-                  end if;
+      return Concorde.Evaluator.Evaluate
+        (Element (Position),
+         Get_Value_Container (Get_Network_Handle (Network)));
+   end Evaluate;
 
-                  DH := DH + (Max - Min);
-                  Total := Total + Value;
-               end;
-            end if;
-         end loop;
+   ------------------------
+   -- Get_Network_Handle --
+   ------------------------
 
-         if Smoothing = 0.0 then
-            return Current_Value (Network, Node);
-         else
-            Total := Total + Real (DS - DH) * Current_Value (Network, Node);
-            return Total / Real (DS);
+   function Get_Network_Handle
+     (Network : Concorde.Handles.Network.Network_Class)
+      return Network_Handle
+   is
+   begin
+      for Handle in 1 .. Vector.Last_Index loop
+         if Vector.Element (Handle).Network.Identifier
+           = Network.Identifier
+         then
+            return Handle;
          end if;
+      end loop;
+      Vector.Append
+        (Network_Record'
+           (Network   => Network.To_Network_Handle,
+            Container => Concorde.Nodes.New_Container (Network)));
+      return Vector.Last_Index;
+   end Get_Network_Handle;
 
-      end;
-   end Inertial_Value;
+   -------------------------
+   -- Get_Value_Container --
+   -------------------------
+
+   function Get_Value_Container
+     (Handle : Network_Handle)
+      return Concorde.Nodes.Value_Container
+   is
+   begin
+      return Vector.Element (Handle).Container;
+   end Get_Value_Container;
 
    ------------------
    -- Load_Network --
    ------------------
 
    procedure Load_Network is
+
+      package String_Lists is
+        new Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
+
+      package Dependency_Maps is
+        new WL.String_Maps (String_Lists.List, String_Lists."=");
+
+      Calculated : WL.String_Sets.Set;
+      Remaining  : WL.String_Sets.Set;
+      Initial    : WL.String_Sets.Set;
+
+      Dependencies : Dependency_Maps.Map;
+
+      procedure Update_Dependencies
+        (Node : Concorde.Handles.Node.Node_Class;
+         Ids  : Concorde.Symbols.Symbol_Id_Array);
+
+      -------------------------
+      -- Update_Dependencies --
+      -------------------------
+
+      procedure Update_Dependencies
+        (Node : Concorde.Handles.Node.Node_Class;
+         Ids  : Concorde.Symbols.Symbol_Id_Array)
+      is
+         Tag : constant String := Node.Tag;
+      begin
+         if not Dependencies.Contains (Tag) then
+            Dependencies.Insert (Tag, String_Lists.Empty_List);
+         end if;
+
+         declare
+            List : String_Lists.List renames
+                     Dependencies (Tag);
+         begin
+            for Id of Ids loop
+               declare
+                  Name : constant String :=
+                           Concorde.Symbols.Get_Name (Id);
+               begin
+                  if Name /= "x"
+                    and then not Concorde.Primitives.Is_Primitive (Name)
+                    and then not List.Contains (Name)
+                  then
+                     List.Append (Name);
+                  end if;
+               end;
+            end loop;
+         end;
+      end Update_Dependencies;
+
    begin
+
+      Ada.Text_IO.Put_Line ("Loading primitives ...");
+
       Concorde.Primitives.Loader.Load_Primitives;
-      for Calculation of Concorde.Db.Calculation.Scan_By_Identifier loop
+
+      Ada.Text_IO.Put_Line ("Loading calculations ...");
+
+      for Calculation of Concorde.Handles.Calculation.Scan_By_Identifier loop
          if Calculation.Expression /= "" then
             declare
                Expr : constant Concorde.Expressions.Expression_Type :=
                         Concorde.Parser.Parse_Expression
                           (Calculation.Expression);
+               Eval : constant Concorde.Evaluator.Evaluation_Handle :=
+                        Concorde.Evaluator.Compile (Expr);
+               Ids  : constant Concorde.Symbols.Symbol_Id_Array :=
+                        Expr.Free_Variables;
+
+               function Show_Ids (Index : Positive) return String
+               is (if Index = Ids'First
+                   then Concorde.Symbols.Get_Name (Ids (Index))
+                   & Show_Ids (Index + 1)
+                   elsif Index <= Ids'Last
+                   then ", " & Concorde.Symbols.Get_Name (Ids (Index))
+                   & Show_Ids (Index + 1)
+                   else "");
+
             begin
-               Expression_Cache.Insert
-                 (Key      => Calculation.Identifier,
-                  New_Item => (Expression => Expr));
+
+               if False then
+                  Ada.Text_IO.Put_Line
+                    (Calculation.Node.Tag
+                     & ": "
+                     & Show_Ids (Ids'First));
+               end if;
+
+               Update_Dependencies (Calculation.Node, Ids);
+               Calculation_Map.Insert (Calculation.Identifier, Eval);
             end;
          end if;
       end loop;
-   end Load_Network;
 
-   ---------------------
-   -- Remove_Observer --
-   ---------------------
+      Ada.Text_IO.Put_Line ("Finding all nodes ...");
 
-   procedure Remove_Observer
-     (Network    : Concorde.Db.Network_Reference;
-      Node       : Concorde.Db.Node_Reference;
-      Observer   : not null access Node_Observer'Class)
-   is
-      Key : constant String := Observer_Key (Network, Node);
-      Element : constant Observer_Access := Observer_Access (Observer);
-      Position : Observer_Lists.Cursor;
-   begin
-      pragma Assert (Observer_Map.Contains (Key),
-                     "no observers for key " & Key);
-      Position := Observer_Map (Key).Find (Element);
-      pragma Assert (Observer_Lists.Has_Element (Position),
-                     "observer not found in map");
-      Observer_Map (Key).Delete (Position);
-   end Remove_Observer;
+      for Node of Concorde.Handles.Node.Scan_By_Tag loop
+         Remaining.Include (Node.Tag);
+         Initial.Include (Node.Tag);
+         All_Nodes.Append (Concorde.Nodes.Get_Handle (Node));
+      end loop;
 
-   -------------------
-   -- Set_New_Value --
-   -------------------
-
-   procedure Set_New_Value
-     (Network : Concorde.Db.Network_Reference;
-      Tag     : String;
-      Value   : Real)
-   is
-      Definition    : constant Concorde.Db.Node.Node_Type :=
-                        Concorde.Db.Node.Get_By_Tag (Tag);
-      Node_Value    : constant Concorde.Db.Network_Value.Network_Value_Type :=
-                        Concorde.Db.Network_Value.Get_By_Network_Value
-                          (Network, Definition.Get_Node_Reference);
-      Clamped_Value : constant Real :=
-                        (case Definition.Content is
-                            when Concorde.Db.Rating =>
-                              Signed_Unit_Clamp (Value),
-                            when Concorde.Db.Setting =>
-                              Unit_Clamp (Value),
-                            when Concorde.Db.Quantity | Concorde.Db.Money =>
-                               Value);
-   begin
-      if not Definition.Has_Element then
-         raise Constraint_Error with
-           "no such node: " & Tag;
-      end if;
-
-      Concorde.Db.Network_Value.Update_Network_Value
-        (Node_Value.Get_Network_Value_Reference)
-        .Set_New_Value (Clamped_Value)
-        .Done;
-   end Set_New_Value;
-
-   ------------
-   -- Update --
-   ------------
-
-   procedure Update
-     (Network : Concorde.Db.Network_Reference)
-   is
-      use Concorde.Db;
-
-      package Node_Lists is
-        new Ada.Containers.Doubly_Linked_Lists (Node_Reference);
-
-      package Node_Maps is
-        new WL.String_Maps (Real);
-
-      Changed_Ids : Node_Lists.List;
-      Node_Value  : Node_Maps.Map;
-
-      procedure Update_Value
-        (Tag       : String;
-         New_Value : Real);
-
-      ------------------
-      -- Update_Value --
-      ------------------
-
-      procedure Update_Value
-        (Tag       : String;
-         New_Value : Real)
-      is
-      begin
-         if not Node_Value.Contains (Tag) then
-            Node_Value.Insert (Tag, New_Value);
-         else
-            Node_Value.Replace (Tag, Node_Value.Element (Tag) + New_Value);
-         end if;
-      end Update_Value;
-
-   begin
+      Ada.Text_IO.Put_Line ("Loading metrics ...");
 
       for Metric of
-        Concorde.Db.Derived_Metric.Scan_By_Tag
+        Concorde.Handles.Derived_Metric.Scan_By_Tag
       loop
          declare
-            Tag   : constant String := Metric.Tag;
-            Value : constant Real := Evaluate (Network, Metric.Calculation);
+            Id    : constant String := Metric.Calculation.Identifier;
          begin
-
-            Set_New_Value
-              (Network, Tag, Value);
-            Commit_New_Value (Network, Tag);
-
-         exception
-
-            when E : others =>
-               raise Constraint_Error with
-                 "error updating "
-                 & Tag
-                 & ": " & Ada.Exceptions.Exception_Message (E);
+            Metric_Nodes.Append
+              (Calculation_Item'
+                 (Node =>
+                      Concorde.Nodes.Get_Handle (Metric),
+                  Eval => Calculation_Map.Element (Id)));
+            Initial.Delete (Metric.Tag);
          end;
       end loop;
 
-      for Node of Concorde.Db.Node.Scan_By_Tag loop
-         if Concorde.Db.Effect.First_Reference_By_To (Node.Get_Node_Reference)
-           = Null_Effect_Reference
-         then
-            Changed_Ids.Append (Node.Get_Node_Reference);
+      Ada.Text_IO.Put_Line ("Finding initial nodes");
+
+      for Node of Concorde.Handles.Node.Scan_By_Tag loop
+         if Initial.Contains (Node.Tag) then
+            if not Concorde.Handles.Effect.First_By_To (Node).Has_Element then
+               Remaining.Delete (Node.Tag);
+               Calculated.Include (Node.Tag);
+               Initial_Nodes.Append
+                 (Concorde.Nodes.Get_Handle (Node));
+            end if;
          end if;
       end loop;
 
-      while not Changed_Ids.Is_Empty loop
-         declare
-            New_Changed_Ids : Node_Lists.List;
-         begin
+      if False then
+         while not Remaining.Is_Empty loop
 
-            for Id of Changed_Ids loop
-               declare
-                  From_Node : constant Concorde.Db.Node.Node_Type :=
-                                Concorde.Db.Node.Get (Id);
+            Ada.Text_IO.Put_Line ("Finding next layer");
+
+            declare
+               Finished : String_Lists.List;
+               Layer    : Calculation_Item_Lists.List;
+
+               procedure Check (Tag : String);
+
+               -----------
+               -- Check --
+               -----------
+
+               procedure Check (Tag : String) is
+                  Node      : constant Concorde.Handles.Node.Node_Handle :=
+                                Concorde.Handles.Node.Get_By_Tag (Tag);
+                  Deps      : constant String_Lists.List :=
+                                (if Dependencies.Contains (Tag)
+                                 then Dependencies (Tag)
+                                 else String_Lists.Empty_List);
+                  Available : Boolean := True;
                begin
 
-                  for Effect of
-                    Concorde.Db.Effect.Select_By_Node (Id)
-                  loop
-                     declare
-                        To_Id : constant Node_Reference :=
-                                  Effect.To;
-                        To_Node : constant Concorde.Db.Node.Node_Type :=
-                                    Concorde.Db.Node.Get (To_Id);
-                        New_Value : constant Real :=
-                                      Evaluate
-                                        (Network,
-                                         Effect.Get_Calculation_Reference);
-                     begin
-                        Update_Value (To_Node.Tag, New_Value);
-                     end;
+                  Ada.Text_IO.Put ("checking: " & Tag);
+                  Ada.Text_IO.Flush;
+
+                  for Dep of Deps loop
+                     if not Calculated.Contains (Dep) then
+                        Ada.Text_IO.Put_Line
+                          (": dependency " & Dep & " unavailable");
+                        Available := False;
+                        exit;
+                     end if;
                   end loop;
 
-               exception
+                  if Available then
+                     declare
+                        use Concorde.Handles.Calculation;
+                        Calculation : constant Calculation_Class :=
+                                        First_By_Node (Node);
+                     begin
+                        Finished.Append (Tag);
+                        Layer.Append
+                          (Calculation_Item'
+                             (Node =>
+                                  Concorde.Nodes.Get_Handle (Node),
+                              Eval => Calculation_Map.Element
+                                (Calculation.Identifier)));
+                        Ada.Text_IO.Put_Line (": ready");
+                     end;
+                  end if;
+               end Check;
 
-                  when E : others =>
+            begin
+
+               if False then
+                  Remaining.Iterate (Check'Access);
+
+                  if Layer.Is_Empty then
                      raise Constraint_Error with
-                       "error updating "
-                       & From_Node.Tag
-                       & ": " & Ada.Exceptions.Exception_Message (E);
+                       "cannot construct layer";
+                  end if;
 
-               end;
-            end loop;
+                  for Tag of Finished loop
+                     Remaining.Delete (Tag);
+                     Calculated.Include (Tag);
+                  end loop;
 
-            if not Node_Value.Is_Empty then
-               for Position in Node_Value.Iterate loop
-                  declare
-                     Tag : constant String := Node_Maps.Key (Position);
-                     Value : constant Real := Node_Maps.Element (Position);
-                     Id : constant Concorde.Db.Node_Reference :=
-                             Concorde.Db.Node.Get_Reference_By_Tag (Tag);
-                  begin
-                     New_Changed_Ids.Append (Id);
-                     Set_New_Value (Network, Tag, Value);
-                     Commit_New_Value (Network, Tag);
-                  end;
-               end loop;
-               Node_Value.Clear;
-            end if;
-            Changed_Ids := New_Changed_Ids;
+                  Layer_Nodes.Append (Layer);
+               end if;
+
+            end;
+         end loop;
+      end if;
+
+   end Load_Network;
+
+   ------------------
+   -- Save_Network --
+   ------------------
+
+   procedure Save_Network is
+      Process : WL.Processes.Process_Type;
+   begin
+      Process.Start_Bar ("saving network",
+                         Natural (Vector.Last_Index)
+                         * Concorde.Nodes.Node_Count,
+                         With_Percentage => True,
+                         Bar_Length      => 60);
+      for E of Vector loop
+
+         declare
+
+            procedure Save_Value
+              (Node    : Concorde.Handles.Node.Node_Handle;
+               Value   : Real);
+
+            ----------------
+            -- Save_Value --
+            ----------------
+
+            procedure Save_Value
+              (Node    : Concorde.Handles.Node.Node_Handle;
+               Value   : Real)
+            is
+               Network_Value         : constant Concorde.Handles.Network_Value
+                 .Network_Value_Handle :=
+                   Concorde.Handles.Network_Value
+                     .Get_By_Network_Value (E.Network, Node);
+            begin
+               if Network_Value.Has_Element then
+                  Network_Value.Update_Network_Value
+                    .Set_Current_Value (Value)
+                    .Done;
+               else
+                  Concorde.Logging.Log
+                    ("warning", Node.Tag & " has no value in network "
+                     & E.Network.Identifier);
+               end if;
+
+               Process.Tick;
+
+            end Save_Value;
+
+         begin
+            Concorde.Nodes.Iterate
+              (E.Container, Save_Value'Access);
+         end;
+
+      end loop;
+
+      Process.Finish;
+
+   end Save_Network;
+
+   --------------------
+   -- Update_Network --
+   --------------------
+
+   procedure Update_Network (Network : Network_Handle) is
+      Container : constant Concorde.Nodes.Value_Container :=
+                    Get_Value_Container (Network);
+   begin
+      for Metric of Metric_Nodes loop
+         declare
+            Node      : constant Concorde.Nodes.Node_Handle :=
+                          Metric.Node;
+            Eval      : constant Concorde.Evaluator.Evaluation_Handle :=
+                          Metric.Eval;
+            New_Value : constant Real :=
+                          Concorde.Evaluator.Evaluate
+                            (Handle  => Eval,
+                             Network => Container);
+         begin
+            Concorde.Logging.Log
+              ("update",
+               Concorde.Nodes.Get_Tag (Node)
+               & " <- "
+               & Concorde.Real_Images.Approximate_Image (New_Value));
+            Concorde.Nodes.Set_Value
+              (Container, Node, New_Value);
          end;
       end loop;
 
-   end Update;
+      for Metric of Metric_Nodes loop
+         Concorde.Nodes.Commit_Value (Container, Metric.Node);
+      end loop;
+
+   end Update_Network;
+
+   ------------------
+   -- Update_Value --
+   ------------------
+
+   procedure Update_Value
+     (Network   : Network_Handle;
+      Tag       : String;
+      New_Value : Real)
+   is
+   begin
+      Concorde.Nodes.Update_Value
+        (Get_Value_Container (Network), Tag, New_Value);
+   end Update_Value;
 
 end Concorde.Network;

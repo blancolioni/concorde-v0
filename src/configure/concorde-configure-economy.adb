@@ -1,7 +1,11 @@
 with Tropos.Reader;
 
-with Concorde.Db.Economic_Sector;
-with Concorde.Db.Zone;
+with Concorde.Identifiers;
+
+with Concorde.Handles.Economic_Sector;
+with Concorde.Handles.Zone;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Economy is
 
@@ -18,11 +22,12 @@ package body Concorde.Configure.Economy is
                               File_Name      => "economic-sectors.config"));
    begin
       for Config of Sector_Config loop
-         Concorde.Db.Economic_Sector.Create
-           (Content => Concorde.Db.Quantity,
-            Tag     => Config.Config_Name,
-            Zone    =>
-              Concorde.Db.Zone.Get_Reference_By_Tag
+         Concorde.Handles.Economic_Sector.Create
+           (Content    => Concorde.Db.Quantity,
+            Identifier => Concorde.Identifiers.Next_Identifier,
+            Tag        => Config.Config_Name,
+            Zone       =>
+              Concorde.Handles.Zone.Get_By_Tag
                 (Config.Get ("zone")));
       end loop;
    end Configure_Economic_Sectors;

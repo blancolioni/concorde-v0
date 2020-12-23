@@ -1,8 +1,10 @@
+with Ada.Calendar;
 with Ada.Text_IO;
 
 with WL.Processes;
 
 with Concorde.Options;
+with Concorde.Real_Images;
 
 with Concorde.UI.Launch;
 
@@ -12,7 +14,6 @@ with Concorde.Logging;
 with Concorde.Logs;
 
 with Concorde.Managers.Loader;
-with Concorde.Managers.Execution;
 
 with Concorde.Server;
 with Concorde.Updates.Control;
@@ -46,8 +47,6 @@ begin
    Concorde.Db.Database.Open;
    Database_Open := True;
 
-   Concorde.Managers.Execution.Load_Managers;
-
    Ada.Text_IO.Put_Line ("starting server ...");
 
    Concorde.Server.Start;
@@ -64,7 +63,9 @@ begin
       declare
          Process     : WL.Processes.Process_Type;
          Update_Days : constant Natural :=
-           Concorde.Options.Update_Count;
+                         Concorde.Options.Update_Count;
+         Start_Time  : constant Ada.Calendar.Time :=
+                         Ada.Calendar.Clock;
       begin
          if Update_Days > 0 then
             Process.Start_Bar ("Updating", Update_Days * 24, True);
@@ -80,6 +81,19 @@ begin
                Process.Tick;
             end loop;
             Process.Finish;
+
+            declare
+               use Ada.Calendar;
+               Elapsed_Time : constant Duration :=
+                                Clock - Start_Time;
+            begin
+               Ada.Text_IO.Put_Line
+                 ("Updated" & Update_Days'Image
+                  & " days in "
+                  & Concorde.Real_Images.Approximate_Image
+                    (Real (Elapsed_Time))
+                  & "s");
+            end;
          end if;
 
       end;
@@ -107,6 +121,8 @@ begin
 
    Ada.Text_IO.Put_Line
      ("Stop date: " & Concorde.Calendar.Image (Concorde.Calendar.Clock));
+
+   Concorde.Server.Stop;
 
    Ada.Text_IO.Put_Line ("Closing database");
    Concorde.Db.Database.Close;

@@ -1,7 +1,11 @@
 with Tropos.Reader;
 
-with Concorde.Db.Sector_Use;
-with Concorde.Db.Zone;
+with Concorde.Identifiers;
+
+with Concorde.Handles.Sector_Use;
+with Concorde.Handles.Zone;
+
+with Concorde.Db;
 
 package body Concorde.Configure.Zones is
 
@@ -25,26 +29,26 @@ package body Concorde.Configure.Zones is
       procedure Configure
         (Config : Tropos.Configuration)
       is
-         use Concorde.Db;
          Tag : constant String := Config.Config_Name;
          Parent_Name : constant String := Config.Get ("parent", "");
-         Parent_Use  : constant Sector_Use_Reference :=
-           Sector_Use.Get_Reference_By_Tag (Parent_Name);
+         Parent_Use  : constant Handles.Sector_Use.Sector_Use_Handle :=
+           Handles.Sector_Use.Get_By_Tag (Parent_Name);
       begin
-         if Zone.Get_Reference_By_Tag (Tag) /= Null_Zone_Reference then
+         if Handles.Zone.Get_By_Tag (Tag).Has_Element then
             null;
          elsif Parent_Name = ""
-           or else Parent_Use /= Null_Sector_Use_Reference
+           or else Parent_Use.Has_Element
          then
             declare
-               Sector_Use : constant Concorde.Db.Sector_Use_Reference :=
-                 Concorde.Db.Sector_Use.Create
+               Sector_Use : constant Handles.Sector_Use.Sector_Use_Handle :=
+                 Concorde.Handles.Sector_Use.Create
                    (Tag             => Tag,
                     Parent          => Parent_Use);
             begin
                for Zone_Config of Config.Child ("zones") loop
-                  Concorde.Db.Zone.Create
+                  Concorde.Handles.Zone.Create
                     (Tag             => Zone_Config.Config_Name,
+                     Identifier      => Concorde.Identifiers.Next_Identifier,
                      Content         => Concorde.Db.Quantity,
                      Sector_Use      => Sector_Use);
                end loop;

@@ -5,17 +5,17 @@ with Concorde.Commodities;
 with Concorde.Money;
 with Concorde.Quantities;
 
-with Concorde.Db.Facility;
-with Concorde.Db.Installation;
-with Concorde.Db.Market;
+with Concorde.Handles.Facility;
+with Concorde.Handles.Installation;
+with Concorde.Handles.Market;
 
 package body Concorde.Managers.Installations is
 
    type Root_Installation_Manager is
      abstract new Concorde.Managers.Agents.Root_Agent_Manager_Type with
       record
-         Installation : Concorde.Db.Installation_Reference;
-         Facility     : Concorde.Db.Facility_Reference;
+         Installation : Concorde.Handles.Installation_Reference;
+         Facility     : Concorde.Handles.Facility_Reference;
       end record;
 
    overriding function Identifier
@@ -24,7 +24,7 @@ package body Concorde.Managers.Installations is
 
    procedure Initialize_Installation_Manager
      (Manager : in out Root_Installation_Manager'Class;
-      Managed : Concorde.Db.Managed_Reference);
+      Managed : Concorde.Handles.Managed.Managed_Class);
 
    type Default_Installation_Manager is
      new Root_Installation_Manager with
@@ -138,7 +138,7 @@ package body Concorde.Managers.Installations is
    ----------------------------------
 
    function Create_Default_Agora_Manager
-     (Managed : Concorde.Db.Managed_Reference) return Manager_Type
+     (Managed : Concorde.Handles.Managed.Managed_Class) return Manager_Type
    is
       Manager : Agora_Installation_Manager;
    begin
@@ -152,7 +152,7 @@ package body Concorde.Managers.Installations is
    ----------------------------
 
    function Create_Default_Manager
-     (Managed : Concorde.Db.Managed_Reference)
+     (Managed : Concorde.Handles.Managed.Managed_Class)
       return Manager_Type
    is
       Manager : Default_Installation_Manager;
@@ -170,9 +170,9 @@ package body Concorde.Managers.Installations is
       return String
    is
    begin
-      return Concorde.Db.Facility.Get (Manager.Facility).Tag
+      return Concorde.Handles.Facility.Get (Manager.Facility).Tag
         & " "
-        & Concorde.Db.To_String (Manager.Installation)
+        & Concorde.Handles.To_String (Manager.Installation)
         & " manager";
    end Identifier;
 
@@ -182,10 +182,10 @@ package body Concorde.Managers.Installations is
 
    procedure Initialize_Installation_Manager
      (Manager : in out Root_Installation_Manager'Class;
-      Managed : Concorde.Db.Managed_Reference)
+      Managed : Concorde.Handles.Managed.Managed_Class)
    is
-      Installation : constant Concorde.Db.Installation.Installation_Type :=
-        Concorde.Db.Installation.Get_Installation
+      Installation : constant Concorde.Handles.Installation.Installation_Type :=
+        Concorde.Handles.Installation.Get_Installation
           (Managed);
    begin
       Manager.Installation := Installation.Get_Installation_Reference;
@@ -193,7 +193,7 @@ package body Concorde.Managers.Installations is
       Manager.Initialize_Agent_Manager
         (Agent  => Installation,
          Market =>
-           Concorde.Db.Market.Get_Reference_By_World
+           Concorde.Handles.Market.Get_By_World
              (Installation.World),
          Planning_Cycle => 10);
    end Initialize_Installation_Manager;

@@ -1,44 +1,38 @@
 with Concorde.Network;
-
-with Concorde.Db.Node;
+with Concorde.Nodes;
 
 package body Concorde.UI.Models.Network is
 
    type Network_Node_Model_Record is
      new Nazar.Models.Numeric.Nazar_Float_Model_Record
-     and Concorde.Network.Node_Observer with
+     and Concorde.Nodes.Node_Observer with
       record
-         Network : Concorde.Db.Network_Reference;
-         Node    : Concorde.Db.Node_Reference;
+         Handle : Concorde.Nodes.Value_Handle;
       end record;
 
    overriding procedure Notify
      (Observer : in out Network_Node_Model_Record;
-      Network  : Concorde.Db.Network_Reference;
-      Node     : Concorde.Db.Node_Reference);
+      Handle   : Concorde.Nodes.Value_Handle;
+      Value    : Real);
 
    ------------------------
    -- Network_Node_Model --
    ------------------------
 
    function Network_Node_Model
-     (Network : Concorde.Db.Network_Reference;
+     (Network : Concorde.Handles.Network.Network_Class;
       Tag     : String)
       return Nazar.Models.Numeric.Nazar_Float_Model
    is
-      use Concorde.Db;
-      Node : constant Concorde.Db.Node.Node_Type :=
-        Concorde.Db.Node.Get_By_Tag (Tag);
-      pragma Assert (Node.Has_Element);
-      pragma Assert (Node.Content = Setting);
+      Handle : constant Concorde.Nodes.Value_Handle :=
+                 Concorde.Network.Get_Handle (Network, Tag);
       Model : Network_Node_Model_Record :=
         Network_Node_Model_Record'
-          (Nazar.Models.Numeric.Nazar_Float_Model_Record with
-           Network => Network,
-           Node    => Node.Get_Node_Reference);
+                   (Nazar.Models.Numeric.Nazar_Float_Model_Record with
+                    Handle => Handle);
 
       Value : constant Unit_Real :=
-        Concorde.Network.Current_Value (Network, Node.Get_Node_Reference);
+                Concorde.Nodes.Current_Value (Handle);
    begin
       Model.Initialize
         (Min           => 0.0,
@@ -56,13 +50,14 @@ package body Concorde.UI.Models.Network is
 
    overriding procedure Notify
      (Observer : in out Network_Node_Model_Record;
-      Network  : Concorde.Db.Network_Reference;
-      Node     : Concorde.Db.Node_Reference)
+      Handle   : Concorde.Nodes.Value_Handle;
+      Value    : Real)
    is
+      pragma Unreferenced (Handle);
    begin
       Observer.Set_Current
         (Nazar.Nazar_Float
-           (100.0 * Concorde.Network.Current_Value (Network, Node)));
+           (100.0 * Value));
    end Notify;
 
 end Concorde.UI.Models.Network;

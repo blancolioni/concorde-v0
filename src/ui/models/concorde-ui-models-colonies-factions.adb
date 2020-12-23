@@ -8,15 +8,14 @@ with Concorde.Money;
 with Concorde.Quantities;
 
 with Concorde.Agents;
-with Concorde.Worlds;
 
 with Concorde.Updates.Events;
 
-with Concorde.Db.Colony;
+with Concorde.Handles.Colony;
 
-with Concorde.Db.Network_Value;
+with Concorde.Handles.Network_Value;
 
-with Concorde.Db.Node;
+with Concorde.Handles.Node;
 
 package body Concorde.UI.Models.Colonies.Factions is
 
@@ -25,8 +24,8 @@ package body Concorde.UI.Models.Colonies.Factions is
 
    type Faction_Colony_Record is
       record
-         Colony          : Concorde.Db.Colony_Reference;
-         Population_Node : Concorde.Db.Network_Value_Reference;
+         Colony          : Concorde.Handles.Colony.Colony_Handle;
+         Population_Node : Concorde.Handles.Network_Value.Network_Value_Handle;
       end record;
 
    Column_Type_Array : constant array (Faction_Colonies_Table_Column)
@@ -40,7 +39,7 @@ package body Concorde.UI.Models.Colonies.Factions is
    type Faction_Model_Record is
      new Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record with
       record
-         Faction : Concorde.Db.Faction_Reference;
+         Faction : Concorde.Handles.Faction.Faction_Handle;
          State   : Faction_Colony_Vectors.Vector;
       end record;
 
@@ -119,17 +118,14 @@ package body Concorde.UI.Models.Colonies.Factions is
       Value : constant String :=
                 (case Faction_Colonies_Table_Column'Val (Column - 1) is
                     when World =>
-                      Concorde.Worlds.Name
-                        (Concorde.Db.Colony.Get (Info.Colony).World),
+                      Info.Colony.World.Name,
                     when Population =>
                       Concorde.Quantities.Show
-                       (Concorde.Quantities.To_Quantity
-                          (Concorde.Db.Network_Value.Get
-                             (Info.Population_Node).Current_Value)),
+                   (Concorde.Quantities.To_Quantity
+                      (Info.Population_Node.Current_Value)),
                     when Cash =>
                       Concorde.Money.Show
-                        (Concorde.Agents.Cash
-                          (Concorde.Db.Colony.Get (Info.Colony))));
+                   (Concorde.Agents.Cash (Info.Colony)));
    begin
       return Nazar.Values.To_Value (Value);
    end Element;
@@ -144,22 +140,19 @@ package body Concorde.UI.Models.Colonies.Factions is
    begin
       Model.State.Clear;
       for Colony of
-        Concorde.Db.Colony.Select_By_Faction (Model.Faction)
+        Concorde.Handles.Colony.Select_By_Faction (Model.Faction)
       loop
          declare
-
-            Network : constant Concorde.Db.Network_Reference :=
-                        Colony.Get_Network_Reference;
             function Node_Reference
               (Name : String)
-               return Concorde.Db.Network_Value_Reference
-            is (Concorde.Db.Network_Value.Get_Reference_By_Network_Value
-                 (Network,
-                  Concorde.Db.Node.Get_Reference_By_Tag (Name)));
+               return Concorde.Handles.Network_Value.Network_Value_Handle
+            is (Concorde.Handles.Network_Value.Get_By_Network_Value
+                 (Colony,
+                  Concorde.Handles.Node.Get_By_Tag (Name)));
 
             Info : constant Faction_Colony_Record :=
                      Faction_Colony_Record'
-                       (Colony          => Colony.Get_Colony_Reference,
+                       (Colony          => Colony.To_Colony_Handle,
                         Population_Node =>
                           Node_Reference ("everybody-population"));
          begin
@@ -178,7 +171,7 @@ package body Concorde.UI.Models.Colonies.Factions is
    is
       Result : constant Faction_Model_Access := new Faction_Model_Record'
         (Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record
-           with Faction => Faction.Reference_Faction, State => <>);
+           with Faction => Faction, State => <>);
    begin
       Result.Load;
       Concorde.Updates.Events.Update_With_Delay

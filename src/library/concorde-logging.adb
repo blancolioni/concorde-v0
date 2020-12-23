@@ -52,6 +52,18 @@ package body Concorde.Logging is
       end if;
    end Log;
 
+   ---------
+   -- Log --
+   ---------
+
+   procedure Log
+     (Category : String;
+      Message  : String)
+   is
+   begin
+      Log ("", "", Category, Message);
+   end Log;
+
    -------------------
    -- Start_Logging --
    -------------------

@@ -1,6 +1,6 @@
 with Tropos.Reader;
 
-with Concorde.Db.Skill;
+with Concorde.Handles.Skill;
 
 package body Concorde.Configure.Skills is
 
@@ -14,7 +14,7 @@ package body Concorde.Configure.Skills is
         Tropos.Reader.Read_Config
           (Scenario_File (Scenario_Name, "individuals", "skills.txt"))
       loop
-         Concorde.Db.Skill.Create (Skill_Config.Config_Name);
+         Concorde.Handles.Skill.Create (Skill_Config.Config_Name);
       end loop;
 
    end Configure_Skills;

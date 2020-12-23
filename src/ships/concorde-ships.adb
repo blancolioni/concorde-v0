@@ -13,16 +13,16 @@ with Concorde.Constants;
 
 with Concorde.Worlds;
 
-with Concorde.Db.Account;
-with Concorde.Db.Commodity;
-with Concorde.Db.Container_Component;
-with Concorde.Db.Drive_Component;
-with Concorde.Db.Faction;
-with Concorde.Db.Ship_Component;
-with Concorde.Db.Ship_Design;
-with Concorde.Db.Ship_Module;
-with Concorde.Db.Ship_Module_Design;
-with Concorde.Db.World;
+with Concorde.Handles.Account;
+with Concorde.Handles.Commodity;
+with Concorde.Handles.Container_Component;
+with Concorde.Handles.Drive_Component;
+with Concorde.Handles.Faction;
+with Concorde.Handles.Ship_Component;
+with Concorde.Handles.Ship_Design;
+with Concorde.Handles.Ship_Module;
+with Concorde.Handles.Ship_Module_Design;
+with Concorde.Handles.World;
 
 package body Concorde.Ships is
 
@@ -31,24 +31,24 @@ package body Concorde.Ships is
    -----------------
 
    procedure Create_Ship
-     (Owner   : Concorde.Db.Faction_Reference;
-      World   : Concorde.Db.World_Reference;
-      Design  : Concorde.Db.Ship_Design_Reference;
+     (Owner   : Concorde.Handles.Faction.Faction_Handle;
+      World   : Concorde.Handles.World_Reference;
+      Design  : Concorde.Handles.Ship_Design_Reference;
       Manager : String;
       Name    : String)
    is
-      World_Rec : constant Concorde.Db.World.World_Type :=
-                    Concorde.Db.World.Get (World);
-      Account      : constant Concorde.Db.Account_Reference :=
-                       Concorde.Db.Account.Create
-                         (Concorde.Db.Null_Account_Reference,
+      World_Rec : constant Concorde.Handles.World.World_Type :=
+                    Concorde.Handles.World.Get (World);
+      Account      : constant Concorde.Handles.Account_Reference :=
+                       Concorde.Handles.Account.Create
+                         (Concorde.Handles.Null_Account_Reference,
                           Concorde.Money.Zero,
                           Concorde.Money.Zero);
-      Ship         : constant Concorde.Db.Ship_Reference :=
-                       Concorde.Db.Ship.Create
+      Ship         : constant Concorde.Handles.Ship_Reference :=
+                       Concorde.Handles.Ship.Create
                          (Name              => Name,
                           Capacity          =>
-                            Concorde.Db.Ship_Design.Get (Design).Hold_Size,
+                            Concorde.Handles.Ship_Design.Get (Design).Hold_Size,
                           Account           => Account,
                           Faction           => Owner,
                           Active            => True,
@@ -56,7 +56,7 @@ package body Concorde.Ships is
                           Next_Event        => Concorde.Calendar.Clock,
                           Manager           => Manager,
                           Owner             =>
-                            Concorde.Db.Faction.Get (Owner).Get_Owner_Reference,
+                            Concorde.Handles.Faction.Get (Owner).Get_Owner_Reference,
                           World             => World,
                           Star_System       => World_Rec.Star_System,
                           Orbit             =>
@@ -77,15 +77,15 @@ package body Concorde.Ships is
                           Dest_Orbit        => 0.0,
                           Dest_Incl         => 0.0,
                           Dest_Epoch        => Concorde.Calendar.Clock,
-                          Final_Destination => Concorde.Db.Null_World_Reference,
+                          Final_Destination => Concorde.Handles.Null_World_Reference,
                           Current_Order     => 0,
                           Cycle_Orders      => False);
    begin
       for Design_Component of
-        Concorde.Db.Ship_Module_Design.Select_By_Ship_Design
+        Concorde.Handles.Ship_Module_Design.Select_By_Ship_Design
           (Design)
       loop
-         Concorde.Db.Ship_Module.Create
+         Concorde.Handles.Ship_Module.Create
            (Ship           => Ship,
             Ship_Component => Design_Component.Ship_Component,
             Crew           => 0,
@@ -132,9 +132,9 @@ package body Concorde.Ships is
                            / Concorde.Constants.Gravitational_Constant
                            / World_Mass);
       Start       : constant Non_Negative_Real :=
-                     Concorde.Db.Ship.Get (Ship.Reference).Start_Longitude;
+                     Concorde.Handles.Ship.Get (Ship.Reference).Start_Longitude;
       Epoch       : constant Time :=
-                     Concorde.Db.Ship.Get (Ship.Reference).Epoch;
+                     Concorde.Handles.Ship.Get (Ship.Reference).Epoch;
       Now         : constant Time := Clock;
       Elapsed     : constant Duration := Now - Epoch;
       Orbit_Count : constant Non_Negative_Real := Real (Elapsed) / Period;
@@ -165,22 +165,22 @@ package body Concorde.Ships is
    -------------------------
 
    function Design_Cargo_Volume
-     (Design : Concorde.Db.Ship_Design_Reference)
+     (Design : Concorde.Handles.Ship_Design_Reference)
       return Non_Negative_Real
    is
       Volume : Non_Negative_Real := 0.0;
    begin
       for Module of
-        Concorde.Db.Ship_Module_Design.Select_By_Ship_Design (Design)
+        Concorde.Handles.Ship_Module_Design.Select_By_Ship_Design (Design)
       loop
          declare
-            use Concorde.Db, Concorde.Db.Ship_Component;
+            use Concorde.Db, Concorde.Handles.Ship_Component;
             Rec_Type : constant Record_Type :=
                          Get (Module.Ship_Component).Top_Record;
          begin
             if Rec_Type = R_Container_Component then
                declare
-                  use Concorde.Db.Container_Component;
+                  use Concorde.Handles.Container_Component;
                   Container : constant Container_Component_Type :=
                                 Get_Container_Component
                                   (Module.Ship_Component);
@@ -204,23 +204,23 @@ package body Concorde.Ships is
    --------------------
 
    function Design_Delta_V
-     (Design     : Concorde.Db.Ship_Design_Reference;
+     (Design     : Concorde.Handles.Ship_Design_Reference;
       Cargo_Mass : Non_Negative_Real)
       return Non_Negative_Real
    is
       Ve : Non_Negative_Real := 0.0;
    begin
       for Module of
-        Concorde.Db.Ship_Module_Design.Select_By_Ship_Design (Design)
+        Concorde.Handles.Ship_Module_Design.Select_By_Ship_Design (Design)
       loop
          declare
-            use Concorde.Db, Concorde.Db.Ship_Component;
+            use Concorde.Db, Concorde.Handles.Ship_Component;
             Rec_Type : constant Record_Type :=
                          Get (Module.Ship_Component).Top_Record;
          begin
             if Rec_Type = R_Drive_Component then
                declare
-                  use Concorde.Db.Drive_Component;
+                  use Concorde.Handles.Drive_Component;
                   Drive : constant Drive_Component_Type :=
                                 Get_Drive_Component
                               (Module.Ship_Component);
@@ -248,12 +248,12 @@ package body Concorde.Ships is
    ----------------------
 
    function Design_Fuel_Mass
-     (Design : Concorde.Db.Ship_Design_Reference)
+     (Design : Concorde.Handles.Ship_Design_Reference)
       return Non_Negative_Real
    is
       type Consumption_Record is
          record
-            Commodity       : Concorde.Db.Commodity_Reference;
+            Commodity       : Concorde.Handles.Commodity.Commodity_Class;
             Liquid          : Boolean;
             Cryo            : Boolean;
             Density         : Non_Negative_Real;
@@ -268,7 +268,7 @@ package body Concorde.Ships is
       List : Consumption_Record_Lists.List;
 
       procedure Update_Fuel
-        (Fuel          : Concorde.Db.Commodity_Reference;
+        (Fuel          : Concorde.Handles.Commodity.Commodity_Class;
          Kg_Per_Second : Non_Negative_Real);
 
       -----------------
@@ -276,11 +276,11 @@ package body Concorde.Ships is
       -----------------
 
       procedure Update_Fuel
-        (Fuel          : Concorde.Db.Commodity_Reference;
+        (Fuel          : Concorde.Handles.Commodity.Commodity_Class;
          Kg_Per_Second : Non_Negative_Real)
       is
          use Concorde.Db;
-         Rec : constant Concorde.Db.Commodity.Commodity_Type :=
+         Rec : constant Concorde.Handles.Commodity.Commodity_Type :=
                  Commodity.Get (Fuel);
       begin
          for Item of List loop
@@ -307,10 +307,10 @@ package body Concorde.Ships is
       Cryo_Fuel_Mass   : Non_Negative_Real := 0.0;
    begin
       for Module of
-        Concorde.Db.Ship_Module_Design.Select_By_Ship_Design (Design)
+        Concorde.Handles.Ship_Module_Design.Select_By_Ship_Design (Design)
       loop
          declare
-            use Concorde.Db, Concorde.Db.Ship_Component;
+            use Concorde.Db, Concorde.Handles.Ship_Component;
             Rec_Type : constant Record_Type :=
                          Get (Module.Ship_Component).Top_Record;
          begin
@@ -330,7 +330,7 @@ package body Concorde.Ships is
                end;
             elsif Rec_Type = R_Container_Component then
                declare
-                  use Concorde.Db.Container_Component;
+                  use Concorde.Handles.Container_Component;
                   Container : constant Container_Component_Type :=
                                 Get_Container_Component
                                   (Module.Ship_Component);
@@ -398,7 +398,7 @@ package body Concorde.Ships is
                   begin
                      if False then
                         Ada.Text_IO.Put_Line
-                          (Concorde.Db.Commodity.Get (Item.Commodity).Tag
+                          (Concorde.Handles.Commodity.Get (Item.Commodity).Tag
                            & ": density: "
                            & Img (Item.Density)
                            & "kg/m3; consumption: "
@@ -443,16 +443,16 @@ package body Concorde.Ships is
    -----------------
 
    function Design_Mass
-     (Design : Concorde.Db.Ship_Design_Reference)
+     (Design : Concorde.Handles.Ship_Design_Reference)
       return Non_Negative_Real
    is
       Mass : Non_Negative_Real := 0.0;
    begin
       for Module of
-        Concorde.Db.Ship_Module_Design.Select_By_Ship_Design (Design)
+        Concorde.Handles.Ship_Module_Design.Select_By_Ship_Design (Design)
       loop
          declare
-            use Concorde.Db.Ship_Component;
+            use Concorde.Handles.Ship_Component;
             Component : constant Ship_Component_Type :=
                           Get (Module.Ship_Component);
          begin
@@ -467,13 +467,13 @@ package body Concorde.Ships is
    -------------------
 
    function Design_Thrust
-     (Design : Concorde.Db.Ship_Design_Reference)
+     (Design : Concorde.Handles.Ship_Design_Reference)
       return Non_Negative_Real
    is
       Thrust : Non_Negative_Real := 0.0;
    begin
       for Module of
-        Concorde.Db.Ship_Module_Design.Select_By_Ship_Design (Design)
+        Concorde.Handles.Ship_Module_Design.Select_By_Ship_Design (Design)
       loop
          declare
             use Concorde.Db;
@@ -504,7 +504,7 @@ package body Concorde.Ships is
    is
    begin
       return Design_Mass
-        (Concorde.Db.Ship.Get (Ship.Reference).Ship_Design);
+        (Concorde.Handles.Ship.Get (Ship.Reference).Ship_Design);
    end Dry_Mass;
 
    ------------------
@@ -517,7 +517,7 @@ package body Concorde.Ships is
    is
    begin
       return Design_Thrust
-        (Concorde.Db.Ship.Get (Ship.Reference).Ship_Design);
+        (Concorde.Handles.Ship.Get (Ship.Reference).Ship_Design);
    end Total_Thrust;
 
 end Concorde.Ships;

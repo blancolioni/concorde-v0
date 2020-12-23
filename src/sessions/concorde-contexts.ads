@@ -116,8 +116,8 @@ private
       record
          Is_Valid         : Boolean := False;
          Is_Administrator : Boolean := False;
-         User             : Concorde.Db.User_Reference :=
-           Concorde.Db.Null_User_Reference;
+         User             : Concorde.Handles.User_Reference :=
+           Concorde.Handles.Null_User_Reference;
          History          : String_Vectors.Vector;
          Current_Path     : String_Vectors.Vector;
          Home_Path        : String_Vectors.Vector;
