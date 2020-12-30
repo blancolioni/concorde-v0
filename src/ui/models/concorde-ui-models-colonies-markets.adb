@@ -1,11 +1,14 @@
 with Ada.Containers.Vectors;
 with Ada.Text_IO;
 
+with Nazar.Main;
 with Nazar.Models.Array_Table;
 with Nazar.Values;
 
 with Concorde.Calendar;
+with Concorde.Logging;
 with Concorde.Money;
+with Concorde.Network;
 with Concorde.Quantities;
 with Concorde.Real_Images;
 with Concorde.Updates.Events;
@@ -13,14 +16,8 @@ with Concorde.Updates.Events;
 with Concorde.Handles.Commodity;
 
 with Concorde.Handles.Colony_Price;
-with Concorde.Handles.Network;
-with Concorde.Handles.Network_Value;
-with Concorde.Handles.Node;
 
 package body Concorde.UI.Models.Colonies.Markets is
-
-   subtype Network_Value_Handle is
-     Concorde.Handles.Network_Value.Network_Value_Handle;
 
    type Market_Table_Column is
      (Name, Demand, Supply, Share, Pressure, Price);
@@ -28,11 +25,11 @@ package body Concorde.UI.Models.Colonies.Markets is
    type Market_Record is
       record
          Commodity : Concorde.Handles.Commodity.Commodity_Handle;
-         Demand    : Network_Value_Handle;
-         Supply    : Network_Value_Handle;
-         Share     : Network_Value_Handle;
-         Pressure  : Network_Value_Handle;
-         Price     : Network_Value_Handle;
+         Demand    : Concorde.Network.Network_Value_Type;
+         Supply    : Concorde.Network.Network_Value_Type;
+         Share     : Concorde.Network.Network_Value_Type;
+         Pressure  : Concorde.Network.Network_Value_Type;
+         Price     : Concorde.Network.Network_Value_Type;
       end record;
 
    Column_Type_Array : constant array (Market_Table_Column)
@@ -47,7 +44,7 @@ package body Concorde.UI.Models.Colonies.Markets is
      new Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record with
       record
          Colony        : Concorde.Handles.Colony.Colony_Handle;
-         Network       : Concorde.Handles.Network.Network_Handle;
+         Network       : Concorde.Network.Network_Type;
          State         : Market_Vectors.Vector;
       end record;
 
@@ -107,8 +104,20 @@ package body Concorde.UI.Models.Colonies.Markets is
    --------------
 
    overriding procedure Activate (Update : Market_Model_Update) is
+
+      procedure Reload;
+
+      ------------
+      -- Reload --
+      ------------
+
+      procedure Reload is
+      begin
+         Update.Model.Load;
+      end Reload;
+
    begin
-      Update.Model.Load;
+      Nazar.Main.With_Render_Lock (Reload'Access);
       Update.Model.Notify_Observers;
       Concorde.Updates.Events.Update_With_Delay
         (Concorde.Calendar.Days (1), Update);
@@ -128,9 +137,9 @@ package body Concorde.UI.Models.Colonies.Markets is
                 Market_Table_Column'Val (Column - 1);
 
       function Get_Value
-        (V : Network_Value_Handle)
+        (V : Concorde.Network.Network_Value_Type)
          return Real
-      is (V.Current_Value);
+      is (Concorde.Network.Current_Value (V));
 
       function Quantity (X : Real) return String
       is (Concorde.Quantities.Show (Concorde.Quantities.To_Quantity (X)));
@@ -154,7 +163,7 @@ package body Concorde.UI.Models.Colonies.Markets is
             (Model.Colony,
              Info.Commodity)
             .Price,
-            1.0 + Get_Value (Info.Price))));
+            Real'Max (1.0 + Get_Value (Info.Price), 0.01))));
 
    begin
 
@@ -169,6 +178,9 @@ package body Concorde.UI.Models.Colonies.Markets is
                        when Pressure => Pressure,
                        when Price    => Price);
       begin
+         Concorde.Logging.Log
+           (Model.Colony.World.Name,
+            "market" & Row'Image & " " & Col'Image & " " & Value);
          return Nazar.Values.To_Value (Value);
       end;
 
@@ -202,23 +214,22 @@ package body Concorde.UI.Models.Colonies.Markets is
 
          function Net
            (Suffix : String)
-            return Network_Value_Handle
-         is (Concorde.Handles.Network_Value.Get_By_Network_Value
+            return Concorde.Network.Network_Value_Type
+         is (Concorde.Network.Get_Network_Value
              (Model.Network,
-              Concorde.Handles.Node.Get_By_Tag
-                (Commodity & "-" & Suffix)));
+              Commodity & "-" & Suffix));
 
          Handle : constant Concorde.Handles.Commodity.Commodity_Handle :=
                     Concorde.Handles.Commodity.Get_By_Tag (Commodity);
-         Demand : constant Network_Value_Handle :=
+         Demand : constant Concorde.Network.Network_Value_Type :=
                     Net ("demand");
-         Supply : constant Network_Value_Handle :=
+         Supply : constant Concorde.Network.Network_Value_Type :=
                     Net ("supply");
-         Share  : constant Network_Value_Handle :=
+         Share  : constant Concorde.Network.Network_Value_Type :=
                     Net ("share");
-         Pressure : constant Network_Value_Handle :=
+         Pressure : constant Concorde.Network.Network_Value_Type :=
                     Net ("p-prod");
-         Price : constant Network_Value_Handle :=
+         Price : constant Concorde.Network.Network_Value_Type :=
                     Net ("price");
 
       begin
@@ -255,7 +266,7 @@ package body Concorde.UI.Models.Colonies.Markets is
       Result : constant Market_Model_Access := new Market_Model_Record'
         (Nazar.Models.Array_Table.Nazar_Array_Table_Model_Record with
          Colony => Colony,
-         Network => Colony.To_Network_Handle,
+         Network => Concorde.Network.Get_Network (Colony),
          others => <>);
    begin
       Result.Load;

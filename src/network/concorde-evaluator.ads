@@ -1,17 +1,18 @@
 with Concorde.Expressions;
-with Concorde.Nodes;
+with Concorde.Network;
 
 package Concorde.Evaluator is
 
    type Evaluation_Handle is private;
 
    function Compile
-     (Expression : Concorde.Expressions.Expression_Type)
+     (Expression : Concorde.Expressions.Expression_Type;
+      Current    : Concorde.Network.Network_Node_Type)
       return Evaluation_Handle;
 
    function Evaluate
      (Handle  : Evaluation_Handle;
-      Network : Concorde.Nodes.Value_Container)
+      Network : Concorde.Network.Network_Type)
       return Real;
 
 private

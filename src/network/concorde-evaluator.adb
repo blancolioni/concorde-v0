@@ -11,7 +11,7 @@ with Concorde.Values.Vectors;
 package body Concorde.Evaluator is
 
    Log_Evaluation : constant Boolean := False;
-   Log_Results    : constant Boolean := True;
+   Log_Results    : constant Boolean := False;
 
    package Primitive_Holders is
      new Ada.Containers.Indefinite_Holders
@@ -33,7 +33,7 @@ package body Concorde.Evaluator is
             when I_CONSTANT =>
                Value : Real;
             when I_NODE =>
-               Node  : Concorde.Nodes.Node_Handle;
+               Node       : Concorde.Network.Network_Node_Type;
                Delayed_By : Non_Negative_Real;
                Smoothing  : Non_Negative_Real;
             when I_PRIMITIVE =>
@@ -72,6 +72,7 @@ package body Concorde.Evaluator is
      new Concorde.Expressions.Compiler_Interface with
       record
          Context_Stack : Compile_Context_Stacks.List;
+         Current       : Concorde.Network.Network_Node_Type;
       end record;
 
    overriding procedure Push_Value
@@ -108,10 +109,13 @@ package body Concorde.Evaluator is
    -------------
 
    function Compile
-     (Expression : Concorde.Expressions.Expression_Type)
+     (Expression : Concorde.Expressions.Expression_Type;
+      Current    : Concorde.Network.Network_Node_Type)
       return Evaluation_Handle
    is
-      Compiler : Compiler_Type;
+      Compiler : Compiler_Type := Compiler_Type'
+        (Context_Stack => <>,
+         Current       => Current);
    begin
       return Handle : constant Evaluation_Handle :=
         Handle_Vector.Last_Index + 1
@@ -142,7 +146,7 @@ package body Concorde.Evaluator is
 
    function Evaluate
      (Handle  : Evaluation_Handle;
-      Network : Concorde.Nodes.Value_Container)
+      Network : Concorde.Network.Network_Type)
       return Real
    is
       Stack : Value_Stacks.Vector;
@@ -179,8 +183,8 @@ package body Concorde.Evaluator is
                   Stack.Append (Cell.Value);
                when I_NODE =>
                   Stack.Append
-                    (Concorde.Nodes.Inertial_Value
-                       (Concorde.Nodes.Get_Handle (Network, Cell.Node),
+                    (Concorde.Network.Inertial_Value
+                       (Network, Cell.Node,
                         Cell.Delayed_By, Cell.Smoothing));
                when I_PRIMITIVE =>
                   declare
@@ -265,6 +269,10 @@ package body Concorde.Evaluator is
       Tag            : String)
    is
       Context : Compile_Context;
+      Node    : constant Concorde.Network.Network_Node_Type :=
+                  (if Tag = "x"
+                   then Compiler.Current
+                   else Concorde.Network.Get_Node (Tag));
    begin
       if not Compiler.Context_Stack.Is_Empty then
          Context := Compiler.Context_Stack.Last_Element;
@@ -272,7 +280,7 @@ package body Concorde.Evaluator is
       Cell_Vector.Append
         (Cell_Type'
            (Instruction => I_NODE,
-            Node        => Concorde.Nodes.Get_Handle (Tag),
+            Node        => Node,
             Delayed_By  => Context.With_Delay,
             Smoothing   => Context.With_Smoothing));
    end Push_Node;
@@ -341,7 +349,7 @@ package body Concorde.Evaluator is
             return "CONSTANT "
               & Concorde.Real_Images.Approximate_Image (Cell.Value);
          when I_NODE =>
-            return "NODE " & Concorde.Nodes.Get_Tag (Cell.Node);
+            return "NODE " & Concorde.Network.Get_Tag (Cell.Node);
          when I_PRIMITIVE =>
             return "PRIMITIVE "
               & Cell.Primitive.Element.Name

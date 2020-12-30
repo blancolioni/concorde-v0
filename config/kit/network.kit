@@ -73,21 +73,19 @@ record Network_Value is
    key Node;
    Active  : Boolean;
    Current_Value : Long_Float;
-   New_Value     : Long_Float;
+   Current_Start : Time;
    unique key Network_Value with Network, Node;
 end Network_Value;
 
 record Historical_Value is
    key Network;
    Node;
-   Is_Previous : Boolean;
    From        : Time;
    To          : Time;   
-   Next        : Long_Float;
    Value       : Long_Float;
+   key Historical_Value with Network, Node;
    key Historical_Value_From with Network, Node, From;
    key Historical_Value_To with Network, Node, To;
-   key Previous_Historical_Value with Network, Node, Is_Previous;
 end Historical_Value;
 
 end Network;

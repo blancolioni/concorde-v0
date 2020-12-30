@@ -9,7 +9,6 @@ with Concorde.Random;
 with Concorde.Real_Images;
 
 with Concorde.Network;
-with Concorde.Nodes;
 
 with Concorde.Handles.Colony;
 with Concorde.Handles.Colony_Policy;
@@ -45,7 +44,7 @@ package body Concorde.Managers.Colonies is
 
    type Pop_Cache_Entry is
       record
-         Handle : Concorde.Nodes.Value_Handle;
+         Node   : Concorde.Network.Network_Value_Type;
          Group  : Concorde.Handles.Pop_Group.Pop_Group_Handle;
       end record;
 
@@ -54,7 +53,7 @@ package body Concorde.Managers.Colonies is
 
    type Commodity_Cache_Entry is
       record
-         Handle : Concorde.Nodes.Value_Handle;
+         Node   : Concorde.Network.Network_Value_Type;
          Ref    : Concorde.Handles.Commodity.Commodity_Handle;
       end record;
 
@@ -66,7 +65,7 @@ package body Concorde.Managers.Colonies is
       record
          Colony      : Concorde.Handles.Colony.Colony_Handle;
          Group_Nodes : Pop_Group_Value_Lists.List;
-         Network     : Concorde.Network.Network_Handle;
+         Network     : Concorde.Network.Network_Type;
          Pop_Cache   : Pop_Cache_Maps.Map;
          Commodities : Commodity_Cache_Lists.List;
       end record;
@@ -91,7 +90,7 @@ package body Concorde.Managers.Colonies is
    is
       Colony : constant Concorde.Handles.Colony.Colony_Handle :=
                  Manager.Colony;
-      Network : constant Concorde.Network.Network_Handle :=
+      Network : constant Concorde.Network.Network_Type :=
                   Manager.Network;
 
       procedure Update_Colony_Prices;
@@ -117,7 +116,7 @@ package body Concorde.Managers.Colonies is
                               (Manager.Colony, Item.Ref)
                             .Price);
             begin
-               Concorde.Nodes.Update_Value (Item.Handle, Price);
+               Concorde.Network.Update_Value (Item.Node, Price);
             end;
          end loop;
       end Update_Colony_Prices;
@@ -218,11 +217,9 @@ package body Concorde.Managers.Colonies is
                        Resource_Mining_Maps.Key (Position) & "-production";
                Quantity : constant Real :=
                             Resource_Mining_Maps.Element (Position);
-               Handle   : constant Concorde.Nodes.Value_Handle :=
-                            Concorde.Network.Get_Handle
-                              (Manager.Network, Tag);
             begin
-               Concorde.Nodes.Update_Value (Handle, Quantity);
+               Concorde.Network.Update_Value
+                 (Manager.Network, Tag, Quantity);
             end;
          end loop;
 
@@ -278,7 +275,19 @@ package body Concorde.Managers.Colonies is
                   Concorde.Network.Current_Value
                     (Manager.Network, Tag & "-supply"));
             end if;
-            return Remaining_Map.Element (Tag);
+
+            declare
+               R : constant Real := Remaining_Map.Element (Tag);
+            begin
+               if R < 0.0 then
+                  Concorde.Logging.Log
+                    (Commodity.Tag,
+                     "remaining was negative: " & Image (R));
+                  return 0.0;
+               else
+                  return R;
+               end if;
+            end;
          end Remaining;
 
       begin
@@ -381,9 +390,8 @@ package body Concorde.Managers.Colonies is
                Size : constant Non_Negative_Real :=
                         Group_Size.Element (Tag);
             begin
-               Concorde.Nodes.Update_Value
-                 (Node      => Cache_Entry.Handle,
-                  New_Value => Size);
+               Concorde.Network.Update_Value
+                 (Cache_Entry.Node, Size);
 
                Concorde.Logging.Log
                  (Actor    => Tag,
@@ -486,7 +494,7 @@ package body Concorde.Managers.Colonies is
                      + Concorde.Calendar.Days (Concorde.Random.Unit_Random),
                      Colony          => Colony,
                      Network         =>
-                       Concorde.Network.Get_Network_Handle (Colony),
+                       Concorde.Network.Get_Network (Colony),
                      Group_Nodes     => Pop_Group_Value_Lists.Empty_List,
                      Pop_Cache       => Pop_Cache_Maps.Empty_Map,
                      Commodities     => Commodity_Cache_Lists.Empty_List);
@@ -530,18 +538,15 @@ package body Concorde.Managers.Colonies is
             Tax_Evasion => Get ("tax-evasion"),
             Happiness   => Get (""));
 
-         Node_Handle  : constant Concorde.Nodes.Node_Handle :=
-                          Concorde.Nodes.Get_Handle
-                            (Concorde.Handles.Node.Get_By_Tag
-                               (Name & "-population"));
-         Value_Handle : constant Concorde.Nodes.Value_Handle :=
-                          Concorde.Network.Get_Handle
-                            (Network => Manager.Network,
-                             Node    => Node_Handle);
+         Value_Node    : constant Concorde.Network.Network_Value_Type :=
+                           Concorde.Network.Get_Network_Value
+                             (Manager.Network, Name & "-population");
       begin
          Manager.Group_Nodes.Append (Group);
          Manager.Pop_Cache.Insert
-           (Name, (Handle => Value_Handle, Group => Group.Group));
+           (Name, Pop_Cache_Entry'
+              (Node  => Value_Node,
+               Group => Group.Group));
       end Add_Group;
 
    begin
@@ -557,8 +562,10 @@ package body Concorde.Managers.Colonies is
          begin
             Manager.Commodities.Append
               (Commodity_Cache_Entry'
-                 (Handle => Concorde.Network.Get_Handle (Manager.Network, Tag),
-                  Ref    =>
+                 (Node =>
+                      Concorde.Network.Get_Network_Value
+                        (Manager.Network, Tag),
+                  Ref  =>
                     Concorde.Handles.Commodity.Commodity_Handle (Commodity)));
          end;
       end loop;

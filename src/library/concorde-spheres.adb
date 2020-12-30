@@ -1,7 +1,7 @@
 with Ada.Numerics;
 
 with Concorde.Elementary_Functions;
-with Concorde.Logging;
+--  with Concorde.Logging;
 with Concorde.Random;
 with Concorde.Real_Images;
 
@@ -77,17 +77,17 @@ package body Concorde.Spheres is
 --                    Arccos ((Cos (C)  - Cos (A) * Cos (B))
 --                            / (Sin (A) * Sin (B)));
    begin
-      Concorde.Logging.Log
-        ("angle",
-         "",
-         "",
-         Show (Lat_1, Long_1)
-         & " "
-         & Show (Lat_2, Long_2)
-         & " "
-         & ": X = " & Image (X)
-         & "; Y = " & Image (Y)
-         & "; angle = " & Image (To_Degrees (A)));
+      --  Concorde.Logging.Log
+      --    ("angle",
+      --     "",
+      --     "",
+      --     Show (Lat_1, Long_1)
+      --     & " "
+      --     & Show (Lat_2, Long_2)
+      --     & " "
+      --     & ": X = " & Image (X)
+      --     & "; Y = " & Image (Y)
+      --     & "; angle = " & Image (To_Degrees (A)));
 
       return A;
    end Get_Bearing;

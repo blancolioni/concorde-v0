@@ -6,7 +6,6 @@ with Concorde.Real_Images;
 with Concorde.Agents;
 
 with Concorde.Network;
-with Concorde.Nodes;
 
 with Concorde.Handles.Pop_Group_Member;
 
@@ -21,8 +20,9 @@ package body Concorde.Colonies is
                    renames Concorde.Real_Images.Approximate_Image
      with Unreferenced;
 
-   package Value_Handle_Maps is
-     new WL.String_Maps (Concorde.Nodes.Value_Handle, Concorde.Nodes."=");
+   package Network_Value_Maps is
+     new WL.String_Maps (Concorde.Network.Network_Value_Type,
+                         Concorde.Network."=");
 
    protected Value_Handle_Store is
 
@@ -31,7 +31,7 @@ package body Concorde.Colonies is
                      Value  : out Real);
 
    private
-      Map : Value_Handle_Maps.Map;
+      Map : Network_Value_Maps.Map;
    end Value_Handle_Store;
 
    function Current_Value
@@ -211,15 +211,15 @@ package body Concorde.Colonies is
                      Tag    : String;
                      Value  : out Real)
       is
-         use Value_Handle_Maps;
+         use Network_Value_Maps;
          Key      : constant String :=
                       Colony.Identifier & "-" & Tag;
          Position : Cursor := Map.Find (Key);
       begin
          if not Has_Element (Position) then
             declare
-               Handle   : constant Concorde.Nodes.Value_Handle :=
-                            Concorde.Network.Get_Handle (Colony, Tag);
+               Handle   : constant Concorde.Network.Network_Value_Type :=
+                            Concorde.Network.Get_Network_Value (Colony, Tag);
                Inserted : Boolean;
             begin
                Map.Insert
@@ -233,7 +233,7 @@ package body Concorde.Colonies is
 
          pragma Assert (Has_Element (Position));
 
-         Value := Concorde.Nodes.Current_Value (Element (Position));
+         Value := Concorde.Network.Current_Value (Element (Position));
 
       end Get;
 
