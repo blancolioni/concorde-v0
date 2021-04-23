@@ -1,5 +1,4 @@
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Vectors;
 
 with WL.Random.Height_Maps;
@@ -99,6 +98,10 @@ package body Concorde.Configure.Worlds is
       return Boolean;
 
    function Check_Plain
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   function Check_Savannah
      (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Boolean;
 
@@ -214,6 +217,22 @@ package body Concorde.Configure.Worlds is
    begin
       return Sector.Elevation >= 0;
    end Check_Plain;
+
+   --------------------
+   -- Check_Savannah --
+   --------------------
+
+   function Check_Savannah
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.World.Hydrosphere > 0.0
+        and then Sector.World.Life > 1
+        and then Sector.Elevation in 1 .. 10
+        and then Sector.Average_Temperature > 280.0
+        and then Sector.Moisture > 0.1;
+   end Check_Savannah;
 
    ------------------
    -- Check_Steppe --
@@ -428,6 +447,7 @@ package body Concorde.Configure.Worlds is
       Add ("marsh", Check_Marsh'Access);
       Add ("forest", Check_Forest'Access);
       Add ("steppe", Check_Steppe'Access);
+      Add ("savannah", Check_Savannah'Access);
       Add ("tundra", Check_Tundra'Access);
       Add ("hill", Check_Hill'Access);
       Add ("plain", Check_Plain'Access);
@@ -546,14 +566,14 @@ package body Concorde.Configure.Worlds is
                             - Info.Elevation;
             Attenuation : constant Unit_Real :=
                             Unit_Clamp
-                              (0.8
-                               - Real (Integer'Max (Delta_E, 0)) * Factor
-                               / 100.0);
+                              (1.0
+                               - Real (Integer'Max (Delta_E, 0)) / 200.0)
+                            * Factor;
             Cold_Factor : constant Unit_Real :=
                             (if Info.Ave_Temp < 275.0
-                             then 0.01
+                             then 0.1
                              else Unit_Clamp
-                               ((Info.Ave_Temp - 275.0) / 20.0 + 0.01));
+                               ((Info.Ave_Temp - 275.0) / 10.0 + 0.1));
          begin
             M := M + Info.Moisture * Attenuation * Cold_Factor;
          end Update;
@@ -561,7 +581,7 @@ package body Concorde.Configure.Worlds is
       begin
          for Info of Sector_Array loop
 
-            Update (Info, Info.Wind_To, 0.8);
+            Update (Info, Info.Wind_To, 0.9);
 
             for I in 1 .. Surface.Neighbour_Count (Info.Tile) loop
                declare
@@ -737,12 +757,28 @@ package body Concorde.Configure.Worlds is
       end loop;
 
       declare
-         package Ordered_Sector_Maps is
-           new Ada.Containers.Ordered_Maps
-             (Real, Concorde.Handles.World_Sector.World_Sector_Handle,
-              "<", Concorde.Handles.World_Sector."=");
 
-         Cold_Sectors : Ordered_Sector_Maps.Map;
+         package Sector_Lists is
+           new Ada.Containers.Doubly_Linked_Lists
+             (Concorde.Handles.World_Sector.World_Sector_Handle,
+              Concorde.Handles.World_Sector."=");
+
+         function Effective_Temp
+           (Sector : Concorde.Handles.World_Sector.World_Sector_Handle)
+            return Non_Negative_Real
+         is (if Sector.Terrain.Is_Water
+             then Sector.Average_Temperature + 10.0
+             else Sector.Average_Temperature);
+
+         function Colder
+           (Left, Right : Concorde.Handles.World_Sector.World_Sector_Handle)
+            return Boolean
+         is (Effective_Temp (Left) < Effective_Temp (Right));
+
+         package Sector_Sorting is
+           new Sector_Lists.Generic_Sorting (Colder);
+
+         Cold_Sectors : Sector_Lists.List;
 
       begin
          for World_Sector of
@@ -750,24 +786,10 @@ package body Concorde.Configure.Worlds is
              .Select_World_Temperature_Bounded_By_Average_Temperature
                (World, 0.0, Concorde.Constants.Freezing_Point_Of_Water)
          loop
-            if World_Sector.Terrain.Is_Water then
-               if World_Sector.Average_Temperature
-                 < Concorde.Constants.Freezing_Point_Of_Water - 10.0
-               then
-                  Cold_Sectors.Insert
-                    (Key      => World_Sector.Average_Temperature + 10.0,
-                     New_Item => World_Sector.To_World_Sector_Handle);
-               end if;
-            else
-               if World_Sector.Average_Temperature
-                 < Concorde.Constants.Freezing_Point_Of_Water
-               then
-                  Cold_Sectors.Insert
-                    (Key      => World_Sector.Average_Temperature,
-                     New_Item => World_Sector.To_World_Sector_Handle);
-               end if;
-            end if;
+            Cold_Sectors.Append (World_Sector.To_World_Sector_Handle);
          end loop;
+
+         Sector_Sorting.Sort (Cold_Sectors);
 
          declare
             Max_Ice_Sectors  : constant Natural :=

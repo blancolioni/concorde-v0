@@ -8,3 +8,5 @@ resource = { funghi = 0.200
              vegetables = 0.300
              water = 0.250
            }
+
+color = "#cc0"
