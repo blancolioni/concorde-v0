@@ -1,9 +1,16 @@
+with Reiko;
+
 package Concorde.Updates is
 
-   type Update_Interface is interface;
+   type Root_Update_Type is
+     abstract new Reiko.Root_Update_Type with private;
 
-   procedure Activate
-     (Update : Update_Interface)
-   is abstract;
+private
+
+   type Root_Update_Type is
+     abstract new Reiko.Root_Update_Type with
+      record
+         null;
+      end record;
 
 end Concorde.Updates;

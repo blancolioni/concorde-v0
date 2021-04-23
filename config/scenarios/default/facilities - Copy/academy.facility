@@ -1,0 +1,12 @@
+class = service
+name = "Sports Academy"
+power = 5
+worker = { exec = 15
+           tech = 15
+           worker = 50
+         }
+module = { commercial = 40
+           habitation = 15
+         }
+quality = 3
+fitness = true

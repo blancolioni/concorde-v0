@@ -1,0 +1,11 @@
+class = extractor
+name = Refinery
+power = 10
+worker = { worker = 15
+           tech = 5
+         }
+module = { industrial = 5
+           habitation = 5
+         }
+mineral = true
+fuel = true

@@ -1,0 +1,21 @@
+with Commodities;
+with Employers;
+with Facilities;
+with World_Sectors;
+
+package Installations is
+
+    record Installation : Agent, Employer, Has_Stock is
+        key World_Sector;
+        Facility;
+    end Installation;
+
+    record Queued_Production is
+        Installation;
+        Priority : Positive;
+        Commodity;
+        Quantity : Quantity_Type;
+        unique key Queued_Production with Installation, Priority;
+    end Queued_Production;
+    
+end Installations;

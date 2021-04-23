@@ -127,7 +127,7 @@ package body Concorde.Individuals.Create is
       use Concorde.Calendar;
       Year_18        : constant Year_Number :=
                          Year (Individual.Birth_Date + Years (18));
-      Term           : constant Duration := Years (4);
+      Term           : constant Concorde_Duration := Years (4);
       Current_Start  : Time := Time_Of (Year_18, 1, 1);
       Current_Finish : Time := Current_Start + Term;
       Choose_Career  : Boolean := True;

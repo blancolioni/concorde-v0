@@ -120,27 +120,27 @@ package Concorde.Managers.Agents is
    function Historical_Supply
      (Manager   : Root_Agent_Manager_Type'Class;
       Commodity : Concorde.Commodities.Commodity_Reference;
-      Since     : Duration)
+      Since     : Concorde_Duration)
       return Concorde.Quantities.Quantity_Type;
 
    function Historical_Supply
      (Manager   : Root_Agent_Manager_Type'Class;
       Commodity : Concorde.Commodities.Commodity_Reference;
       Max_Price : Concorde.Money.Price_Type;
-      Since     : Duration)
+      Since     : Concorde_Duration)
       return Concorde.Quantities.Quantity_Type;
 
    function Historical_Demand
      (Manager   : Root_Agent_Manager_Type'Class;
       Commodity : Concorde.Commodities.Commodity_Reference;
-      Since     : Duration)
+      Since     : Concorde_Duration)
       return Concorde.Quantities.Quantity_Type;
 
    function Historical_Demand
      (Manager   : Root_Agent_Manager_Type'Class;
       Commodity : Concorde.Commodities.Commodity_Reference;
       Min_Price : Concorde.Money.Price_Type;
-      Since     : Duration)
+      Since     : Concorde_Duration)
       return Concorde.Quantities.Quantity_Type;
 
    procedure Create_Ask

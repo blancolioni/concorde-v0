@@ -82,7 +82,7 @@ package body Concorde.UI.Models.Colonies.Pop_Groups is
      (Model : in out Pop_Group_Model_Record'Class);
 
    type Pop_Group_Model_Update is
-     new Concorde.Updates.Update_Interface with
+     new Concorde.Updates.Root_Update_Type with
       record
          Model : Pop_Group_Model_Access;
       end record;

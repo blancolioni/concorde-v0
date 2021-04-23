@@ -15,7 +15,6 @@ with Concorde.Worlds;
 
 with Concorde.Handles.Feature;
 with Concorde.Handles.Has_Color;
-with Concorde.Handles.Terrain;
 
 with Concorde.Handles.Colony;
 with Concorde.Handles.World_Sector;
@@ -54,8 +53,11 @@ package body Concorde.UI.Models.World is
    type World_Model_Type is
      new Nazar.Models.Draw.Root_Draw_Model with
       record
-         Sectors : Sector_Model_Vectors.Vector;
-         Ref_Map : Sector_Reference_Maps.Map;
+         Sectors    : Sector_Model_Vectors.Vector;
+         Ref_Map    : Sector_Reference_Maps.Map;
+         Display    : Display_Type;
+         Show_Owner : Boolean;
+         Show_Wind  : Boolean;
       end record;
 
    function Project
@@ -155,50 +157,37 @@ package body Concorde.UI.Models.World is
          end loop;
       end loop;
 
-      Model.Set_Color (0.0, 0.0, 0.0, 1.0);
-      for Sector of Model.Sectors loop
-         declare
-            use Nazar;
-            From : constant Map_Point :=
-                     (Sector.Map_Centre.X, Sector.Map_Centre.Y);
-            To_S : constant Sector_Model :=
-                     Model.Sectors.Element (Sector.Wind_To);
-            To   : constant Map_Point :=
-                     (From.X + (To_S.Map_Centre.X - From.X) / 2.0,
-                      From.Y + (To_S.Map_Centre.Y - From.Y) / 2.0);
-            DX   : constant Nazar_Float := To.X - From.X;
-            DY   : constant Nazar_Float := To.Y - From.Y;
-            D    : constant Non_Negative_Real :=
-                     Sqrt (Real (DX) ** 2 + Real (DY) ** 2);
-            N    : constant Map_Point :=
-                     (DX / Nazar_Float (D), DY / Nazar_Float (D));
-            AX   : constant Nazar_Float := 0.025 * (-N.Y - N.X);
-            AY   : constant Nazar_Float := 0.025 * (N.X - N.Y);
-         begin
-            Model.Move_To (From.X, From.Y);
-            Model.Line_To (To.X, To.Y);
-            Model.Line_To (To.X + AX, To.Y + AY);
-            Model.Move_To (To.X, To.Y);
-            Model.Line_To (To.X - AY, To.Y + AX);
+      if Model.Show_Wind then
+         Model.Set_Color (0.0, 0.0, 0.0, 1.0);
+         for Sector of Model.Sectors loop
+            declare
+               use Nazar;
+               From : constant Map_Point :=
+                        (Sector.Map_Centre.X, Sector.Map_Centre.Y);
+               To_S : constant Sector_Model :=
+                        Model.Sectors.Element (Sector.Wind_To);
+               To   : constant Map_Point :=
+                        (From.X + (To_S.Map_Centre.X - From.X) / 2.0,
+                         From.Y + (To_S.Map_Centre.Y - From.Y) / 2.0);
+               DX   : constant Nazar_Float := To.X - From.X;
+               DY   : constant Nazar_Float := To.Y - From.Y;
+               D    : constant Non_Negative_Real :=
+                        Sqrt (Real (DX) ** 2 + Real (DY) ** 2);
+               N    : constant Map_Point :=
+                        (DX / Nazar_Float (D), DY / Nazar_Float (D));
+               AX   : constant Nazar_Float := 0.025 * (-N.Y - N.X);
+               AY   : constant Nazar_Float := 0.025 * (N.X - N.Y);
+            begin
+               Model.Move_To (From.X, From.Y);
+               Model.Line_To (To.X, To.Y);
+               Model.Line_To (To.X + AX, To.Y + AY);
+               Model.Move_To (To.X, To.Y);
+               Model.Line_To (To.X - AY, To.Y + AX);
 
-            Model.Render;
-            --  Concorde.Logging.Log
-            --    ("model", "world", "draw",
-            --     "wind = "
-            --     & Image (180.0 * Sector.Wind / Pi)
-            --     & "; to ="
-            --     & Sector.Wind_To'Image
-            --     & "; line ("
-            --     & Image (Real (From.X))
-            --     & ","
-            --     & Image (Real (From.Y))
-            --     & ") -> ("
-            --     & Image (Real (To.X))
-            --     & ","
-            --     & Image (Real (To.Y))
-            --     & ")");
-         end;
-      end loop;
+               Model.Render;
+            end;
+         end loop;
+      end if;
 
    end Draw_World;
 
@@ -265,29 +254,97 @@ package body Concorde.UI.Models.World is
    -----------------
 
    function World_Model
-     (Faction : Concorde.Handles.Faction.Faction_Handle;
-      World   : Concorde.Handles.World.World_Class)
+     (Faction    : Concorde.Handles.Faction.Faction_Handle;
+      World      : Concorde.Handles.World.World_Class;
+      Display    : Display_Type;
+      Show_Owner : Boolean;
+      Show_Wind  : Boolean)
       return Nazar.Models.Draw.Nazar_Draw_Model
    is
       pragma Unreferenced (Faction);
       Result : World_Model_Type;
+
+      function Get_Color
+        (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+         return Nazar.Colors.Nazar_Color;
+
+      ---------------
+      -- Get_Color --
+      ---------------
+
+      function Get_Color
+        (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+         return Nazar.Colors.Nazar_Color
+      is
+      begin
+         if Show_Owner and then Sector.Faction.Has_Element then
+            return To_Nazar_Color (Sector.Faction);
+         end if;
+
+         case Display is
+            when Terrain_Display =>
+               if Sector.Feature.Has_Element then
+                  return To_Nazar_Color (Sector.Feature);
+               else
+                  return To_Nazar_Color (Sector.Terrain);
+               end if;
+            when Elevation_Display =>
+               if Sector.Elevation < 0 then
+                  return (0.1, 0.1, 0.5, 1.0);
+               else
+                  declare
+                     use Nazar;
+                     E : constant Nazar_Unit_Float :=
+                           Nazar_Unit_Float
+                             (Unit_Clamp
+                                (Real (Sector.Elevation) / 60.0 + 0.2));
+                  begin
+                     return (E, E, E, 1.0);
+                  end;
+               end if;
+            when Moisture_Display =>
+               if Sector.Elevation < 0 then
+                  return (0.1, 0.1, 0.5, 1.0);
+               else
+                  declare
+                     use Nazar;
+                     E : constant Nazar_Unit_Float :=
+                           Nazar_Unit_Float (Sector.Moisture);
+                  begin
+                     return (E, E, E, 1.0);
+                  end;
+               end if;
+            when Temperature_Display =>
+               if Sector.Average_Temperature < 270.0 then
+                  return (1.0, 1.0, 1.0, 1.0);
+               elsif Sector.Average_Temperature > 320.0 then
+                  return (1.0, 0.0, 0.0, 1.0);
+               else
+                  declare
+                     use Nazar;
+                     T : constant Nazar_Unit_Float :=
+                           Nazar_Unit_Float
+                             ((Sector.Average_Temperature - 270.0)
+                              / 50.0);
+                  begin
+                     return (1.0, 1.0 - T, 1.0 - T, 1.0);
+                  end;
+               end if;
+         end case;
+      end Get_Color;
+
    begin
+
+      Result.Show_Wind := Show_Wind;
+      Result.Show_Owner := Show_Owner;
+      Result.Display := Display;
+
       for Sector of
         Concorde.Handles.World_Sector.Select_By_World (World)
       loop
          declare
-            Terrain : constant Concorde.Handles.Terrain.Terrain_Class :=
-                        Sector.Terrain;
-            Faction : constant Concorde.Handles.Faction.Faction_Class :=
-                        Sector.Faction;
-            Feature : constant Concorde.Handles.Feature.Feature_Class :=
-                        Sector.Feature;
             Color   : constant Nazar.Colors.Nazar_Color :=
-                        (if Faction.Has_Element
-                         then To_Nazar_Color (Faction)
-                         elsif Feature.Has_Element
-                         then To_Nazar_Color (Feature)
-                         else To_Nazar_Color (Terrain));
+                        Get_Color (Sector);
          begin
             Result.Sectors.Append
               (Sector_Model'
@@ -306,35 +363,37 @@ package body Concorde.UI.Models.World is
          end;
       end loop;
 
-      for Sector of Result.Sectors loop
-         declare
-            use Concorde.Trigonometry;
-            Wind    : constant Angle := From_Degrees (Sector.Wind);
-            To      : Concorde.Handles.World_Sector.World_Sector_Handle :=
-                        Concorde.Handles.World_Sector.Empty_Handle;
-            Closest : Angle := From_Radians (0.0);
-            First   : Boolean := True;
-         begin
+      if Show_Wind then
+         for Sector of Result.Sectors loop
+            declare
+               use Concorde.Trigonometry;
+               Wind    : constant Angle := From_Degrees (Sector.Wind);
+               To      : Concorde.Handles.World_Sector.World_Sector_Handle :=
+                           Concorde.Handles.World_Sector.Empty_Handle;
+               Closest : Angle := From_Radians (0.0);
+               First   : Boolean := True;
+            begin
 
-            for Neighbour of
-              Concorde.Worlds.Get_Neighbours (Sector.Sector)
-            loop
-               declare
-                  Bearing : constant Angle :=
-                              Concorde.Worlds.Get_Bearing
-                                (Sector.Sector, Neighbour);
-               begin
-                  if First or else Wind - Bearing < Closest then
-                     Closest := Bearing;
-                     To := Neighbour;
-                     First := False;
-                  end if;
-               end;
-            end loop;
-            Sector.Wind_To :=
-              Result.Ref_Map.Element (To.Identifier);
-         end;
-      end loop;
+               for Neighbour of
+                 Concorde.Worlds.Get_Neighbours (Sector.Sector)
+               loop
+                  declare
+                     Bearing : constant Angle :=
+                                 Concorde.Worlds.Get_Bearing
+                                   (Sector.Sector, Neighbour);
+                  begin
+                     if First or else Wind - Bearing < Closest then
+                        Closest := Bearing;
+                        To := Neighbour;
+                        First := False;
+                     end if;
+                  end;
+               end loop;
+               Sector.Wind_To :=
+                 Result.Ref_Map.Element (To.Identifier);
+            end;
+         end loop;
+      end if;
 
       declare
          Colony : constant Concorde.Handles.Colony.Colony_Class :=

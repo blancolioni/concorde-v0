@@ -13,10 +13,6 @@ with Concorde.Updates.Events;
 
 with Concorde.Handles.Colony;
 
-with Concorde.Handles.Network_Value;
-
-with Concorde.Handles.Node;
-
 package body Concorde.UI.Models.Colonies.Factions is
 
    type Faction_Colonies_Table_Column is
@@ -85,7 +81,7 @@ package body Concorde.UI.Models.Colonies.Factions is
      (Model : in out Faction_Model_Record'Class);
 
    type Faction_Model_Update is
-     new Concorde.Updates.Update_Interface with
+     new Concorde.Updates.Root_Update_Type with
       record
          Model : Faction_Model_Access;
       end record;

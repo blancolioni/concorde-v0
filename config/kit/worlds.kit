@@ -14,12 +14,12 @@ package Worlds is
      (Hydrogen, Gaseous, Ice, Rock, Rock_Ice, Rock_Iron);
 
    type World_Climate is
-     (Airless, Desert, Iceball, Martian, Temperate, Venusian, Water, Jovian);
+     (Airless, Desert, Hothouse, Iceball, Martian, Temperate, Venusian, Water, Jovian);
 
    type Stellar_Orbit_Zone is
      (Red, Yellow, Green, Blue, Black);
 
-    record Gas : Localised is
+    record Atmospheric_Gas : Localised is
        unique key Formula   : String (16);
        key Molecular_Weight : Long_Float;
        Melting_Point        : Long_Float;
@@ -29,7 +29,7 @@ package Worlds is
        Abundance_S          : Long_Float;
        Reactivity           : Long_Float;
        Max_IPP              : Long_Float;
-    end Gas;
+    end Atmospheric_Gas;
 
    record Terrain : Localised, Has_Color is
       Hazard   : Long_Float;
@@ -68,20 +68,20 @@ package Worlds is
       Age                 : Long_Float;
       key Habitability    : Long_Float;
       Surface_Pressure    : Long_Float;
-	  Average_Temperature : Long_Float;
+	   Average_Temperature : Long_Float;
       Hydrosphere         : Long_Float;
-	  Life                : Natural;
-	  Smoothness          : Natural;
-	  Elevation_Range     : Natural;
-	  Sea_Level           : Natural;
+	   Life                : Natural;
+	   Smoothness          : Natural;
+	   Elevation_Range     : Natural;
+	   Sea_Level           : Natural;
    end World; 
 
    record Atmosphere is
       key World;
-      Gas;
+      Atmospheric_Gas;
       Percentage : Long_Float;
       key World_Atmosphere with World, Percentage;
-      key World_Gas with World, Gas;
+      key World_Gas with World, Atmospheric_Gas;
    end Atmosphere;
 
 end Worlds;

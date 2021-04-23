@@ -3,6 +3,8 @@ with Ada.Text_IO;
 
 with WL.Processes;
 
+with Reiko.Control;
+
 with Concorde.Options;
 with Concorde.Real_Images;
 
@@ -16,11 +18,10 @@ with Concorde.Logs;
 with Concorde.Managers.Loader;
 
 with Concorde.Server;
-with Concorde.Updates.Control;
 
 with Concorde.Db.Database;
 
-with Nazar.Main;
+--  with Nazar.Main;
 
 procedure Concorde.Driver is
 
@@ -56,7 +57,11 @@ begin
    Ada.Text_IO.Put_Line
      ("Start date: " & Concorde.Calendar.Image (Concorde.Calendar.Clock));
 
-   Concorde.Updates.Control.Start_Updates;
+   Reiko.Control.Start
+     (Current_Time =>
+        Reiko.Reiko_Time (Concorde.Calendar.To_Real (Concorde.Calendar.Clock)),
+      Task_Count   => Concorde.Options.Work_Threads);
+
    Updates_Running := True;
 
    if Concorde.Options.Batch_Mode then
@@ -73,8 +78,7 @@ begin
             for Day_Index in 1 .. Update_Days loop
                for Hour_Index in 1 .. 24 loop
                   for Minute_Index in 1 .. 60 loop
-                     Concorde.Calendar.Advance (60.0);
-                     Concorde.Updates.Control.Execute_Pending_Updates;
+                     Reiko.Control.Advance (60.0);
                   end loop;
                   Process.Tick;
                end loop;
@@ -100,8 +104,6 @@ begin
 
    else
 
-      Nazar.Main.Init;
-
       declare
          UI : constant Concorde.UI.UI_Type :=
            Concorde.UI.Launch.Get_UI (Concorde.Options.User_Interface);
@@ -112,12 +114,10 @@ begin
 
       end;
 
-      Nazar.Main.Stop;
-
    end if;
 
    Updates_Running := False;
-   Concorde.Updates.Control.Stop_Updates;
+   Reiko.Control.Stop;
 
    Ada.Text_IO.Put_Line
      ("Stop date: " & Concorde.Calendar.Image (Concorde.Calendar.Clock));
@@ -140,7 +140,7 @@ exception
 
    when others =>
       if Updates_Running then
-         Concorde.Updates.Control.Stop_Updates;
+         Reiko.Control.Stop;
       end if;
       if Database_Open then
          Concorde.Db.Database.Close;

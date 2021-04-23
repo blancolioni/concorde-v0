@@ -1,0 +1,11 @@
+class = factory
+power = 2
+worker = { exec = 2
+           worker = 25
+           tech = 10
+         }
+module = { industrial = 3
+           habitation = 2
+         }
+production = { rations readymeal }
+capacity = 500

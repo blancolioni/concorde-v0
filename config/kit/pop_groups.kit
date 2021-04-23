@@ -1,0 +1,11 @@
+with Commodities;
+with Localisation;
+
+package Pop_Groups is
+
+record Pop_Group : Localised, Commodity is
+    Consumer_Demand : Quality_Type;
+    Service_Demand  : Quality_Type;
+end Pop_Group;
+
+end Pop_Groups;

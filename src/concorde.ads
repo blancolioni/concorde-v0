@@ -11,6 +11,8 @@ package Concorde is
 
    subtype Real_Time is Real;
 
+   type Concorde_Duration is new Real;
+
    function Clamp (X : Real;
                    Lo, Hi : Real)
                    return Real

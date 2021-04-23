@@ -1,5 +1,4 @@
 with Concorde.Handles.Input_Commodity;
-with Concorde.Handles.Manufactured;
 with Concorde.Handles.Stock_Item;
 
 with Concorde.Db;
@@ -109,19 +108,6 @@ package body Concorde.Commodities is
       return Concorde.Handles.Commodity.Get_By_Tag (Tag);
    end Get;
 
-   ---------------------
-   -- Is_Manufactured --
-   ---------------------
-
-   function Is_Manufactured
-     (Commodity : Commodity_Class)
-      return Boolean
-   is
-      use Concorde.Db;
-   begin
-      return Commodity.Top_Record = R_Manufactured;
-   end Is_Manufactured;
-
    -----------------
    -- Is_Resource --
    -----------------
@@ -198,10 +184,10 @@ package body Concorde.Commodities is
    is
    begin
       for Input of
-        Concorde.Handles.Input_Commodity.Select_By_Manufactured
-          (Concorde.Handles.Manufactured.Get_From_Commodity (Commodity))
+        Concorde.Handles.Input_Commodity.Select_By_Commodity
+          (Commodity)
       loop
-         Process (Input.Commodity, Input.Quantity);
+         Process (Input.Input, Input.Quantity);
       end loop;
    end Scan_Ingredients;
 

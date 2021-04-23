@@ -25,7 +25,7 @@ package Concorde.Managers is
 
    procedure Set_Next_Update_Delay
      (Manager      : not null access Root_Manager_Type'Class;
-      Update_Delay : Duration);
+      Update_Delay : Concorde_Duration);
 
    type Manager_Type is access all Root_Manager_Type'Class;
 
@@ -59,12 +59,12 @@ private
    Active_Map : Manager_Maps.Map;
 
    type Manager_Update is
-     new Concorde.Updates.Update_Interface with
+     new Concorde.Updates.Root_Update_Type with
       record
          Manager : Manager_Type;
       end record;
 
-   overriding procedure Activate
+   overriding procedure Execute
      (Update : Manager_Update);
 
    function Managed_Key

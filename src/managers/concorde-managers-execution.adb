@@ -11,9 +11,9 @@ with Concorde.Db;
 package body Concorde.Managers.Execution is
 
    type Check_Manager_Update is
-     new Concorde.Updates.Update_Interface with null record;
+     new Concorde.Updates.Root_Update_Type with null record;
 
-   overriding procedure Activate
+   overriding procedure Execute
      (Update : Check_Manager_Update);
 
    package Managed_Reference_Lists is
@@ -25,11 +25,11 @@ package body Concorde.Managers.Execution is
      (Managed : Concorde.Handles.Managed.Managed_Class)
       return String;
 
-   --------------
-   -- Activate --
-   --------------
+   -------------
+   -- Execute --
+   -------------
 
-   overriding procedure Activate
+   overriding procedure Execute
      (Update : Check_Manager_Update)
    is
       List : Managed_Reference_Lists.List;
@@ -49,7 +49,7 @@ package body Concorde.Managers.Execution is
       Concorde.Updates.Events.Update_With_Delay
         (Wait   => Concorde.Calendar.Days (1.0),
          Update => Update);
-   end Activate;
+   end Execute;
 
    ----------------------
    -- Get_Manager_Name --
@@ -80,7 +80,8 @@ package body Concorde.Managers.Execution is
          Start_Manager (Managed);
       end loop;
       declare
-         Update : Check_Manager_Update;
+         Update : constant Check_Manager_Update :=
+                    (Concorde.Updates.Root_Update_Type with null record);
       begin
          Concorde.Updates.Events.Update_With_Delay
            (Wait   =>
@@ -110,7 +111,8 @@ package body Concorde.Managers.Execution is
          if Manager.Is_Active then
             declare
                Update : constant Manager_Update :=
-                          (Manager => Manager);
+                          (Concorde.Updates.Root_Update_Type with
+                           Manager => Manager);
             begin
                Concorde.Updates.Events.Update_At
                  (Clock  => Managed.Next_Event,

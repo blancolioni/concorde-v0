@@ -1,0 +1,9 @@
+class = resource
+name = Funghi
+mass = 1
+organic = true
+npc-price = 20
+yield = 20%
+constraints = {
+    life = plants
+}

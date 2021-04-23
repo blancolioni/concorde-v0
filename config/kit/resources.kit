@@ -3,6 +3,8 @@ with Worlds;
 
 package Resources is 
 
+type Resource_Category is (Organic, Mineral, Metal, Fissile, Fuel, Gas, Liquid);
+
 record Fuzzy_Set is
    Max_Zero : Long_Float;
    Min_One  : Long_Float;
@@ -11,7 +13,7 @@ record Fuzzy_Set is
 end Fuzzy_Set;
    
 record Resource : Commodity is
-   Is_Raw_Resource : Boolean;
+   Category : Resource_Category;
 end Resource;
 
 record Resource_Sphere is

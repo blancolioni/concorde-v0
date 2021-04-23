@@ -1,0 +1,12 @@
+class = administration
+name = Outpost
+power = 10
+worker = { exec = 5
+           worker = 10
+           tech = 5
+         }
+module = { commercial = 2
+           industrial = 2
+           habitation = 5
+           military = 2
+         }

@@ -1,0 +1,12 @@
+class = service
+name = Hypermall
+power = 15
+worker = { exec = 10
+           tech = 25
+           worker = 100
+         }
+module = { commercial = 100
+           habitation = 25
+         }
+quality = 3
+entertainment = true

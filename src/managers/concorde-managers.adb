@@ -3,11 +3,11 @@ with Concorde.Updates.Events;
 
 package body Concorde.Managers is
 
-   --------------
-   -- Activate --
-   --------------
+   -------------
+   -- Execute --
+   -------------
 
-   overriding procedure Activate
+   overriding procedure Execute
      (Update : Manager_Update)
    is
    begin
@@ -34,7 +34,7 @@ package body Concorde.Managers is
            .Done;
       end if;
 
-   end Activate;
+   end Execute;
 
    ---------------------------
    -- Set_Next_Update_Delay --
@@ -42,7 +42,7 @@ package body Concorde.Managers is
 
    procedure Set_Next_Update_Delay
      (Manager      : not null access Root_Manager_Type'Class;
-      Update_Delay : Duration)
+      Update_Delay : Concorde_Duration)
    is
       use type Concorde.Calendar.Time;
    begin
@@ -64,7 +64,8 @@ package body Concorde.Managers is
       else
          declare
             Update : constant Manager_Update :=
-                       (Manager => Manager_Type (Manager));
+                       (Concorde.Updates.Root_Update_Type with
+                        Manager => Manager_Type (Manager));
          begin
             Manager.Is_Active := True;
             Concorde.Updates.Events.Update_At

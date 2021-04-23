@@ -80,7 +80,7 @@ package body Concorde.UI.Models.Colonies.Policies is
      (Model : in out Policy_Model_Record'Class);
 
    type Policy_Model_Update is
-     new Concorde.Updates.Update_Interface with
+     new Concorde.Updates.Root_Update_Type with
       record
          Model : Policy_Model_Access;
       end record;

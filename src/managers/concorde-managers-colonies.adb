@@ -8,25 +8,16 @@ with Concorde.Quantities;
 with Concorde.Random;
 with Concorde.Real_Images;
 
-with Concorde.Network;
-
 with Concorde.Handles.Colony;
-with Concorde.Handles.Colony_Policy;
 with Concorde.Handles.Colony_Price;
-with Concorde.Handles.Colony_Zone;
+with Concorde.Handles.Colony_District;
 with Concorde.Handles.Commodity;
 with Concorde.Handles.Deposit;
-with Concorde.Handles.Network_Value;
-with Concorde.Handles.Node;
-with Concorde.Handles.Policy;
 with Concorde.Handles.Pop;
 with Concorde.Handles.Pop_Group;
-with Concorde.Handles.Pop_Group_Demand;
-with Concorde.Handles.Pop_Group_Member;
 with Concorde.Handles.Resource;
-with Concorde.Handles.Wealth_Group;
 with Concorde.Handles.World_Sector;
-with Concorde.Handles.Zone;
+with Concorde.Handles.District;
 
 package body Concorde.Managers.Colonies is
 
@@ -132,19 +123,19 @@ package body Concorde.Managers.Colonies is
 
          Mined_Resource : Resource_Mining_Maps.Map;
 
-         Mine : constant Concorde.Handles.Zone.Zone_Handle :=
-                  Concorde.Handles.Zone.Get_By_Tag ("mine");
+         Mine : constant Concorde.Handles.District.District_Handle :=
+                  Concorde.Handles.District.Get_By_Tag ("mine");
       begin
 
-         for Colony_Zone of
-           Concorde.Handles.Colony_Zone.Select_By_Colony_Zone
+         for Colony_District of
+           Concorde.Handles.Colony_District.Select_By_Colony_District
              (Colony => Manager.Colony,
-              Zone   => Mine)
+              District   => Mine)
          loop
             declare
                Sector  : constant Concorde.Handles.World_Sector
                  .World_Sector_Class :=
-                   Colony_Zone.World_Sector;
+                   Colony_District.World_Sector;
                Deposit : constant Concorde.Handles.Deposit.Deposit_Handle :=
                                        Concorde.Handles.Deposit
                                          .Get_By_World_Sector (Sector);
@@ -165,7 +156,7 @@ package body Concorde.Managers.Colonies is
                                             (Concentration / 10.0)
                                           + Concentration);
                      Mined         : constant Non_Negative_Real :=
-                                       Factor * Colony_Zone.Size;
+                                       Factor * Colony_District.Size;
                      Remaining     : constant Non_Negative_Real :=
                                        Real'Max (Available - Mined / 100.0,
                                                  0.0);

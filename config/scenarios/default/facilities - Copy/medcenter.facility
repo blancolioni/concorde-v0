@@ -1,0 +1,13 @@
+class = service
+name = "Medical Center"
+power = 5
+worker = { exec = 10
+           worker = 20
+           tech = 10
+         }
+module = { commercial = 10
+           industrial = 5
+           habitation = 10
+         }
+quality = 2
+medical = true

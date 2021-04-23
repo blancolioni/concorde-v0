@@ -46,7 +46,7 @@ package body Concorde.File_System.Proc is
    function Status_Text return String is
       NL                 : constant Character := Character'Val (10);
       Paused             : Boolean;
-      Advance_Per_Second : Duration;
+      Advance_Per_Second : Concorde_Duration;
       Start_Time         : Ada.Calendar.Time;
    begin
       Concorde.Updates.Control.Get_Status

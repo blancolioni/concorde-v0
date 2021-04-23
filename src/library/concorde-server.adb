@@ -17,7 +17,6 @@ with Concorde.Random_Names;
 with Concorde.Color;
 with Concorde.Factions.Create;
 with Concorde.Managers.Execution;
-with Concorde.Network;
 
 with Concorde.Db.Database;
 
@@ -247,7 +246,6 @@ package body Concorde.Server is
 
    procedure Start is
    begin
-      Concorde.Network.Load_Network;
       Concorde.Managers.Execution.Load_Managers;
    end Start;
 
@@ -266,7 +264,7 @@ package body Concorde.Server is
 
    procedure Stop is
    begin
-      Concorde.Network.Save_Network;
+      null;
    end Stop;
 
 end Concorde.Server;

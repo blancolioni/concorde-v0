@@ -14,7 +14,7 @@ package body Concorde.Employment is
    Employment_Updates_Started : Boolean := False;
 
    type Employment_Contracts_Update is
-     new Concorde.Updates.Update_Interface with null record;
+     new Concorde.Updates.Root_Update_Type with null record;
 
    overriding procedure Activate
      (Item : Employment_Contracts_Update);

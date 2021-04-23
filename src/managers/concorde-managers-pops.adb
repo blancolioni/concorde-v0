@@ -27,7 +27,7 @@ with Concorde.Handles.Market;
 with Concorde.Handles.Pop;
 with Concorde.Handles.Utility_Function;
 with Concorde.Handles.World_Sector;
-with Concorde.Handles.Zone;
+with Concorde.Handles.District;
 
 package body Concorde.Managers.Pops is
 
@@ -108,7 +108,7 @@ package body Concorde.Managers.Pops is
             Production : Concorde.Handles.Production_Reference;
             Sector     : Concorde.Handles.World_Sector_Reference;
             Sector_Use : Concorde.Handles.Sector_Use_Reference;
-            Zone       : Concorde.Commodities.Commodity_Reference;
+            District       : Concorde.Commodities.Commodity_Reference;
             Skill      : Concorde.Quantities.Quantity_Type;
             Size       : Non_Negative_Real;
          end record;
@@ -129,7 +129,7 @@ package body Concorde.Managers.Pops is
         (World_Sector : Concorde.Handles.World_Sector_Reference;
          Production   : Concorde.Handles.Production_Reference;
          Sector_Use   : Concorde.Handles.Sector_Use_Reference;
-         Zone         : Concorde.Commodities.Commodity_Reference)
+         District         : Concorde.Commodities.Commodity_Reference)
         return Natural;
 
       ----------------
@@ -140,12 +140,12 @@ package body Concorde.Managers.Pops is
         (Production : Concorde.Handles.Production_Reference;
          Skill      : Concorde.Commodities.Commodity_Reference)
       is
-         Zone           : constant Concorde.Handles.Zone_Reference :=
-           Concorde.Handles.Production.Get (Production).Zone;
+         District           : constant Concorde.Handles.District_Reference :=
+           Concorde.Handles.Production.Get (Production).District;
          Sector_Use     : constant Concorde.Handles.Sector_Use_Reference :=
-           Concorde.Handles.Zone.Get (Zone).Sector_Use;
-         Zone_Commodity : constant Concorde.Commodities.Commodity_Reference :=
-           Concorde.Commodities.Get_Commodity (Zone);
+           Concorde.Handles.District.Get (District).Sector_Use;
+         District_Commodity : constant Concorde.Commodities.Commodity_Reference :=
+           Concorde.Commodities.Get_Commodity (District);
       begin
          for World_Sector of
            Concorde.Handles.World_Sector.Select_By_World_Sector_Use
@@ -155,7 +155,7 @@ package body Concorde.Managers.Pops is
                Score : constant Natural :=
                  Score_World_Sector_Production
                    (World_Sector.Get_World_Sector_Reference,
-                    Production, Sector_Use, Zone_Commodity);
+                    Production, Sector_Use, District_Commodity);
             begin
                if Score > 0 then
                   Choice.Insert
@@ -166,7 +166,7 @@ package body Concorde.Managers.Pops is
                             World_Sector.Get_World_Sector_Reference,
                           Sector_Use =>
                             Sector_Use,
-                          Zone       => Zone_Commodity,
+                          District       => District_Commodity,
                           Skill      =>
                             Manager.Stock_Quantity (Skill),
                           Size       =>
@@ -185,14 +185,14 @@ package body Concorde.Managers.Pops is
         (World_Sector   : Concorde.Handles.World_Sector_Reference;
          Production     : Concorde.Handles.Production_Reference;
          Sector_Use     : Concorde.Handles.Sector_Use_Reference;
-         Zone           : Concorde.Commodities.Commodity_Reference)
+         District           : Concorde.Commodities.Commodity_Reference)
          return Natural
       is
          pragma Unreferenced (Production, Sector_Use);
          use Concorde.Quantities;
          Title     : constant Concorde.Commodities.Commodity_Reference :=
            Concorde.Commodities.Title_Commodity
-             (World_Sector, Zone);
+             (World_Sector, District);
          Leases    : constant Concorde.Commodities.Commodity_Array :=
            Commodities.Lease_Commodities (Title);
          Available : Quantity_Type := Zero;
@@ -234,7 +234,7 @@ package body Concorde.Managers.Pops is
               Production_Choice.Sector;
             Title             : constant Commodities.Commodity_Reference :=
               Concorde.Commodities.Title_Commodity
-                (Sector, Production_Choice.Zone);
+                (Sector, Production_Choice.District);
             Leases            : constant Commodities.Commodity_Array :=
               Commodities.Lease_Commodities (Title);
             Quantity          : constant Quantity_Type :=
@@ -655,7 +655,7 @@ package body Concorde.Managers.Pops is
 
       declare
          use Ada.Calendar;
-         Interval : constant Duration :=
+         Interval : constant Concorde_Duration :=
            Clock - Now;
       begin
          Manager.Log ("planning complete in "
@@ -1020,8 +1020,8 @@ package body Concorde.Managers.Pops is
          Used      : Concorde.Quantities.Quantity_Type)
          return Concorde.Money.Money_Type;
 
-      function Zone_Capacity return Non_Negative_Real;
-      function Zone_Cost return Concorde.Money.Money_Type;
+      function District_Capacity return Non_Negative_Real;
+      function District_Cost return Concorde.Money.Money_Type;
 
       ---------------
       -- Constrain --
@@ -1073,36 +1073,36 @@ package body Concorde.Managers.Pops is
       end Evaluate_Cost;
 
       -------------------
-      -- Zone_Capacity --
+      -- District_Capacity --
       -------------------
 
-      function Zone_Capacity return Non_Negative_Real is
+      function District_Capacity return Non_Negative_Real is
          Production : constant Concorde.Handles.Production.Production_Type :=
            Concorde.Handles.Production.Get (Manager.Production);
          Title      : constant Concorde.Commodities.Commodity_Reference :=
            Concorde.Commodities.Title_Commodity
-             (Manager.Sector, Commodities.Get_Commodity (Production.Zone));
+             (Manager.Sector, Commodities.Get_Commodity (Production.District));
          Size : constant Non_Negative_Real := Production.Size;
          Have : constant Non_Negative_Real :=
            Concorde.Quantities.To_Real
              (Manager.Stock_Quantity (Title));
       begin
          return Have / Size;
-      end Zone_Capacity;
+      end District_Capacity;
 
       ---------------
-      -- Zone_Cost --
+      -- District_Cost --
       ---------------
 
-      function Zone_Cost return Concorde.Money.Money_Type is
+      function District_Cost return Concorde.Money.Money_Type is
          use Concorde.Money, Concorde.Quantities;
          Production : constant Concorde.Handles.Production.Production_Type :=
            Concorde.Handles.Production.Get (Manager.Production);
-         Zone       : constant Concorde.Commodities.Commodity_Reference :=
-           Concorde.Commodities.Get_Commodity (Production.Zone);
+         District       : constant Concorde.Commodities.Commodity_Reference :=
+           Concorde.Commodities.Get_Commodity (Production.District);
          Title      : constant Concorde.Commodities.Commodity_Reference :=
            Concorde.Commodities.Title_Commodity
-             (Manager.Sector, Zone);
+             (Manager.Sector, District);
          Have       : Concorde.Quantities.Quantity_Type :=
            Manager.Stock_Quantity (Title);
          Leases     : constant Concorde.Commodities.Commodity_Array :=
@@ -1116,7 +1116,7 @@ package body Concorde.Managers.Pops is
 
          Cost := Cost + Total (Manager.Stock_Price (Title), Have);
          return Cost;
-      end Zone_Cost;
+      end District_Cost;
 
       Budget : constant Concorde.Money.Money_Type :=
         Concorde.Money.Adjust (Manager.Current_Cash, 0.5);
@@ -1145,7 +1145,7 @@ package body Concorde.Managers.Pops is
          end if;
       end;
 
-      Max_Capacity := Zone_Capacity;
+      Max_Capacity := District_Capacity;
 
       for Input_Item of
         Concorde.Handles.Input_Item.Select_By_Production (Manager.Production)
@@ -1305,7 +1305,7 @@ package body Concorde.Managers.Pops is
                    & Concorde.Real_Images.Approximate_Image
                      (Max_Capacity));
 
-      Production_Cost := Zone_Cost;
+      Production_Cost := District_Cost;
 
       Manager.Log
         ("production cost: location " & Concorde.Money.Show (Production_Cost));

@@ -1,0 +1,11 @@
+class = service
+name = "Neural Network Terminal"
+power = 2
+worker = { tech = 5
+           worker = 5
+         }
+module = { commercial = 1
+           habitation = 1
+         }
+quality = 1
+education = true

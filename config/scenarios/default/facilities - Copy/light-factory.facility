@@ -1,0 +1,13 @@
+class = factory
+name = "Light Factory"
+power = 10
+worker = { exec = 5
+           worker = 80
+           tech = 15
+         }
+module = { industrial = 30
+           habitation = 20
+         }
+industrial = true
+consumer = true
+capacity = 1000

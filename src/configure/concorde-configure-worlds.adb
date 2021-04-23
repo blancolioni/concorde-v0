@@ -1,3 +1,4 @@
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Vectors;
 
@@ -15,7 +16,6 @@ with Concorde.Trigonometry;
 with Concorde.Configure.Resources;
 
 with Concorde.Handles.Climate_Terrain;
-with Concorde.Handles.Elevation;
 with Concorde.Handles.Faction;
 with Concorde.Handles.Feature;
 with Concorde.Handles.Sector;
@@ -31,16 +31,6 @@ with Concorde.Db;
 package body Concorde.Configure.Worlds is
 
    package Heights renames WL.Random.Height_Maps;
-
-   type Elevation_Terrain is
-      record
-         Elevation : Concorde.Handles.Elevation.Elevation_Handle;
-         Terrain   : Concorde.Handles.Terrain.Terrain_Handle;
-      end record;
-
-   package Elevation_Vectors is
-     new Ada.Containers.Vectors
-       (Positive, Elevation_Terrain);
 
    type Climate_Terrain_Record is
       record
@@ -60,11 +50,214 @@ package body Concorde.Configure.Worlds is
 
    procedure Get_Climate_Terrain
      (World  : Concorde.Handles.World.World_Class;
-      Vector : out Climate_Terrain_Vectors.Vector);
+      Vector : out Climate_Terrain_Vectors.Vector)
+     with Unreferenced;
 
    function Get_Frequencies
      (World : Concorde.Handles.World.World_Class)
       return Heights.Frequency_Map;
+
+   type Terrain_Checker is access
+     function (Sector  : Concorde.Handles.World_Sector.World_Sector_Class)
+               return Boolean;
+
+   type Terrain_Checker_Record is
+      record
+         Terrain : Concorde.Handles.Terrain.Terrain_Handle;
+         Checker : Terrain_Checker;
+      end record;
+
+   package Terrain_Checker_Lists is
+     new Ada.Containers.Doubly_Linked_Lists (Terrain_Checker_Record);
+
+   Terrain_Checkers : Terrain_Checker_Lists.List;
+
+   procedure Load_Terrain_Checkers;
+
+   function Check_Cold_Desert
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   function Check_Desert
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   function Check_Forest
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   function Check_Hill
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   function Check_Jungle
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   function Check_Marsh
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   function Check_Plain
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   function Check_Steppe
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   function Check_Tundra
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   function Check_Water
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean;
+
+   -----------------------
+   -- Check_Cold_Desert --
+   -----------------------
+
+   function Check_Cold_Desert
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.Moisture < 0.1
+        and then Sector.Average_Temperature < 280.0
+        and then Sector.Elevation >= 0;
+   end Check_Cold_Desert;
+
+   ------------------
+   -- Check_Desert --
+   ------------------
+
+   function Check_Desert
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.Moisture < 0.1
+        and then Sector.Average_Temperature >= 280.0
+        and then Sector.Elevation >= 0;
+   end Check_Desert;
+
+   ------------------
+   -- Check_Forest --
+   ------------------
+
+   function Check_Forest
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.World.Hydrosphere > 0.0
+        and then Sector.World.Life > 1
+        and then Sector.Elevation >= 0
+        and then Sector.Average_Temperature in 274.0 .. 290.0
+        and then Sector.Moisture >= 0.2;
+   end Check_Forest;
+
+   ----------------
+   -- Check_Hill --
+   ----------------
+
+   function Check_Hill
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.Elevation > 8
+        and then Sector.Average_Temperature >= 280.0;
+   end Check_Hill;
+
+   ------------------
+   -- Check_Jungle --
+   ------------------
+
+   function Check_Jungle
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.World.Hydrosphere > 0.0
+        and then Sector.World.Life > 1
+        and then Sector.Elevation >= 0
+        and then Sector.Average_Temperature > 290.0
+        and then Sector.Moisture > 0.8;
+   end Check_Jungle;
+
+   -----------------
+   -- Check_Marsh --
+   -----------------
+
+   function Check_Marsh
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.World.Hydrosphere > 0.0
+        and then Sector.World.Life > 0
+        and then Sector.Elevation in 0 .. 2
+        and then Sector.Average_Temperature >= 280.0
+        and then Sector.Moisture > 0.5;
+   end Check_Marsh;
+
+   -----------------
+   -- Check_Plain --
+   -----------------
+
+   function Check_Plain
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.Elevation >= 0;
+   end Check_Plain;
+
+   ------------------
+   -- Check_Steppe --
+   ------------------
+
+   function Check_Steppe
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.World.Life > 0
+        and then Sector.Elevation >= 0
+        and then Sector.Average_Temperature < 290.0
+        and then Sector.Moisture in 0.1 .. 0.2;
+   end Check_Steppe;
+
+   ------------------
+   -- Check_Tundra --
+   ------------------
+
+   function Check_Tundra
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.World.Hydrosphere > 0.0
+        and then Sector.World.Life > 0
+        and then Sector.Elevation >= 0
+        and then Sector.Average_Temperature < 280.0
+        and then Sector.Moisture in 0.1 .. 0.2;
+   end Check_Tundra;
+
+   -----------------
+   -- Check_Water --
+   -----------------
+
+   function Check_Water
+     (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
+      return Boolean
+   is
+   begin
+      return Sector.World.Hydrosphere > 0.0
+        and then Sector.Elevation < 0;
+   end Check_Water;
 
    ----------------------
    -- Generate_Surface --
@@ -105,16 +298,18 @@ package body Concorde.Configure.Worlds is
          end;
       end if;
 
-      declare
-         System    : constant Concorde.Handles.Star_System.Star_System_Class :=
-                       World.Star_System;
-      begin
-         Concorde.Configure.Resources.Create_Deposits
-           (World     => World,
-            Generator =>
-              Concorde.Configure.Resources.Create_Generator
-                (System.X, System.Y, System.Z));
-      end;
+      if False then
+         declare
+            System    : constant Handles.Star_System.Star_System_Class :=
+                          World.Star_System;
+         begin
+            Concorde.Configure.Resources.Create_Deposits
+              (World     => World,
+               Generator =>
+                 Concorde.Configure.Resources.Create_Generator
+                   (System.X, System.Y, System.Z));
+         end;
+      end if;
 
    end Generate_Surface;
 
@@ -203,6 +398,41 @@ package body Concorde.Configure.Worlds is
         (1 .. World.Elevation_Range) := (others => 1);
    end Get_Frequencies;
 
+   ---------------------------
+   -- Load_Terrain_Checkers --
+   ---------------------------
+
+   procedure Load_Terrain_Checkers is
+
+      procedure Add (Tag : String;
+                     Checker : Terrain_Checker);
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add (Tag : String;
+                     Checker : Terrain_Checker)
+      is
+      begin
+         Terrain_Checkers.Append
+           ((Concorde.Handles.Terrain.Get_By_Tag (Tag), Checker));
+         pragma Assert (Terrain_Checkers.Last_Element.Terrain.Has_Element);
+      end Add;
+
+   begin
+      Add ("water", Check_Water'Access);
+      Add ("cold-desert", Check_Cold_Desert'Access);
+      Add ("desert", Check_Desert'Access);
+      Add ("jungle", Check_Jungle'Access);
+      Add ("marsh", Check_Marsh'Access);
+      Add ("forest", Check_Forest'Access);
+      Add ("steppe", Check_Steppe'Access);
+      Add ("tundra", Check_Tundra'Access);
+      Add ("hill", Check_Hill'Access);
+      Add ("plain", Check_Plain'Access);
+   end Load_Terrain_Checkers;
+
    ------------------
    -- Save_Surface --
    ------------------
@@ -218,6 +448,21 @@ package body Concorde.Configure.Worlds is
       Tile_Refs : array (1 .. Surface.Tile_Count)
         of Concorde.Handles.Sector.Sector_Handle;
 
+      type Sector_Info is
+         record
+            Tile         : Concorde.Surfaces.Surface_Tile_Index;
+            Centre       : Concorde.Surfaces.Vector_3;
+            Elevation    : Integer;
+            Ave_Temp     : Non_Negative_Real;
+            Wind         : Real;
+            Wind_To      : Concorde.Surfaces.Surface_Tile_Index;
+            Moisture     : Unit_Real;
+            Habitability : Unit_Real;
+            Toxicity     : Unit_Real;
+         end record;
+
+      Sector_Array : array (1 .. Surface.Tile_Count) of Sector_Info;
+
       Axial_Tilt : constant Real :=
                      Concorde.Trigonometry.To_Degrees (World.Tilt);
 
@@ -232,6 +477,8 @@ package body Concorde.Configure.Worlds is
       function Prevailing_Wind
         (Latitude : Real)
          return Real;
+
+      procedure Iterate_Moisture;
 
       ----------------------
       -- Base_Temperature --
@@ -271,6 +518,84 @@ package body Concorde.Configure.Worlds is
          end return;
       end Get_Neighbours;
 
+      ----------------------
+      -- Iterate_Moisture --
+      ----------------------
+
+      procedure Iterate_Moisture is
+         New_Moisture : array (Sector_Array'Range) of Non_Negative_Real :=
+                          (others => 0.0);
+
+         procedure Update
+           (Info   : Sector_Info;
+            Tile   : Concorde.Surfaces.Surface_Tile_Index;
+            Factor : Unit_Real);
+
+         ------------
+         -- Update --
+         ------------
+
+         procedure Update
+           (Info   : Sector_Info;
+            Tile   : Concorde.Surfaces.Surface_Tile_Index;
+            Factor : Unit_Real)
+         is
+            M           : Non_Negative_Real renames New_Moisture (Tile);
+            Delta_E     : constant Integer :=
+                            Sector_Array (Tile).Elevation
+                            - Info.Elevation;
+            Attenuation : constant Unit_Real :=
+                            Unit_Clamp
+                              (0.8
+                               - Real (Integer'Max (Delta_E, 0)) * Factor
+                               / 100.0);
+            Cold_Factor : constant Unit_Real :=
+                            (if Info.Ave_Temp < 275.0
+                             then 0.01
+                             else Unit_Clamp
+                               ((Info.Ave_Temp - 275.0) / 20.0 + 0.01));
+         begin
+            M := M + Info.Moisture * Attenuation * Cold_Factor;
+         end Update;
+
+      begin
+         for Info of Sector_Array loop
+
+            Update (Info, Info.Wind_To, 0.8);
+
+            for I in 1 .. Surface.Neighbour_Count (Info.Tile) loop
+               declare
+                  use type Concorde.Surfaces.Surface_Tile_Index;
+                  N : constant Concorde.Surfaces.Surface_Tile_Index :=
+                        Surface.Neighbour (Info.Tile, I);
+               begin
+                  if N /= Info.Wind_To
+                    and then Surface.Is_Neighbour (Info.Tile, N)
+                  then
+                     Update (Info, N, 0.2);
+                  end if;
+               end;
+            end loop;
+
+         end loop;
+
+         for I in Sector_Array'Range loop
+            declare
+               Info     : Sector_Info renames Sector_Array (I);
+               Ave_Temp : constant Non_Negative_Real := Info.Ave_Temp;
+            begin
+               Info.Moisture :=
+                 (if Info.Elevation < 0
+                  then (if Ave_Temp < 263.0
+                    then 0.0
+                    elsif Ave_Temp < 273.0
+                    then (Ave_Temp - 263.0) / 10.0
+                    else 1.0)
+                  else Unit_Clamp (New_Moisture (I)));
+            end;
+         end loop;
+      end Iterate_Moisture;
+
       ---------------------
       -- Prevailing_Wind --
       ---------------------
@@ -295,14 +620,13 @@ package body Concorde.Configure.Worlds is
          end if;
       end Prevailing_Wind;
 
-      Climate_Vector : Climate_Terrain_Vectors.Vector;
-      Elevation      : Elevation_Vectors.Vector;
-
    begin
 
-      WL.Random.Reset (World.Seed);
+      if Terrain_Checkers.Is_Empty then
+         Load_Terrain_Checkers;
+      end if;
 
-      Get_Climate_Terrain (World, Climate_Vector);
+      WL.Random.Reset (World.Seed);
 
       Heights.Generate_Height_Map
         (Heights     => Hs,
@@ -310,42 +634,53 @@ package body Concorde.Configure.Worlds is
          Smoothing   => 3,
          Neighbours  => Get_Neighbours'Access);
 
-      for E of Concorde.Handles.Elevation.Scan_By_Top_Record loop
-         declare
-            Height  : constant Integer := E.Height + World.Sea_Level;
-            Terrain : Concorde.Handles.Terrain.Terrain_Handle;
-         begin
-            if Height in 1 .. World.Elevation_Range then
-               for Item of Climate_Vector loop
-                  if Height in Item.First .. Item.Last then
-                     Terrain := Item.Terrain;
-                     exit;
-                  end if;
-               end loop;
-
-               Elevation.Append
-                 (Elevation_Terrain'
-                    (Elevation => E.To_Elevation_Handle,
-                     Terrain   => Terrain));
-            end if;
-         end;
-      end loop;
-
-      for I in Tile_Refs'Range loop
+      for I in Sector_Array'Range loop
          declare
             Centre : constant Concorde.Surfaces.Vector_3 :=
                        Surface.Tile_Centre (I);
             Latitude : constant Real :=
                          Concorde.Elementary_Functions.Arcsin
                            (Centre (3), 360.0);
-            E      : constant Concorde.Handles.Elevation.Elevation_Handle :=
-                         Elevation.Element (Hs (Positive (I))).Elevation;
-            Terrain : constant Concorde.Handles.Terrain.Terrain_Handle :=
-                        Elevation.Element (Hs (Positive (I))).Terrain;
-            Ave_Temp : constant Real :=
-                         Base_Temperature (I)
-                         - (if E.Height <= 0 then 0.0
-                            else 6.5 * Real (E.Height) / 100.0);
+            Elevation : constant Integer :=
+                          Hs (Positive (I)) - World.Sea_Level;
+            Wind      : constant Real := Prevailing_Wind (Latitude);
+            Ave_Temp  : constant Non_Negative_Real :=
+                          Base_Temperature (I)
+                          - (if Elevation <= 0 then 0.0
+                             else 6.5 * Real (Elevation) / 100.0);
+            Moisture  : constant Unit_Real :=
+                          (if Elevation < 0
+                           then (if Ave_Temp < 263.0
+                             then 0.0
+                             elsif Ave_Temp < 273.0
+                             then (Ave_Temp - 263.0) / 10.0
+                             else 1.0)
+                           else 0.0);
+         begin
+            Sector_Array (I) := Sector_Info'
+              (Tile         => I,
+               Centre       => Centre,
+               Elevation    => Elevation,
+               Ave_Temp     => Ave_Temp,
+               Wind         => Wind,
+               Wind_To      => Concorde.Surfaces.Neighbour
+                 (Surface => Surface,
+                  Tile    => I,
+                  Bearing => Wind),
+               Moisture     => Moisture,
+               Habitability => World.Habitability,
+               Toxicity     => 0.0);
+         end;
+      end loop;
+
+      for I in 1 .. Sector_Array'Length / 20 loop
+         Iterate_Moisture;
+      end loop;
+
+      for I in Tile_Refs'Range loop
+         declare
+            Centre : constant Concorde.Surfaces.Vector_3 :=
+                       Sector_Array (I).Centre;
             Sector               : constant Concorde.Handles.World_Sector
               .World_Sector_Handle :=
                 Concorde.Handles.World_Sector.Create
@@ -357,18 +692,17 @@ package body Concorde.Configure.Worlds is
                    Faction             =>
                      Concorde.Handles.Faction.Empty_Handle,
                    World               => World,
-                   Terrain             => Terrain,
+                   Terrain             => Handles.Terrain.Empty_Handle,
                    Feature             =>
                      Concorde.Handles.Feature.Empty_Handle,
                    Height              => Hs (Positive (I)),
-                   Elevation           => E,
+                   Elevation           => Sector_Array (I).Elevation,
                    Sector_Use          =>
                      Concorde.Handles.Sector_Use.Empty_Handle,
-                   Average_Temperature => Ave_Temp,
-                   Prevailing_Wind     => Prevailing_Wind (Latitude),
-                   Moisture            =>
-                     (if Terrain.Is_Water
-                      then 1.0 else 0.0));
+                   Average_Temperature => Sector_Array (I).Ave_Temp,
+                   Habitability        => Sector_Array (I).Habitability,
+                   Prevailing_Wind     => Sector_Array (I).Wind,
+                   Moisture            => Sector_Array (I).Moisture);
          begin
             Tile_Refs (I) := Sector.To_Sector_Handle;
             for V of Surface.Tile_Boundary (I) loop
@@ -386,6 +720,19 @@ package body Concorde.Configure.Worlds is
             Concorde.Handles.Sector_Neighbour.Create
               (Sector    => Tile_Refs (Tile_Index),
                Neighbour => Tile_Refs (Surface.Neighbour (Tile_Index, I)));
+         end loop;
+      end loop;
+
+      for Sector of
+        Concorde.Handles.World_Sector.Select_By_World (World)
+      loop
+         for Element of Terrain_Checkers loop
+            if Element.Checker (Sector) then
+               Sector.Update_World_Sector
+                 .Set_Terrain (Element.Terrain)
+                 .Done;
+               exit;
+            end if;
          end loop;
       end loop;
 

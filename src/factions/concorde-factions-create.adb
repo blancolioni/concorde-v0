@@ -117,11 +117,11 @@ package body Concorde.Factions.Create is
 
       begin
 
-         Concorde.Colonies.Create.New_Colony
-           (World   => Capital,
-            Sector  => Sector,
-            Faction => Faction,
-            Config  => Setup);
+         Concorde.Colonies.Create.Initial_Colony
+           (Faction => Faction,
+            World   => Capital,
+            Capital => Sector,
+            Init    => Setup);
 
          Concorde.Handles.Shareholder.Create
            (Company => Company,

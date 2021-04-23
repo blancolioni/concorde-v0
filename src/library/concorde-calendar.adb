@@ -56,7 +56,7 @@ package body Concorde.Calendar is
    -- Advance --
    -------------
 
-   procedure Advance (Seconds : Duration) is
+   procedure Advance (Seconds : Concorde_Duration) is
    begin
 
       Check_Clock;
@@ -179,7 +179,7 @@ package body Concorde.Calendar is
    -----------
 
    function Image
-     (Elapsed_Time          : Duration;
+     (Elapsed_Time          : Concorde_Duration;
       Include_Time_Fraction : Boolean := False)
       return String
    is
@@ -240,7 +240,7 @@ package body Concorde.Calendar is
 
    function Seconds (Date : Time) return Day_Duration is
    begin
-      return Duration (Date mod 86_400);
+      return Concorde_Duration (Date mod 86_400);
    end Seconds;
 
    ----------------
@@ -255,9 +255,9 @@ package body Concorde.Calendar is
       return Day_Duration
    is
    begin
-      return Duration (Hour * 3600)
-        + Duration (Minute * 60)
-        + Duration (Second)
+      return Concorde_Duration (Hour * 3600)
+        + Concorde_Duration (Minute * 60)
+        + Concorde_Duration (Second)
         + Sub_Second;
    end Seconds_Of;
 
@@ -314,7 +314,7 @@ package body Concorde.Calendar is
       Second     : out Second_Number;
       Sub_Second : out Second_Duration)
    is
-      D : Duration;
+      D : Concorde_Duration;
    begin
       Split (Date, Year, Month, Day, D);
       Split (D, Hour, Minute, Second, Sub_Second);
@@ -326,14 +326,14 @@ package body Concorde.Calendar is
 
    procedure Split
      (Date          : Time;
-      Period        : Duration;
+      Period        : Concorde_Duration;
       Cycle_Count   : out Natural;
-      Partial_Cycle : out Duration)
+      Partial_Cycle : out Concorde_Duration)
    is
       P : constant Positive := Natural'Max (Natural (Period), 1);
    begin
       Cycle_Count := Natural (Date) / P;
-      Partial_Cycle := Duration (Natural (Date) mod P);
+      Partial_Cycle := Concorde_Duration (Natural (Date) mod P);
    end Split;
 
    -----------

@@ -1,0 +1,11 @@
+class = service
+name = Gymnasium
+power = 1
+worker = { worker = 10
+           tech = 5
+         }
+module = { commercial = 1
+           habitation = 1
+         }
+quality = 1
+fitness = true

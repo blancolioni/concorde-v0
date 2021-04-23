@@ -1,0 +1,11 @@
+class = service
+name = School
+power = 5
+worker = { tech = 10
+           worker = 30
+         }
+module = { commercial = 20
+           habitation = 10
+         }
+quality = 2
+education = true

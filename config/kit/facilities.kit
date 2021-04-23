@@ -1,11 +1,45 @@
+with Commodities;
 with Localisation;
+with Money;
+with Quantities;
 
 package Facilities is
 
-record Facility_Class : Localised;
+type Facility_Category is (Administration, Orbital_Dock, Factory, Extractor, Service);
 
-record Facility : Localised is
-   key Facility_Class;
+record Facility   : Localised is
+   key Category   : Facility_Category;
+   Power          : Quantity_Type;
+   Capacity       : Quantity_Type;
 end Facility;
+
+record Facility_Module is
+   key Facility;
+   key Building_Module;
+   Quantity : Quantity_Type;
+end Facility_Module;
+
+record Facility_Worker is
+   key Facility;
+   key Pop_Group;
+   Quantity : Quantity_Type;
+   unique key Facility_Worker with Facility, Pop_Group;
+end Facility_Worker;
+
+record Facility_Production is
+   key Facility;
+   key Commodity;
+   Quantity : Quantity_Type;
+end Facility_Production;
+
+record Facility_Extraction is
+   key Facility;
+   key Commodity;
+end Facility_Extraction;
+
+record Facility_Service is
+   key Facility;
+   key Service_Commodity;
+end Facility_Service;
 
 end Facilities;

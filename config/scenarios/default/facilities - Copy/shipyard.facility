@@ -1,0 +1,13 @@
+class = factory
+name = Shipyard
+power = 50
+worker = { exec = 10
+           worker = 100
+           tech = 100
+         }
+module = { industrial = 100
+           habitation = 50
+           military = 50
+         }
+shipyard = true
+capacity = 500

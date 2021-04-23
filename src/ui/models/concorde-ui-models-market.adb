@@ -94,7 +94,7 @@ package body Concorde.UI.Models.Market is
      (Model : in out Market_Model_Record'Class);
 
    type Market_Model_Update is
-     new Concorde.Updates.Update_Interface with
+     new Concorde.Updates.Root_Update_Type with
       record
          Model : Market_Model_Access;
       end record;

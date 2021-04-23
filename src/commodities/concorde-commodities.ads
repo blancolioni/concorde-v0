@@ -25,10 +25,6 @@ package Concorde.Commodities is
      (Commodity : Commodity_Class)
       return Concorde.Handles.Resource.Resource_Handle;
 
-   function Is_Manufactured
-     (Commodity : Commodity_Class)
-      return Boolean;
-
    procedure Scan_Ingredients
      (Commodity : Commodity_Class;
       Process   : not null access

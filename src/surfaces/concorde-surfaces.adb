@@ -174,6 +174,26 @@ package body Concorde.Surfaces is
 
    end Create_Voronoi_Partition;
 
+   -----------------
+   -- Get_Bearing --
+   -----------------
+
+   function Get_Bearing
+     (Surface  : Root_Surface_Type'Class;
+      From, To : Surface_Tile_Index)
+      return Concorde.Trigonometry.Angle
+   is
+      use Concorde.Spheres;
+
+      function To_Point (V : Vector_3) return Surface_Point
+      is (V (1), V (2), V (3));
+
+      B   : constant Surface_Point := To_Point (Surface.Tile_Centre (From));
+      C   : constant Surface_Point := To_Point (Surface.Tile_Centre (To));
+   begin
+      return Get_Bearing (B, C);
+   end Get_Bearing;
+
    --------------
    -- Get_Tile --
    --------------
@@ -188,6 +208,25 @@ package body Concorde.Surfaces is
    begin
       return 1;
    end Get_Tile;
+
+   ------------------
+   -- Is_Neighbour --
+   ------------------
+
+   function Is_Neighbour
+     (Surface   : Root_Surface_Type'Class;
+      Tile      : Surface_Tile_Index;
+      Neighbour : Surface_Tile_Index)
+      return Boolean
+   is
+   begin
+      for I in 1 .. Surface.Neighbour_Count (Tile) loop
+         if Surface.Neighbour (Tile, I) = Neighbour then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Is_Neighbour;
 
    --------------
    -- Latitude --
@@ -219,6 +258,39 @@ package body Concorde.Surfaces is
    begin
       return Arctan (V (3), V (1), 360.0);
    end Longitude;
+
+   ---------------
+   -- Neighbour --
+   ---------------
+
+   function Neighbour
+     (Surface : Root_Surface_Type'Class;
+      Tile    : Surface_Tile_Index;
+      Bearing : Real)
+      return Surface_Tile_Index
+   is
+      use Concorde.Trigonometry;
+      A       : constant Angle := From_Degrees (Bearing);
+      To      : Surface_Tile_Count := 0;
+      Closest : Angle := From_Radians (0.0);
+      First   : Boolean := True;
+   begin
+      for I in 1 .. Surface.Neighbour_Count (Tile) loop
+         declare
+            N : constant Surface_Tile_Index :=
+                  Surface.Neighbour (Tile, I);
+            This : constant Angle :=
+                     Surface.Get_Bearing (Tile, N);
+         begin
+            if First or else A - This < Closest then
+               Closest := This;
+               To := N;
+               First := False;
+            end if;
+         end;
+      end loop;
+      return To;
+   end Neighbour;
 
    -------------------
    -- Tile_Boundary --

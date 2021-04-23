@@ -4,10 +4,10 @@ package Concorde.Updates.Events is
 
    procedure Update_At
      (Clock  : Concorde.Calendar.Time;
-      Update : Update_Interface'Class);
+      Update : Root_Update_Type'Class);
 
    procedure Update_With_Delay
-     (Wait   : Duration;
-      Update : Update_Interface'Class);
+     (Wait   : Concorde_Duration;
+      Update : Root_Update_Type'Class);
 
 end Concorde.Updates.Events;

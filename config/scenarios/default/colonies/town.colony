@@ -1,0 +1,7 @@
+colony-hub = 1
+extractors = { 1 5 1 10 }
+#heavy-factory = { 1 5 }
+light-factory = { 1 10 }
+shipyard = 0
+super-heavy-factory = 0
+market-size = 200

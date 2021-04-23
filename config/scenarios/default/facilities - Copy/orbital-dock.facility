@@ -1,0 +1,12 @@
+class = orbital-dock
+name = "Orbital Dock"
+power = 100
+worker = { exec = 5
+           worker = 10
+           tech = 5
+         }
+module = { commercial = 10
+           industrial = 100
+           habitation = 15
+           military = 5
+         }

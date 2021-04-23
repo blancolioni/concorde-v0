@@ -3,7 +3,7 @@ with Tropos.Reader;
 with Concorde.Identifiers;
 
 with Concorde.Handles.Economic_Sector;
-with Concorde.Handles.Zone;
+with Concorde.Handles.District;
 
 with Concorde.Db;
 
@@ -26,9 +26,9 @@ package body Concorde.Configure.Economy is
            (Content    => Concorde.Db.Quantity,
             Identifier => Concorde.Identifiers.Next_Identifier,
             Tag        => Config.Config_Name,
-            Zone       =>
-              Concorde.Handles.Zone.Get_By_Tag
-                (Config.Get ("zone")));
+            District       =>
+              Concorde.Handles.District.Get_By_Tag
+                (Config.Get ("district")));
       end loop;
    end Configure_Economic_Sectors;
 

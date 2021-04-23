@@ -93,7 +93,7 @@ package body Concorde.UI.Models.Population is
      (Model : in out Population_Model_Record'Class);
 
    type Population_Model_Update is
-     new Concorde.Updates.Update_Interface with
+     new Concorde.Updates.Root_Update_Type with
       record
          Model : Population_Model_Access;
       end record;

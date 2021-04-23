@@ -1,11 +1,11 @@
 with WL.String_Maps;
 
+with Reiko.Control;
+
 with Nazar.Interfaces.Text;
 with Nazar.Interfaces.Text_Writer;
 
 with Concorde.Calendar;
-
-with Concorde.Updates.Control;
 
 package body Concorde.Commands is
 
@@ -111,7 +111,7 @@ package body Concorde.Commands is
    is
       pragma Unreferenced (Command, Environment, Writer);
       Speed : constant String := Arguments.Argument (1);
-      Acc   : Duration := 0.0;
+      Acc   : Concorde_Duration := 0.0;
    begin
       if Speed = "slow" then
          Acc := 3600.0;
@@ -122,10 +122,10 @@ package body Concorde.Commands is
       elsif Speed = "maximum" then
          Acc := Concorde.Calendar.Days (10);
       else
-         Acc := Duration'Value (Speed);
+         Acc := Concorde_Duration'Value (Speed);
       end if;
 
-      Concorde.Updates.Control.Set_Advance_Speed (Acc);
+      Reiko.Control.Set_Acceleration (Reiko.Reiko_Duration (Acc));
    end Execute;
 
    -------------
@@ -143,9 +143,9 @@ package body Concorde.Commands is
       pragma Unreferenced (Arguments, Environment, Writer);
    begin
       if Command.Pause then
-         Concorde.Updates.Control.Pause_Updates;
+         Reiko.Control.Pause;
       else
-         Concorde.Updates.Control.Resume_Updates;
+         Reiko.Control.Resume;
       end if;
    end Execute;
 

@@ -1,0 +1,12 @@
+class = service
+name = Multiplex
+power = 10
+worker = { exec = 5
+           tech = 10
+           worker = 30
+         }
+module = { commercial = 50
+           habitation = 15
+         }
+quality = 2
+entertainment = true

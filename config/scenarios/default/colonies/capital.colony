@@ -1,0 +1,8 @@
+colony-hub = 1
+orbital-dock = 1
+extractors = { 1 5 20 }
+heavy-factory = { 1 3 10 }
+light-factory = { 1 3 10 }
+shipyard = { 1 10 1 }
+super-heavy-factory = { 1 30 1 }
+market-size = 5000

@@ -1,0 +1,14 @@
+class = factory
+name = "Super-Heavy Factory"
+power = 40
+worker = { exec = 20
+           worker = 320
+           tech = 40
+         }
+module = { industrial = 120
+           habitation = 80
+         }
+industrial = true
+consumer = true
+construction = true
+capacity = 5000

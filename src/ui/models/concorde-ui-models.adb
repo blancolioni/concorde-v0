@@ -2,22 +2,22 @@ with Concorde.Updates.Events;
 
 package body Concorde.UI.Models is
 
-   type Model_Access is access all Regular_Update_Interface'Class;
+   type Model_Access is access all Regular_Root_Update_Type'Class;
 
    type Model_Update is
-     new Concorde.Updates.Update_Interface with
+     new Concorde.Updates.Root_Update_Type with
       record
          Model : Model_Access;
       end record;
 
-   overriding procedure Activate
+   overriding procedure Execute
      (Update : Model_Update);
 
-   --------------
-   -- Activate --
-   --------------
+   -------------
+   -- Execute --
+   -------------
 
-   overriding procedure Activate (Update : Model_Update) is
+   overriding procedure Execute (Update : Model_Update) is
       Continue : Boolean;
    begin
       Update.Model.Refresh (Continue);
@@ -25,7 +25,7 @@ package body Concorde.UI.Models is
          Concorde.Updates.Events.Update_With_Delay
            (Update.Model.Interval, Update);
       end if;
-   end Activate;
+   end Execute;
 
    ----------------
    -- Initialize --
@@ -34,7 +34,7 @@ package body Concorde.UI.Models is
    procedure Initialize
      (Model        : not null access Dynamic_Text_Model'Class;
       Initial_Text : String;
-      Interval     : Duration)
+      Interval     : Concorde_Duration)
    is
    begin
       Model.Set_Text (Initial_Text);
@@ -60,11 +60,13 @@ package body Concorde.UI.Models is
    -------------------
 
    procedure Start_Updates
-     (Model : not null access Regular_Update_Interface'Class)
+     (Model : not null access Regular_Root_Update_Type'Class)
    is
    begin
       Concorde.Updates.Events.Update_With_Delay
-        (Model.Interval, Model_Update'(Model => Model_Access (Model)));
+        (Model.Interval,
+         Model_Update'(Concorde.Updates.Root_Update_Type with
+               Model => Model_Access (Model)));
    end Start_Updates;
 
 end Concorde.UI.Models;

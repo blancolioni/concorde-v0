@@ -1,0 +1,9 @@
+class = resource
+name = Livestock
+mass = 1
+organic = true
+npc-price = 10
+constraints = {
+    life = multicellular
+}
+yield = 25%

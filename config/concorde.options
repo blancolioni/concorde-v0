@@ -35,7 +35,7 @@ package Concorde.Options is
    System_Z_Deviation      : Natural;
    Average_Connections     : Positive;
    
-   Work_Threads            : Positive;
+   Work_Threads            : Positive := 1;
 
    Enable_Faction_Logging  : Boolean;
    Enable_Market_Logging   : Boolean;

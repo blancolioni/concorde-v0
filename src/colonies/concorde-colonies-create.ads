@@ -6,10 +6,10 @@ with Concorde.Handles.World_Sector;
 
 package Concorde.Colonies.Create is
 
-   procedure New_Colony
-     (World   : Concorde.Handles.World.World_Class;
-      Sector  : Concorde.Handles.World_Sector.World_Sector_Class;
-      Faction : Concorde.Handles.Faction.Faction_Class;
-      Config  : Tropos.Configuration);
+   procedure Initial_Colony
+     (Faction : Concorde.Handles.Faction.Faction_Class;
+      World   : Concorde.Handles.World.World_Class;
+      Capital : Concorde.Handles.World_Sector.World_Sector_Class;
+      Init    : Tropos.Configuration);
 
 end Concorde.Colonies.Create;

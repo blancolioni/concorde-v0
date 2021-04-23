@@ -1,6 +1,6 @@
 with Tropos.Reader;
 
-with Concorde.Facilities;
+with Concorde.Db;
 
 with Concorde.Handles.Facility;
 
@@ -36,10 +36,16 @@ package body Concorde.Configure.Facilities is
    is
    begin
       Concorde.Handles.Facility.Create
-        (Tag            => Facility_Config.Config_Name,
-         Facility_Class =>
-           Concorde.Facilities.Facility_Class
-             (Facility_Config.Get ("class")));
+        (Tag      => Facility_Config.Config_Name,
+         Category =>
+           Concorde.Db.Facility_Category'Value
+             (Facility_Config.Get ("class")),
+         Power    =>
+           Concorde.Quantities.To_Quantity
+             (Facility_Config.Get ("power", 0.0)),
+         Capacity =>
+           Concorde.Quantities.To_Quantity
+             (Facility_Config.Get ("capacity", 0.0)));
    end Configure_Facility;
 
 end Concorde.Configure.Facilities;

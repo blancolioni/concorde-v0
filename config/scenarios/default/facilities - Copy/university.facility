@@ -1,0 +1,13 @@
+class = service
+name = University
+power = 10
+worker = { tech = 80
+           exec = 40
+           worker = 200
+         }
+module = { commercial = 40
+           industrial = 20
+           habitation = 50
+         }
+quality = 3
+education = true

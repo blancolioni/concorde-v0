@@ -136,7 +136,7 @@ package body Concorde.Ships is
       Epoch       : constant Time :=
                      Concorde.Handles.Ship.Get (Ship.Reference).Epoch;
       Now         : constant Time := Clock;
-      Elapsed     : constant Duration := Now - Epoch;
+      Elapsed     : constant Concorde_Duration := Now - Epoch;
       Orbit_Count : constant Non_Negative_Real := Real (Elapsed) / Period;
       Partial     : constant Unit_Real :=
                       Orbit_Count - Real'Truncation (Orbit_Count);

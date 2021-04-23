@@ -1,0 +1,9 @@
+class = resource
+name = Herbs
+mass = 1
+organic = true
+npc-price = 20
+constraints = {
+    life = plants
+}
+yield = 20%

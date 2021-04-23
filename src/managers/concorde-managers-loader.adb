@@ -1,5 +1,5 @@
 --  with Concorde.Managers.Armies;
-with Concorde.Managers.Colonies;
+--  with Concorde.Managers.Colonies;
 --  with Concorde.Managers.Factions;
 
 --  with Concorde.Managers.Installations;
@@ -30,9 +30,10 @@ package body Concorde.Managers.Loader is
 --        Register.Insert
 --          ("faction-company",
 --           Concorde.Managers.Factions.Create_Faction_Company_Manager'Access);
-      Register.Insert
-        ("default-colony",
-         Concorde.Managers.Colonies.Create_Default_Manager'Access);
+      --  Register.Insert
+      --    ("default-colony",
+--     Concorde.Managers.Colonies.Create_Default_Manager'Access);
+      null;
    end Register_Managers;
 
 end Concorde.Managers.Loader;

@@ -6,9 +6,9 @@ package Concorde.Calendar is
    subtype Month_Number is Integer range 1 .. 12;
    subtype Day_Number   is Integer range 1 .. 30;
 
-   subtype Day_Duration is Duration range 0.0 .. 86_400.0;
+   subtype Day_Duration is Concorde_Duration range 0.0 .. 86_400.0;
 
-   Day_Length : constant Duration := Day_Duration'Last;
+   Day_Length : constant Concorde_Duration := Day_Duration'Last;
 
    subtype Hour_Number     is Natural range 0 .. 23;
    subtype Minute_Number   is Natural range 0 .. 59;
@@ -53,9 +53,9 @@ package Concorde.Calendar is
 
    procedure Split
      (Date          : Time;
-      Period        : Duration;
+      Period        : Concorde_Duration;
       Cycle_Count   : out Natural;
-      Partial_Cycle : out Duration);
+      Partial_Cycle : out Concorde_Duration);
 
    function Time_Of
      (Year    : Year_Number;
@@ -87,7 +87,7 @@ package Concorde.Calendar is
       return String;
 
    function Image
-     (Elapsed_Time          : Duration;
+     (Elapsed_Time          : Concorde_Duration;
       Include_Time_Fraction : Boolean := False) return String;
 
    function From_String
@@ -106,25 +106,25 @@ package Concorde.Calendar is
    function Zero_Time return Time;
    function Start return Time;
 
-   procedure Advance (Seconds : Duration);
+   procedure Advance (Seconds : Concorde_Duration);
 
    procedure Load_Clock;
 
-   function "+" (Left : Time;     Right : Duration) return Time;
-   function "+" (Left : Duration; Right : Time)     return Time;
-   function "-" (Left : Time;     Right : Duration) return Time;
-   function "-" (Left : Time;     Right : Time)     return Duration;
+   function "+" (Left : Time;     Right : Concorde_Duration) return Time;
+   function "+" (Left : Concorde_Duration; Right : Time)     return Time;
+   function "-" (Left : Time;     Right : Concorde_Duration) return Time;
+   function "-" (Left : Time;     Right : Time)     return Concorde_Duration;
 
    function "<"  (Left, Right : Time) return Boolean;
    function "<=" (Left, Right : Time) return Boolean;
    function ">"  (Left, Right : Time) return Boolean;
    function ">=" (Left, Right : Time) return Boolean;
 
-   function Hours (Count : Natural) return Duration;
-   function Days (Count : Natural) return Duration;
-   function Years (Count : Natural) return Duration;
+   function Hours (Count : Natural) return Concorde_Duration;
+   function Days (Count : Natural) return Concorde_Duration;
+   function Years (Count : Natural) return Concorde_Duration;
 
-   function Days (Count : Non_Negative_Real) return Duration;
+   function Days (Count : Non_Negative_Real) return Concorde_Duration;
    function Delay_Days (Days_Delay : Non_Negative_Real) return Time;
 
    Time_Error : exception;
@@ -141,29 +141,29 @@ private
    function Sub_Second (Date : Time) return Second_Duration
    is (0.0);
 
-   function "+" (Left : Time;     Right : Duration) return Time
+   function "+" (Left : Time;     Right : Concorde_Duration) return Time
    is (Left + Time (Right));
 
-   function "+" (Left : Duration; Right : Time)     return Time
+   function "+" (Left : Concorde_Duration; Right : Time)     return Time
    is (Right + Time (Left));
 
-   function "-" (Left : Time;     Right : Duration) return Time
+   function "-" (Left : Time;     Right : Concorde_Duration) return Time
    is (Left - Time (Right));
 
-   function "-" (Left : Time;     Right : Time)     return Duration
-   is (Duration (Time'(Left - Right)));
+   function "-" (Left : Time;     Right : Time)     return Concorde_Duration
+   is (Concorde_Duration (Time'(Left - Right)));
 
-   function Days (Count : Natural) return Duration
-   is (Duration (Count) * Day_Length);
+   function Days (Count : Natural) return Concorde_Duration
+   is (Concorde_Duration (Count) * Day_Length);
 
-   function Days (Count : Non_Negative_Real) return Duration
-   is (Duration (Count) * Day_Length);
+   function Days (Count : Non_Negative_Real) return Concorde_Duration
+   is (Concorde_Duration (Count) * Day_Length);
 
-   function Hours (Count : Natural) return Duration
-   is (Duration (Count) * 3_600.0);
+   function Hours (Count : Natural) return Concorde_Duration
+   is (Concorde_Duration (Count) * 3_600.0);
 
-   function Years (Count : Natural) return Duration
-   is (Count * Days (360));
+   function Years (Count : Natural) return Concorde_Duration
+   is (Concorde_Duration (Count) * Days (360));
 
    function Max (Left, Right : Time) return Time
    is (Time'Max (Left, Right));

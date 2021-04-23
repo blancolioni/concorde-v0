@@ -2,24 +2,24 @@ with Nazar.Models.Text;
 
 package Concorde.UI.Models is
 
-   type Regular_Update_Interface is interface;
+   type Regular_Root_Update_Type is interface;
 
    procedure Refresh
-     (Model    : in out Regular_Update_Interface;
+     (Model    : in out Regular_Root_Update_Type;
       Continue : out Boolean)
    is abstract;
 
    function Interval
-     (Model : Regular_Update_Interface)
-      return Duration
+     (Model : Regular_Root_Update_Type)
+      return Concorde_Duration
       is abstract;
 
    procedure Start_Updates
-     (Model    : not null access Regular_Update_Interface'Class);
+     (Model    : not null access Regular_Root_Update_Type'Class);
 
    type Dynamic_Text_Model is
      abstract new Nazar.Models.Text.Nazar_Text_Model_Record
-     and Regular_Update_Interface
+     and Regular_Root_Update_Type
    with private;
 
    overriding procedure Refresh
@@ -28,12 +28,12 @@ package Concorde.UI.Models is
 
    overriding function Interval
      (Model : Dynamic_Text_Model)
-      return Duration;
+      return Concorde_Duration;
 
    procedure Initialize
      (Model        : not null access Dynamic_Text_Model'Class;
       Initial_Text : String;
-      Interval     : Duration);
+      Interval     : Concorde_Duration);
 
    function Current_Text
      (Model : Dynamic_Text_Model)
@@ -44,14 +44,14 @@ private
 
    type Dynamic_Text_Model is
      abstract new Nazar.Models.Text.Nazar_Text_Model_Record
-     and Regular_Update_Interface with
+     and Regular_Root_Update_Type with
       record
-         Interval : Duration;
+         Interval : Concorde_Duration;
       end record;
 
    overriding function Interval
      (Model : Dynamic_Text_Model)
-      return Duration
+      return Concorde_Duration
    is (Model.Interval);
 
 end Concorde.UI.Models;

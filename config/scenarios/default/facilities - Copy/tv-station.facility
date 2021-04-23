@@ -1,0 +1,12 @@
+class = service
+name = "TV Station"
+power = 5
+worker = { exec = 10
+           tech = 50
+           worker = 50
+         }
+module = { commercial = 25
+           habitation = 15
+         }
+quality = 1
+entertainment = true

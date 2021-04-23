@@ -1,0 +1,9 @@
+class = extractor
+name = "Liquid Pump"
+power = 5
+worker = { tech = 5
+         }
+module = { industrial = 4
+           habitation = 1
+         }
+liquid = true

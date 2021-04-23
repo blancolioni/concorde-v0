@@ -1,6 +1,11 @@
+default-terrain = ice
+habitability = 0.1
+
 terrain = {
-   mountains = 2%
-   hills = 5%
-   plain = 97%
+   hill = 10%
+   marsh = 5%
+   mountain = 20%
+   swamp = 5%
+   tundra = 5%
+   volcanic = 10%
 }
-habitability = 25

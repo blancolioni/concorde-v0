@@ -2,6 +2,8 @@ private with Ada.Containers.Vectors;
 
 with Ada.Numerics.Generic_Real_Arrays;
 
+with Concorde.Trigonometry;
+
 package Concorde.Surfaces is
 
    Max_Surface_Tiles : constant := 60_000;
@@ -40,10 +42,27 @@ package Concorde.Surfaces is
      with Pre => Tile <= Surface.Tile_Count
      and then Index <= Surface.Neighbour_Count (Tile);
 
+   function Neighbour
+     (Surface : Root_Surface_Type'Class;
+      Tile    : Surface_Tile_Index;
+      Bearing : Real)
+      return Surface_Tile_Index;
+
+   function Is_Neighbour
+     (Surface   : Root_Surface_Type'Class;
+      Tile      : Surface_Tile_Index;
+      Neighbour : Surface_Tile_Index)
+      return Boolean;
+
    function Get_Tile
      (Relative_Latitude  : Signed_Unit_Real;
       Relative_Longitude : Unit_Real)
       return Surface_Tile_Index;
+
+   function Get_Bearing
+     (Surface  : Root_Surface_Type'Class;
+      From, To : Surface_Tile_Index)
+      return Concorde.Trigonometry.Angle;
 
    function Latitude
      (Surface : Root_Surface_Type'Class;

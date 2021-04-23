@@ -15,7 +15,7 @@ with Concorde.Trigonometry;
 with Concorde.Solar_System;
 
 with Concorde.Handles.Atmosphere;
-with Concorde.Handles.Gas;
+with Concorde.Handles.Atmospheric_Gas;
 --  with Concorde.Handles.Palette;
 with Concorde.Handles.Star;
 with Concorde.Handles.World;
@@ -171,7 +171,8 @@ package body Concorde.Configure.Star_Systems is
       function K (N : Non_Negative_Real) return Mass_Parameters is (N, 0);
       function R (N : Positive) return Mass_Parameters is (0.0, N);
 
-      type Mass_Table is array (2 .. 12, Planetary_Zone) of Mass_Parameters;
+      type Mass_Table is
+        array (2 .. 12, Planetary_Zone) of Mass_Parameters;
       Planet_Mass : constant Mass_Table :=
                       (2  => (others => Z),
                        3  => (Black => Z, others => K (0.1)),
@@ -824,6 +825,7 @@ package body Concorde.Configure.Star_Systems is
                when Airless => 0.0,
                when Desert  =>
                  Tmp_Factor * (Hydrosphere + 0.5),
+               when Hothouse => 0.0,
                when Iceball => 0.0,
                when Martian => 0.0,
                when Temperate => Tmp_Factor,
@@ -965,10 +967,11 @@ package body Concorde.Configure.Star_Systems is
          if Current_Pressure > 0.0 then
             for Item of Current_Atm.List loop
                declare
-                  Gas : constant Concorde.Handles.Gas.Gas_Handle :=
-                    Concorde.Handles.Gas.Get_By_Tag
-                      (Ada.Characters.Handling.To_Lower
-                         (Item.Gas'Image));
+                  use Concorde.Handles.Atmospheric_Gas;
+                  Gas : constant Atmospheric_Gas_Handle :=
+                          Get_By_Tag
+                            (Ada.Characters.Handling.To_Lower
+                               (Item.Gas'Image));
                begin
                   if not Gas.Has_Element then
                      raise Constraint_Error with
@@ -976,9 +979,9 @@ package body Concorde.Configure.Star_Systems is
                   end if;
 
                   Concorde.Handles.Atmosphere.Create
-                    (World      => World,
-                     Gas        => Gas,
-                     Percentage => Item.Partial);
+                    (World           => World,
+                     Atmospheric_Gas => Gas,
+                     Percentage      => Item.Partial);
                end;
             end loop;
          end if;

@@ -1,0 +1,14 @@
+class = service
+power = 2
+worker = { exec = 2
+           worker = 4
+           tech = 8
+         }
+module = { commercial = 1
+           habitation = 1
+         }
+service = {
+   entertainment = { quality = 2 charge = 50 }
+}
+
+capacity = 100

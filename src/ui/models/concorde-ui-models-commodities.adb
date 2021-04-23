@@ -15,8 +15,6 @@ with Concorde.Handles.Colony;
 with Concorde.Handles.World;
 
 with Concorde.Handles.Colony_Price;
-with Concorde.Handles.Network_Value;
-with Concorde.Handles.Node;
 
 package body Concorde.UI.Models.Commodities is
 
@@ -95,28 +93,28 @@ package body Concorde.UI.Models.Commodities is
      (Model : in out Model_Record'Class);
 
    type Market_Model_Update is
-     new Concorde.Updates.Update_Interface with
+     new Concorde.Updates.Root_Update_Type with
       record
          Model : Model_Access;
       end record;
 
-   overriding procedure Activate
+   overriding procedure Execute
      (Update : Market_Model_Update);
 
    function Image (X : Real) return String
                    renames Concorde.Real_Images.Approximate_Image;
 
-   --------------
-   -- Activate --
-   --------------
+   -------------
+   -- Execute --
+   -------------
 
-   overriding procedure Activate (Update : Market_Model_Update) is
+   overriding procedure Execute (Update : Market_Model_Update) is
    begin
       Update.Model.Load;
       Update.Model.Notify_Observers;
       Concorde.Updates.Events.Update_With_Delay
         (Concorde.Calendar.Days (1), Update);
-   end Activate;
+   end Execute;
 
    ----------------------------
    -- Commodity_Market_Model --

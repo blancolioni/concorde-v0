@@ -1,0 +1,10 @@
+class = extractor
+name = Farm
+power = 5
+worker = { tech = 1
+           worker = 9
+         }
+module = { industrial = 3
+           habitation = 2
+         }
+organic = true

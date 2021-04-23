@@ -1,0 +1,12 @@
+class = service
+name = "Leisure Complex"
+power = 2
+worker = { exec = 10
+           tech = 20
+           worker = 40
+         }
+module = { commercial = 30
+           habitation = 10
+         }
+quality = 2
+fitness = true

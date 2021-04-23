@@ -41,7 +41,7 @@ package Concorde.Markets is
      (Market    : Concorde_Market;
       Commodity : Concorde.Commodities.Commodity_Reference;
       Offer     : Concorde.Handles.Offer_Type;
-      Since     : Duration)
+      Since     : Concorde_Duration)
       return Concorde.Quantities.Quantity_Type;
 
    function Historical_Offer_Quantity
@@ -49,7 +49,7 @@ package Concorde.Markets is
       Commodity : Concorde.Commodities.Commodity_Reference;
       Offer     : Concorde.Handles.Offer_Type;
       Price     : Concorde.Money.Price_Type;
-      Since     : Duration)
+      Since     : Concorde_Duration)
       return Concorde.Quantities.Quantity_Type;
 
    function Current_Quantity

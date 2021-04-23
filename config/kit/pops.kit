@@ -2,27 +2,23 @@ with Colonies;
 with Commodities;
 with Employers;
 with Managed;
-with Network;
 with Transport;
 with Utility;
 with Worlds;
 
 package Pops is
 
-record Pop is
+record Pop : Agent, Managed is
    key Faction;
    key Colony;
    key World;
    key World_Sector;
+   Pop_Group;
    Size   : Long_Float;
    Apathy : Long_Float;
-   Wealth_Group : Pop_Group;
    key Faction_World with Faction, World;
+   key Faction_Sector_Group with Faction, World_Sector, Pop_Group;
+   key Faction_World_Group with Faction, World, Pop_Group;
 end Pop;
-
-record Pop_Group_Member is
-   key Pop;
-   Pop_Group;
-end Pop_Group_Member;
 
 end Pops;

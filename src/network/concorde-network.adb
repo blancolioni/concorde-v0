@@ -338,9 +338,9 @@ package body Concorde.Network is
       declare
          use Concorde.Calendar;
          use Value_History_Maps;
-         DT          : constant Duration := Days (Inertia);
-         DS          : constant Duration := Days (Smoothing);
-         DH          : Duration := 0.0;
+         DT          : constant Concorde_Duration := Days (Inertia);
+         DS          : constant Concorde_Duration := Days (Smoothing);
+         DH          : Concorde_Duration := 0.0;
          Now         : constant Time := Clock;
          Start_Time  : constant Time := Now - DT - DS;
          Finish_Time : constant Time := Now - DT;

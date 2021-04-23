@@ -1,0 +1,10 @@
+class = extractor
+name = "Gas Plant"
+power = 10
+worker = { worker = 10
+           tech = 10
+         }
+module = { industrial = 7
+           habitation = 3
+         }
+gas = true

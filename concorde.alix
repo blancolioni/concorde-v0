@@ -28,6 +28,7 @@ source_dir = src/ui/entities
 source_dir = src/ui/gtk
 source_dir = src/ui/models
 source_dir = src/ui/nazar
+source_dir = src/ui/rho
 source_dir = src/ui/text
 source_dir = src/ui/views
 source_dir = src/updates
@@ -40,6 +41,10 @@ depend = { project = marlowe version = any }
 depend = { project = kit version = any }
 depend = { project = nazar version = any }
 depend = { project = nazargtk version = any }
+depend = { project = ../agora/agora external = yes }
+depend = { project = ../reiko/reiko external = yes }
+depend = { project = ../tarana/tarana external = yes }
+depend = { project = E:/home/fraser/Documents/GitHub/rho/rho external = yes }
 depend = { project = aws external = yes }
 depend = { project = GtkAda external = yes }
 language = Ada

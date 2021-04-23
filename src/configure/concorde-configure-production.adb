@@ -8,7 +8,7 @@ with Concorde.Handles.Input_Item;
 with Concorde.Handles.Output_Item;
 with Concorde.Handles.Efficiency_Item;
 with Concorde.Handles.Required_Item;
-with Concorde.Handles.Zone;
+with Concorde.Handles.District;
 
 package body Concorde.Configure.Production is
 
@@ -48,24 +48,24 @@ package body Concorde.Configure.Production is
    procedure Configure_Production
      (Production_Config : Tropos.Configuration)
    is
-      use type Concorde.Handles.Zone_Reference;
-      Zone : constant Concorde.Handles.Zone_Reference :=
-        Concorde.Handles.Zone.Get_By_Tag
-          (Production_Config.Get ("zone", ""));
+      use type Concorde.Handles.District_Reference;
+      District : constant Concorde.Handles.District_Reference :=
+        Concorde.Handles.District.Get_By_Tag
+          (Production_Config.Get ("district", ""));
       Size : constant Non_Negative_Real :=
         Real (Float'(Production_Config.Get ("size", 1.0)));
       P : constant Concorde.Handles.Production_Reference :=
         Concorde.Handles.Production.Create
           (Tag  => Production_Config.Config_Name,
-           Zone => Zone,
+           District => District,
            Size => Size);
    begin
 
-      if Zone = Concorde.Handles.Null_Zone_Reference then
+      if District = Concorde.Handles.Null_District_Reference then
          raise Constraint_Error with
            "in production " & Production_Config.Config_Name
-           & ": no such zone: "
-           & Production_Config.Get ("zone");
+           & ": no such district: "
+           & Production_Config.Get ("district");
       end if;
 
       Configure_Production_Items

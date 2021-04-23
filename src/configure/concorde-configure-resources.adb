@@ -11,7 +11,7 @@ with Concorde.Solar_System;
 
 with Concorde.Handles.Deposit;
 with Concorde.Handles.Fuzzy_Set;
-with Concorde.Handles.Gas;
+with Concorde.Handles.Atmospheric_Gas;
 with Concorde.Handles.Resource_Constraint;
 with Concorde.Handles.Resource_Sphere;
 with Concorde.Handles.Star_System;
@@ -77,7 +77,7 @@ package body Concorde.Configure.Resources is
             Max_IPP_PPM  : constant Non_Negative_Real := Get ("max_ipp_ppm");
 
          begin
-            Concorde.Handles.Gas.Create
+            Concorde.Handles.Atmospheric_Gas.Create
               (Tag              =>
                  Ada.Characters.Handling.To_Lower (Cfg.Config_Name),
                Formula          => Formula,

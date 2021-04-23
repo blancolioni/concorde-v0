@@ -1,0 +1,12 @@
+class = colony-hub
+name = "Colony Hub"
+power = 10
+worker = { exec = 5
+           worker = 10
+           tech = 5
+         }
+module = { commercial = 5
+           industrial = 5
+           habitation = 10
+           military = 5
+         }

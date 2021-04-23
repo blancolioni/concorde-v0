@@ -1,4 +1,4 @@
-with Concorde.Updates.Tasks;
+with Reiko.Control;
 
 package body Concorde.Updates.Events is
 
@@ -8,10 +8,15 @@ package body Concorde.Updates.Events is
 
    procedure Update_At
      (Clock  : Concorde.Calendar.Time;
-      Update : Update_Interface'Class)
+      Update : Root_Update_Type'Class)
    is
    begin
-      Concorde.Updates.Tasks.Update_Map.Add_Update (Clock, Update);
+      if False then
+         Reiko.Control.Add_Update
+           (Update    => Update,
+            Update_At =>
+              Reiko.Reiko_Time (Concorde.Calendar.To_Real (Clock)));
+      end if;
    end Update_At;
 
    -----------------------
@@ -19,13 +24,12 @@ package body Concorde.Updates.Events is
    -----------------------
 
    procedure Update_With_Delay
-     (Wait   : Duration;
-      Update : Update_Interface'Class)
+     (Wait   : Concorde_Duration;
+      Update : Root_Update_Type'Class)
    is
       use type Concorde.Calendar.Time;
    begin
-      Concorde.Updates.Tasks.Update_Map.Add_Update
-        (Concorde.Calendar.Clock + Wait, Update);
+      Update_At (Concorde.Calendar.Clock + Wait, Update);
    end Update_With_Delay;
 
 end Concorde.Updates.Events;

@@ -1,0 +1,10 @@
+class = extractor
+power = 5
+worker = { tech = 1
+           worker = 19
+         }
+module = { industrial = 6
+           habitation = 4
+         }
+mineral = true
+fuel = true
