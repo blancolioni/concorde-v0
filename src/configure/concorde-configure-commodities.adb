@@ -13,6 +13,7 @@ with Concorde.Handles.Commodity;
 with Concorde.Handles.Construction_Input;
 with Concorde.Handles.Consumer_Commodity;
 with Concorde.Handles.Industrial_Commodity;
+with Concorde.Handles.Input_Commodity;
 with Concorde.Handles.Pop_Group;
 with Concorde.Handles.Resource;
 with Concorde.Handles.Service_Commodity;
@@ -101,12 +102,12 @@ package body Concorde.Configure.Commodities is
    ---------------------------
 
    procedure Configure_Commodities (Scenario_Name : String) is
-   begin
-      for Commodity_Config of
+      Config : constant Tropos.Configuration :=
         Tropos.Reader.Read_Config
           (Path      => Scenario_Directory (Scenario_Name, "commodities"),
-           Extension => "commodity")
-      loop
+           Extension => "commodity");
+   begin
+      for Commodity_Config of Config loop
          begin
             Create_Commodity (Commodity_Config);
          exception
@@ -114,6 +115,37 @@ package body Concorde.Configure.Commodities is
                Ada.Text_IO.Put_Line
                  (Ada.Text_IO.Standard_Error,
                   Ada.Exceptions.Exception_Message (E));
+         end;
+      end loop;
+
+      for Commodity_Config of Config loop
+         declare
+            Commodity : constant Commodity_Class :=
+                          Get_By_Tag
+                            (Commodity_Config.Config_Name);
+         begin
+            pragma Assert (Commodity.Has_Element);
+
+            for Component_Config of Commodity_Config.Child ("component") loop
+               declare
+                  Input : constant Commodity_Class :=
+                            Get_By_Tag (Component_Config.Config_Name);
+                  Quantity : constant Non_Negative_Real :=
+                               Component_Config.Value;
+               begin
+                  if not Input.Has_Element then
+                     raise Constraint_Error with
+                       "no such commodity " & Component_Config.Config_Name
+                       & " in components for commodity "
+                       & Commodity.Tag;
+                  end if;
+
+                  Concorde.Handles.Input_Commodity.Create
+                    (Commodity => Commodity,
+                     Input     => Input,
+                     Quantity  => Concorde.Quantities.To_Quantity (Quantity));
+               end;
+            end loop;
          end;
       end loop;
 
