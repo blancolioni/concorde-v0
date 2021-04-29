@@ -79,7 +79,7 @@ package body Concorde.Managers.Factions is
    is
 
       procedure Check_Stock
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type);
 
@@ -88,7 +88,7 @@ package body Concorde.Managers.Factions is
       -----------------
 
       procedure Check_Stock
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type)
       is
@@ -119,7 +119,7 @@ package body Concorde.Managers.Factions is
    is
 
       procedure Check_Stock
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type);
 
@@ -128,7 +128,7 @@ package body Concorde.Managers.Factions is
       -----------------
 
       procedure Check_Stock
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type)
       is

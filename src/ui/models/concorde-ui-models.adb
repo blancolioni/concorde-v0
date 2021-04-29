@@ -10,6 +10,11 @@ package body Concorde.UI.Models is
          Model : Model_Access;
       end record;
 
+   overriding function Name
+     (Update : Model_Update)
+      return String
+   is ("model-update");
+
    overriding procedure Execute
      (Update : Model_Update);
 

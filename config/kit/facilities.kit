@@ -7,10 +7,11 @@ package Facilities is
 
 type Facility_Category is (Administration, Orbital_Dock, Factory, Extractor, Service);
 
-record Facility   : Localised is
-   key Category   : Facility_Category;
-   Power          : Quantity_Type;
-   Capacity       : Quantity_Type;
+record Facility : Localised is
+   key Category    : Facility_Category;
+   Power           : Quantity_Type;
+   Capacity        : Quantity_Type;
+   Default_Manager : String (32);
 end Facility;
 
 record Facility_Module is

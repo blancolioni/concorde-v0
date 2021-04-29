@@ -13,6 +13,11 @@ package body Concorde.Managers.Execution is
    type Check_Manager_Update is
      new Concorde.Updates.Root_Update_Type with null record;
 
+   overriding function Name
+     (Update : Check_Manager_Update)
+      return String
+   is ("check-manager");
+
    overriding procedure Execute
      (Update : Check_Manager_Update);
 

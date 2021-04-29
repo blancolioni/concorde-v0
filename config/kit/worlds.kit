@@ -19,6 +19,9 @@ package Worlds is
    type Stellar_Orbit_Zone is
      (Red, Yellow, Green, Blue, Black);
 
+   type Life_Complexity_Type is
+        (No_Life, Prebiotic, Single_Celled, Plants, Multicellular);
+
     record Atmospheric_Gas : Localised is
        unique key Formula   : String (16);
        key Molecular_Weight : Long_Float;
@@ -70,7 +73,7 @@ package Worlds is
       Surface_Pressure    : Long_Float;
 	   Average_Temperature : Long_Float;
       Hydrosphere         : Long_Float;
-	   Life                : Natural;
+	   Life                : Life_Complexity_Type;
 	   Smoothness          : Natural;
 	   Elevation_Range     : Natural;
 	   Sea_Level           : Natural;

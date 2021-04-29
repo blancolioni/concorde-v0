@@ -7,15 +7,18 @@ with WL.String_Maps;
 with Tropos.Reader;
 
 with Concorde.Commodities;
+with Concorde.Logging;
 
 with Concorde.Handles.Building_Module;
 with Concorde.Handles.Commodity;
 with Concorde.Handles.Construction_Input;
 with Concorde.Handles.Consumer_Commodity;
+with Concorde.Handles.Fuzzy_Set;
 with Concorde.Handles.Industrial_Commodity;
 with Concorde.Handles.Input_Commodity;
 with Concorde.Handles.Pop_Group;
 with Concorde.Handles.Resource;
+with Concorde.Handles.Resource_Constraint;
 with Concorde.Handles.Service_Commodity;
 with Concorde.Handles.Stock_Item;
 with Concorde.Handles.Supply_Input;
@@ -78,6 +81,14 @@ package body Concorde.Configure.Commodities is
      (Config : Tropos.Configuration)
       return Commodity_Handle;
 
+   procedure Create_Frequency_Constraint
+     (Resource : Concorde.Handles.Resource.Resource_Handle;
+      Config   : Tropos.Configuration);
+
+   procedure Create_Sphere_Constraint
+     (Resource : Concorde.Handles.Resource.Resource_Handle;
+      Config   : Tropos.Configuration);
+
    function Get_Price
      (Config : Tropos.Configuration)
       return Concorde.Money.Price_Type
@@ -94,8 +105,58 @@ package body Concorde.Configure.Commodities is
    procedure Create_Pop_Groups
      (Config : Tropos.Configuration);
 
-   --  procedure Create_Components
-   --    (Config : Tropos.Configuration);
+   type Frequency_Type is (Unlimited, Abundant, Common, Uncommon, Rare);
+
+   type Normal_Value is
+      record
+         Mean    : Real;
+         Std_Dev : Real;
+      end record;
+
+   Standard_Frequencies : constant array (Frequency_Type) of Normal_Value :=
+                            (Unlimited => (0.0, 0.0),
+                             Abundant  => (1.0, 0.1),
+                             Common    => (0.5, 0.05),
+                             Uncommon  => (0.1, 0.01),
+                             Rare      => (0.01, 0.001));
+
+   subtype Resource_Constraint_Handle is
+     Concorde.Handles.Resource_Constraint.Resource_Constraint_Handle;
+
+   type Constraint_Application is access
+     procedure (Constraint : Resource_Constraint_Handle;
+                Config     : Tropos.Configuration);
+
+   package Constraint_Argument_Maps is
+     new WL.String_Maps (Constraint_Application);
+
+   Constraint_Argument_Map : Constraint_Argument_Maps.Map;
+
+   procedure Initialize_Constraint_Arguments;
+
+   procedure Constrain_Composition
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration);
+
+   procedure Constrain_Hydrosphere
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration);
+
+   procedure Constrain_Life
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration);
+
+   procedure Constrain_Minimum_Age
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration);
+
+   procedure Constrain_Mass
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration);
+
+   procedure Constrain_Zone
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration);
 
    ---------------------------
    -- Configure_Commodities --
@@ -118,6 +179,25 @@ package body Concorde.Configure.Commodities is
          end;
       end loop;
 
+      Create_Pop_Groups
+        (Tropos.Reader.Read_Config
+           (Path      => Scenario_Directory (Scenario_Name, "pops"),
+            Extension => "pop"));
+
+   end Configure_Commodities;
+
+   --------------------------
+   -- Configure_Components --
+   --------------------------
+
+   procedure Configure_Components
+     (Scenario_Name : String)
+   is
+      Config : constant Tropos.Configuration :=
+        Tropos.Reader.Read_Config
+          (Path      => Scenario_Directory (Scenario_Name, "commodities"),
+           Extension => "commodity");
+   begin
       for Commodity_Config of Config loop
          declare
             Commodity : constant Commodity_Class :=
@@ -149,12 +229,7 @@ package body Concorde.Configure.Commodities is
          end;
       end loop;
 
-      Create_Pop_Groups
-        (Tropos.Reader.Read_Config
-           (Path      => Scenario_Directory (Scenario_Name, "pops"),
-            Extension => "pop"));
-
-   end Configure_Commodities;
+   end Configure_Components;
 
    ---------------------------
    -- Configure_Constructed --
@@ -194,6 +269,64 @@ package body Concorde.Configure.Commodities is
          end if;
       end loop;
    end Configure_Constructed;
+
+   procedure Configure_Initial_Prices is
+      use Concorde.Money;
+      Changed : Boolean := True;
+      Missing : Boolean := False;
+   begin
+      while Changed loop
+         Changed := False;
+         Missing := False;
+
+         for Commodity of Concorde.Handles.Commodity.Scan_By_Top_Record loop
+            if Commodity.Base_Price = Zero then
+               declare
+                  Component_Cost : Money_Type := Zero;
+                  Valid          : Boolean := True;
+               begin
+                  for Component of
+                    Concorde.Handles.Input_Commodity.Select_By_Commodity
+                      (Commodity)
+                  loop
+                     if Component.Input.Base_Price = Zero then
+                        Missing := True;
+                        Valid   := False;
+                        exit;
+                     else
+                        Component_Cost := Component_Cost
+                          + Total (Component.Input.Base_Price,
+                                   Component.Quantity);
+                     end if;
+                  end loop;
+
+                  if Valid then
+                     Commodity.Update_Commodity
+                       .Set_Base_Price
+                         (Price
+                            (Adjust (Component_Cost, 5.0),
+                             Concorde.Quantities.Unit))
+                       .Done;
+                     Changed := True;
+                  end if;
+               end;
+            end if;
+         end loop;
+      end loop;
+
+      if Missing then
+         Concorde.Logging.Log
+           ("error", "unable to determine initial commodity prices");
+         for Commodity of Concorde.Handles.Commodity.Scan_By_Top_Record loop
+            if Commodity.Base_Price = Zero then
+               Concorde.Logging.Log ("error", Commodity.Tag);
+            end if;
+         end loop;
+         raise Constraint_Error with
+           "unable to determine initial commodity prices";
+      end if;
+
+   end Configure_Initial_Prices;
 
    ---------------------
    -- Configure_Stock --
@@ -272,6 +405,131 @@ package body Concorde.Configure.Commodities is
          end if;
       end loop;
    end Configure_Supplied;
+
+   ---------------------------
+   -- Constrain_Composition --
+   ---------------------------
+
+   procedure Constrain_Composition
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
+      Config     : Tropos.Configuration)
+   is
+   begin
+      Constraint.Update_Resource_Constraint
+        .Set_Composition_Constraint (True)
+        .Set_Composition
+          (Concorde.Db.World_Composition'Value (Config.Value))
+          .Done;
+   end Constrain_Composition;
+
+   ---------------------------
+   -- Constrain_Hydrosphere --
+   ---------------------------
+
+   procedure Constrain_Hydrosphere
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
+      Config     : Tropos.Configuration)
+   is
+   begin
+      Constraint.Update_Resource_Constraint
+        .Set_Hydrosphere_Constraint (True)
+        .Set_Min_Hydrosphere (Real (Long_Float'(Config.Value)))
+        .Done;
+   end Constrain_Hydrosphere;
+
+   --------------------
+   -- Constrain_Life --
+   --------------------
+
+   procedure Constrain_Life
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
+      Config     : Tropos.Configuration)
+   is
+   begin
+      Constraint.Update_Resource_Constraint
+        .Set_Life_Constraint (True)
+        .Set_Min_Lifeforms
+          (Concorde.Db.Life_Complexity_Type'Value
+             (Config.Value))
+        .Done;
+   end Constrain_Life;
+
+   --------------------
+   -- Constrain_Mass --
+   --------------------
+
+   procedure Constrain_Mass
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
+      Config     : Tropos.Configuration)
+   is
+      type Mass_Constraint is (Small, Medium, Large);
+      type Mass_Value is array (1 .. 4) of Real;
+
+      function Get (Index : Positive) return Real
+      is (Real (Long_Float'(Config.Get (Index))));
+
+      Mass_Range       : constant array (Mass_Constraint) of Mass_Value :=
+                           (Small  => (0.0, 0.01, 0.2, 0.8),
+                            Medium => (0.6, 0.9, 1.5, 2.0),
+                            Large  => (0.6, 0.9, 1.5, 2.0));
+      Constraint_Name  : constant Mass_Constraint :=
+                           (if Config.Child_Count = 1
+                            then Mass_Constraint'Value (Config.Value)
+                            else Medium);
+      Constraint_Range : constant Mass_Value :=
+                           (if Config.Child_Count = 1
+                            then Mass_Range (Constraint_Name)
+                            else (Get (1), Get (2), Get (3), Get (4)));
+      Fuzzy_Ref         : constant Concorde.Handles.Fuzzy_Set
+        .Fuzzy_Set_Handle :=
+                           Concorde.Handles.Fuzzy_Set.Create
+                             (Constraint_Range (1),
+                              Constraint_Range (2),
+                              Constraint_Range (3),
+                              Constraint_Range (4));
+
+   begin
+      Constraint.Update_Resource_Constraint
+        .Set_Mass_Constraint (True)
+        .Set_Mass (Fuzzy_Ref)
+        .Done;
+   end Constrain_Mass;
+
+   ---------------------------
+   -- Constrain_Minimum_Age --
+   ---------------------------
+
+   procedure Constrain_Minimum_Age
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
+      Config     : Tropos.Configuration)
+   is
+   begin
+      Constraint.Update_Resource_Constraint
+        .Set_Age_Constraint (True)
+        .Set_Min_Age (Real (Long_Float'(Config.Value)))
+        .Done;
+   end Constrain_Minimum_Age;
+
+   --------------------
+   -- Constrain_Zone --
+   --------------------
+
+   procedure Constrain_Zone
+     (Constraint : Concorde.Handles.Resource_Constraint
+      .Resource_Constraint_Handle;
+      Config     : Tropos.Configuration)
+   is
+   begin
+      Constraint.Update_Resource_Constraint
+        .Set_Zone_Constraint (True)
+        .Set_Zone (Concorde.Db.Stellar_Orbit_Zone'Value (Config.Value))
+          .Done;
+   end Constrain_Zone;
 
    ----------------------------
    -- Create_Building_Module --
@@ -442,6 +700,43 @@ package body Concorde.Configure.Commodities is
       return Commodity.To_Commodity_Handle;
    end Create_Consumer_Good;
 
+   ---------------------------------
+   -- Create_Frequency_Constraint --
+   ---------------------------------
+
+   procedure Create_Frequency_Constraint
+     (Resource : Concorde.Handles.Resource.Resource_Handle;
+      Config   : Tropos.Configuration)
+   is
+      Freq_Name  : constant Frequency_Type :=
+                     Frequency_Type'Value (Config.Config_Name);
+      Freq       : constant Normal_Value :=
+                     Standard_Frequencies (Freq_Name);
+      Constraint : constant Concorde.Handles.Resource_Constraint
+        .Resource_Constraint_Handle :=
+                     Concorde.Handles.Resource_Constraint.Create
+                       (Resource               => Resource,
+                        Unlimited              => Freq_Name = Unlimited,
+                        Mean                   => Freq.Mean,
+                        Standard_Deviation     => Freq.Std_Dev);
+   begin
+
+      if Constraint_Argument_Map.Is_Empty then
+         Initialize_Constraint_Arguments;
+      end if;
+
+      for Child_Config of Config loop
+         if Constraint_Argument_Map.Contains (Child_Config.Config_Name) then
+            Constraint_Argument_Map.Element (Child_Config.Config_Name)
+              (Constraint, Child_Config);
+         else
+            raise Constraint_Error with
+              "no such constraint argument " & Child_Config.Config_Name
+              & " in resource constraint for " & Resource.Tag;
+         end if;
+      end loop;
+   end Create_Frequency_Constraint;
+
    ----------------------------
    -- Create_Industrial_Good --
    ----------------------------
@@ -484,6 +779,10 @@ package body Concorde.Configure.Commodities is
       return Commodity.To_Commodity_Handle;
    end Create_Industrial_Good;
 
+   -----------------------
+   -- Create_Pop_Groups --
+   -----------------------
+
    procedure Create_Pop_Groups
      (Config : Tropos.Configuration)
    is
@@ -498,7 +797,7 @@ package body Concorde.Configure.Commodities is
            (Tag             => Pop_Group_Config.Config_Name,
             Mass            => 0.0,
             Base_Price      =>
-              Concorde.Money.To_Price (Config.Get ("salary")),
+              Concorde.Money.To_Price (Pop_Group_Config.Get ("salary")),
             Transient       => True,
             Consumer_Demand =>
               To_Quality_Type (Pop_Group_Config.Get ("consumer-quality")),
@@ -544,6 +843,15 @@ package body Concorde.Configure.Commodities is
                         Tag        => Config.Config_Name,
                         Category   => Class);
    begin
+
+      for Deposit_Config of Config.Child ("deposits") loop
+         if Deposit_Config.Config_Name = "sphere" then
+            Create_Sphere_Constraint (Commodity, Deposit_Config);
+         else
+            Create_Frequency_Constraint (Commodity, Deposit_Config);
+         end if;
+      end loop;
+
       return Commodity.To_Commodity_Handle;
    end Create_Resource;
 
@@ -592,6 +900,65 @@ package body Concorde.Configure.Commodities is
    begin
       return Commodity.To_Commodity_Handle;
    end Create_Service_Commodity;
+
+   ------------------------------
+   -- Create_Sphere_Constraint --
+   ------------------------------
+
+   procedure Create_Sphere_Constraint
+     (Resource : Concorde.Handles.Resource.Resource_Handle;
+      Config   : Tropos.Configuration)
+   is
+      function Get (Field : String;
+                    Index : Natural := 0)
+                    return Real
+      is (if Index = 0
+          then Real (Long_Float'(Config.Get (Field)))
+          else Real (Long_Float'(Config.Child (Field).Get (Index))));
+
+   begin
+      Concorde.Handles.Resource_Constraint.Create
+        (Resource               => Resource,
+         Sphere_Constraint      => True,
+         Sphere_Frequency       => Get ("frequency"),
+         Sphere_Rx              => Get ("radius", 1),
+         Sphere_Ry              => Get ("radius", 2),
+         Sphere_Rz              => Get ("radius", 3),
+         Attenuation_Min        => Get ("attenuation", 1),
+         Attenuation_Max        => Get ("attenuation", 2),
+         Unlimited              => False,
+         Mean                   => Get ("strength", 1),
+         Standard_Deviation     => Get ("strength", 2));
+   end Create_Sphere_Constraint;
+
+   -------------------------------------
+   -- Initialize_Constraint_Arguments --
+   -------------------------------------
+
+   procedure Initialize_Constraint_Arguments is
+
+      procedure Add (Name : String;
+                     Proc : Constraint_Application);
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add (Name : String;
+                     Proc : Constraint_Application)
+      is
+      begin
+         Constraint_Argument_Map.Insert (Name, Proc);
+      end Add;
+
+   begin
+      Add ("composition", Constrain_Composition'Access);
+      Add ("hydrosphere", Constrain_Hydrosphere'Access);
+      Add ("life", Constrain_Life'Access);
+      Add ("mass", Constrain_Mass'Access);
+      Add ("minimum-age", Constrain_Minimum_Age'Access);
+      Add ("zone", Constrain_Zone'Access);
+   end Initialize_Constraint_Arguments;
 
    ----------------------------
    -- Initialize_Creator_Map --

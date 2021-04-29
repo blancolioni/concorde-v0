@@ -21,4 +21,12 @@ record Pop : Agent, Managed is
    key Faction_World_Group with Faction, World, Pop_Group;
 end Pop;
 
+record Employment is
+   key Pop;
+   key Employer;
+   Quantity : Quantity_Type;
+   Salary   : Price_Type;
+   unique key Employment with Pop, Employer;
+end Employment;
+
 end Pops;

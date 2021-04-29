@@ -6,3 +6,8 @@ npc-price = 10
 constraints = {
     life = multicellular
 }
+
+sector-constraint = {
+    temperature = { 280 300 }
+    moisture = { 0.2 0.6 }
+}

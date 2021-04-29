@@ -5,4 +5,6 @@ organic = true
 npc-price = 10
 constraints = {
     life = multicellular
+    terrain = water
+    temperature = { 270 310 }
 }

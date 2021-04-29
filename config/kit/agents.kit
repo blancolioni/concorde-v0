@@ -8,15 +8,15 @@ package Agents is
       Guarantor  : Account;
       Start_Cash : Money_Type;
       Cash       : Money_Type;
-	  Earn       : Money_Type;
-	  Spend      : Money_Type;
+	   Earn       : Money_Type;
+	   Spend      : Money_Type;
    end Account;
 
    record Historical_Account is
       key Account;
       Time_Stamp : Time;
-	  Tag        : String (32);
-	  Change     : Money_Type;
+	   Tag        : String (32);
+	   Change     : Money_Type;
       Cash       : Money_Type;
    end Historical_Account;
    

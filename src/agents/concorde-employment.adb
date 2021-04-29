@@ -21,8 +21,8 @@ package body Concorde.Employment is
 
    type Contract_Record is
       record
-         Employer : Concorde.Handles.Agent_Reference;
-         Employee : Concorde.Handles.Agent_Reference;
+         Employer : Concorde.Handles.Agent.Agent_Class;
+         Employee : Concorde.Handles.Agent.Agent_Class;
          Quantity : Concorde.Quantities.Quantity_Type;
          Salary   : Concorde.Money.Price_Type;
       end record;
@@ -33,8 +33,8 @@ package body Concorde.Employment is
    Current : Contract_Lists.List;
 
    procedure Execute
-     (Employer_Agent : Concorde.Handles.Agent_Reference;
-      Employee_Agent : Concorde.Handles.Agent_Reference;
+     (Employer_Agent : Concorde.Handles.Agent.Agent_Class;
+      Employee_Agent : Concorde.Handles.Agent.Agent_Class;
       Quantity       : Concorde.Quantities.Quantity_Type;
       Salary         : Concorde.Money.Price_Type);
 
@@ -61,8 +61,8 @@ package body Concorde.Employment is
    --------------------------------
 
    procedure Create_Employment_Contract
-     (Employer : Concorde.Handles.Agent_Reference;
-      Employee : Concorde.Handles.Agent_Reference;
+     (Employer : Concorde.Handles.Agent.Agent_Class;
+      Employee : Concorde.Handles.Agent.Agent_Class;
       Quantity : Concorde.Quantities.Quantity_Type;
       Salary   : Concorde.Money.Price_Type)
    is
@@ -87,8 +87,8 @@ package body Concorde.Employment is
    -------------
 
    procedure Execute
-     (Employer_Agent : Concorde.Handles.Agent_Reference;
-      Employee_Agent : Concorde.Handles.Agent_Reference;
+     (Employer_Agent : Concorde.Handles.Agent.Agent_Class;
+      Employee_Agent : Concorde.Handles.Agent.Agent_Class;
       Quantity       : Concorde.Quantities.Quantity_Type;
       Salary         : Concorde.Money.Price_Type)
    is

@@ -153,9 +153,10 @@ package body Concorde.Configure.Worlds is
      (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Boolean
    is
+      use type Concorde.Db.Life_Complexity_Type;
    begin
       return Sector.World.Hydrosphere > 0.0
-        and then Sector.World.Life > 1
+        and then Sector.World.Life > Concorde.Db.Single_Celled
         and then Sector.Elevation >= 0
         and then Sector.Average_Temperature in 274.0 .. 290.0
         and then Sector.Moisture >= 0.2;
@@ -182,9 +183,10 @@ package body Concorde.Configure.Worlds is
      (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Boolean
    is
+      use type Concorde.Db.Life_Complexity_Type;
    begin
       return Sector.World.Hydrosphere > 0.0
-        and then Sector.World.Life > 1
+        and then Sector.World.Life > Concorde.Db.Single_Celled
         and then Sector.Elevation >= 0
         and then Sector.Average_Temperature > 290.0
         and then Sector.Moisture > 0.8;
@@ -198,9 +200,10 @@ package body Concorde.Configure.Worlds is
      (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Boolean
    is
+      use type Concorde.Db.Life_Complexity_Type;
    begin
       return Sector.World.Hydrosphere > 0.0
-        and then Sector.World.Life > 0
+        and then Sector.World.Life > Concorde.Db.Single_Celled
         and then Sector.Elevation in 0 .. 2
         and then Sector.Average_Temperature >= 280.0
         and then Sector.Moisture > 0.5;
@@ -226,9 +229,10 @@ package body Concorde.Configure.Worlds is
      (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Boolean
    is
+      use type Concorde.Db.Life_Complexity_Type;
    begin
       return Sector.World.Hydrosphere > 0.0
-        and then Sector.World.Life > 1
+        and then Sector.World.Life > Concorde.Db.Single_Celled
         and then Sector.Elevation in 1 .. 10
         and then Sector.Average_Temperature > 280.0
         and then Sector.Moisture > 0.1;
@@ -242,8 +246,9 @@ package body Concorde.Configure.Worlds is
      (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Boolean
    is
+      use type Concorde.Db.Life_Complexity_Type;
    begin
-      return Sector.World.Life > 0
+      return Sector.World.Life > Concorde.Db.Prebiotic
         and then Sector.Elevation >= 0
         and then Sector.Average_Temperature < 290.0
         and then Sector.Moisture in 0.1 .. 0.2;
@@ -257,9 +262,10 @@ package body Concorde.Configure.Worlds is
      (Sector : Concorde.Handles.World_Sector.World_Sector_Class)
       return Boolean
    is
+      use type Concorde.Db.Life_Complexity_Type;
    begin
       return Sector.World.Hydrosphere > 0.0
-        and then Sector.World.Life > 0
+        and then Sector.World.Life > Concorde.Db.Prebiotic
         and then Sector.Elevation >= 0
         and then Sector.Average_Temperature < 280.0
         and then Sector.Moisture in 0.1 .. 0.2;
@@ -317,18 +323,16 @@ package body Concorde.Configure.Worlds is
          end;
       end if;
 
-      if False then
-         declare
-            System    : constant Handles.Star_System.Star_System_Class :=
-                          World.Star_System;
-         begin
-            Concorde.Configure.Resources.Create_Deposits
-              (World     => World,
-               Generator =>
-                 Concorde.Configure.Resources.Create_Generator
-                   (System.X, System.Y, System.Z));
-         end;
-      end if;
+      declare
+         System    : constant Handles.Star_System.Star_System_Class :=
+                       World.Star_System;
+      begin
+         Concorde.Configure.Resources.Create_Deposits
+           (World     => World,
+            Generator =>
+              Concorde.Configure.Resources.Create_Generator
+                (System.X, System.Y, System.Z));
+      end;
 
    end Generate_Surface;
 

@@ -2,7 +2,7 @@
 --  with Concorde.Managers.Colonies;
 --  with Concorde.Managers.Factions;
 
---  with Concorde.Managers.Installations;
+with Concorde.Installations.Managers;
 
 package body Concorde.Managers.Loader is
 
@@ -12,9 +12,11 @@ package body Concorde.Managers.Loader is
 
    procedure Register_Managers is
    begin
---        Register.Insert
---          ("default-installation",
---           Concorde.Managers.Installations.Create_Default_Manager'Access);
+
+      Register.Insert
+        ("default-installation",
+         Concorde.Installations.Managers.Create_Default_Manager'Access);
+
 --        Register.Insert
 --          ("default-agora",
 --       Concorde.Managers.Installations.Create_Default_Agora_Manager'Access);
@@ -33,7 +35,7 @@ package body Concorde.Managers.Loader is
       --  Register.Insert
       --    ("default-colony",
 --     Concorde.Managers.Colonies.Create_Default_Manager'Access);
-      null;
+
    end Register_Managers;
 
 end Concorde.Managers.Loader;

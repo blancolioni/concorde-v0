@@ -6,18 +6,17 @@ with Concorde.Agents;
 with Concorde.Calendar;
 with Concorde.Identifiers;
 with Concorde.Money;
+with Concorde.Pops;
 with Concorde.Quantities;
 
 with Concorde.Configure.Commodities;
 
-with Concorde.Handles.Account;
 with Concorde.Handles.Colony;
 with Concorde.Handles.Deposit;
 with Concorde.Handles.Facility;
 with Concorde.Handles.Facility_Worker;
 with Concorde.Handles.Installation;
 with Concorde.Handles.Owned_World;
-with Concorde.Handles.Pop;
 with Concorde.Handles.Pop_Group;
 with Concorde.Handles.Resource;
 with Concorde.Handles.Terrain;
@@ -121,6 +120,10 @@ package body Concorde.Colonies.Create is
                            (Capital_Installation.Config_Name);
             Count    : constant Natural :=
                          Capital_Installation.Value;
+            Manager  : constant String :=
+                         (if Facility.Default_Manager = ""
+                          then "default-installation"
+                          else Facility.Default_Manager);
          begin
             for I in 1 .. Count loop
                Concorde.Handles.Installation.Create
@@ -131,7 +134,11 @@ package body Concorde.Colonies.Create is
                   Last_Spend   => Concorde.Money.Zero,
                   Identifier   => Concorde.Identifiers.Next_Identifier,
                   World_Sector => Capital,
-                  Facility     => Facility);
+                  Facility     => Facility,
+                  Active       => True,
+                  Scheduled    => False,
+                  Next_Event   => Concorde.Calendar.Clock,
+                  Manager      => Manager);
 
                Add_Worker_Population (Facility);
 
@@ -216,6 +223,10 @@ package body Concorde.Colonies.Create is
                declare
                   Info : constant Facility_Info :=
                            Facility_List (Best_Facility);
+                  Manager  : constant String :=
+                               (if Info.Facility.Default_Manager = ""
+                                then "default-installation"
+                                else Info.Facility.Default_Manager);
                begin
                   for Resource of Concorde.Handles.Resource.Scan_By_Tag loop
                      if Info.Resources.Contains
@@ -232,6 +243,10 @@ package body Concorde.Colonies.Create is
                      end if;
                   end loop;
 
+                  Sector.Update_World_Sector
+                    .Set_Faction (Faction)
+                    .Done;
+
                   Concorde.Handles.Installation.Create
                     (Account      =>
                        Concorde.Agents.New_Account
@@ -240,7 +255,8 @@ package body Concorde.Colonies.Create is
                      Last_Spend   => Concorde.Money.Zero,
                      Identifier   => Concorde.Identifiers.Next_Identifier,
                      World_Sector => Sector,
-                     Facility     => Info.Facility);
+                     Facility     => Info.Facility,
+                     Manager      => Manager);
 
                   Add_Worker_Population (Info.Facility);
 
@@ -346,24 +362,13 @@ package body Concorde.Colonies.Create is
                                 Quantity_Type => Size),
                              10.0);
          begin
-            Concorde.Handles.Pop.Create
-              (Account      =>
-                 Concorde.Agents.New_Account
-                   (Cash, Concorde.Handles.Account.Empty_Handle),
-               Last_Earn    => Concorde.Money.Zero,
-               Last_Spend   => Concorde.Money.Zero,
-               Active       => True,
-               Scheduled    => False,
-               Next_Event   => Concorde.Calendar.Clock,
-               Manager      => "default-pop",
-               Identifier   => Concorde.Identifiers.Next_Identifier,
-               Faction      => Faction,
-               Colony       => Colony,
-               World        => World,
-               World_Sector => Capital,
-               Pop_Group    => Pop_Group,
-               Size         => Concorde.Quantities.To_Real (Size),
-               Apathy       => 0.0);
+            Concorde.Pops.New_Pop
+              (Faction => Faction,
+               Colony  => Colony,
+               Sector  => Capital,
+               Group   => Pop_Group,
+               Size    => Size,
+               Cash    => Cash);
          end;
       end loop;
 

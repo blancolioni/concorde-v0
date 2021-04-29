@@ -8,7 +8,7 @@ package body Concorde.Sectors is
 
    function Has_Stock_Reference
      (Sector : Concorde.Handles.World_Sector_Reference)
-      return Concorde.Handles.Has_Stock_Reference
+      return Concorde.Handles.Has_Stock.Has_Stock_Class
    is
    begin
       return Concorde.Handles.World_Sector.Get (Sector).Get_Has_Stock_Reference;

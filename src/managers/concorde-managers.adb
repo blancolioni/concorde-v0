@@ -1,3 +1,6 @@
+with Ada.Exceptions;
+with Ada.Text_IO;
+
 with Concorde.Logging;
 with Concorde.Updates.Events;
 
@@ -33,6 +36,19 @@ package body Concorde.Managers is
            .Set_Active (False)
            .Done;
       end if;
+
+   exception
+      when E : others =>
+         declare
+            Message : constant String := Ada.Exceptions.Exception_Message (E);
+         begin
+            Concorde.Logging.Log
+              (Category => Update.Manager.Identifier,
+               Message  => Message);
+            Ada.Text_IO.Put_Line
+              (Ada.Text_IO.Standard_Error,
+               Message);
+         end;
 
    end Execute;
 

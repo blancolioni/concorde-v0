@@ -46,7 +46,7 @@ package body Concorde.Managers.Armies is
    is
 
       procedure Bid
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type);
 
@@ -55,7 +55,7 @@ package body Concorde.Managers.Armies is
       ---------
 
       procedure Bid
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type)
       is
@@ -221,12 +221,12 @@ package body Concorde.Managers.Armies is
          Organisation : Unit_Real := 1.0;
 
          procedure Consume
-           (Commodity : Concorde.Commodities.Commodity_Reference;
+           (Commodity : Concorde.Handles.Commodity.Commodity_Class;
             Quantity  : Concorde.Quantities.Quantity_Type;
             Value     : Concorde.Money.Money_Type);
 
          procedure Transfer
-           (Commodity : Concorde.Commodities.Commodity_Reference;
+           (Commodity : Concorde.Handles.Commodity.Commodity_Class;
             Quantity  : Concorde.Quantities.Quantity_Type;
             Value     : Concorde.Money.Money_Type);
 
@@ -235,7 +235,7 @@ package body Concorde.Managers.Armies is
          -------------
 
          procedure Consume
-           (Commodity : Concorde.Commodities.Commodity_Reference;
+           (Commodity : Concorde.Handles.Commodity.Commodity_Class;
             Quantity  : Concorde.Quantities.Quantity_Type;
             Value     : Concorde.Money.Money_Type)
          is
@@ -259,7 +259,7 @@ package body Concorde.Managers.Armies is
          --------------
 
          procedure Transfer
-           (Commodity : Concorde.Commodities.Commodity_Reference;
+           (Commodity : Concorde.Handles.Commodity.Commodity_Class;
             Quantity  : Concorde.Quantities.Quantity_Type;
             Value     : Concorde.Money.Money_Type)
          is

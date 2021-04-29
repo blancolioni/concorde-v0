@@ -35,7 +35,7 @@ package body Concorde.Managers.Pops is
 
    type Bid_Record is
       record
-         Commodity : Concorde.Commodities.Commodity_Reference;
+         Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Price     : Concorde.Money.Price_Type;
       end record;
@@ -108,7 +108,7 @@ package body Concorde.Managers.Pops is
             Production : Concorde.Handles.Production_Reference;
             Sector     : Concorde.Handles.World_Sector_Reference;
             Sector_Use : Concorde.Handles.Sector_Use_Reference;
-            District       : Concorde.Commodities.Commodity_Reference;
+            District       : Concorde.Handles.Commodity.Commodity_Class;
             Skill      : Concorde.Quantities.Quantity_Type;
             Size       : Non_Negative_Real;
          end record;
@@ -123,13 +123,13 @@ package body Concorde.Managers.Pops is
 
       procedure Add_Choice
         (Production : Concorde.Handles.Production_Reference;
-         Skill      : Concorde.Commodities.Commodity_Reference);
+         Skill      : Concorde.Handles.Commodity.Commodity_Class);
 
       function Score_World_Sector_Production
         (World_Sector : Concorde.Handles.World_Sector_Reference;
          Production   : Concorde.Handles.Production_Reference;
          Sector_Use   : Concorde.Handles.Sector_Use_Reference;
-         District         : Concorde.Commodities.Commodity_Reference)
+         District         : Concorde.Handles.Commodity.Commodity_Class)
         return Natural;
 
       ----------------
@@ -138,13 +138,13 @@ package body Concorde.Managers.Pops is
 
       procedure Add_Choice
         (Production : Concorde.Handles.Production_Reference;
-         Skill      : Concorde.Commodities.Commodity_Reference)
+         Skill      : Concorde.Handles.Commodity.Commodity_Class)
       is
          District           : constant Concorde.Handles.District_Reference :=
            Concorde.Handles.Production.Get (Production).District;
          Sector_Use     : constant Concorde.Handles.Sector_Use_Reference :=
            Concorde.Handles.District.Get (District).Sector_Use;
-         District_Commodity : constant Concorde.Commodities.Commodity_Reference :=
+         District_Commodity : constant Concorde.Handles.Commodity.Commodity_Class :=
            Concorde.Commodities.Get_Commodity (District);
       begin
          for World_Sector of
@@ -185,12 +185,12 @@ package body Concorde.Managers.Pops is
         (World_Sector   : Concorde.Handles.World_Sector_Reference;
          Production     : Concorde.Handles.Production_Reference;
          Sector_Use     : Concorde.Handles.Sector_Use_Reference;
-         District           : Concorde.Commodities.Commodity_Reference)
+         District           : Concorde.Handles.Commodity.Commodity_Class)
          return Natural
       is
          pragma Unreferenced (Production, Sector_Use);
          use Concorde.Quantities;
-         Title     : constant Concorde.Commodities.Commodity_Reference :=
+         Title     : constant Concorde.Handles.Commodity.Commodity_Class :=
            Concorde.Commodities.Title_Commodity
              (World_Sector, District);
          Leases    : constant Concorde.Commodities.Commodity_Array :=
@@ -289,7 +289,7 @@ package body Concorde.Managers.Pops is
       for Item of Manager.Current_Bids loop
          declare
             use Concorde.Quantities;
-            Commodity : constant Concorde.Commodities.Commodity_Reference :=
+            Commodity : constant Concorde.Handles.Commodity.Commodity_Class :=
               Item.Commodity;
             Quantity  : constant Quantity_Type :=
               Item.Quantity;
@@ -384,7 +384,7 @@ package body Concorde.Managers.Pops is
       function Current_Cost return Concorde.Money.Money_Type;
 
       procedure Initial_Value
-        (Commodity : Concorde.Commodities.Commodity_Reference);
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class);
 
       function Current_Utility return Real;
 
@@ -434,7 +434,7 @@ package body Concorde.Managers.Pops is
       -------------------
 
       procedure Initial_Value
-        (Commodity : Concorde.Commodities.Commodity_Reference)
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class)
       is
          X : constant Non_Negative_Real := 1.0;
          Quantity : constant Concorde.Quantities.Quantity_Type :=
@@ -501,7 +501,7 @@ package body Concorde.Managers.Pops is
          use Ada.Text_IO;
 
          procedure Put_Property
-           (Commodity : Concorde.Commodities.Commodity_Reference;
+           (Commodity : Concorde.Handles.Commodity.Commodity_Class;
             Quantity  : Concorde.Quantities.Quantity_Type;
             Name      : String);
 
@@ -510,7 +510,7 @@ package body Concorde.Managers.Pops is
          ------------------
 
          procedure Put_Property
-           (Commodity : Concorde.Commodities.Commodity_Reference;
+           (Commodity : Concorde.Handles.Commodity.Commodity_Class;
             Quantity  : Concorde.Quantities.Quantity_Type;
             Name      : String)
          is
@@ -606,7 +606,7 @@ package body Concorde.Managers.Pops is
             Old_Work    : constant Bid_Vectors.Vector := Work;
             Change_Index : constant Positive :=
               WL.Random.Random_Number (1, Work.Last_Index);
-            Commodity    : constant Concorde.Commodities.Commodity_Reference :=
+            Commodity    : constant Concorde.Handles.Commodity.Commodity_Class :=
               Work.Element (Change_Index).Commodity;
             Quantity     : constant Quantity_Type :=
               Work.Element (Change_Index).Quantity;
@@ -733,7 +733,7 @@ package body Concorde.Managers.Pops is
         Concorde.Quantities.Zero;
 
       procedure Apply
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type);
 
@@ -747,7 +747,7 @@ package body Concorde.Managers.Pops is
       -----------
 
       procedure Apply
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type)
       is
@@ -890,7 +890,7 @@ package body Concorde.Managers.Pops is
    begin
       for Item of Manager.Current_Bids loop
          declare
-            Commodity : constant Concorde.Commodities.Commodity_Reference :=
+            Commodity : constant Concorde.Handles.Commodity.Commodity_Class :=
               Item.Commodity;
             Quantity  : constant Quantity_Type :=
               Item.Quantity;
@@ -998,7 +998,7 @@ package body Concorde.Managers.Pops is
 
       type Bid_Record is
          record
-            Commodity  : Concorde.Commodities.Commodity_Reference;
+            Commodity  : Concorde.Handles.Commodity.Commodity_Class;
             Quantity   : Concorde.Quantities.Quantity_Type;
             Price      : Concorde.Money.Price_Type;
             Total_Cost : Concorde.Money.Money_Type;
@@ -1011,12 +1011,12 @@ package body Concorde.Managers.Pops is
       Bids : Bid_Lists.List;
 
       function Constrain
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Required  : Concorde.Quantities.Quantity_Type)
          return Non_Negative_Real;
 
       function Evaluate_Cost
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Used      : Concorde.Quantities.Quantity_Type)
          return Concorde.Money.Money_Type;
 
@@ -1028,7 +1028,7 @@ package body Concorde.Managers.Pops is
       ---------------
 
       function Constrain
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Required  : Concorde.Quantities.Quantity_Type)
          return Non_Negative_Real
       is
@@ -1044,7 +1044,7 @@ package body Concorde.Managers.Pops is
       -------------------
 
       function Evaluate_Cost
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Used      : Concorde.Quantities.Quantity_Type)
          return Concorde.Money.Money_Type
       is
@@ -1079,7 +1079,7 @@ package body Concorde.Managers.Pops is
       function District_Capacity return Non_Negative_Real is
          Production : constant Concorde.Handles.Production.Production_Type :=
            Concorde.Handles.Production.Get (Manager.Production);
-         Title      : constant Concorde.Commodities.Commodity_Reference :=
+         Title      : constant Concorde.Handles.Commodity.Commodity_Class :=
            Concorde.Commodities.Title_Commodity
              (Manager.Sector, Commodities.Get_Commodity (Production.District));
          Size : constant Non_Negative_Real := Production.Size;
@@ -1098,9 +1098,9 @@ package body Concorde.Managers.Pops is
          use Concorde.Money, Concorde.Quantities;
          Production : constant Concorde.Handles.Production.Production_Type :=
            Concorde.Handles.Production.Get (Manager.Production);
-         District       : constant Concorde.Commodities.Commodity_Reference :=
+         District       : constant Concorde.Handles.Commodity.Commodity_Class :=
            Concorde.Commodities.Get_Commodity (Production.District);
-         Title      : constant Concorde.Commodities.Commodity_Reference :=
+         Title      : constant Concorde.Handles.Commodity.Commodity_Class :=
            Concorde.Commodities.Title_Commodity
              (Manager.Sector, District);
          Have       : Concorde.Quantities.Quantity_Type :=
@@ -1347,7 +1347,7 @@ package body Concorde.Managers.Pops is
              (Manager.Production)
          loop
             declare
-               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+               Commodity : constant Concorde.Handles.Commodity.Commodity_Class :=
                  Concorde.Commodities.Get_Commodity (Out_Item.Commodity);
                Quantity : constant Concorde.Quantities.Quantity_Type :=
                  Concorde.Quantities.Scale
@@ -1373,7 +1373,7 @@ package body Concorde.Managers.Pops is
 
             declare
                use Concorde.Money, Concorde.Quantities;
-               Commodity : constant Concorde.Commodities.Commodity_Reference :=
+               Commodity : constant Concorde.Handles.Commodity.Commodity_Class :=
                  Concorde.Commodities.Get_Commodity (Out_Item.Commodity);
                Quantity  : constant Concorde.Quantities.Quantity_Type :=
                  Manager.Stock_Quantity

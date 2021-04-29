@@ -117,6 +117,10 @@ package body Concorde.Factions.Create is
 
       begin
 
+         Sector.Update_World_Sector
+           .Set_Faction (Faction)
+           .Done;
+
          Concorde.Colonies.Create.Initial_Colony
            (Faction => Faction,
             World   => Capital,

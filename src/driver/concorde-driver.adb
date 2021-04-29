@@ -48,6 +48,11 @@ begin
    Concorde.Db.Database.Open;
    Database_Open := True;
 
+   Reiko.Control.Start
+     (Current_Time =>
+        Reiko.Reiko_Time (Concorde.Calendar.To_Real (Concorde.Calendar.Clock)),
+      Task_Count   => Concorde.Options.Work_Threads);
+
    Ada.Text_IO.Put_Line ("starting server ...");
 
    Concorde.Server.Start;
@@ -56,11 +61,6 @@ begin
 
    Ada.Text_IO.Put_Line
      ("Start date: " & Concorde.Calendar.Image (Concorde.Calendar.Clock));
-
-   Reiko.Control.Start
-     (Current_Time =>
-        Reiko.Reiko_Time (Concorde.Calendar.To_Real (Concorde.Calendar.Clock)),
-      Task_Count   => Concorde.Options.Work_Threads);
 
    Updates_Running := True;
 
@@ -79,6 +79,7 @@ begin
                for Hour_Index in 1 .. 24 loop
                   for Minute_Index in 1 .. 60 loop
                      Reiko.Control.Advance (60.0);
+                     Concorde.Calendar.Advance (60.0);
                   end loop;
                   Process.Tick;
                end loop;

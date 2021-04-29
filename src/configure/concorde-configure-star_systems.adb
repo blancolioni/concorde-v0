@@ -675,11 +675,12 @@ package body Concorde.Configure.Star_Systems is
                        (Primordial_Temp in 253.0 .. 323.0
                         and then Atmospheric_Class >= Thin);
 
-      type Life_Complexity_Type is
-        (Prebiotic, Single_Celled, Plants, Multicellular);
+      use all type Concorde.Db.Life_Complexity_Type;
 
-      Life_Complexity : constant Life_Complexity_Type :=
-                          (if Star.Age <= 1.0e9
+      Life_Complexity : constant Concorde.Db.Life_Complexity_Type :=
+                          (if not Life_Bearing
+                           then No_Life
+                           elsif Star.Age <= 1.0e9
                            then Prebiotic
                            elsif Star.Age <= 2.0e9
                            then Single_Celled
@@ -879,6 +880,7 @@ package body Concorde.Configure.Star_Systems is
          then
             Put (16,
                  (case Life_Complexity is
+                     when No_Life => "",
                      when Prebiotic     => "prebiotic",
                      when Single_Celled => "single-celled",
                      when Plants        => "plants",
@@ -955,10 +957,7 @@ package body Concorde.Configure.Star_Systems is
               Surface_Pressure    => Current_Pressure * Earth_Surface_Pressure,
               Average_Temperature => Current_Temperature,
               Hydrosphere         => Hydrosphere,
-              Life                => (if Life_Bearing
-                                      then Life_Complexity_Type'Pos
-                                        (Life_Complexity) + 1
-                                      else 0),
+              Life                => Life_Complexity,
               Smoothness          => Smoothness,
               Elevation_Range     => Elevation_Range,
               Sea_Level           =>

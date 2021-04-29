@@ -18,6 +18,9 @@ with Concorde.Color;
 with Concorde.Factions.Create;
 with Concorde.Managers.Execution;
 
+with Concorde.Markets;
+with Concorde.Pops;
+
 with Concorde.Db.Database;
 
 with Concorde.Handles.Faction;
@@ -246,7 +249,9 @@ package body Concorde.Server is
 
    procedure Start is
    begin
+      Concorde.Markets.Load_Markets;
       Concorde.Managers.Execution.Load_Managers;
+      Concorde.Pops.Load_Pops;
    end Start;
 
    ----------------

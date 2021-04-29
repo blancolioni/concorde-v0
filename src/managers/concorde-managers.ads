@@ -67,6 +67,11 @@ private
    overriding procedure Execute
      (Update : Manager_Update);
 
+   overriding function Name
+     (Update : Manager_Update)
+      return String
+   is (Update.Manager.Identifier);
+
    function Managed_Key
      (Managed : Concorde.Handles.Managed.Managed_Class)
       return String

@@ -19,6 +19,9 @@ with Concorde.Handles.World_Sector;
 
 with Concorde.Db;
 
+with Concorde.Logging;
+with Concorde.Real_Images;
+
 package body Concorde.Configure.Resources is
 
    package Resource_Choices is
@@ -132,6 +135,11 @@ package body Concorde.Configure.Resources is
                          Resource => Resource,
                          Generator => Generator);
          begin
+            Concorde.Logging.Log
+              (World.Name,
+               Resource.Tag
+               & ": score" & Score'Image);
+
             Resource_Choice.Insert
               (Resource.To_Resource_Handle, Score);
          end;
@@ -163,6 +171,13 @@ package body Concorde.Configure.Resources is
                                 + 1.0)
                                 * Concentration);
          begin
+            Concorde.Logging.Log
+              (World.Name,
+               "choice: "
+               & Resource.Tag
+               & "; concentration "
+               & Concorde.Real_Images.Approximate_Image (This_Conc));
+
             Concorde.Handles.Deposit.Create
               (World         => World,
                World_Sector  =>
@@ -335,6 +350,7 @@ package body Concorde.Configure.Resources is
          .Resource_Constraint_Class)
          return Boolean
       is
+         use type Concorde.Db.Life_Complexity_Type;
          use type Concorde.Db.Stellar_Orbit_Zone;
          use type Concorde.Db.World_Composition;
       begin

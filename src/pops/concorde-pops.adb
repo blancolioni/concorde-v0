@@ -1,41 +1,116 @@
-with Concorde.Handles.Pop;
+with Concorde.Agents;
+with Concorde.Calendar;
+with Concorde.Identifiers;
+with Concorde.Stock;
+
+with Concorde.Pops.Updates;
+
+with Concorde.Logging;
+with Concorde.Real_Images;
+
+with Concorde.Handles.Employment;
 
 package body Concorde.Pops is
 
-   -----------
-   -- Happy --
-   -----------
+   --------------
+   -- Describe --
+   --------------
 
-   function Happy
-     (Pop : Concorde.Handles.Pop_Reference)
-      return Non_Negative_Real
+   function Describe (Pop : Concorde.Handles.Pop.Pop_Class) return String is
+   begin
+      return Concorde.Real_Images.Approximate_Image (Pop.Size)
+        & " " & Pop.Pop_Group.Tag;
+   end Describe;
+
+   ---------------
+   -- Load_Pops --
+   ---------------
+
+   procedure Load_Pops is
+   begin
+      for Pop of Concorde.Handles.Pop.Scan_By_Top_Record loop
+         if Pop.Size > 0.0 then
+            Updates.Create_Pop_Update (Pop);
+         end if;
+      end loop;
+   end Load_Pops;
+
+   ---------
+   -- Log --
+   ---------
+
+   procedure Log (Pop     : Concorde.Handles.Pop.Pop_Class;
+                  Message : String)
    is
    begin
-      return Concorde.Handles.Pop.Get (Pop).Happy;
-   end Happy;
+      Concorde.Logging.Log
+        (Describe (Pop), Message);
+   end Log;
 
-   ------------
-   -- Health --
-   ------------
+   -------------
+   -- New_Pop --
+   -------------
 
-   function Health
-     (Pop : Concorde.Handles.Pop_Reference)
-      return Non_Negative_Real
+   procedure New_Pop
+     (Faction : Concorde.Handles.Faction.Faction_Class;
+      Colony  : Concorde.Handles.Colony.Colony_Class;
+      Sector  : Concorde.Handles.World_Sector.World_Sector_Class;
+      Group   : Concorde.Handles.Pop_Group.Pop_Group_Class;
+      Size    : Concorde.Quantities.Quantity_Type;
+      Cash    : Concorde.Money.Money_Type)
    is
+      Pop : constant Concorde.Handles.Pop.Pop_Handle :=
+              Concorde.Handles.Pop.Create
+                (Account      =>
+                           Concorde.Agents.New_Account (Cash),
+                 Last_Earn    => Concorde.Money.Zero,
+                 Last_Spend   => Concorde.Money.Zero,
+                 Active       => True,
+                 Scheduled    => False,
+                 Next_Event   => Concorde.Calendar.Clock,
+                 Manager      => "default-pop",
+                 Identifier   => Concorde.Identifiers.Next_Identifier,
+                 Faction      => Faction,
+                 Colony       => Colony,
+                 World        => Sector.World,
+                 World_Sector => Sector,
+                 Pop_Group    => Group,
+                 Size         => Concorde.Quantities.To_Real (Size),
+                 Apathy       => 0.0);
    begin
-      return Concorde.Handles.Pop.Get (Pop).Health;
-   end Health;
+      Concorde.Stock.Add_Initial_Stock
+        (To       => Pop,
+         Item     => Group,
+         Quantity => Size);
+   end New_Pop;
 
-   -----------
-   -- Hours --
-   -----------
+   -------------------
+   -- On_Employment --
+   -------------------
 
-   function Hours
-     (Pop : Concorde.Handles.Pop_Reference)
-      return Non_Negative_Real
+   procedure On_Employment
+     (Pop      : Concorde.Handles.Pop.Pop_Class;
+      Employer : Concorde.Handles.Employer.Employer_Class;
+      Quantity : Concorde.Quantities.Quantity_Type;
+      Salary   : Concorde.Money.Price_Type)
    is
+      use type Concorde.Quantities.Quantity_Type;
+      Handle : constant Concorde.Handles.Employment.Employment_Class :=
+                 Concorde.Handles.Employment.Get_By_Employment
+                   (Pop, Employer);
    begin
-      return Concorde.Handles.Pop.Get (Pop).Hours;
-   end Hours;
+      if Handle.Has_Element then
+         Handle.Update_Employment
+           .Set_Quantity (Handle.Quantity + Quantity)
+           .Set_Salary (Salary)
+           .Done;
+      else
+         Concorde.Handles.Employment.Create
+           (Pop      => Pop,
+            Employer => Employer,
+            Quantity => Quantity,
+            Salary   => Salary);
+      end if;
+   end On_Employment;
 
 end Concorde.Pops;

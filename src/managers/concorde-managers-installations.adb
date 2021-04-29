@@ -78,7 +78,7 @@ package body Concorde.Managers.Installations is
    is
 
       procedure Create_Ask
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type);
 
@@ -87,7 +87,7 @@ package body Concorde.Managers.Installations is
       ----------------
 
       procedure Create_Ask
-        (Commodity : Concorde.Commodities.Commodity_Reference;
+        (Commodity : Concorde.Handles.Commodity.Commodity_Class;
          Quantity  : Concorde.Quantities.Quantity_Type;
          Value     : Concorde.Money.Money_Type)
       is

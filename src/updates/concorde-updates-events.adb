@@ -1,5 +1,7 @@
 with Reiko.Control;
 
+with Concorde.Logging;
+
 package body Concorde.Updates.Events is
 
    ---------------
@@ -10,13 +12,19 @@ package body Concorde.Updates.Events is
      (Clock  : Concorde.Calendar.Time;
       Update : Root_Update_Type'Class)
    is
+      Message : constant String :=
+                  Update.Name & " at " & Concorde.Calendar.Image (Clock, True);
    begin
-      if False then
-         Reiko.Control.Add_Update
-           (Update    => Update,
-            Update_At =>
-              Reiko.Reiko_Time (Concorde.Calendar.To_Real (Clock)));
-      end if;
+      Concorde.Logging.Log
+        (Category => "add-update",
+         Message  => Message);
+
+      Reiko.Control.Add_Update
+        (Update    => Update,
+         Update_At =>
+           Reiko.Reiko_Time
+             (Concorde.Calendar.To_Real (Clock)
+              * Real (Concorde.Calendar.Days (1))));
    end Update_At;
 
    -----------------------

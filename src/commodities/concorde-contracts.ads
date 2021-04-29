@@ -14,15 +14,15 @@ package Concorde.Contracts is
       return Contract_Type;
 
    function Create_Rental_Contract
-     (Rental_Item : Concorde.Commodities.Commodity_Reference;
+     (Rental_Item : Concorde.Handles.Commodity.Commodity_Class;
       Rental_Days : Non_Negative_Real;
       Rental_Cost : Concorde.Money.Money_Type)
       return Contract_Type;
 
    procedure Create_Agreement
      (Contract : Contract_Type;
-      Supplier : Concorde.Handles.Agent_Reference;
-      User     : Concorde.Handles.Agent_Reference);
+      Supplier : Concorde.Handles.Agent.Agent_Class;
+      User     : Concorde.Handles.Agent.Agent_Class);
 
 private
 

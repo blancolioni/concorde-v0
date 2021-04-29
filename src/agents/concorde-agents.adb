@@ -56,19 +56,49 @@ package body Concorde.Agents is
       return Agent.Account.Cash;
    end Cash;
 
+   --------------
+   -- Describe --
+   --------------
+
+   function Describe
+     (Agent : Concorde.Handles.Agent.Agent_Class)
+      return String
+   is
+   begin
+      return "Agent " & Agent.Identifier;
+   end Describe;
+
+   ----------------
+   -- Limit_Cash --
+   ----------------
+
+   function Limit_Cash
+     (Account : Concorde.Handles.Account.Account_Class)
+      return Concorde.Money.Money_Type
+   is
+      use Concorde.Money;
+   begin
+      if Account.Guarantor.Has_Element then
+         return Account.Cash + Limit_Cash (Account.Guarantor);
+      else
+         return Account.Cash;
+      end if;
+   end Limit_Cash;
+
    ---------------
    -- Log_Agent --
    ---------------
 
    procedure Log_Agent
      (Agent   : Concorde.Handles.Agent.Agent_Class;
+      Context : String;
       Message : String)
    is
    begin
       Concorde.Logging.Log
-        (Actor    => "Agent " & Agent.Identifier,
+        (Actor    => Describe (Agent),
          Location => "",
-         Category => "",
+         Category => Context,
          Message  => Message);
    end Log_Agent;
 
