@@ -10,3 +10,4 @@ module = { commercial = 2
            habitation = 5
            military = 2
          }
+default-manager = default-outpost

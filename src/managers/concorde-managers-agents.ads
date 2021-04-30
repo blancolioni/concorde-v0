@@ -26,8 +26,19 @@ package Concorde.Managers.Agents is
      (Manager : in out Root_Agent_Manager_Type)
    is null;
 
+   procedure Create_Asks
+     (Manager : in out Root_Agent_Manager_Type);
+
    procedure Create_Bids
      (Manager : in out Root_Agent_Manager_Type);
+
+   procedure Set_Sale_Stock
+     (Manager : in out Root_Agent_Manager_Type)
+   is null;
+
+   procedure Pay_Daily_Costs
+     (Manager : in out Root_Agent_Manager_Type)
+   is null;
 
    procedure Execute_Production
      (Manager : in out Root_Agent_Manager_Type)
@@ -48,6 +59,12 @@ package Concorde.Managers.Agents is
       Commodity : Concorde.Handles.Commodity.Commodity_Class;
       Necessary : Concorde.Quantities.Quantity_Type;
       Desired   : Concorde.Quantities.Quantity_Type);
+
+   procedure Add_Ask
+     (Manager   : in out Root_Agent_Manager_Type'Class;
+      Commodity : Concorde.Handles.Commodity.Commodity_Class;
+      Quantity  : Concorde.Quantities.Quantity_Type;
+      Value     : Concorde.Money.Money_Type);
 
    function Current_Cash
      (Manager : Root_Agent_Manager_Type'Class)
@@ -268,6 +285,7 @@ private
                                Concorde.Money.Zero;
          Necessary         : Stock_Item_Lists.List;
          Desired           : Stock_Item_Lists.List;
+         Sell              : Stock_Item_Lists.List;
       end record;
 
 end Concorde.Managers.Agents;

@@ -63,7 +63,7 @@ package body Concorde.Factions.Create is
       declare
          Cash    : constant Concorde.Money.Money_Type :=
                      Concorde.Configure.Configure_Money
-                       (Setup, "cash", 1000.0);
+                       (Setup, "start-cash", 1000.0);
          Account : constant Concorde.Handles.Account.Account_Handle :=
                      Concorde.Agents.New_Account
                        (Starting_Balance => Cash,

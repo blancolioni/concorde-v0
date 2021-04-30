@@ -19,7 +19,6 @@ with Concorde.Factions.Create;
 with Concorde.Managers.Execution;
 
 with Concorde.Markets;
-with Concorde.Pops;
 
 with Concorde.Db.Database;
 
@@ -251,7 +250,6 @@ package body Concorde.Server is
    begin
       Concorde.Markets.Load_Markets;
       Concorde.Managers.Execution.Load_Managers;
-      Concorde.Pops.Load_Pops;
    end Start;
 
    ----------------

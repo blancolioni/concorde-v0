@@ -31,8 +31,14 @@ package body Concorde.Managers.Agents is
          M.Create_Planning;
       end if;
 
+      M.Pay_Daily_Costs;
+
       M.Set_Requirements;
+      M.Set_Sale_Stock;
+
       M.Create_Bids;
+      M.Create_Asks;
+
       M.Execute_Production;
       M.Execute_Consumption;
 
@@ -49,6 +55,24 @@ package body Concorde.Managers.Agents is
       end if;
 
    end Activate;
+
+   -------------
+   -- Add_Ask --
+   -------------
+
+   procedure Add_Ask
+     (Manager   : in out Root_Agent_Manager_Type'Class;
+      Commodity : Concorde.Handles.Commodity.Commodity_Class;
+      Quantity  : Concorde.Quantities.Quantity_Type;
+      Value     : Concorde.Money.Money_Type)
+   is
+   begin
+      Manager.Sell.Append
+        (Stock_Item_Record'
+           (Commodity => Commodity.To_Commodity_Handle,
+            Quantity  => Quantity,
+            Value     => Value));
+   end Add_Ask;
 
    ---------------------
    -- Add_Requirement --
@@ -144,6 +168,36 @@ package body Concorde.Managers.Agents is
 
    end Create_Ask;
 
+   -----------------
+   -- Create_Asks --
+   -----------------
+
+   procedure Create_Asks
+     (Manager : in out Root_Agent_Manager_Type)
+   is
+      use Concorde.Money, Concorde.Quantities;
+   begin
+      Manager.Log ("creating asks");
+
+      for Item of Manager.Sell loop
+         declare
+            Min_Price : constant Price_Type :=
+                          Price (Item.Value, Item.Quantity);
+         begin
+            Manager.Create_Ask
+              (Commodity => Item.Commodity,
+               Quantity  => Item.Quantity,
+               Price     =>
+                 Max
+                   (Min_Price,
+                    Manager.Current_Bid_Price
+                      (Item.Commodity,
+                       Item.Quantity)));
+         end;
+      end loop;
+
+   end Create_Asks;
+
    ----------------
    -- Create_Bid --
    ----------------
@@ -186,38 +240,44 @@ package body Concorde.Managers.Agents is
       Necessary_Cost : Money_Type := Zero;
       --  Desired_Cost   : Money_Type := Zero;
    begin
-      Manager.Log ("creating bids");
-      for Item of Manager.Necessary loop
-         Necessary_Cost := Necessary_Cost
-           + Total (Manager.Current_Ask_Price
-                    (Item.Commodity, Item.Quantity),
-                    Item.Quantity);
-      end loop;
+      Manager.Log ("creating bids; limit cash " & Show (Remaining));
+      if Remaining <= Zero then
+         return;
+      end if;
 
-      declare
-         Necessary_Factor : constant Unit_Real :=
-                              (if Necessary_Cost <= Remaining
-                               then 1.0
-                               else To_Real (Remaining)
-                               / To_Real (Necessary_Cost));
-      begin
+      if not Manager.Necessary.Is_Empty then
          for Item of Manager.Necessary loop
-            declare
-               Quantity : constant Quantity_Type :=
-                            Scale (Item.Quantity, Necessary_Factor);
-               Price    : constant Price_Type :=
-                            Manager.Current_Ask_Price
-                              (Item.Commodity, Quantity);
-               Value    : constant Money_Type := Total (Price, Quantity);
-            begin
-               Manager.Create_Bid
-                 (Commodity => Item.Commodity,
-                  Quantity  => Quantity,
-                  Price     => Price);
-               Remaining := Remaining - Value;
-            end;
+            Necessary_Cost := Necessary_Cost
+              + Total (Manager.Current_Ask_Price
+                       (Item.Commodity, Item.Quantity),
+                       Item.Quantity);
          end loop;
-      end;
+
+         declare
+            Necessary_Factor : constant Unit_Real :=
+                                 (if Necessary_Cost <= Remaining
+                                  then 1.0
+                                  else To_Real (Remaining)
+                                  / To_Real (Necessary_Cost));
+         begin
+            for Item of Manager.Necessary loop
+               declare
+                  Quantity : constant Quantity_Type :=
+                               Scale (Item.Quantity, Necessary_Factor);
+                  Price    : constant Price_Type :=
+                               Manager.Current_Ask_Price
+                                 (Item.Commodity, Quantity);
+                  Value    : constant Money_Type := Total (Price, Quantity);
+               begin
+                  Manager.Create_Bid
+                    (Commodity => Item.Commodity,
+                     Quantity  => Quantity,
+                     Price     => Price);
+                  Remaining := Remaining - Value;
+               end;
+            end loop;
+         end;
+      end if;
    end Create_Bids;
 
    -----------------------

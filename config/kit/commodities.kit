@@ -22,6 +22,7 @@ record Commodity : Localised is
    Mass       : Long_Float;
    Base_Price : Price_Type;
    Transient  : Boolean;
+   Employment : Boolean;
 end Commodity;
 
 record Has_Stock;
@@ -53,6 +54,7 @@ record Consumer_Commodity : Commodity is
    key Quality : Quality_Type;
    key Class   : Consumer_Class;
    Happiness   : Long_Float;
+   Consumption : Long_Float;
    key Quality_Class with Quality, Class;
 end Consumer_Commodity;
 

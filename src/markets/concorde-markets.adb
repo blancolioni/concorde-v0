@@ -321,24 +321,39 @@ package body Concorde.Markets is
       Quantity  : Agora.Quantity_Type;
       Price     : Agora.Price_Type)
    is
+      use type Concorde.Db.Record_Type;
       Q : constant Concorde.Quantities.Quantity_Type :=
             To_Concorde (Quantity);
       P : constant Concorde.Money.Price_Type :=
             To_Concorde (Price);
       M : constant Concorde.Money.Money_Type :=
             Concorde.Money.Total (P, Q);
+      Employed : constant Boolean :=
+                   To_Concorde (Commodity).Top_Record
+                   = Concorde.Db.R_Pop_Group;
    begin
-      Concorde.Logging.Log
-        (Concorde.Agents.Describe (Agent.Handle),
-         "bought " & Concorde.Quantities.Show (Q)
-         & " " & To_Concorde (Commodity).Tag
-         & " for " & Concorde.Money.Show (P)
-         & " ea (total " & Concorde.Money.Show (M) & ")");
 
-      Concorde.Agents.Remove_Cash
-        (Agent => Agent.Handle,
-         Cash  => M,
-         Tag   => "bought");
+      if Employed then
+         Concorde.Logging.Log
+           (Concorde.Agents.Describe (Agent.Handle),
+            "employed " & Concorde.Quantities.Show (Q)
+            & " " & To_Concorde (Commodity).Tag
+            & " for " & Concorde.Money.Show (P)
+            & " per day");
+      else
+         Concorde.Logging.Log
+           (Concorde.Agents.Describe (Agent.Handle),
+            "bought " & Concorde.Quantities.Show (Q)
+            & " " & To_Concorde (Commodity).Tag
+            & " for " & Concorde.Money.Show (P)
+            & " ea (total " & Concorde.Money.Show (M) & ")");
+
+         Concorde.Agents.Remove_Cash
+           (Agent => Agent.Handle,
+            Cash  => M,
+            Tag   => "bought");
+      end if;
+
       Concorde.Stock.Add_Stock
         (To       => Agent.Handle,
          Item     => To_Concorde (Commodity),
@@ -357,44 +372,53 @@ package body Concorde.Markets is
       Quantity  : Agora.Quantity_Type;
       Price     : Agora.Price_Type)
    is
+      use type Concorde.Db.Record_Type;
       Q : constant Concorde.Quantities.Quantity_Type :=
             To_Concorde (Quantity);
       P : constant Concorde.Money.Price_Type :=
             To_Concorde (Price);
       M : constant Concorde.Money.Money_Type :=
             Concorde.Money.Total (P, Q);
+      Employed : constant Boolean :=
+                   To_Concorde (Commodity).Top_Record
+                   = Concorde.Db.R_Pop_Group;
    begin
-      Concorde.Logging.Log
-        (Concorde.Agents.Describe (Agent.Handle),
-         "sold " & Concorde.Quantities.Show (Q)
-         & " " & To_Concorde (Commodity).Tag
-         & " for " & Concorde.Money.Show (P)
-         & " ea (total " & Concorde.Money.Show (M) & ")");
+      if Employed then
+         Concorde.Logging.Log
+           (Concorde.Agents.Describe (Agent.Handle),
+            Concorde.Quantities.Show (Q)
+            & " working for "
+            & Concorde.Money.Show (P)
+            & " per day");
 
-      Concorde.Agents.Add_Cash
-        (Agent => Agent.Handle,
-         Cash  => M,
-         Tag   => "sold");
+         Concorde.Pops.On_Employment
+           (Pop      =>
+              Concorde.Handles.Pop.Get_From_Agent (Agent.Handle),
+            Employer =>
+              Concorde.Handles.Employer.Get_From_Agent
+                (Agora_Agent (Buyer).Handle),
+            Quantity => Q,
+            Salary   => P);
+
+      else
+
+         Concorde.Logging.Log
+           (Concorde.Agents.Describe (Agent.Handle),
+            "sold " & Concorde.Quantities.Show (Q)
+            & " " & To_Concorde (Commodity).Tag
+            & " for " & Concorde.Money.Show (P)
+            & " ea (total " & Concorde.Money.Show (M) & ")");
+
+         Concorde.Agents.Add_Cash
+           (Agent => Agent.Handle,
+            Cash  => M,
+            Tag   => "sold");
+      end if;
 
       Concorde.Stock.Remove_Stock
         (From     => Agent.Handle,
          Item     => To_Concorde (Commodity),
          Quantity => Q);
-
-      declare
-         use type Concorde.Db.Record_Type;
-      begin
-         if To_Concorde (Commodity).Top_Record = Concorde.Db.R_Pop_Group then
-            Concorde.Pops.On_Employment
-              (Pop      =>
-                 Concorde.Handles.Pop.Get_From_Agent (Agent.Handle),
-               Employer =>
-                 Concorde.Handles.Employer.Get_From_Agent
-                   (Agora_Agent (Buyer).Handle),
-               Quantity => Q,
-               Salary   => P);
-         end if;
-      end;
 
    end On_Sell;
 

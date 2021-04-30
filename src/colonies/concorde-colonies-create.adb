@@ -119,36 +119,43 @@ package body Concorde.Colonies.Create is
                          Concorde.Handles.Facility.Get_By_Tag
                            (Capital_Installation.Config_Name);
             Count    : constant Natural :=
-                         Capital_Installation.Value;
+                         (if Capital_Installation.Contains ("count")
+                          then Capital_Installation.Get ("count")
+                          else Capital_Installation.Value);
             Manager  : constant String :=
                          (if Facility.Default_Manager = ""
                           then "default-installation"
                           else Facility.Default_Manager);
          begin
             for I in 1 .. Count loop
-               Concorde.Handles.Installation.Create
-                 (Account      =>
-                    Concorde.Agents.New_Account
-                      (Concorde.Money.Zero, Faction.Account),
-                  Last_Earn    => Concorde.Money.Zero,
-                  Last_Spend   => Concorde.Money.Zero,
-                  Identifier   => Concorde.Identifiers.Next_Identifier,
-                  World_Sector => Capital,
-                  Facility     => Facility,
-                  Active       => True,
-                  Scheduled    => False,
-                  Next_Event   => Concorde.Calendar.Clock,
-                  Manager      => Manager);
-
-               Add_Worker_Population (Facility);
-
+               declare
+                  Installation : constant Concorde.Handles.Installation
+                    .Installation_Handle :=
+                      Concorde.Handles.Installation.Create
+                        (Account      =>
+                               Concorde.Agents.New_Account
+                           (Concorde.Money.Zero, Faction.Account),
+                         Last_Earn    => Concorde.Money.Zero,
+                         Last_Spend   => Concorde.Money.Zero,
+                         Identifier   => Concorde.Identifiers.Next_Identifier,
+                         World_Sector => Capital,
+                         Colony       => Colony,
+                         Facility     => Facility,
+                         Active       => True,
+                         Scheduled    => False,
+                         Next_Event   => Concorde.Calendar.Clock,
+                         Manager      => Manager);
+               begin
+                  Add_Worker_Population (Facility);
+                  if Capital_Installation.Contains ("stock") then
+                     Concorde.Configure.Commodities.Configure_Stock
+                       (Has_Stock => Installation,
+                        Config    => Capital_Installation.Child ("stock"));
+                  end if;
+               end;
             end loop;
          end;
       end loop;
-
-      Concorde.Configure.Commodities.Configure_Stock
-        (Has_Stock => Colony,
-         Config    => Init.Child ("stock"));
 
       declare
 
@@ -255,6 +262,7 @@ package body Concorde.Colonies.Create is
                      Last_Spend   => Concorde.Money.Zero,
                      Identifier   => Concorde.Identifiers.Next_Identifier,
                      World_Sector => Sector,
+                     Colony       => Colony,
                      Facility     => Info.Facility,
                      Manager      => Manager);
 

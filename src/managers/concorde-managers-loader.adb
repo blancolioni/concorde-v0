@@ -3,6 +3,7 @@
 --  with Concorde.Managers.Factions;
 
 with Concorde.Installations.Managers;
+with Concorde.Pops.Managers;
 
 package body Concorde.Managers.Loader is
 
@@ -16,6 +17,14 @@ package body Concorde.Managers.Loader is
       Register.Insert
         ("default-installation",
          Concorde.Installations.Managers.Create_Default_Manager'Access);
+
+      Register.Insert
+        ("default-outpost",
+         Concorde.Installations.Managers.Create_Outpost_Manager'Access);
+
+      Register.Insert
+        ("default-pop",
+         Concorde.Pops.Managers.Create_Pop_Manager'Access);
 
 --        Register.Insert
 --          ("default-agora",

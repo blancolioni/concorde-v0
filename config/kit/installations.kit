@@ -6,6 +6,7 @@ with World_Sectors;
 package Installations is
 
     record Installation : Agent, Employer, Has_Stock, Managed is
+        key Colony;
         key World_Sector;
         Facility;
     end Installation;

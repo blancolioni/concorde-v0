@@ -47,7 +47,11 @@ package body Concorde.Configure.Facilities is
                           (Facility_Config.Get ("power", 0.0)),
                       Capacity =>
                         Concorde.Quantities.To_Quantity
-                          (Facility_Config.Get ("capacity", 0.0)));
+                          (Facility_Config.Get ("capacity", 0.0)),
+                      Default_Manager =>
+                        Facility_Config.Get
+                          ("default-manager", "default-installation"));
+
    begin
       for Worker_Config of
         Facility_Config.Child ("worker")

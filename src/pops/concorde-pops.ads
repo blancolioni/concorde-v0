@@ -18,8 +18,6 @@ package Concorde.Pops is
       Size    : Concorde.Quantities.Quantity_Type;
       Cash    : Concorde.Money.Money_Type);
 
-   procedure Load_Pops;
-
    function Describe (Pop : Concorde.Handles.Pop.Pop_Class) return String;
    procedure Log (Pop     : Concorde.Handles.Pop.Pop_Class;
                   Message : String);

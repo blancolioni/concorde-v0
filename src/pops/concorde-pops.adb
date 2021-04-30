@@ -3,8 +3,6 @@ with Concorde.Calendar;
 with Concorde.Identifiers;
 with Concorde.Stock;
 
-with Concorde.Pops.Updates;
-
 with Concorde.Logging;
 with Concorde.Real_Images;
 
@@ -21,19 +19,6 @@ package body Concorde.Pops is
       return Concorde.Real_Images.Approximate_Image (Pop.Size)
         & " " & Pop.Pop_Group.Tag;
    end Describe;
-
-   ---------------
-   -- Load_Pops --
-   ---------------
-
-   procedure Load_Pops is
-   begin
-      for Pop of Concorde.Handles.Pop.Scan_By_Top_Record loop
-         if Pop.Size > 0.0 then
-            Updates.Create_Pop_Update (Pop);
-         end if;
-      end loop;
-   end Load_Pops;
 
    ---------
    -- Log --

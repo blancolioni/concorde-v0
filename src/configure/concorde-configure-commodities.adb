@@ -36,9 +36,9 @@ package body Concorde.Configure.Commodities is
      (Class : Consumer_Class)
       return Happiness_Rating
    is (case Class is
-          when Food => 1,
-          when Drink => 1,
-          when Intoxicant => 3,
+          when Food => 3,
+          when Drink => 2,
+          when Intoxicant => 1,
           when Clothing   => 2);
 
    function Happiness_Level
@@ -270,6 +270,10 @@ package body Concorde.Configure.Commodities is
       end loop;
    end Configure_Constructed;
 
+   ------------------------------
+   -- Configure_Initial_Prices --
+   ------------------------------
+
    procedure Configure_Initial_Prices is
       use Concorde.Money;
       Changed : Boolean := True;
@@ -304,7 +308,7 @@ package body Concorde.Configure.Commodities is
                      Commodity.Update_Commodity
                        .Set_Base_Price
                          (Price
-                            (Adjust (Component_Cost, 5.0),
+                            (Adjust (Component_Cost, 2.0),
                              Concorde.Quantities.Unit))
                        .Done;
                      Changed := True;
@@ -357,7 +361,10 @@ package body Concorde.Configure.Commodities is
                Concorde.Handles.Stock_Item.Create
                  (Has_Stock => Has_Stock,
                   Commodity => Commodity,
-                  Quantity  => Quantity);
+                  Quantity  => Quantity,
+                  Value     =>
+                    Concorde.Money.Total (Commodity.Base_Price, Quantity));
+
             end;
          else
             raise Constraint_Error with
@@ -695,7 +702,13 @@ package body Concorde.Configure.Commodities is
                          Quality_Type'Val (Config.Get ("quality") - 1),
                        Class      => Class,
                        Happiness  => Real (Happiness_Level (Class))
-                       / Real (Happiness_Rating'Last));
+                       / Real (Happiness_Rating'Last),
+                       Consumption =>
+                         (case Class is
+                             when Food       => 1.0,
+                             when Drink      => 1.0,
+                             when Intoxicant => 1.0,
+                             when Clothing   => 0.1));
    begin
       return Commodity.To_Commodity_Handle;
    end Create_Consumer_Good;

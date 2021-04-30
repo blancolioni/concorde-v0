@@ -1,4 +1,4 @@
-cash = 100K
+start-cash = 1M
 
 gdp = ~1G
 total-population = ~1M
@@ -104,7 +104,28 @@ init-script = {
 }
 
    capital = {
-      outpost = 1
+      outpost = {
+         count = 1
+         stock = {
+            rations = 5000
+            readymeal = 1000
+            luxuryfood = 500
+            bargainclothes = 5000
+            regularclothes = 1000
+            luxuryclothes = 500
+            bottled-water = 5000
+            soda = 1000
+            ambrosia = 500
+            alcohol = 5000
+            stimulants = 1000
+            narcotics = 500
+            grains = 10000
+            salt = 5000
+            herb = 5000
+            livestock = 1000
+            vegetables = 1000
+         }
+      }
       clinic = 1
       private-clinic = 1
       basic-internet-provider = 2
