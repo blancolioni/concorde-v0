@@ -67,6 +67,19 @@ package body Concorde.Stock is
          Register_Stock (To, Item);
       end if;
 
+   exception
+      when others =>
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            "error while adding "
+            & Concorde.Quantities.Show (Quantity)
+            & " "
+            & Item.Tag
+            & " valued at "
+            & Concorde.Money.Show (Value)
+            & " to stock "
+            & To.Identifier);
+         raise;
    end Add_Stock;
 
    ------------------------

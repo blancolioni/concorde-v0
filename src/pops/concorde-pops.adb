@@ -6,6 +6,8 @@ with Concorde.Stock;
 with Concorde.Logging;
 with Concorde.Real_Images;
 
+with Concorde.Handles.Commodity;
+with Concorde.Handles.Consumer_Commodity;
 with Concorde.Handles.Employment;
 
 package body Concorde.Pops is
@@ -61,12 +63,31 @@ package body Concorde.Pops is
                  World_Sector => Sector,
                  Pop_Group    => Group,
                  Size         => Concorde.Quantities.To_Real (Size),
-                 Apathy       => 0.0);
+                 Apathy       => 0.0,
+                 Loyalty      => 1.0,
+                 Happiness    => 1.0);
    begin
       Concorde.Stock.Add_Initial_Stock
         (To       => Pop,
          Item     => Group,
          Quantity => Size);
+
+      for Consumer of
+        Concorde.Handles.Consumer_Commodity.Select_By_Quality
+          (Group.Consumer_Demand)
+      loop
+         declare
+            use Concorde.Quantities;
+            Necessary : constant Quantity_Type :=
+                          Concorde.Quantities.Scale
+                            (Size, Consumer.Consumption);
+         begin
+            Concorde.Stock.Add_Initial_Stock
+              (Pop, Concorde.Handles.Commodity.Get_By_Tag (Consumer.Tag),
+               Necessary);
+         end;
+      end loop;
+
    end New_Pop;
 
    -------------------

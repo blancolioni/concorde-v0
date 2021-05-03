@@ -84,6 +84,7 @@ package body Concorde.Managers.Agents is
       Necessary : Concorde.Quantities.Quantity_Type;
       Desired   : Concorde.Quantities.Quantity_Type)
    is
+      use Concorde.Quantities;
    begin
       Manager.Log
         (Commodity.Tag & ": necessary "
@@ -91,16 +92,22 @@ package body Concorde.Managers.Agents is
          & "; desired "
          & Concorde.Quantities.Show (Desired));
 
-      Manager.Necessary.Append
-        (Stock_Item_Record'
-           (Commodity => Commodity.To_Commodity_Handle,
-            Quantity  => Necessary,
-            Value     => Concorde.Money.Zero));
-      Manager.Desired.Append
-        (Stock_Item_Record'
-           (Commodity => Commodity.To_Commodity_Handle,
+      if Necessary > Zero then
+         Manager.Necessary.Append
+           (Stock_Item_Record'
+              (Commodity => Commodity.To_Commodity_Handle,
+               Quantity  => Necessary,
+               Value     => Concorde.Money.Zero));
+      end if;
+
+      if Desired > Zero then
+         Manager.Desired.Append
+           (Stock_Item_Record'
+              (Commodity => Commodity.To_Commodity_Handle,
             Quantity  => Desired,
-            Value     => Concorde.Money.Zero));
+               Value     => Concorde.Money.Zero));
+      end if;
+
    end Add_Requirement;
 
    ---------------
@@ -620,6 +627,7 @@ package body Concorde.Managers.Agents is
 
       Manager.Necessary.Clear;
       Manager.Desired.Clear;
+      Manager.Sell.Clear;
 
    end On_Activation_Begin;
 

@@ -14,8 +14,10 @@ record Pop : Agent, Managed is
    key World;
    key World_Sector;
    Pop_Group;
-   Size   : Long_Float;
-   Apathy : Long_Float;
+   Size      : Long_Float;
+   Apathy    : Long_Float;
+   Happiness : Long_Float;
+   Loyalty   : Long_Float;
    key Faction_World with Faction, World;
    key Faction_Sector_Group with Faction, World_Sector, Pop_Group;
    key Faction_World_Group with Faction, World, Pop_Group;

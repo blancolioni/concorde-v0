@@ -1,6 +1,7 @@
 with Localisation;
 with Calendar;
 with Colors;
+with Identifiers;
 with Money;
 with Properties;
 with Quantities;
@@ -25,7 +26,7 @@ record Commodity : Localised is
    Employment : Boolean;
 end Commodity;
 
-record Has_Stock;
+record Has_Stock : Has_Identifier;
 
 record Stock_Item is
    key Has_Stock;

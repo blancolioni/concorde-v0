@@ -707,8 +707,8 @@ package body Concorde.Configure.Commodities is
                          (case Class is
                              when Food       => 1.0,
                              when Drink      => 1.0,
-                             when Intoxicant => 1.0,
-                             when Clothing   => 0.1));
+                             when Intoxicant => 0.1,
+                             when Clothing   => 0.05));
    begin
       return Commodity.To_Commodity_Handle;
    end Create_Consumer_Good;

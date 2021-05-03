@@ -1,6 +1,7 @@
 with Concorde.Agents;
 with Concorde.Markets;
 with Concorde.Stock;
+with Concorde.Real_Images;
 
 with Concorde.Managers.Agents;
 
@@ -29,6 +30,9 @@ package body Concorde.Pops.Managers is
      (Manager : in out Pop_Manager);
 
    overriding procedure Set_Sale_Stock
+     (Manager : in out Pop_Manager);
+
+   overriding procedure Execute_Consumption
      (Manager : in out Pop_Manager);
 
    -----------------------
@@ -62,6 +66,72 @@ package body Concorde.Pops.Managers is
       return Concorde.Managers.Manager_Type (Manager);
    end Create_Pop_Manager;
 
+   -------------------------
+   -- Execute_Consumption --
+   -------------------------
+
+   overriding procedure Execute_Consumption
+     (Manager : in out Pop_Manager)
+   is
+      use Concorde.Money, Concorde.Quantities;
+      Happiness : Unit_Real := 0.0;
+      Total     : Money_Type := Zero;
+   begin
+      for Consumer of
+        Concorde.Handles.Consumer_Commodity.Select_By_Quality
+          (Manager.Group.Consumer_Demand)
+      loop
+         declare
+            Required : constant Quantity_Type :=
+                         To_Quantity (Manager.Pop.Size
+                                      * Consumer.Consumption);
+            Available : constant Quantity_Type :=
+                          Concorde.Stock.Get_Quantity
+                            (Manager.Pop, Consumer);
+            Consumed  : constant Quantity_Type :=
+                          Min (Required, Available);
+            Happy     : constant Unit_Real :=
+                          To_Real (Consumed) / To_Real (Required)
+                        * Consumer.Happiness;
+            Value     : Money_Type := Zero;
+         begin
+            if Consumed > Zero then
+               Concorde.Stock.Remove_Stock
+                 (Manager.Pop, Consumer, Consumed, Value);
+               Total := Total + Value;
+            end if;
+
+            Manager.Log
+              (Consumer.Tag
+               & ": required " & Show (Required)
+               & "; available " & Show (Available)
+               & "; consumed " & Show (Consumed)
+               & "; cost " & Show (Value)
+               & "; happiness "
+               & Concorde.Real_Images.Approximate_Image (Happy * 100.0)
+               & "%");
+
+            Happiness := Happiness + Happy;
+         end;
+      end loop;
+
+      declare
+         New_Happiness : constant Unit_Real :=
+                           Manager.Pop.Happiness * 0.5
+                             + Happiness * 0.5;
+      begin
+         Manager.Log ("total cost " & Show (Total)
+                      & "; new happiness "
+                      & Concorde.Real_Images.Approximate_Image
+                        (New_Happiness * 100.0)
+                      & "%");
+         Manager.Pop.Update_Pop
+           .Set_Happiness (New_Happiness)
+           .Done;
+      end;
+
+   end Execute_Consumption;
+
    ----------------------
    -- Set_Requirements --
    ----------------------
@@ -74,14 +144,29 @@ package body Concorde.Pops.Managers is
         Concorde.Handles.Consumer_Commodity.Select_By_Quality
           (Manager.Group.Consumer_Demand)
       loop
-         Manager.Add_Requirement
-           (Commodity => Consumer,
-            Necessary =>
-              Concorde.Quantities.To_Quantity
-                (Manager.Pop.Size),
-            Desired   =>
-              Concorde.Quantities.To_Quantity
-                (Manager.Pop.Size / Consumer.Happiness));
+         declare
+            use Concorde.Quantities;
+            Have : constant Quantity_Type :=
+                     Concorde.Stock.Get_Quantity
+                       (Manager.Pop, Consumer);
+            Necessary : constant Quantity_Type :=
+                          Concorde.Quantities.To_Quantity
+                            (Manager.Pop.Size
+                             * Consumer.Consumption);
+            Desired   : constant Quantity_Type :=
+                          Concorde.Quantities.To_Quantity
+                            (Manager.Pop.Size / Consumer.Happiness
+                             * Consumer.Consumption);
+         begin
+            if Necessary > Have or else Desired > Have then
+               Manager.Add_Requirement
+                 (Commodity => Consumer,
+                  Necessary =>
+                    (if Necessary > Have then Necessary - Have else Zero),
+                  Desired   =>
+                    (if Desired > Have then Desired - Have else Zero));
+            end if;
+         end;
       end loop;
    end Set_Requirements;
 
