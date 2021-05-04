@@ -6,6 +6,7 @@ with Concorde.Real_Images;
 with Concorde.Managers.Agents;
 
 with Concorde.Handles.Consumer_Commodity;
+with Concorde.Handles.Service_Commodity;
 with Concorde.Handles.World;
 
 package body Concorde.Pops.Managers is
@@ -18,8 +19,6 @@ package body Concorde.Pops.Managers is
          World  : Concorde.Handles.World.World_Handle;
          Colony : Concorde.Handles.Colony.Colony_Handle;
       end record;
-
-   type Pop_Manager_Access is access all Pop_Manager'Class;
 
    overriding function Identifier
      (Manager : Pop_Manager)
@@ -41,13 +40,13 @@ package body Concorde.Pops.Managers is
 
    function Create_Pop_Manager
      (Managed : Concorde.Handles.Managed.Managed_Class)
-      return Concorde.Managers.Manager_Type
+      return Concorde.Managers.Root_Manager_Type'Class
    is
       use Concorde.Handles.Pop;
       Pop : constant Pop_Handle :=
               Get_From_Managed (Managed);
-      Manager      : constant Pop_Manager_Access :=
-                       new Pop_Manager'
+      Manager      : Pop_Manager :=
+                       Pop_Manager'
                          (Concorde.Managers.Agents.Root_Agent_Manager_Type with
                           Pop => Pop,
                           Group  => Pop.Pop_Group.To_Pop_Group_Handle,
@@ -63,7 +62,7 @@ package body Concorde.Pops.Managers is
          Market         =>
            Concorde.Markets.World_Market (Pop.World),
          Planning_Cycle => 10);
-      return Concorde.Managers.Manager_Type (Manager);
+      return Manager;
    end Create_Pop_Manager;
 
    -------------------------
@@ -103,6 +102,43 @@ package body Concorde.Pops.Managers is
 
             Manager.Log
               (Consumer.Tag
+               & ": required " & Show (Required)
+               & "; available " & Show (Available)
+               & "; consumed " & Show (Consumed)
+               & "; cost " & Show (Value)
+               & "; happiness "
+               & Concorde.Real_Images.Approximate_Image (Happy * 100.0)
+               & "%");
+
+            Happiness := Happiness + Happy;
+         end;
+      end loop;
+
+      for Service of
+        Concorde.Handles.Service_Commodity.Select_By_Quality
+          (Manager.Group.Service_Demand)
+      loop
+         declare
+            Required : constant Quantity_Type :=
+                         To_Quantity (Manager.Pop.Size);
+            Available : constant Quantity_Type :=
+                          Concorde.Stock.Get_Quantity
+                            (Manager.Pop, Service);
+            Consumed  : constant Quantity_Type :=
+                          Min (Required, Available);
+            Happy     : constant Unit_Real :=
+                          To_Real (Consumed) / To_Real (Required)
+                        * Service.Happiness;
+            Value     : Money_Type := Zero;
+         begin
+            if Available > Zero then
+               Concorde.Stock.Remove_Stock
+                 (Manager.Pop, Service, Available, Value);
+               Total := Total + Value;
+            end if;
+
+            Manager.Log
+              (Service.Tag
                & ": required " & Show (Required)
                & "; available " & Show (Available)
                & "; consumed " & Show (Consumed)
@@ -166,6 +202,24 @@ package body Concorde.Pops.Managers is
                   Desired   =>
                     (if Desired > Have then Desired - Have else Zero));
             end if;
+         end;
+      end loop;
+
+      for Service of
+        Concorde.Handles.Service_Commodity.Select_By_Quality
+          (Manager.Group.Service_Demand)
+      loop
+         declare
+            use Concorde.Quantities;
+            Necessary : constant Quantity_Type :=
+                          Concorde.Quantities.To_Quantity
+                            (Manager.Pop.Size);
+            Desired   : constant Quantity_Type := Necessary;
+         begin
+            Manager.Add_Requirement
+              (Commodity => Service,
+               Necessary => Necessary,
+               Desired   => Desired);
          end;
       end loop;
    end Set_Requirements;

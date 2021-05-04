@@ -3,13 +3,19 @@ with Concorde.Managers.Agents;
 with Concorde.Markets;
 with Concorde.Money;
 with Concorde.Quantities;
+with Concorde.Real_Images;
 with Concorde.Stock;
 
 with Concorde.Handles.Commodity;
 with Concorde.Handles.Employment;
 with Concorde.Handles.Facility;
+with Concorde.Handles.Facility_Service;
 with Concorde.Handles.Facility_Worker;
 with Concorde.Handles.Installation;
+with Concorde.Handles.Pop_Group;
+with Concorde.Handles.Service_Commodity;
+
+with Concorde.Db;
 
 package body Concorde.Installations.Managers is
 
@@ -20,7 +26,18 @@ package body Concorde.Installations.Managers is
          Facility     : Concorde.Handles.Facility.Facility_Handle;
       end record;
 
-   type Manager_Access is access all Default_Installation_Manager'Class;
+   procedure Initialize_Manager
+     (Manager : in out Default_Installation_Manager'Class;
+      Installation : Concorde.Handles.Installation.Installation_Class);
+
+   function Employees
+     (Manager : Default_Installation_Manager'Class;
+      Group   : Concorde.Handles.Pop_Group.Pop_Group_Class)
+      return Concorde.Quantities.Quantity_Type;
+
+   function Worker_Capacity
+     (Manager : Default_Installation_Manager'Class)
+      return Unit_Real;
 
    overriding function Identifier
      (Manager : Default_Installation_Manager)
@@ -38,9 +55,6 @@ package body Concorde.Installations.Managers is
          null;
       end record;
 
-   type Outpost_Manager_Access is
-     access all Default_Outpost_Manager'Class;
-
    overriding function Identifier
      (Manager : Default_Outpost_Manager)
       return String
@@ -49,18 +63,32 @@ package body Concorde.Installations.Managers is
    overriding procedure Set_Sale_Stock
      (Manager : in out Default_Outpost_Manager);
 
+   type Default_Service_Manager is new Default_Installation_Manager with
+      record
+         null;
+      end record;
+
+   overriding function Identifier
+     (Manager : Default_Service_Manager)
+      return String
+   is (Describe (Manager.Installation) & " service manager");
+
+   overriding procedure Execute_Production
+     (Manager : in out Default_Service_Manager);
+
    ----------------------------
    -- Create_Default_Manager --
    ----------------------------
 
    function Create_Default_Manager
      (Managed : Concorde.Handles.Managed.Managed_Class)
-      return Concorde.Managers.Manager_Type
+      return Concorde.Managers.Root_Manager_Type'Class
    is
-      Installation : constant Concorde.Handles.Installation.Installation_Handle
-        := Concorde.Handles.Installation.Get_From_Managed (Managed);
-      Manager      : constant Manager_Access :=
-                       new Default_Installation_Manager'
+      use Concorde.Handles.Installation;
+      Installation : constant Installation_Handle :=
+                       Get_From_Managed (Managed);
+      Manager      : Default_Installation_Manager :=
+                       Default_Installation_Manager'
                          (Concorde.Managers.Agents.Root_Agent_Manager_Type with
                           Installation => Installation,
                           Facility     =>
@@ -76,7 +104,7 @@ package body Concorde.Installations.Managers is
            Concorde.Markets.World_Market
              (Installation.World_Sector.World),
          Planning_Cycle => 10);
-      return Concorde.Managers.Manager_Type (Manager);
+      return Manager;
    end Create_Default_Manager;
 
    ----------------------------
@@ -85,13 +113,13 @@ package body Concorde.Installations.Managers is
 
    function Create_Outpost_Manager
      (Managed : Concorde.Handles.Managed.Managed_Class)
-      return Concorde.Managers.Manager_Type
+      return Concorde.Managers.Root_Manager_Type'Class
    is
       use Concorde.Handles.Installation;
       Installation : constant Installation_Handle :=
                        Get_From_Managed (Managed);
-      Manager      : constant Outpost_Manager_Access :=
-                       new Default_Outpost_Manager'
+      Manager      : Default_Outpost_Manager :=
+                       Default_Outpost_Manager'
                          (Concorde.Managers.Agents.Root_Agent_Manager_Type with
                           Installation => Installation,
                           Facility     =>
@@ -107,8 +135,137 @@ package body Concorde.Installations.Managers is
            Concorde.Markets.World_Market
              (Installation.World_Sector.World),
          Planning_Cycle => 10);
-      return Concorde.Managers.Manager_Type (Manager);
+      return Manager;
    end Create_Outpost_Manager;
+
+   ----------------------------
+   -- Create_Service_Manager --
+   ----------------------------
+
+   function Create_Service_Manager
+     (Managed : Concorde.Handles.Managed.Managed_Class)
+      return Concorde.Managers.Root_Manager_Type'Class
+   is
+      use Concorde.Handles.Installation;
+      Installation : constant Installation_Handle :=
+                       Get_From_Managed (Managed);
+      Manager      : Default_Service_Manager;
+   begin
+      Concorde.Agents.Log_Agent
+        (Installation,
+         Describe (Installation),
+         "using service manager");
+      Initialize_Manager (Manager, Installation);
+      return Manager;
+   end Create_Service_Manager;
+
+   ---------------
+   -- Employees --
+   ---------------
+
+   function Employees
+     (Manager : Default_Installation_Manager'Class;
+      Group   : Concorde.Handles.Pop_Group.Pop_Group_Class)
+      return Concorde.Quantities.Quantity_Type
+   is
+      use type Concorde.Quantities.Quantity_Type;
+      Result : Concorde.Quantities.Quantity_Type :=
+                 Concorde.Quantities.Zero;
+   begin
+      for Employment of
+        Concorde.Handles.Employment.Select_By_Employer
+          (Manager.Installation)
+      loop
+         if Employment.Pop.Pop_Group.Tag = Group.Tag then
+            Result := Result + Employment.Quantity;
+         end if;
+      end loop;
+      return Result;
+   end Employees;
+
+   ------------------------
+   -- Execute_Production --
+   ------------------------
+
+   overriding procedure Execute_Production
+     (Manager : in out Default_Service_Manager)
+   is
+      use Concorde.Money, Concorde.Quantities;
+      Capacity : constant Unit_Real :=
+                   Manager.Worker_Capacity;
+      Cost     : Money_Type := Zero;
+   begin
+
+      for Employment of
+        Concorde.Handles.Employment.Select_By_Employer
+          (Manager.Installation)
+      loop
+         Cost := Cost + Total (Employment.Salary, Employment.Quantity);
+      end loop;
+
+      Default_Installation_Manager (Manager).Execute_Production;
+
+      Manager.Log
+        ("executing production: worker cost "
+         & Show (Cost)
+         & "; capacity "
+         & Concorde.Real_Images.Approximate_Image (Capacity * 100.0)
+         & "%");
+
+      for Facility_Service of
+        Concorde.Handles.Facility_Service.Select_By_Facility
+          (Manager.Facility)
+      loop
+         declare
+            Service  : constant Concorde.Handles.Service_Commodity
+              .Service_Commodity_Class
+                := Facility_Service.Service_Commodity;
+            Quality  : constant Positive :=
+                         1 + Concorde.Db.Quality_Type'Pos
+                           (Facility_Service.Service_Commodity.Quality);
+            Quantity : constant Quantity_Type :=
+                         Scale (Manager.Facility.Capacity,
+                                Capacity / (1.0 + Real (Quality) ** 2));
+
+         begin
+            Manager.Remove_Stock (Service,
+                                  Manager.Stock_Quantity (Service));
+            if Quantity > Zero then
+               Manager.Log
+                 ("produced " & Show (Quantity) & " "
+                  & Service.Tag
+                  & " for " & Concorde.Money.Show (Cost)
+                  & " ("
+                  & Concorde.Money.Show (Concorde.Money.Price (Cost, Quantity))
+                  & " each)");
+               Manager.Add_Stock (Service, Quantity, Cost);
+               Manager.Create_Ask
+                 (Commodity => Service,
+                  Quantity  => Quantity,
+                  Price     => Price (Adjust (Cost, 2.0), Quantity));
+            end if;
+         end;
+      end loop;
+   end Execute_Production;
+
+   ------------------------
+   -- Initialize_Manager --
+   ------------------------
+
+   procedure Initialize_Manager
+     (Manager : in out Default_Installation_Manager'Class;
+      Installation : Concorde.Handles.Installation.Installation_Class)
+   is
+   begin
+      Manager.Initialize_Agent_Manager
+        (Agent          => Installation,
+         Market         =>
+           Concorde.Markets.World_Market
+             (Installation.World_Sector.World),
+         Planning_Cycle => 10);
+      Manager.Installation := Installation.To_Installation_Handle;
+      Manager.Facility     := Installation.Facility.To_Facility_Handle;
+   end Initialize_Manager;
 
    ---------------------
    -- Pay_Daily_Costs --
@@ -214,5 +371,37 @@ package body Concorde.Installations.Managers is
          Process   => Ask'Access);
       Manager.Scan_Stock (Ask'Access);
    end Set_Sale_Stock;
+
+   ---------------------
+   -- Worker_Capacity --
+   ---------------------
+
+   function Worker_Capacity
+     (Manager : Default_Installation_Manager'Class)
+      return Unit_Real
+   is
+      Capacity : Unit_Real := 1.0;
+   begin
+      for Facility_Worker of
+        Concorde.Handles.Facility_Worker.Select_By_Facility
+          (Manager.Facility)
+      loop
+         declare
+            use Concorde.Quantities;
+            Employees : constant Quantity_Type :=
+                          Manager.Employees (Facility_Worker.Pop_Group);
+         begin
+            if Employees < Facility_Worker.Quantity then
+               Capacity :=
+                 Unit_Real'Min
+                   (Capacity,
+                    To_Real (Employees) / To_Real (Facility_Worker.Quantity));
+            end if;
+         end;
+      end loop;
+
+      return Capacity;
+
+   end Worker_Capacity;
 
 end Concorde.Installations.Managers;

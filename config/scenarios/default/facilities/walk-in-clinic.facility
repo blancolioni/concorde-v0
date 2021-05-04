@@ -12,3 +12,4 @@ service = {
 }
 
 capacity = 100
+default-manager = default-service

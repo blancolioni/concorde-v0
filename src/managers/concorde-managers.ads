@@ -31,7 +31,7 @@ package Concorde.Managers is
 
    type Constructor_Function is access
      function (Managed : Concorde.Handles.Managed.Managed_Class)
-               return Manager_Type;
+               return Root_Manager_Type'Class;
 
 private
 

@@ -1,12 +1,12 @@
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-with Ada.Text_IO;
+--  with Ada.Text_IO;
 
 with Concorde.Random;
 with Concorde.Updates.Events;
 
 with Concorde.Handles.Managed;
 
-with Concorde.Db;
+--  with Concorde.Db;
 
 package body Concorde.Managers.Execution is
 
@@ -106,39 +106,39 @@ package body Concorde.Managers.Execution is
       Key  : constant String := Managed.Identifier;
       Name : constant String := Get_Manager_Name (Managed);
       Manager : constant Manager_Type :=
-                  Register.Element (Name) (Managed);
+                  new Root_Manager_Type'Class'
+                    (Register.Element (Name) (Managed));
 
    begin
-      if Manager /= null then
-         Manager.Is_Active := Managed.Active;
-         Manager.Managed := Managed_Holders.To_Holder (Managed);
-         Active_Map.Insert (Key, Manager);
-         if Manager.Is_Active then
-            declare
-               Update : constant Manager_Update :=
-                          (Concorde.Updates.Root_Update_Type with
-                           Manager => Manager);
-            begin
-               Concorde.Updates.Events.Update_At
-                 (Clock  => Managed.Next_Event,
-                  Update => Update);
-            end;
-         end if;
-
-         Managed.Update_Managed.Set_Scheduled (Manager.Is_Active).Done;
-      else
-         Ada.Text_IO.Put_Line
-           (Ada.Text_IO.Standard_Error,
-            "cannot create manager '"
-            & Name
-            & "' for "
-            & Concorde.Db.Record_Type'Image
-              (Managed.Top_Record));
-         Concorde.Handles.Managed.Update_Managed (Managed)
-           .Set_Active (False)
-           .Set_Scheduled (False)
-           .Done;
+      Manager.Is_Active := Managed.Active;
+      Manager.Managed := Managed_Holders.To_Holder (Managed);
+      Active_Map.Insert (Key, Manager);
+      if Manager.Is_Active then
+         declare
+            Update : constant Manager_Update :=
+                       (Concorde.Updates.Root_Update_Type with
+                        Manager => Manager);
+         begin
+            Concorde.Updates.Events.Update_At
+              (Clock  => Managed.Next_Event,
+               Update => Update);
+         end;
       end if;
+
+      Managed.Update_Managed.Set_Scheduled (Manager.Is_Active).Done;
+      --  else
+      --     Ada.Text_IO.Put_Line
+      --       (Ada.Text_IO.Standard_Error,
+      --        "cannot create manager '"
+      --        & Name
+      --        & "' for "
+      --        & Concorde.Db.Record_Type'Image
+      --          (Managed.Top_Record));
+      --     Concorde.Handles.Managed.Update_Managed (Managed)
+      --       .Set_Active (False)
+      --       .Set_Scheduled (False)
+      --       .Done;
+      --  end if;
    end Start_Manager;
 
 end Concorde.Managers.Execution;

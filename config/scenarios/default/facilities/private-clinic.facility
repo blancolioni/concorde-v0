@@ -11,3 +11,4 @@ service = {
    medical = { quality = 3 charge = 1000 }
 }
 capacity = 80
+default-manager = default-service

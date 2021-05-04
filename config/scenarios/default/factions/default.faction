@@ -128,7 +128,7 @@ init-script = {
       }
       clinic = 1
       private-clinic = 1
-      basic-internet-provider = 2
+      basic-internet-provider = 1
       broadband-internet-provider = 1
       virtual-reality-studio = 1
       small-food-factory = 1

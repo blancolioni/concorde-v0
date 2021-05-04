@@ -2,9 +2,13 @@ with Tropos.Reader;
 
 with Concorde.Db;
 
+with Concorde.Handles.Commodity;
 with Concorde.Handles.Facility;
+with Concorde.Handles.Facility_Production;
+with Concorde.Handles.Facility_Service;
 with Concorde.Handles.Facility_Worker;
 with Concorde.Handles.Pop_Group;
+with Concorde.Handles.Service_Commodity;
 
 package body Concorde.Configure.Facilities is
 
@@ -53,6 +57,50 @@ package body Concorde.Configure.Facilities is
                           ("default-manager", "default-installation"));
 
    begin
+
+      for Production_Config of Facility_Config.Child ("production") loop
+         declare
+            Commodity : constant Concorde.Handles.Commodity.Commodity_Class :=
+                          Concorde.Handles.Commodity.Get_By_Tag
+                            (Production_Config.Config_Name);
+         begin
+            if not Commodity.Has_Element then
+               raise Constraint_Error with
+                 "in configuration for " & Facility.Tag
+                 & ": no such commodity: " & Production_Config.Config_Name;
+            end if;
+
+            Concorde.Handles.Facility_Production.Create
+              (Facility  => Facility,
+               Commodity => Commodity);
+         end;
+      end loop;
+
+      for Service_Config of Facility_Config.Child ("service") loop
+         declare
+            Class : constant String := Service_Config.Config_Name;
+            Quality : constant Positive :=
+                        Positive'Value (Service_Config.Get ("quality"));
+            Commodity : constant Concorde.Handles.Service_Commodity
+              .Service_Commodity_Class :=
+                Concorde.Handles.Service_Commodity.First_By_Quality_Class
+                  (Concorde.Db.Quality_Type'Val (Quality - 1),
+                   Concorde.Db.Service_Category'Value (Class));
+         begin
+            if not Commodity.Has_Element then
+               raise Constraint_Error with
+                 "in configuration for " & Facility.Tag
+                 & ": no such service commodity: "
+                 & Service_Config.Config_Name;
+            end if;
+
+            Concorde.Handles.Facility_Service.Create
+              (Facility  => Facility,
+               Service_Commodity => Commodity);
+
+         end;
+      end loop;
+
       for Worker_Config of
         Facility_Config.Child ("worker")
       loop

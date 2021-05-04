@@ -8,7 +8,8 @@ module = { commercial = 1
            habitation = 1
          }
 service = {
-   entertainment = { quality = 1 charge = 1 }
+   entertainment = { quality = 1 charge = 100 }
 }
 
-capacity = 100
+capacity = 300
+default-manager = default-service

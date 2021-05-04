@@ -2,4 +2,4 @@ class = service
 quality = 2
 mass = 0
 entertainment = true
-npc-price = 50
+npc-price = 500

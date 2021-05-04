@@ -11,4 +11,5 @@ service = {
    entertainment = { quality = 2 charge = 50 }
 }
 
-capacity = 100
+capacity = 250
+default-manager = default-service
