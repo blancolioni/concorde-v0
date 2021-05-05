@@ -27,16 +27,14 @@ package body Concorde.Managers.Agents is
 
       M.On_Activation_Begin;
 
-      if Manager.Update_Count mod Manager.Planning_Cycle = 0 then
-         M.Create_Planning;
-      end if;
+      M.Create_Planning;
+      M.Set_Requirements;
+      M.Create_Bids;
 
       M.Pay_Daily_Costs;
 
-      M.Set_Requirements;
       M.Set_Sale_Stock;
 
-      M.Create_Bids;
       M.Create_Asks;
 
       M.Execute_Production;
