@@ -1,9 +1,11 @@
-with Concorde.Db;
+with Concorde.Handles.Resource;
+with Concorde.Handles.World_Sector;
 
 package Concorde.Sectors is
 
-   function Has_Stock_Reference
-     (Sector : Concorde.Handles.World_Sector_Reference)
-      return Concorde.Handles.Has_Stock.Has_Stock_Class;
+   function Resource_Yield
+     (Sector   : Concorde.Handles.World_Sector.World_Sector_Class;
+      Resource : Concorde.Handles.Resource.Resource_Class)
+      return Non_Negative_Real;
 
 end Concorde.Sectors;

@@ -264,6 +264,9 @@ package body Concorde.Colonies.Create is
                      World_Sector => Sector,
                      Colony       => Colony,
                      Facility     => Info.Facility,
+                     Active       => True,
+                     Scheduled    => False,
+                     Next_Event   => Concorde.Calendar.Clock,
                      Manager      => Manager);
 
                   Add_Worker_Population (Info.Facility);

@@ -13,7 +13,8 @@ record Fuzzy_Set is
 end Fuzzy_Set;
    
 record Resource : Commodity is
-   Category : Resource_Category;
+   key Category : Resource_Category;
+   Yield        : Long_Float;
 end Resource;
 
 record Resource_Sphere is

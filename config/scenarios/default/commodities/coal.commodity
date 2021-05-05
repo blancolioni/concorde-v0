@@ -3,9 +3,6 @@ name = Coal
 mass = 1
 fuel = true
 npc-price = 10
-constraints = {
-    life = multicellular
-}
     
 deposits = {
    uncommon = {

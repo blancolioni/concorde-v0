@@ -8,3 +8,4 @@ constraints = {
     terrain = water
     temperature = { 270 310 }
 }
+yield = 20%

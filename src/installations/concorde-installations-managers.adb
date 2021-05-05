@@ -4,6 +4,7 @@ with Concorde.Markets;
 with Concorde.Money;
 with Concorde.Quantities;
 with Concorde.Real_Images;
+with Concorde.Sectors;
 with Concorde.Stock;
 
 with Concorde.Handles.Commodity;
@@ -13,7 +14,9 @@ with Concorde.Handles.Facility_Service;
 with Concorde.Handles.Facility_Worker;
 with Concorde.Handles.Installation;
 with Concorde.Handles.Pop_Group;
+with Concorde.Handles.Resource;
 with Concorde.Handles.Service_Commodity;
+with Concorde.Handles.World_Sector;
 
 with Concorde.Db;
 
@@ -76,6 +79,19 @@ package body Concorde.Installations.Managers is
    overriding procedure Execute_Production
      (Manager : in out Default_Service_Manager);
 
+   type Default_Farm_Manager is new Default_Installation_Manager with
+      record
+         null;
+      end record;
+
+   overriding function Identifier
+     (Manager : Default_Farm_Manager)
+      return String
+   is (Describe (Manager.Installation) & " farm manager");
+
+   overriding procedure Execute_Production
+     (Manager : in out Default_Farm_Manager);
+
    ----------------------------
    -- Create_Default_Manager --
    ----------------------------
@@ -106,6 +122,27 @@ package body Concorde.Installations.Managers is
          Planning_Cycle => 10);
       return Manager;
    end Create_Default_Manager;
+
+   -------------------------
+   -- Create_Farm_Manager --
+   -------------------------
+
+   function Create_Farm_Manager
+     (Managed : Concorde.Handles.Managed.Managed_Class)
+      return Concorde.Managers.Root_Manager_Type'Class
+   is
+      use Concorde.Handles.Installation;
+      Installation : constant Installation_Handle :=
+                       Get_From_Managed (Managed);
+      Manager      : Default_Farm_Manager;
+   begin
+      Concorde.Agents.Log_Agent
+        (Installation,
+         Describe (Installation),
+         "using farm manager");
+      Initialize_Manager (Manager, Installation);
+      return Manager;
+   end Create_Farm_Manager;
 
    ----------------------------
    -- Create_Outpost_Manager --
@@ -246,6 +283,115 @@ package body Concorde.Installations.Managers is
             end if;
          end;
       end loop;
+   end Execute_Production;
+
+   ------------------------
+   -- Execute_Production --
+   ------------------------
+
+   overriding procedure Execute_Production
+     (Manager : in out Default_Farm_Manager)
+   is
+      use Concorde.Money, Concorde.Quantities;
+      Installation  : constant Handles.Installation.Installation_Handle :=
+                        Manager.Installation;
+      Best_Resource : Concorde.Handles.Resource.Resource_Handle;
+      Best_Yield    : Unit_Real := 0.0;
+      Sector        : constant Handles.World_Sector.World_Sector_Class :=
+                        Manager.Installation.World_Sector;
+      Capacity      : constant Unit_Real :=
+                        Manager.Worker_Capacity;
+      Cost          : Money_Type := Zero;
+   begin
+
+      for Employment of
+        Concorde.Handles.Employment.Select_By_Employer
+          (Manager.Installation)
+      loop
+         Cost := Cost + Total (Employment.Salary, Employment.Quantity);
+      end loop;
+
+      Default_Installation_Manager (Manager).Execute_Production;
+
+      Manager.Log
+        ("executing production: worker cost "
+         & Show (Cost)
+         & "; capacity "
+         & Concorde.Real_Images.Approximate_Image (Capacity * 100.0)
+         & "%");
+
+      if Empty_Queue (Manager.Installation) then
+         for Commodity of
+           Concorde.Handles.Resource.Select_By_Category
+             (Concorde.Db.Organic)
+         loop
+            declare
+               Yield : constant Unit_Real :=
+                         Concorde.Sectors.Resource_Yield
+                           (Sector, Commodity);
+            begin
+               if Yield > Best_Yield then
+                  Best_Yield := Yield;
+                  Best_Resource := Commodity.To_Resource_Handle;
+               end if;
+            end;
+         end loop;
+
+         if not Best_Resource.Has_Element then
+            Manager.Log ("no possible production");
+            return;
+         end if;
+
+         Manager.Log ("queuing: " & Best_Resource.Tag
+                      & "; yield "
+                      & Concorde.Real_Images.Approximate_Image
+                        (Best_Yield * 100.0)
+                      & "%");
+
+         Queue_Production (Manager.Installation, Best_Resource,
+                           Concorde.Quantities.To_Quantity
+                             (1.0e6 * Best_Yield));
+      end if;
+
+      if not Empty_Queue (Manager.Installation) then
+         Set_Production
+           (Manager.Installation,
+            First_Queued_Commodity (Manager.Installation));
+
+         declare
+            use Concorde.Handles.Commodity;
+            Production : constant Commodity_Class :=
+                           First_Queued_Commodity (Installation);
+            Target     : constant Quantity_Type :=
+                           First_Queued_Quantity (Installation);
+            Yield      : constant Unit_Real :=
+                           Concorde.Sectors.Resource_Yield
+                             (Manager.Installation.World_Sector,
+                              Concorde.Handles.Resource
+                                .Get_From_Commodity (Production));
+            Quantity   : constant Quantity_Type :=
+                           Scale (Manager.Installation.Facility.Capacity,
+                                  100.0
+                                  * Yield * Capacity
+                                  * (1.0 - Installation.Inefficiency));
+         begin
+            Manager.Log
+              ("produced " & Show (Quantity) & " "
+               & Production.Tag
+               & " for " & Concorde.Money.Show (Cost)
+               & " ("
+               & Concorde.Money.Show (Concorde.Money.Price (Cost, Quantity))
+               & " each)");
+            Manager.Add_Stock (Production, Quantity, Cost);
+            Manager.Create_Ask
+              (Commodity => Production,
+               Quantity  => Quantity,
+               Price     => Price (Adjust (Cost, 2.0), Quantity));
+            Update_Queue_First
+              (Manager.Installation,
+               Target - Min (Target, Quantity));
+         end;
+      end if;
    end Execute_Production;
 
    ------------------------

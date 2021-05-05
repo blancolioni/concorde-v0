@@ -2,8 +2,10 @@ class = resource
 name = Livestock
 mass = 1
 organic = true
-npc-price = 10
+npc-price = 20
 constraints = {
     life = multicellular
+    temperature = { 270 290 }
+    moisture = { 0.3 0.9 }
 }
-yield = 25%
+yield = 5%

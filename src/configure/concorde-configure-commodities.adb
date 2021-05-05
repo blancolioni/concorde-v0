@@ -22,6 +22,7 @@ with Concorde.Handles.Resource_Constraint;
 with Concorde.Handles.Service_Commodity;
 with Concorde.Handles.Stock_Item;
 with Concorde.Handles.Supply_Input;
+with Concorde.Handles.Terrain;
 
 with Concorde.Db;
 
@@ -151,6 +152,18 @@ package body Concorde.Configure.Commodities is
       Config     : Tropos.Configuration);
 
    procedure Constrain_Mass
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration);
+
+   procedure Constrain_Moisture
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration);
+
+   procedure Constrain_Temperature
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration);
+
+   procedure Constrain_Terrain
      (Constraint : Resource_Constraint_Handle;
       Config     : Tropos.Configuration);
 
@@ -522,6 +535,66 @@ package body Concorde.Configure.Commodities is
         .Done;
    end Constrain_Minimum_Age;
 
+   ------------------------
+   -- Constrain_Moisture --
+   ------------------------
+
+   procedure Constrain_Moisture
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration)
+   is
+   begin
+      if Config.Child_Count /= 2 then
+         raise Constraint_Error with
+           "incorrect moisture constraint";
+      end if;
+
+      Constraint.Update_Resource_Constraint
+        .Set_Moisture_Constraint (True)
+        .Set_Min_Moisture (Config.Get (1))
+        .Set_Max_Moisture (Config.Get (2))
+        .Done;
+   end Constrain_Moisture;
+
+   ---------------------------
+   -- Constrain_Temperature --
+   ---------------------------
+
+   procedure Constrain_Temperature
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration)
+   is
+   begin
+      Constraint.Update_Resource_Constraint
+        .Set_Temperature_Constraint (True)
+        .Set_Min_Temperature (Config.Get (1))
+        .Set_Max_Temperature (Config.Get (2))
+        .Done;
+   end Constrain_Temperature;
+
+   -----------------------
+   -- Constrain_Terrain --
+   -----------------------
+
+   procedure Constrain_Terrain
+     (Constraint : Resource_Constraint_Handle;
+      Config     : Tropos.Configuration)
+   is
+      Terrain : constant Concorde.Handles.Terrain.Terrain_Handle :=
+                  Concorde.Handles.Terrain.Get_By_Tag
+                    (Config.Value);
+   begin
+      if not Terrain.Has_Element then
+         raise Constraint_Error with
+           "terrain constraint: no such terrain: " & Config.Value;
+      end if;
+
+      Constraint.Update_Resource_Constraint
+        .Set_Terrain_Constraint (True)
+        .Set_Terrain (Terrain)
+        .Done;
+   end Constrain_Terrain;
+
    --------------------
    -- Constrain_Zone --
    --------------------
@@ -734,10 +807,6 @@ package body Concorde.Configure.Commodities is
                         Standard_Deviation     => Freq.Std_Dev);
    begin
 
-      if Constraint_Argument_Map.Is_Empty then
-         Initialize_Constraint_Arguments;
-      end if;
-
       for Child_Config of Config loop
          if Constraint_Argument_Map.Contains (Child_Config.Config_Name) then
             Constraint_Argument_Map.Element (Child_Config.Config_Name)
@@ -854,8 +923,13 @@ package body Concorde.Configure.Commodities is
                         Base_Price => Get_Price (Config),
                         Transient  => False,
                         Tag        => Config.Config_Name,
-                        Category   => Class);
+                        Category   => Class,
+                        Yield      => Config.Get ("yield", 1.0));
    begin
+
+      if Constraint_Argument_Map.Is_Empty then
+         Initialize_Constraint_Arguments;
+      end if;
 
       for Deposit_Config of Config.Child ("deposits") loop
          if Deposit_Config.Config_Name = "sphere" then
@@ -864,6 +938,31 @@ package body Concorde.Configure.Commodities is
             Create_Frequency_Constraint (Commodity, Deposit_Config);
          end if;
       end loop;
+
+      if Config.Contains ("constraints") then
+         declare
+            Constraint : constant Concorde.Handles.Resource_Constraint
+              .Resource_Constraint_Handle :=
+                Concorde.Handles.Resource_Constraint.Create
+                  (Resource => Commodity);
+         begin
+            for Constraint_Config of Config.Child ("constraints") loop
+               if Constraint_Argument_Map.Contains
+                 (Constraint_Config.Config_Name)
+               then
+                  Constraint_Argument_Map.Element
+                    (Constraint_Config.Config_Name)
+                    (Constraint, Constraint_Config);
+               else
+                  raise Constraint_Error with
+                    "no such constraint argument "
+                    & Constraint_Config.Config_Name
+                    & " in resource constraint for "
+                    & Commodity.Tag;
+               end if;
+            end loop;
+         end;
+      end if;
 
       return Commodity.To_Commodity_Handle;
    end Create_Resource;
@@ -957,8 +1056,9 @@ package body Concorde.Configure.Commodities is
       -- Add --
       ---------
 
-      procedure Add (Name : String;
-                     Proc : Constraint_Application)
+      procedure Add
+        (Name : String;
+         Proc : Constraint_Application)
       is
       begin
          Constraint_Argument_Map.Insert (Name, Proc);
@@ -970,6 +1070,9 @@ package body Concorde.Configure.Commodities is
       Add ("life", Constrain_Life'Access);
       Add ("mass", Constrain_Mass'Access);
       Add ("minimum-age", Constrain_Minimum_Age'Access);
+      Add ("moisture", Constrain_Moisture'Access);
+      Add ("temperature", Constrain_Temperature'Access);
+      Add ("terrain", Constrain_Terrain'Access);
       Add ("zone", Constrain_Zone'Access);
    end Initialize_Constraint_Arguments;
 
@@ -1003,4 +1106,7 @@ package body Concorde.Configure.Commodities is
       Add ("service", Create_Service_Commodity'Access);
    end Initialize_Creator_Map;
 
+begin
+   Initialize_Creator_Map;
+   Initialize_Constraint_Arguments;
 end Concorde.Configure.Commodities;

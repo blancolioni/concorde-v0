@@ -5,5 +5,7 @@ organic = true
 npc-price = 20
 yield = 20%
 constraints = {
-    life = plants
+    life = multicellular
+    temperature = { 280 300 }
+    moisture = { 0.2 0.6 }
 }

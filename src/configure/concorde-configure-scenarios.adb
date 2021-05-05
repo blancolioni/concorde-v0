@@ -146,11 +146,10 @@ package body Concorde.Configure.Scenarios is
       Concorde.Handles.Scenario.Create
         (Scenario_Name, True, Concorde.Handles.Star_System.Empty_Handle);
 
+      Concorde.Configure.Terrain.Configure_Terrain (Scenario_Name);
       Concorde.Configure.Commodities.Configure_Commodities (Scenario_Name);
 
-      Concorde.Configure.Terrain.Configure_Terrain (Scenario_Name);
       Concorde.Configure.Districts.Configure_Districts (Scenario_Name);
-
       Concorde.Configure.Facilities.Configure_Facilities (Scenario_Name);
 
       Concorde.Configure.Commodities.Configure_Components (Scenario_Name);

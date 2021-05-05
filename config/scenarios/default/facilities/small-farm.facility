@@ -8,3 +8,5 @@ module = { industrial = 3
            habitation = 2
          }
 organic = true
+capacity = 300
+default-manager = default-farm

@@ -1,3 +1,5 @@
+with Ada.Exceptions;
+
 with WL.Images.Bitmaps;
 
 with Tropos.Reader;
@@ -140,6 +142,11 @@ package body Concorde.Configure.Terrain is
          Extension => "feature",
          Configure => Configure_Feature'Access);
       Configure_Elevation;
+   exception
+      when E : others =>
+         raise Constraint_Error with
+           "error configuring terrain: "
+           & Ada.Exceptions.Exception_Message (E);
    end Configure_Terrain;
 
    -----------------------
