@@ -8,4 +8,5 @@ module = { industrial = 3
            habitation = 2
          }
 production = { rations readymeal }
-capacity = 500
+capacity = 6000
+default-manager = default-factory
