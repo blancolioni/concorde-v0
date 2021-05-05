@@ -22,6 +22,7 @@ type Building_Module_Category is (Structural, Industrial, Commercial, Habitation
 record Commodity : Localised is
    Mass       : Long_Float;
    Base_Price : Price_Type;
+   Complexity : Long_Float;
    Transient  : Boolean;
    Employment : Boolean;
 end Commodity;
@@ -49,6 +50,7 @@ record Input_Commodity is
    key Commodity;
    key Input : Commodity;
    Quantity : Quantity_Type;
+   unique key Input_Commodity with Commodity, Input;
 end Input_Commodity;
 
 record Consumer_Commodity : Commodity is

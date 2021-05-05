@@ -154,6 +154,7 @@ package body Concorde.Configure.Scenarios is
 
       Concorde.Configure.Commodities.Configure_Components (Scenario_Name);
       Concorde.Configure.Commodities.Configure_Initial_Prices;
+      Concorde.Configure.Commodities.Configure_Complexity;
 
       for Ability_Config of
         Tropos.Reader.Read_Config

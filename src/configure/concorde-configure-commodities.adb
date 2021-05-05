@@ -7,6 +7,7 @@ with WL.String_Maps;
 with Tropos.Reader;
 
 with Concorde.Commodities;
+with Concorde.Elementary_Functions;
 with Concorde.Logging;
 
 with Concorde.Handles.Building_Module;
@@ -198,6 +199,75 @@ package body Concorde.Configure.Commodities is
             Extension => "pop"));
 
    end Configure_Commodities;
+
+   --------------------------
+   -- Configure_Complexity --
+   --------------------------
+
+   procedure Configure_Complexity is
+      Changed : Boolean := True;
+      Missing : Boolean := False;
+   begin
+      while Changed loop
+         Changed := False;
+         Missing := False;
+
+         for Commodity of Concorde.Handles.Commodity.Scan_By_Top_Record loop
+            if Commodity.Complexity = 0.0 then
+               declare
+                  Component_Complexity : Non_Negative_Real := 0.0;
+                  Valid                : Boolean := True;
+               begin
+                  for Component of
+                    Concorde.Handles.Input_Commodity.Select_By_Commodity
+                      (Commodity)
+                  loop
+                     if Component.Input.Complexity = 0.0 then
+                        Missing := True;
+                        Valid   := False;
+                        exit;
+                     else
+                        declare
+                           use Concorde.Elementary_Functions;
+                           Input_Complexity : constant Non_Negative_Real :=
+                                                Component.Input.Complexity;
+                           Input_Quantity   : constant Non_Negative_Real :=
+                                                Concorde.Quantities.To_Real
+                                                  (Component.Quantity);
+                           Input_Factor     : constant Non_Negative_Real :=
+                                                1.0 + Log (Input_Quantity);
+                        begin
+                           Component_Complexity :=
+                             Component_Complexity
+                               + Input_Factor * Input_Complexity;
+                        end;
+                     end if;
+                  end loop;
+
+                  if Valid then
+                     Commodity.Update_Commodity
+                       .Set_Complexity (Component_Complexity)
+                       .Done;
+                     Changed := True;
+                  end if;
+               end;
+            end if;
+         end loop;
+      end loop;
+
+      if Missing then
+         Concorde.Logging.Log
+           ("error", "unable to determine initial commodity prices");
+         for Commodity of Concorde.Handles.Commodity.Scan_By_Top_Record loop
+            if Commodity.Complexity = 0.0 then
+               Concorde.Logging.Log ("error", Commodity.Tag);
+            end if;
+         end loop;
+         raise Constraint_Error with
+           "unable to determine initial commodity prices";
+      end if;
+
+   end Configure_Complexity;
 
    --------------------------
    -- Configure_Components --
@@ -881,6 +951,7 @@ package body Concorde.Configure.Commodities is
             Base_Price      =>
               Concorde.Money.To_Price (Pop_Group_Config.Get ("salary")),
             Transient       => True,
+            Complexity      => 1.0,
             Consumer_Demand =>
               To_Quality_Type (Pop_Group_Config.Get ("consumer-quality")),
             Service_Demand  =>
@@ -924,6 +995,7 @@ package body Concorde.Configure.Commodities is
                         Transient  => False,
                         Tag        => Config.Config_Name,
                         Category   => Class,
+                        Complexity => 1.0,
                         Yield      => Config.Get ("yield", 1.0));
    begin
 
@@ -1004,6 +1076,8 @@ package body Concorde.Configure.Commodities is
                        Base_Price => Get_Price (Config),
                        Transient  => True,
                        Tag        => Config.Config_Name,
+                       Complexity =>
+                         Config.Get ("quality") ** 2,
                        Quality    =>
                          Quality_Type'Val (Config.Get ("quality") - 1),
                        Class      => Class,

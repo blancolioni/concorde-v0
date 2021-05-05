@@ -13,6 +13,7 @@ package Concorde.Configure.Commodities is
      (Scenario_Name : String);
 
    procedure Configure_Initial_Prices;
+   procedure Configure_Complexity;
 
    procedure Configure_Stock
      (Has_Stock : Concorde.Handles.Has_Stock.Has_Stock_Class;
