@@ -71,6 +71,24 @@ package body Concorde.Installations is
       return Cached_Queues (Installation.Identifier).First_Element.Quantity;
    end First_Queued_Quantity;
 
+   -------------------
+   -- Iterate_Queue --
+   -------------------
+
+   procedure Iterate_Queue
+     (Installation : Installation_Class;
+      Process      : not null access
+        procedure (Commodity    : Concorde.Handles.Commodity.Commodity_Class;
+                   Quantity     : Concorde.Quantities.Quantity_Type))
+   is
+   begin
+      if Cached_Queues.Contains (Installation.Identifier) then
+         for Item of Cached_Queues (Installation.Identifier) loop
+            Process (Item.Commodity, Item.Quantity);
+         end loop;
+      end if;
+   end Iterate_Queue;
+
    ---------
    -- Log --
    ---------
@@ -82,6 +100,18 @@ package body Concorde.Installations is
    begin
       Concorde.Logging.Log (Describe (Installation), Message);
    end Log;
+
+   -------------------------------
+   -- Queue_Capacity_Production --
+   -------------------------------
+
+   procedure Queue_Capacity_Production
+     (Installation : Installation_Class;
+      Commodity    : Concorde.Handles.Commodity.Commodity_Class)
+   is
+   begin
+      Queue_Production (Installation, Commodity, Concorde.Quantities.Zero);
+   end Queue_Capacity_Production;
 
    ----------------------
    -- Queue_Production --

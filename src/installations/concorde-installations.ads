@@ -48,4 +48,15 @@ package Concorde.Installations is
       Quantity     : Concorde.Quantities.Quantity_Type)
      with Post => not Empty_Queue (Installation);
 
+   procedure Queue_Capacity_Production
+     (Installation : Installation_Class;
+      Commodity    : Concorde.Handles.Commodity.Commodity_Class)
+     with Post => not Empty_Queue (Installation);
+
+   procedure Iterate_Queue
+     (Installation : Installation_Class;
+      Process      : not null access
+        procedure (Commodity    : Concorde.Handles.Commodity.Commodity_Class;
+                   Quantity     : Concorde.Quantities.Quantity_Type));
+
 end Concorde.Installations;
