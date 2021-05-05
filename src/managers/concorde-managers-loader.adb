@@ -31,6 +31,10 @@ package body Concorde.Managers.Loader is
          Concorde.Installations.Managers.Create_Farm_Manager'Access);
 
       Register.Insert
+        ("default-factory",
+         Concorde.Installations.Managers.Create_Factory_Manager'Access);
+
+      Register.Insert
         ("default-pop",
          Concorde.Pops.Managers.Create_Pop_Manager'Access);
 
