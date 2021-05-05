@@ -271,10 +271,18 @@ package body Concorde.Stock is
                         (From, Item);
             pragma Assert (Stock.Has_Element);
 
-            Available : constant Quantity_Type := Stock.Quantity;
+            Available : constant Quantity_Type :=
+                          (if Stock.Quantity >= Quantity
+                           then Stock.Quantity
+                           elsif To_Real (Stock.Quantity)
+                           >= To_Real (Quantity) - 0.1
+                           then Quantity
+                           else Stock.Quantity);
             Stock_Value : constant Money_Type := Stock.Value;
             Removed_Value : constant Money_Type :=
-              Adjust (Stock_Value, To_Real (Quantity) / To_Real (Available));
+                              Adjust (Stock_Value,
+                                      To_Real (Quantity)
+                                      / To_Real (Available));
          begin
             if Available < Quantity then
                Ada.Text_IO.Put_Line
