@@ -423,12 +423,17 @@ package body Concorde.Managers.Colonies is
       for Policy of
         Concorde.Handles.Policy.Scan_By_Tag
       loop
-         Concorde.Handles.Colony_Policy.Update_Colony_Policy
-           (Concorde.Handles.Colony_Policy.Get_By_Colony_Policy
-              (Manager.Colony, Policy))
-           .Set_Revenue (Concorde.Money.Zero)
-           .Set_Expense (Concorde.Money.Zero)
-           .Done;
+         declare
+            P : constant Concorde.Handles.Policy.Policy_Class :=
+                  Policy;
+         begin
+            Concorde.Handles.Colony_Policy.Update_Colony_Policy
+              (Concorde.Handles.Colony_Policy.Get_By_Colony_Policy
+                 (Manager.Colony, P))
+                .Set_Revenue (Concorde.Money.Zero)
+              .Set_Expense (Concorde.Money.Zero)
+              .Done;
+         end;
       end loop;
 
       for Pop of Concorde.Handles.Pop.Select_By_Colony (Manager.Colony) loop
