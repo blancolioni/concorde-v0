@@ -34,13 +34,15 @@ package Concorde.Individuals is
    procedure Advance_Skill
      (Individual : Concorde.Handles.Individual.Individual_Class;
       Skill      : Concorde.Handles.Skill.Skill_Class)
-     with Post => Has_Skill (Individual, Skill);
+     with Pre => Individual.Has_Element and then Skill.Has_Element,
+     Post => Has_Skill (Individual, Skill);
 
    procedure Advance_Skill
      (Individual : Concorde.Handles.Individual.Individual_Class;
       Skill      : Concorde.Handles.Skill.Skill_Class;
       Level      : Natural)
-     with Post => Has_Skill (Individual, Skill);
+     with Pre => Individual.Has_Element and then Skill.Has_Element,
+     Post => Has_Skill (Individual, Skill);
 
    function Has_Skill
      (Individual : Concorde.Handles.Individual.Individual_Class;

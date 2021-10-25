@@ -402,7 +402,9 @@ package body Concorde.Individuals.Create is
                  Current_Assignment.Career.Basic_Training,
                  Concorde.Handles.Assignment.Empty_Handle)
             loop
-               Advance_Skill (Individual, Advance.Skill);
+               if Advance.Skill.Has_Element then
+                  Advance_Skill (Individual, Advance.Skill);
+               end if;
             end loop;
 
             First_Career := False;
@@ -417,7 +419,9 @@ package body Concorde.Individuals.Create is
                               Concorde.Handles.Assignment.Empty_Handle,
                               Roll_1D6);
             begin
-               Advance_Skill (Individual, Advance.Skill);
+               if Advance.Skill.Has_Element then
+                  Advance_Skill (Individual, Advance.Skill);
+               end if;
             end;
          else
             declare
