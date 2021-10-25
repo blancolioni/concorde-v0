@@ -420,7 +420,7 @@ package body Concorde.Configure.Commodities is
                                 & ": no such input commodity: " & Tag);
                   Quantity : constant Concorde.Quantities.Quantity_Type :=
                                Concorde.Quantities.To_Quantity
-                                 (Input_Config.Value);
+                                 (Real'(Input_Config.Value));
                begin
                   Concorde.Handles.Input_Commodity.Create
                     (Manufactured => Item,
@@ -444,7 +444,7 @@ package body Concorde.Configure.Commodities is
                  (Commodity    => Item,
                   Pop_Per_Item =>
                     Concorde.Quantities.To_Quantity
-                      (Item_Config.Get ("per-pop")));
+                      (Real'(Item_Config.Get ("per-pop"))));
             end if;
          end;
       end loop;
