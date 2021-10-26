@@ -3,7 +3,6 @@ with Ada.Text_IO;
 with Tropos.Reader;
 
 with Concorde.Handles.Ability;
-with Concorde.Handles.Advancement;
 with Concorde.Handles.Advancement_Table;
 with Concorde.Handles.Assignment;
 with Concorde.Handles.Assignment_Rank;
@@ -30,8 +29,11 @@ package body Concorde.Configure.Careers is
       Score   : out Natural);
 
    procedure Configure_Advancement
-     (Advancement : Concorde.Handles.Advancement.Advancement_Class;
-      Config      : Tropos.Configuration);
+     (Config          : Tropos.Configuration;
+      Advance_Cash    : out Concorde.Money.Money_Type;
+      Advance_Ability : out Concorde.Handles.Ability.Ability_Handle;
+      Advance_Skill   : out Concorde.Handles.Skill.Skill_Handle;
+      Advance_Level   : out Integer);
 
    procedure Configure_Benefits
      (Career : Concorde.Handles.Career.Career_Class;
@@ -68,15 +70,14 @@ package body Concorde.Configure.Careers is
    ---------------------------
 
    procedure Configure_Advancement
-     (Advancement : Concorde.Handles.Advancement.Advancement_Class;
-      Config      : Tropos.Configuration)
+     (Config          : Tropos.Configuration;
+      Advance_Cash    : out Concorde.Money.Money_Type;
+      Advance_Ability : out Concorde.Handles.Ability.Ability_Handle;
+      Advance_Skill   : out Concorde.Handles.Skill.Skill_Handle;
+      Advance_Level   : out Integer)
    is
       use Concorde.Handles.Ability;
       use Concorde.Handles.Skill;
-      Advance_Cash : Concorde.Money.Money_Type := Concorde.Money.Zero;
-      Advance_Ability : Ability_Handle := Empty_Handle;
-      Advance_Skill   : Skill_Handle := Empty_Handle;
-      Advance_Level   : Integer := -1;
    begin
       for Item_Config of Config loop
          declare
@@ -103,13 +104,6 @@ package body Concorde.Configure.Careers is
          end;
       end loop;
 
-      Concorde.Handles.Advancement.Update_Advancement (Advancement)
-        .Set_Cash (Advance_Cash)
-        .Set_Ability (Advance_Ability)
-        .Set_Skill (Advance_Skill)
-        .Set_Skill_Level (Advance_Level)
-        .Done;
-
    end Configure_Advancement;
 
    ---------------------------------
@@ -126,19 +120,24 @@ package body Concorde.Configure.Careers is
    begin
       for Config of Table_Config loop
          declare
-            Row : constant Concorde.Handles.Advancement_Table
-              .Advancement_Table_Handle :=
-                    Concorde.Handles.Advancement_Table.Create
-                      (Ability     => Concorde.Handles.Ability.Empty_Handle,
-                       Cash        => Concorde.Money.Zero,
-                       Skill       => Concorde.Handles.Skill.Empty_Handle,
-                       Skill_Level => -1,
-                       Table       => Training,
-                       Career      => Career,
-                       Assignment  => Assignment,
-                       Dr          => DR);
+            Advance_Cash    : Concorde.Money.Money_Type;
+            Advance_Ability : Concorde.Handles.Ability.Ability_Handle;
+            Advance_Skill   : Concorde.Handles.Skill.Skill_Handle;
+            Advance_Level   : Integer;
          begin
-            Configure_Advancement (Row, Config);
+            Configure_Advancement
+              (Config, Advance_Cash, Advance_Ability,
+               Advance_Skill, Advance_Level);
+
+            Concorde.Handles.Advancement_Table.Create
+              (Ability     => Advance_Ability,
+               Cash        => Advance_Cash,
+               Skill       => Advance_Skill,
+               Skill_Level => Advance_Level,
+               Table       => Training,
+               Career      => Career,
+               Assignment  => Assignment,
+               Dr          => DR);
             DR := DR + 1;
          end;
       end loop;
@@ -201,20 +200,22 @@ package body Concorde.Configure.Careers is
    begin
       for Item_Config of Config loop
          declare
-            Benefit : constant Concorde.Handles.Career_Benefit
-              .Career_Benefit_Handle :=
-                        Concorde.Handles.Career_Benefit.Create
-                  (Ability     =>
-                         Concorde.Handles.Ability.Empty_Handle,
-                           Skill       => Concorde.Handles.Skill.Empty_Handle,
-                           Skill_Level => -1,
-                           Career      => Career,
-                           Index       => Benefit_Index,
-                           Cash        => Concorde.Money.Zero);
+            Advance_Cash    : Concorde.Money.Money_Type;
+            Advance_Ability : Concorde.Handles.Ability.Ability_Handle;
+            Advance_Skill   : Concorde.Handles.Skill.Skill_Handle;
+            Advance_Level   : Integer;
          begin
             Configure_Advancement
-              (Benefit,
-               Item_Config);
+              (Item_Config, Advance_Cash, Advance_Ability,
+               Advance_Skill, Advance_Level);
+
+            Concorde.Handles.Career_Benefit.Create
+              (Ability     => Advance_Ability,
+               Cash        => Advance_Cash,
+               Skill       => Advance_Skill,
+               Skill_Level => Advance_Level,
+               Career      => Career,
+               Index       => Benefit_Index);
             Benefit_Index := Benefit_Index + 1;
          end;
       end loop;
@@ -325,20 +326,23 @@ package body Concorde.Configure.Careers is
    begin
       for Rank_Config of Table_Config loop
          declare
-            Row : constant Concorde.Handles.Assignment_Rank
-              .Assignment_Rank_Handle :=
-                    Concorde.Handles.Assignment_Rank.Create
-                      (Assignment  => Assignment,
-                       Ability     => Concorde.Handles.Ability.Empty_Handle,
-                       Cash        => Concorde.Money.Zero,
-                       Skill       => Concorde.Handles.Skill.Empty_Handle,
-                       Skill_Level => -1,
-                       Tag         => Rank_Config.Config_Name,
-                       Rank_Index  => Rank);
+            Advance_Cash    : Concorde.Money.Money_Type;
+            Advance_Ability : Concorde.Handles.Ability.Ability_Handle;
+            Advance_Skill   : Concorde.Handles.Skill.Skill_Handle;
+            Advance_Level   : Integer;
          begin
             Configure_Advancement
-              (Row,
-               Rank_Config);
+              (Rank_Config, Advance_Cash, Advance_Ability,
+               Advance_Skill, Advance_Level);
+
+            Concorde.Handles.Assignment_Rank.Create
+              (Ability     => Advance_Ability,
+               Cash        => Advance_Cash,
+               Skill       => Advance_Skill,
+               Skill_Level => Advance_Level,
+               Tag         => Rank_Config.Config_Name,
+               Assignment  => Assignment,
+               Rank_Index  => Rank);
             Rank := Rank + 1;
          end;
       end loop;
