@@ -323,7 +323,8 @@ package body Concorde.Spheres is
          declare
             R : constant Real := Sqrt (1.0 - Z ** 2);
          begin
-            Point_List.Append ((Cos (Long) * R, Sin (Long) * R, Z));
+            Point_List.Append
+              (Surface_Point'(Cos (Long) * R, Sin (Long) * R, Z));
             Z := Z - D_Z;
             Long := Long + D_Long;
          end;

@@ -224,7 +224,8 @@ package body Concorde.Configure.Resources is
 
             if not Found then
                Gen.Resources.Append
-                 ((Sphere.Resource.To_Resource_Handle, Strength));
+                 (Resource_Record'
+                    (Sphere.Resource.To_Resource_Handle, Strength));
             end if;
 
             Gen.Total_Strength := Gen.Total_Strength + Strength;
